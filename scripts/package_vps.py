@@ -29,7 +29,12 @@ files = [
 ]
 files += [
     root / "scripts" / item
-    for item in ("diagnose_traefik.py", "prepare_production_env.py")
+    for item in (
+        "diagnose_traefik.py",
+        "prepare_production_env.py",
+        "deploy_vps.py",
+        "install_vps.sh",
+    )
 ]
 for directory in roots:
     files.extend(path for path in (root / directory).rglob("*") if path.is_file())

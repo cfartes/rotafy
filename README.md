@@ -144,3 +144,5 @@ Viagens exigem cidades de origem/destino selecionadas por UF. CPF é obrigatóri
 O projeto Flutter está em [mobile/](mobile/README.md), usando a mesma API e as contas de motorista/guia. Ambos preparam manifestos, leem QR, registram embarque/desembarque offline e sincronizam com revisão de conflitos. Viagem sem guia funciona com o motorista atribuído. SQLite com conteúdo criptografado e sessão no armazenamento seguro do aparelho. APK debug de homologação gerado por `scripts/build_mobile.ps1`; configuração separada por empresa. Testes em aparelho real, distribuição assinada e compilação iOS ainda precisam de homologação/configuração.
 
 Detalhes e endpoints em [cadastro SaaS](docs/CADASTRO_SAAS.md).
+
+Instalador Hostinger/Traefik: [guia e comandos](docs/INSTALACAO_VPS.md).
