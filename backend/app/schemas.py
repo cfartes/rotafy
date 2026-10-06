@@ -1,6 +1,7 @@
 from typing import Literal
 from uuid import UUID
 
+import phonenumbers
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -49,7 +50,26 @@ class UserCreate(Input):
     role: Role = "attendant"
 
 
-class CompanyCreate(Input):
+class CompanyContact(Input):
+    contact_phone: str | None = Field(default=None, max_length=50)
+
+    @field_validator("contact_phone")
+    @classmethod
+    def validate_contact(cls, value):
+        if value is None or not value.strip():
+            return None
+        try:
+            number = phonenumbers.parse(value.strip(), "BR")
+        except phonenumbers.NumberParseException:
+            raise ValueError(
+                "Informe telefone/WhatsApp válido com DDD ou + e código do país."
+            ) from None
+        if not phonenumbers.is_valid_number(number) or number.extension:
+            raise ValueError("Informe telefone/WhatsApp válido, sem ramal.")
+        return phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164)
+
+
+class CompanyCreate(CompanyContact):
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)
@@ -72,7 +92,7 @@ class ActiveUpdate(Input):
     is_active: bool
 
 
-class CompanyDetailsUpdate(Input):
+class CompanyDetailsUpdate(CompanyContact):
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)

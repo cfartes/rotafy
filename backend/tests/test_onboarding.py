@@ -27,6 +27,42 @@ TERMS = {
 }
 
 
+def test_company_contact_validated_saved_and_preserved_by_legacy_updates(client, owner):
+    configure(client)
+    invalid = client.post(
+        "/api/v1/nexus/companies", json=PAYLOAD | {"contact_phone": "123"}
+    )
+    assert invalid.status_code == 422
+    created = client.post(
+        "/api/v1/nexus/companies", json=PAYLOAD | {"contact_phone": "(47) 99999-9999"}
+    )
+    assert created.status_code == 201, created.text
+    company = created.json()
+    assert company["contact_phone"] == "+5547999999999"
+    details = {
+        key: PAYLOAD[key] for key in ("slug", "trade_name", "corporate_name", "cnpj")
+    }
+    url = f"/api/v1/nexus/companies/{company['id']}/details"
+    assert client.patch(url, json=details).json()["contact_phone"] == "+5547999999999"
+    assert (
+        client.patch(url, json=details | {"contact_phone": "+1 202 555 0123"}).json()[
+            "contact_phone"
+        ]
+        == "+12025550123"
+    )
+    assert (
+        client.patch(url, json=details | {"contact_phone": ""}).json()["contact_phone"]
+        is None
+    )
+    login(client, company=company["slug"], email="customer@example.com")
+    assert (
+        client.patch(
+            url, json=details | {"contact_phone": "+5547999999999"}
+        ).status_code
+        == 403
+    )
+
+
 def configure(client):
     login(client, nexus=True, email="nexus@example.com")
     assert (

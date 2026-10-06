@@ -52,12 +52,23 @@ test("primeiro acesso: plano e documento obrigatórios, assinatura automática e
   expect(planResponse.status()).toBe(201);
   const plan = await planResponse.json();
   await page.getByRole("button", { name: "Sair da conta" }).click();
+  await expect(
+    page.getByRole("button", { name: "Acessar painel" }),
+  ).toBeVisible();
   await page.goto("/");
   await page.getByRole("link", { name: "Criar minha empresa" }).click();
   await expect(page).toHaveURL("http://localhost:5178/cadastro");
   await page.getByLabel("Nome comercial").fill("Empresa Primeiro Acesso");
   await page.getByLabel("Razão social").fill("Empresa Primeiro Acesso LTDA");
   await page.getByLabel("Identificador de acesso").fill(slug);
+  await page.getByLabel("Telefone / WhatsApp").fill("47999999999");
+  await expect(page.getByLabel("Telefone / WhatsApp")).toHaveValue(
+    "(47) 99999-9999",
+  );
+  const dialogWidth = await page
+    .getByRole("dialog")
+    .evaluate((dialog) => dialog.getBoundingClientRect().width);
+  expect(dialogWidth).toBeGreaterThan(800);
   await page.getByLabel("Nome completo").fill("Admin Primeiro Acesso");
   await page.getByLabel("E-mail", { exact: true }).fill(email);
   await page.getByLabel("Senha inicial").fill(password);
@@ -80,10 +91,24 @@ test("primeiro acesso: plano e documento obrigatórios, assinatura automática e
   await expect(page.getByRole("alert")).toContainText("CPF");
   await expect(page.getByLabel("Plano escolhido")).toHaveValue(plan.id);
   await page.getByLabel("CPF/CNPJ").fill(testDocument());
+  await page.getByRole("dialog").evaluate((dialog) => {
+    dialog.scrollTop = 0;
+  });
   await page.screenshot({
     path: "../docs/screenshots/cadastro-empresa-plano.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page
+      .getByRole("dialog")
+      .evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth),
+  ).toBe(true);
+  await page.screenshot({
+    path: "../docs/screenshots/cadastro-empresa-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page
     .getByRole("button", { name: "Cadastrar empresa", exact: true })
     .click();

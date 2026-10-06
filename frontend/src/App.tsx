@@ -4,6 +4,7 @@ import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
 import { Reports } from "./Reports";
 import { DocumentInput } from "./components/DocumentInput";
+import { PhoneInput } from "./components/PhoneInput";
 import { ForgotPassword, EmailDeliveries } from "./AccessEmail";
 import { TicketPage } from "./Tickets";
 const OfflineHub = lazy(() =>
@@ -360,6 +361,7 @@ function CreateCompany({
           corporate_name: data.get("corporate_name"),
           slug: data.get("slug"),
           cnpj: String(data.get("cnpj") || "").trim() || null,
+          contact_phone: String(data.get("contact_phone") || "").trim() || null,
           plan_id: data.get("plan_id"),
           admin: {
             full_name: data.get("full_name"),
@@ -399,7 +401,7 @@ function CreateCompany({
       </Modal>
     );
   return (
-    <Modal title="Cadastrar empresa" onClose={onClose}>
+    <Modal title="Cadastrar empresa" onClose={onClose} wide>
       <form onSubmit={submit} className="modal-form">
         <p className="muted">
           Crie o espaço da empresa e seu primeiro administrador. Escolha o plano
@@ -435,6 +437,14 @@ function CreateCompany({
               conferência dos dígitos verificadores.
             </small>
           </Field>
+          <div className="company-contact">
+            <Field label="Telefone / WhatsApp">
+              <PhoneInput />
+              <small className="muted">
+                Contato da empresa. Use DDD ou + e código do país.
+              </small>
+            </Field>
+          </div>
         </div>
         <h3 className="form-section">Plano da empresa</h3>
         <Field label="Plano escolhido">
@@ -465,34 +475,36 @@ function CreateCompany({
           </Alert>
         )}
         <h3 className="form-section">Administrador da empresa</h3>
-        <Field label="Nome completo">
-          <input name="full_name" required minLength={2} maxLength={150} />
-        </Field>
-        <Field label="E-mail">
-          <input name="email" type="email" autoComplete="off" required />
-        </Field>
-        <Field label="Senha inicial">
-          <input
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            minLength={12}
-            maxLength={128}
-            required
-          />
-        </Field>
-        {publicSignup && (
-          <Field label="Confirmar senha">
+        <div className="form-grid">
+          <Field label="Nome completo">
+            <input name="full_name" required minLength={2} maxLength={150} />
+          </Field>
+          <Field label="E-mail">
+            <input name="email" type="email" autoComplete="off" required />
+          </Field>
+          <Field label="Senha inicial">
             <input
-              name="confirm"
+              name="password"
               type="password"
               autoComplete="new-password"
-              required
               minLength={12}
               maxLength={128}
+              required
             />
           </Field>
-        )}
+          {publicSignup && (
+            <Field label="Confirmar senha">
+              <input
+                name="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={12}
+                maxLength={128}
+              />
+            </Field>
+          )}
+        </div>
         <small className="muted">
           Mínimo de 12 caracteres. Compartilhe o acesso por um canal seguro.
         </small>
@@ -534,6 +546,7 @@ function EditCompany({
         corporate_name: form.get("corporate_name"),
         slug: form.get("slug"),
         cnpj: String(form.get("cnpj") || "").trim() || null,
+        contact_phone: String(form.get("contact_phone") || "").trim() || null,
       });
       await client.invalidateQueries({ queryKey: ["companies"] });
       await client.invalidateQueries({ queryKey: ["audit"] });
@@ -545,46 +558,54 @@ function EditCompany({
     }
   }
   return (
-    <Modal title="Editar empresa" onClose={onClose}>
+    <Modal title="Editar empresa" onClose={onClose} wide>
       <form className="modal-form" onSubmit={submit}>
         <p className="muted">
           Ao alterar o identificador de acesso, informe o novo identificador à
           equipe e atualize os links públicos da empresa.
         </p>
-        <Field label="Nome comercial">
-          <input
-            name="trade_name"
-            defaultValue={company.trade_name}
-            required
-            minLength={2}
-            maxLength={150}
-          />
-        </Field>
-        <Field label="Razão social">
-          <input
-            name="corporate_name"
-            defaultValue={company.corporate_name}
-            required
-            minLength={2}
-            maxLength={150}
-          />
-        </Field>
-        <Field label="Identificador de acesso">
-          <input
-            name="slug"
-            defaultValue={company.slug}
-            required
-            minLength={2}
-            maxLength={50}
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          />
-        </Field>
-        <Field label="CPF/CNPJ">
-          <DocumentInput initialValue={company.cnpj || ""} required />
-          <small id="document-help" className="muted">
-            Informe um CPF ou CNPJ válido para cobrança.
-          </small>
-        </Field>
+        <div className="form-grid">
+          <Field label="Nome comercial">
+            <input
+              name="trade_name"
+              defaultValue={company.trade_name}
+              required
+              minLength={2}
+              maxLength={150}
+            />
+          </Field>
+          <Field label="Razão social">
+            <input
+              name="corporate_name"
+              defaultValue={company.corporate_name}
+              required
+              minLength={2}
+              maxLength={150}
+            />
+          </Field>
+          <Field label="Identificador de acesso">
+            <input
+              name="slug"
+              defaultValue={company.slug}
+              required
+              minLength={2}
+              maxLength={50}
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            />
+          </Field>
+          <Field label="CPF/CNPJ">
+            <DocumentInput initialValue={company.cnpj || ""} required />
+            <small id="document-help" className="muted">
+              Informe um CPF ou CNPJ válido para cobrança.
+            </small>
+          </Field>
+          <Field label="Telefone / WhatsApp">
+            <PhoneInput initialValue={company.contact_phone || ""} />
+            <small className="muted">
+              Contato da empresa com DDD ou código internacional.
+            </small>
+          </Field>
+        </div>
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
           <button type="button" className="button secondary" onClick={onClose}>

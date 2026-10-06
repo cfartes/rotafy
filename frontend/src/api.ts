@@ -13,6 +13,7 @@ export type Company = {
   trade_name: string;
   corporate_name: string;
   cnpj: string | null;
+  contact_phone: string | null;
   primary_color: string;
   accent_color: string;
   is_active: boolean;
@@ -56,6 +57,7 @@ const fieldNames: Record<string, string> = {
   company: "Identificador da empresa",
   contact_name: "Nome do responsável",
   phone: "Telefone",
+  contact_phone: "Telefone / WhatsApp",
   cpf: "CPF",
   name: "Nome",
   starts_at: "Saída",

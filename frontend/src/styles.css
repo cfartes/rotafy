@@ -846,6 +846,31 @@ dialog::backdrop {
   background: #06132085;
   backdrop-filter: blur(3px);
 }
+dialog.modal-wide {
+  width: min(960px, calc(100vw - 32px));
+}
+.modal-wide .modal-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+.modal-wide .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  column-gap: 24px;
+}
+.modal-wide .field {
+  min-width: 0;
+}
+.modal-wide .company-contact {
+  grid-column: 1 / -1;
+}
+@media (max-width: 640px) {
+  .modal-wide .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .modal-header {
   display: flex;
   justify-content: space-between;

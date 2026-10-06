@@ -51,7 +51,7 @@ from app.schemas import (
 from app.security import DUMMY_HASH, digest, passwords, verify_password
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
-COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, primary_color, accent_color, is_active, created_at"
+COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at"
 
 
 def create_app(settings: Settings | None = None):
@@ -414,9 +414,14 @@ def create_app(settings: Settings | None = None):
             (
                 await actor.db.execute(
                     text(f"""UPDATE companies SET slug=:slug,trade_name=:trade_name,
-                corporate_name=:corporate_name,cnpj=:cnpj
+                corporate_name=:corporate_name,cnpj=:cnpj,
+                contact_phone=CASE WHEN :update_phone THEN :contact_phone ELSE contact_phone END
                 WHERE id=:id RETURNING {COMPANY_FIELDS}"""),
-                    payload.model_dump() | {"id": company_id},
+                    payload.model_dump()
+                    | {
+                        "id": company_id,
+                        "update_phone": "contact_phone" in payload.model_fields_set,
+                    },
                 )
             )
             .mappings()
