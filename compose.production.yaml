@@ -1,0 +1,142 @@
+name: nexus-rotafy-prod
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+x-api: &api
+  image: nexus-rotafy-api:${RELEASE:?Configure RELEASE com a versão da entrega}
+  build: ./backend
+  logging: *logging
+  labels: {traefik.enable: "false"}
+  environment: &api-env
+    DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
+    PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
+    COOKIE_SECURE: "true"
+    ALLOWED_ORIGINS: https://frotafy.nexusdataanalytics.tech
+    RESEND_API_KEY: ${RESEND_API_KEY:-}
+    EMAIL_FROM: ${EMAIL_FROM:-}
+    PUBLIC_BASE_URL: https://frotafy.nexusdataanalytics.tech
+  networks: [database, frontend]
+services:
+  db:
+    image: postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6
+    labels: {traefik.enable: "false"}
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_DB: rotafy
+      POSTGRES_USER: rotafy_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure senha hexadecimal}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Configure senha hexadecimal}
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?Configure senha hexadecimal}
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./infra/init-db.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U rotafy_owner -d rotafy"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+  migrate:
+    <<: *api
+    command: [alembic, upgrade, head]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://rotafy_owner:${POSTGRES_PASSWORD}@db:5432/rotafy
+    networks: [database]
+    depends_on: {db: {condition: service_healthy}}
+  bootstrap:
+    <<: *api
+    command: [python, -m, app.bootstrap]
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?Configure e-mail Nexus}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?Configure senha Nexus}
+    networks: [database]
+    depends_on: {migrate: {condition: service_completed_successfully}}
+  api:
+    <<: *api
+    restart: unless-stopped
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --no-access-log, --proxy-headers, --forwarded-allow-ips, "${TRAEFIK_TRUSTED_IPS:?Informe IP do Traefik na rede externa}"]
+    networks: [database, frontend, traefik]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
+      traefik.http.routers.rotafy-api.rule: Host(`frotafy.nexusdataanalytics.tech`) && PathPrefix(`/api/`)
+      traefik.http.routers.rotafy-api.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
+      traefik.http.routers.rotafy-api.tls: "true"
+      traefik.http.routers.rotafy-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
+      traefik.http.routers.rotafy-api.priority: "100"
+      traefik.http.routers.rotafy-api.service: rotafy-api
+      traefik.http.services.rotafy-api.loadbalancer.server.port: "8000"
+    depends_on: {bootstrap: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  billing:
+    <<: *api
+    restart: unless-stopped
+    command: [python, -m, app.billing.worker]
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+    networks: [database]
+    depends_on: {migrate: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-billing-health'); assert p.exists() and time.time()-p.stat().st_mtime < 180"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  email:
+    <<: *api
+    restart: unless-stopped
+    command: [python, -m, app.email_worker]
+    networks: [database, email_egress]
+    depends_on: {migrate: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-email-health'); assert p.exists() and time.time()-p.stat().st_mtime < 90"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  web:
+    image: nexus-rotafy-web:${RELEASE:?Configure RELEASE}
+    build: ./frontend
+    restart: unless-stopped
+    logging: *logging
+    networks: [frontend, traefik]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
+      traefik.http.routers.rotafy-web.rule: Host(`frotafy.nexusdataanalytics.tech`)
+      traefik.http.routers.rotafy-web.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
+      traefik.http.routers.rotafy-web.tls: "true"
+      traefik.http.routers.rotafy-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
+      traefik.http.routers.rotafy-web.priority: "10"
+      traefik.http.routers.rotafy-web.service: rotafy-web
+      traefik.http.services.rotafy-web.loadbalancer.server.port: "80"
+    depends_on: {api: {condition: service_healthy}}
+  backup:
+    profiles: [backup]
+    labels: {traefik.enable: "false"}
+    build: ./infra/backup
+    logging: *logging
+    environment:
+      PGHOST: db
+      PGDATABASE: rotafy
+      PGUSER: rotafy_owner
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - path: .env.backup
+        required: false
+    networks: [database, backup_egress]
+    depends_on: {db: {condition: service_healthy}}
+networks:
+  database: {internal: true}
+  frontend: {internal: true}
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
+  backup_egress: {}
+  email_egress: {}
+volumes:
+  database: {}

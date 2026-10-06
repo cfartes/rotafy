@@ -1,0 +1,100 @@
+name: nexus-rotafy
+services:
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_DB: rotafy
+      POSTGRES_USER: rotafy_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Configure .env}
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?Configure .env}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5448}:5432"
+    volumes:
+      - rotafy_data:/var/lib/postgresql/data
+      - ./infra/init-db.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U rotafy_owner -d rotafy"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+  migrate:
+    build: ./backend
+    command: [alembic, upgrade, head]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://rotafy_owner:${POSTGRES_PASSWORD}@db:5432/rotafy
+    depends_on:
+      db:
+        condition: service_healthy
+  bootstrap:
+    build: ./backend
+    command: [python, -m, app.bootstrap]
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?Configure .env}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?Configure .env}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  api:
+    build: ./backend
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --no-access-log, --no-proxy-headers]
+    environment:
+      DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD}@db:5432/rotafy
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5178}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5178}
+    ports:
+      - "127.0.0.1:${API_PORT:-8018}:8000"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  web:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:${WEB_PORT:-5178}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+  billing:
+    build: ./backend
+    command: [python, -m, app.billing.worker]
+    restart: unless-stopped
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-billing-health'); assert p.exists() and time.time()-p.stat().st_mtime < 180"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  email:
+    build: ./backend
+    command: [python, -m, app.email_worker]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD}@db:5432/rotafy
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5178}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-email-health'); assert p.exists() and time.time()-p.stat().st_mtime < 90"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+volumes:
+  rotafy_data:

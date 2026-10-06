@@ -1,0 +1,14 @@
+{
+  "environment": "Windows TestClient/FastAPI + local PostgreSQL Docker; not VPS",
+  "companies": 2,
+  "vehicles": 20,
+  "unique_passengers": 800,
+  "concurrent_readers": 10,
+  "requests": 100,
+  "errors": 0,
+  "duration_seconds": 2.59,
+  "requests_per_second": 38.68,
+  "p50_ms": 204.12,
+  "p95_ms": 497.04,
+  "max_ms": 639.07
+}

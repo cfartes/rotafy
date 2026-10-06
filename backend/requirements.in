@@ -1,0 +1,14 @@
+fastapi>=0.135,<1
+uvicorn>=0.41,<1
+SQLAlchemy>=2.0.48,<2.1
+psycopg[binary]>=3.3,<4
+alembic>=1.18,<2
+pydantic-settings>=2.13,<3
+pwdlib[argon2]>=0.3,<1
+email-validator>=2.3,<3
+tzdata>=2026.1
+phonenumbers>=9,<10
+openpyxl>=3.1,<4
+defusedxml>=0.7,<1
+python-multipart>=0.0.20,<1
+Pillow>=12,<13

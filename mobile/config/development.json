@@ -1,0 +1,7 @@
+{
+  "APP_NAME": "Nexus Rotafy · Teste",
+  "APP_ID": "br.com.nexusdataanalytics.rotafy.dev",
+  "COMPANY_SLUG": "",
+  "API_URL": "http://127.0.0.1:8018/api/v1",
+  "WEB_ORIGIN": "http://localhost:5178"
+}

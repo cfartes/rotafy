@@ -1,0 +1,7 @@
+{
+  "APP_NAME": "Nexus Rotafy",
+  "APP_ID": "br.com.nexusdataanalytics.rotafy",
+  "COMPANY_SLUG": "",
+  "API_URL": "https://frotafy.nexusdataanalytics.tech/api/v1",
+  "WEB_ORIGIN": "https://frotafy.nexusdataanalytics.tech"
+}

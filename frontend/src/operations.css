@@ -1,0 +1,79 @@
+.operations-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.operation-card {
+  border: 1px solid var(--border, #dce4e8);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 8px 0;
+  min-width: 0;
+}
+.operation-card h3 {
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+.operation-card legend {
+  font-weight: 600;
+  padding: 0 8px;
+}
+.operation-card > .button {
+  margin: 8px 8px 0 0;
+}
+.operation-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.operation-checkbox input {
+  width: auto;
+}
+.modal-form textarea {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid #dce4e8;
+  border-radius: 8px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+}
+.operations-tabs + .panel .panel-header {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .operations-table-trips,
+  .operations-table-trips tbody,
+  .operations-table-trips tr,
+  .operations-table-trips td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .operations-table-trips thead {
+    display: none;
+  }
+  .operations-table-trips tr {
+    padding: 16px 0;
+    border-bottom: 1px solid #dce4e8;
+  }
+  .operations-table-trips tr:last-child {
+    border-bottom: 0;
+  }
+  .operations-table-trips td {
+    padding: 6px 20px;
+    white-space: normal;
+    border: 0;
+  }
+  .operations-table-trips td:nth-child(4)::before {
+    content: "Situação: ";
+    color: #637c88;
+  }
+  .operations-table-trips td .button {
+    margin-top: 6px;
+    width: 100%;
+  }
+}

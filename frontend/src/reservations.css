@@ -1,0 +1,81 @@
+.reservation-workspace {
+  display: grid;
+  gap: 24px;
+}
+.reservation-workspace > .button {
+  justify-self: start;
+}
+.reservation-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.reservation-heading h2 {
+  margin: 8px 0;
+  font-size: 24px;
+}
+.reservation-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.availability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+.availability-card {
+  padding: 22px;
+}
+.availability-card h3 {
+  margin: 0 0 8px;
+}
+.availability-card > strong {
+  color: #0d7775;
+  display: block;
+  margin: 16px 0;
+}
+.availability-card details {
+  border-top: 1px solid #dce4e8;
+  padding: 12px 0;
+}
+.availability-card summary {
+  cursor: pointer;
+}
+.reservation-suggestion {
+  background: #edf8f6;
+  padding: 16px;
+  border-radius: 10px;
+  color: #0d6564;
+}
+@media (max-width: 600px) {
+  .reservation-actions,
+  .reservation-actions .button {
+    width: 100%;
+  }
+  .reservations-table,
+  .reservations-table tbody,
+  .reservations-table tr,
+  .reservations-table td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .reservations-table thead {
+    display: none;
+  }
+  .reservations-table tr {
+    padding: 16px 0;
+    border-bottom: 1px solid #dce4e8;
+  }
+  .reservations-table td {
+    padding: 6px 20px;
+    white-space: normal;
+    border: 0;
+  }
+  .reservations-table td .button {
+    width: 100%;
+  }
+}

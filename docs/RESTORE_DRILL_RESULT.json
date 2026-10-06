@@ -1,0 +1,31 @@
+{
+  "tested_at": "2026-10-06T17:44:42.799109+00:00",
+  "source": "local Docker rotafy",
+  "destination": "isolated temporary container, no network or published ports",
+  "revision": "0013_geographic_routes",
+  "counts": {
+    "companies": 152,
+    "users": 434,
+    "vehicles": 194,
+    "trips": 109,
+    "trip_legs": 218,
+    "trip_vehicles": 224,
+    "reservations": 88,
+    "passengers": 160,
+    "reservation_legs": 176,
+    "boarding_states": 85,
+    "boarding_events": 162,
+    "tickets": 112,
+    "billing_periods": 127,
+    "usage_events": 214,
+    "audit_events": 2906,
+    "password_resets": 0,
+    "platform_password_resets": 0,
+    "email_outbox": 0
+  },
+  "rls_companies_checked": 2,
+  "dump_bytes": 599648,
+  "sha256": "ef5c933b10cd3802485f8a7a415cd342d12e51073b8487e69d08e62341e54cc0",
+  "duration_seconds": 15.44,
+  "result": "passed"
+}

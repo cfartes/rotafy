@@ -1,0 +1,16 @@
+[Unit]
+Description=Backup externo criptografado Nexus Rotafy
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rotafy
+Group=docker
+WorkingDirectory=/opt/nexus-rotafy
+ExecStart=/usr/bin/docker compose --env-file .env.production -f compose.production.yaml --profile backup run --rm backup
+TimeoutStartSec=1800
+NoNewPrivileges=true
+PrivateTmp=true
+

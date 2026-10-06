@@ -1,0 +1,419 @@
+.billing-page {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.billing-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+.billing-heading h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.plan-card {
+  background: white;
+  border: 1px solid #dfe8ee;
+  border-radius: 12px;
+  padding: 23px;
+  min-width: 0;
+}
+.plan-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.plan-icon {
+  color: #1d7d75;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf5f2;
+}
+.plan-card h3 {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+.plan-price strong {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+.plan-price .unconfigured {
+  font-size: 15px;
+  color: #8294a0;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.plan-price > span {
+  color: #8093a1;
+  font-size: 11px;
+}
+.plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0;
+}
+.plan-features p {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  color: #6c8292;
+  line-height: 1.5;
+}
+.plan-features svg {
+  flex-shrink: 0;
+  color: #539084;
+}
+.plan-card footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 13px;
+  margin-top: 7px;
+}
+.plan-card footer .text-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.company-select {
+  width: min(350px, 100%);
+  font-size: 12px;
+}
+.cell-note {
+  display: block;
+  color: #8c9eaa;
+  font-size: 10px;
+  margin-top: 5px;
+}
+.subscription-details,
+.subscription-form {
+  padding: 26px;
+}
+.subscription-form > h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.subscription-form > .muted {
+  margin-bottom: 24px;
+}
+.subscription-details > .subscription-form {
+  padding-inline: 0;
+  border-top: 1px solid #e6edf1;
+}
+.subscription-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.subscription-status > small {
+  color: #8094a2;
+  font-size: 10px;
+}
+.subscription-banner {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  background: #edf5f5;
+  border: 1px solid #d9e8e8;
+  border-radius: 10px;
+  padding: 23px;
+}
+.subscription-emblem {
+  color: #198274;
+  background: #deefea;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.subscription-banner h2 {
+  font-size: 23px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.subscription-banner .section-kicker {
+  font-size: 8px;
+  margin-bottom: 6px;
+}
+.subscription-banner p {
+  font-size: 11px;
+  color: #608289;
+  line-height: 1.7;
+}
+.subscription-banner .muted {
+  font-size: 10px;
+}
+.subscription-value {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.subscription-value strong {
+  font-size: 24px;
+  display: block;
+  font-weight: 600;
+}
+.subscription-value small {
+  color: #789398;
+  font-size: 10px;
+}
+.billing-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 25px 0;
+  gap: 12px;
+}
+.billing-metrics > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #e3eaef;
+  border-radius: 9px;
+  color: #56877b;
+  min-width: 0;
+}
+.billing-metrics small {
+  color: #81939f;
+  font-size: 10px;
+}
+.billing-metrics strong {
+  font-size: 25px;
+  font-weight: 600;
+  color: #294b60;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.billing-metrics strong span {
+  font-size: 14px;
+  color: #a0afba;
+  font-weight: 400;
+}
+.usage-bar-section {
+  margin-bottom: 25px;
+}
+.usage-bar-section > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 11px;
+  color: #6b8292;
+  margin-bottom: 10px;
+}
+.usage-track {
+  height: 7px;
+  border-radius: 20px;
+  background: #edf2f5;
+  overflow: hidden;
+}
+.usage-track > span {
+  display: block;
+  height: 100%;
+  background: #0f9586;
+  border-radius: inherit;
+}
+.usage-bar-section p {
+  font-size: 10px;
+  color: #8094a1;
+  margin-top: 10px;
+}
+.billing-notice {
+  background: #fff8f0;
+  border: 1px solid #f5e3cc;
+  border-radius: 9px;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px;
+  margin: 20px 0;
+  color: #a5703c;
+}
+.billing-notice > svg {
+  flex-shrink: 0;
+}
+.billing-notice strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.billing-notice p {
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 5px;
+}
+.subscription-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 22px 0;
+  border-top: 1px solid #e6edf2;
+}
+.subscription-controls form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex: 1;
+}
+.subscription-controls .field {
+  margin: 0;
+  max-width: 330px;
+  flex: 1;
+}
+.subscription-controls .button {
+  flex-shrink: 0;
+}
+.danger-text {
+  color: #af5846;
+}
+.period-history {
+  padding-top: 24px;
+  border-top: 1px solid #e6edf2;
+}
+.period-history h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.period-history > p {
+  font-size: 11px;
+  margin-bottom: 18px;
+}
+.period-history table th,
+.period-history table td {
+  padding-inline: 14px;
+}
+.version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.version-list article {
+  border: 1px solid #e0e9ed;
+  border-radius: 9px;
+  padding: 18px;
+}
+.version-list header {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.version-list strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.version-list p {
+  font-size: 12px;
+  margin: 12px 0 5px;
+  color: #3d6975;
+}
+.version-list small {
+  font-size: 10px;
+  color: #8c9eaa;
+}
+@media (max-width: 1100px) {
+  .plan-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .subscription-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .subscription-controls form {
+    width: 100%;
+  }
+  .billing-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 580px) {
+  .billing-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .billing-heading > .button {
+    width: 100%;
+  }
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+  .subscription-details,
+  .subscription-form {
+    padding: 20px;
+  }
+  .subscription-status {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .subscription-banner {
+    flex-wrap: wrap;
+    padding: 18px;
+  }
+  .subscription-banner > div {
+    min-width: 0;
+  }
+  .subscription-value {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    border-top: 1px solid #cfe1e0;
+    padding-top: 14px;
+  }
+  .subscription-banner h2 {
+    overflow-wrap: anywhere;
+  }
+  .subscription-banner p > .muted {
+    display: block;
+  }
+  .billing-metrics {
+    gap: 10px;
+  }
+  .billing-metrics > div {
+    padding: 15px;
+  }
+  .billing-metrics strong {
+    font-size: 22px;
+  }
+  .subscription-controls form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .subscription-controls .field {
+    max-width: none;
+    width: 100%;
+  }
+  .version-list header {
+    flex-direction: column;
+    gap: 5px;
+  }
+}

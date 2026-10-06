@@ -1,0 +1,183 @@
+.boarding-page {
+  display: grid;
+  gap: 22px;
+}
+.boarding-page .eyebrow {
+  color: #365b70;
+}
+.offline-container {
+  max-width: 1100px;
+  display: grid;
+  gap: 20px;
+}
+.offline-container select,
+.offline-container textarea,
+.offline-container input {
+  max-width: 100%;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd9df;
+  border-radius: 9px;
+  font: inherit;
+}
+.offline-banner {
+  background: #eaf3f6;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+.offline-state {
+  color: #78520e;
+  font-weight: 600;
+}
+.offline-container .eyebrow {
+  color: #365b70;
+}
+.boarding-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.boarding-counts > div {
+  background: white;
+  border: 1px solid #dce4e8;
+  border-radius: 14px;
+  padding: 22px;
+  display: grid;
+  gap: 8px;
+}
+.boarding-counts strong {
+  font-size: 32px;
+  color: #12364c;
+}
+.boarding-counts span {
+  color: #466477;
+  font-size: 14px;
+}
+.boarding-passengers {
+  display: grid;
+  gap: 14px;
+}
+.boarding-passenger {
+  background: white;
+  border: 1px solid #dce4e8;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+.boarding-passenger h3 {
+  margin: 0 0 10px;
+}
+.boarding-passenger p {
+  margin: 8px 0 14px;
+}
+.boarding-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.boarding-state {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f2f5f7;
+  color: #365369;
+}
+.boarding-state.onboard {
+  background: #e5f4ee;
+  color: #195846;
+}
+.boarding-state.alighted {
+  background: #e9f0fa;
+  color: #244f7a;
+}
+.boarding-camera {
+  width: 100%;
+  max-height: 340px;
+  border-radius: 12px;
+  background: #12364c;
+  object-fit: cover;
+  margin: 20px 0;
+}
+.ticket-entry {
+  border-top: 1px solid #dce4e8;
+  padding-top: 18px;
+  margin-top: 20px;
+}
+.ticket-entry > .button {
+  margin: 8px 8px 8px 0;
+}
+.ticket-manager input {
+  min-width: 0;
+  width: 100%;
+}
+.ticket-qr {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 20px auto;
+}
+.ticket-brand-logo {
+  max-width: 100px;
+  max-height: 70px;
+  object-fit: contain;
+}
+.ticket-tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ticket-tools .field {
+  flex-basis: 100%;
+}
+.ticket-tools textarea {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .boarding-passenger {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .boarding-counts > div {
+    padding: 14px 10px;
+  }
+  .boarding-counts {
+    gap: 8px;
+  }
+  .boarding-counts span {
+    font-size: 12px;
+  }
+  .boarding-actions .button {
+    flex: 1;
+  }
+  .ticket-tools > .button {
+    flex: 1 1 145px;
+  }
+}
+@media print {
+  .ticket-page {
+    background: white;
+  }
+  .ticket-page .eyebrow,
+  .ticket-page h1,
+  .ticket-tools {
+    display: none;
+  }
+  .ticket-page .public-container {
+    padding: 0;
+    max-width: 100%;
+  }
+  .printable-ticket {
+    border: 1px solid #777;
+    break-inside: avoid;
+  }
+  .ticket-qr {
+    width: 240px;
+  }
+}
