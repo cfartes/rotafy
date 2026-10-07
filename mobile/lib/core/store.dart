@@ -254,6 +254,60 @@ class LocalStore {
     });
   }
 
+  Future<int> disembarkAll(String id, {DateTime? capturedAt}) async {
+    final snapshot = await this.snapshot(id);
+    final data = Json.from(snapshot['data']);
+    final now = capturedAt ?? DateTime.now().toUtc();
+    if (!DateTime.parse(data['expires_at']).isAfter(now) ||
+        data['can_write'] != true) {
+      throw StateError(
+        'Prepare o trecho novamente com conexão antes de registrar desembarques.',
+      );
+    }
+    final records = await queue(id);
+    final people = projectPassengers(
+      data,
+      records,
+    ).where((person) => person['status'] == 'onboard').toList();
+    if (people.any(
+      (person) => records.any(
+        (record) =>
+            record['payload']['passenger_id'] == person['id'] &&
+            record['status'] != 'pending',
+      ),
+    )) {
+      throw StateError('Revise os conflitos antes de desembarcar todos.');
+    }
+    final device = await meta('device') ?? const Uuid().v4();
+    await setMeta('device', device);
+    final commands = <Json>[];
+    for (final person in people) {
+      final operation = const Uuid().v4();
+      commands.add({
+        'id': operation,
+        'owner': snapshot['owner'],
+        'manifest': id,
+        'status': 'pending',
+        'payload': await encode({
+          'operation_key': operation,
+          'passenger_id': person['id'],
+          'expected_version': person['version'],
+          'action': 'disembark',
+          'device_id': device,
+          'captured_at': now.toIso8601String(),
+          'offline': true,
+          'expected_actor_id': data['operator']['id'],
+        }),
+      });
+    }
+    await db.transaction((transaction) async {
+      for (final command in commands) {
+        await transaction.insert('queue', command);
+      }
+    });
+    return commands.length;
+  }
+
   Future<void> acknowledge(Json record, Json response) async {
     final snapshot = await this.snapshot(record['manifest']);
     final data = Json.from(snapshot['data']);

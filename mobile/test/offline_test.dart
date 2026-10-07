@@ -62,6 +62,80 @@ void main() {
   });
   tearDown(() => store.db.close());
 
+  test('bulk disembark preserves waiting and alighted passengers and is repeat safe', () async {
+    final data = fixture();
+    data['passengers'] = [
+      {'id': 'p1', 'full_name': 'A bordo', 'status': 'onboard', 'version': 1},
+      {
+        'id': 'p2',
+        'full_name': 'Não embarcou',
+        'status': 'waiting',
+        'version': 0,
+      },
+      {'id': 'p3', 'full_name': 'Já saiu', 'status': 'alighted', 'version': 2},
+    ];
+    final id = await store.prepare('/trip/vehicle/leg', data);
+    expect(await store.disembarkAll(id, capturedAt: now), 1);
+    final command = (await store.queue()).single;
+    expect(command['payload']['passenger_id'], 'p1');
+    expect(command['payload']['expected_version'], 1);
+    expect(
+      projectPassengers(data, await store.queue()).map((p) => p['status']),
+      ['alighted', 'waiting', 'alighted'],
+    );
+    expect(await store.disembarkAll(id, capturedAt: now), 0);
+    expect((await store.queue()).length, 1);
+  });
+
+  test(
+    'bulk conflict blocks whole batch before inserting any additional command',
+    () async {
+      final data = fixture();
+      data['passengers'] = [
+        {
+          'id': 'p1',
+          'full_name': 'Primeiro',
+          'status': 'onboard',
+          'version': 1,
+        },
+        {'id': 'p2', 'full_name': 'Segundo', 'status': 'onboard', 'version': 1},
+      ];
+      final id = await store.prepare('/trip/vehicle/leg', data);
+      await store.enqueue(id, 'p1', 'disembark', capturedAt: now);
+      await store.mark(
+        (await store.queue()).single,
+        'conflict',
+        'Outro aparelho',
+      );
+      await expectLater(
+        store.disembarkAll(id, capturedAt: now),
+        throwsStateError,
+      );
+      expect((await store.queue()).length, 1);
+    },
+  );
+
+  test(
+    'journey change refuses pending commands before contacting the API',
+    () async {
+      final data = fixture();
+      final id = await store.prepare('/trip/vehicle/leg', data);
+      await store.enqueue(id, 'p1', 'board', capturedAt: now);
+      var calls = 0;
+      final controller = OperationController(
+        FakeApi((method, path, body) async {
+          calls++;
+          return {};
+        }),
+        store,
+      )..user = Json.from(data['operator']);
+      expect(await controller.changeJourney(id, 'completed'), false);
+      expect(calls, 0);
+      expect((await store.queue()).length, 1);
+      controller.dispose();
+    },
+  );
+
   test('disk queue survives closing and reopening the database', () async {
     final directory = await Directory.systemTemp.createTemp(
       'rotafy-mobile-test-',

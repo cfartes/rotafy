@@ -1,6 +1,7 @@
 """Bilhetes individuais e comandos de presença com versões e histórico imutável."""
 
 import hashlib
+import json
 import secrets
 from datetime import timedelta
 from typing import Literal
@@ -32,6 +33,109 @@ class BoardingCommand(OperationalInput):
     captured_at: AwareDatetime | None = None
     offline: bool = Field(default=False, strict=True)
     expected_actor_id: UUID | None = None
+
+
+class JourneyCommand(OperationalInput):
+    status: Literal["in_progress", "completed"]
+
+
+@router.patch("/trips/{trip_id}/vehicles/{allocation_id}/legs/{leg_id}/journey")
+async def change_journey(
+    trip_id: UUID,
+    allocation_id: UUID,
+    leg_id: UUID,
+    data: JourneyCommand,
+    request: Request,
+    actor: Auth,
+):
+    tenant(actor)
+    async with request.app.state.platform_engine.begin() as db:
+        await scope(db, actor.company_id)
+        await lock_company(db, actor.company_id, require_active=True)
+        allocation = await allocation_access(
+            db, actor, trip_id, allocation_id, write=True
+        )
+        leg = await leg_for_trip(db, trip_id, leg_id)
+        trip = await trip_detail(db, trip_id)
+        states = allocation["journey_states"]
+        current = states.get(str(leg_id), {"status": "scheduled"})
+        if current["status"] != data.status:
+            if trip["status"] not in {"scheduled", "in_progress"}:
+                raise HTTPException(
+                    409, "Viagem encerrada não permite iniciar ou fechar trechos."
+                )
+            allowed = {"scheduled": "in_progress", "in_progress": "completed"}
+            if allowed.get(current["status"]) != data.status:
+                raise HTTPException(409, "Inicie o trecho antes de fechar a chegada.")
+            previous_legs = await rows(
+                db,
+                "SELECT id FROM trip_legs WHERE trip_id=:trip AND position<:position",
+                trip=trip_id,
+                position=leg["position"],
+            )
+            if data.status == "in_progress" and any(
+                states.get(str(previous["id"]), {}).get("status") != "completed"
+                for previous in previous_legs
+            ):
+                raise HTTPException(
+                    409,
+                    "Feche o trecho anterior deste veículo antes de iniciar o próximo.",
+                )
+            if data.status == "completed" and await db.scalar(
+                text(
+                    "SELECT 1 FROM boarding_states WHERE trip_id=:trip AND allocation_id=:allocation AND leg_id=:leg AND status='onboard' LIMIT 1"
+                ),
+                {"trip": trip_id, "allocation": allocation_id, "leg": leg_id},
+            ):
+                raise HTTPException(
+                    409,
+                    "Há passageiros a bordo. Registre e sincronize os desembarques antes de fechar.",
+                )
+            now = utc_now().isoformat()
+            states[str(leg_id)] = current | {
+                "status": data.status,
+                "started_at" if data.status == "in_progress" else "arrived_at": now,
+            }
+            await db.execute(
+                text(
+                    "UPDATE trip_vehicles SET journey_states=CAST(:states AS jsonb) WHERE id=:id"
+                ),
+                {"states": json.dumps(states), "id": allocation_id},
+            )
+            if trip["status"] == "scheduled":
+                await db.execute(
+                    text("UPDATE trips SET status='in_progress' WHERE id=:id"),
+                    {"id": trip_id},
+                )
+                await audit(
+                    db, actor.company_id, actor.user["id"], "trip.in_progress", trip_id
+                )
+            await audit(
+                db,
+                actor.company_id,
+                actor.user["id"],
+                "vehicle_leg." + data.status,
+                allocation_id,
+            )
+            incomplete = await db.scalar(
+                text("""SELECT 1 FROM trip_vehicles v JOIN trip_legs l ON l.trip_id=v.trip_id
+              WHERE v.trip_id=:trip AND (v.journey_states -> l.id::text ->> 'status') IS DISTINCT FROM 'completed' LIMIT 1"""),
+                {"trip": trip_id},
+            )
+            if not incomplete and not await db.scalar(
+                text(
+                    "SELECT 1 FROM boarding_states WHERE trip_id=:trip AND status='onboard' LIMIT 1"
+                ),
+                {"trip": trip_id},
+            ):
+                await db.execute(
+                    text("UPDATE trips SET status='completed' WHERE id=:id"),
+                    {"id": trip_id},
+                )
+                await audit(
+                    db, actor.company_id, actor.user["id"], "trip.completed", trip_id
+                )
+    return await manifest(trip_id, allocation_id, leg_id, actor)
 
 
 async def allocation_access(db, actor, trip_id, allocation_id, write=False):
@@ -121,14 +225,17 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
         status: sum(p["status"] == status for p in passengers)
         for status in ["waiting", "onboard", "alighted"]
     }
+    journey = allocation["journey_states"].get(str(leg_id), {"status": "scheduled"})
     return {
         "trip": {k: trip[k] for k in ["id", "name", "status"]},
         "vehicle": {k: allocation[k] for k in ["id", "name", "plate", "capacity"]},
         "leg": leg,
         "passengers": passengers,
         "counts": counts,
+        "journey": journey,
         "can_write": actor.user["role"] in {"admin", "attendant", "guide", "driver"}
-        and trip["status"] in {"scheduled", "in_progress"},
+        and trip["status"] in {"scheduled", "in_progress"}
+        and journey["status"] != "completed",
     }
 
 
@@ -415,6 +522,18 @@ async def command(
                 "replayed": True
             }
         trip = await trip_detail(db, trip_id)
+        allocation = await allocation_access(
+            db, actor, trip_id, allocation_id, write=True
+        )
+        if (
+            allocation["journey_states"].get(str(leg_id), {}).get("status")
+            == "completed"
+        ):
+            raise HTTPException(
+                409,
+                "Chegada já registrada para este veículo e trecho.",
+                headers={"X-Rotafy-Error": "leg_closed"},
+            )
         if trip["status"] not in {"scheduled", "in_progress"}:
             raise HTTPException(
                 409,

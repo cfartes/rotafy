@@ -36,6 +36,93 @@ def command(client, prefix, passenger, version=0, action="board", **changes):
     return client.post(prefix + "/boarding", json=data)
 
 
+def test_vehicle_journey_start_arrival_round_trip_and_other_vehicles(client, seeded):
+    trip, reservation, prefix = prepare(client, seeded)
+    login(client, email="driver0@example.com")
+    assert (
+        client.patch(prefix + "/journey", json={"status": "completed"}).status_code
+        == 409
+    )
+    started = client.patch(prefix + "/journey", json={"status": "in_progress"})
+    assert started.status_code == 200, started.text
+    assert started.json()["trip"]["status"] == "in_progress"
+    timestamp = started.json()["journey"]["started_at"]
+    assert (
+        client.patch(prefix + "/journey", json={"status": "in_progress"}).json()[
+            "journey"
+        ]["started_at"]
+        == timestamp
+    )
+    passenger = reservation["passengers"][0]["id"]
+    assert command(client, prefix, passenger).status_code == 201
+    assert (
+        client.patch(prefix + "/journey", json={"status": "completed"}).status_code
+        == 409
+    )
+    assert (
+        command(client, prefix, passenger, version=1, action="disembark").status_code
+        == 201
+    )
+    arrived = client.patch(prefix + "/journey", json={"status": "completed"})
+    assert arrived.status_code == 200, arrived.text
+    assert not arrived.json()["can_write"]
+    assert arrived.json()["trip"]["status"] == "in_progress"
+    assert command(client, prefix, passenger, version=2).status_code == 409
+    back = prefix.replace(trip["legs"][0]["id"], trip["legs"][1]["id"])
+    assert (
+        client.patch(back + "/journey", json={"status": "in_progress"}).status_code
+        == 200
+    )
+    assert (
+        client.patch(back + "/journey", json={"status": "completed"}).json()["trip"][
+            "status"
+        ]
+        == "in_progress"
+    )
+    login(client, email="driver1@example.com")
+    second = next(
+        vehicle
+        for vehicle in trip["vehicles"]
+        if vehicle["id"] != reservation["allocation_id"]
+    )
+    for leg in trip["legs"]:
+        url = f"/api/v1/trips/{trip['id']}/vehicles/{second['id']}/legs/{leg['id']}/journey"
+        assert client.patch(url, json={"status": "in_progress"}).status_code == 200
+        final = client.patch(url, json={"status": "completed"})
+        assert final.status_code == 200, final.text
+    assert final.json()["trip"]["status"] == "completed"
+    assert client.patch(url, json={"status": "completed"}).status_code == 200
+
+
+def test_journey_guide_permissions_return_order_and_company_isolation(client, seeded):
+    trip, reservation, prefix = prepare(client, seeded)
+    login(client, email="guide@example.com")
+    back = prefix.replace(trip["legs"][0]["id"], trip["legs"][1]["id"])
+    assert (
+        client.patch(back + "/journey", json={"status": "in_progress"}).status_code
+        == 409
+    )
+    assert (
+        client.patch(prefix + "/journey", json={"status": "in_progress"}).status_code
+        == 200
+    )
+    other = next(
+        vehicle
+        for vehicle in trip["vehicles"]
+        if vehicle["id"] != reservation["allocation_id"]
+    )
+    forbidden = prefix.replace(reservation["allocation_id"], other["id"])
+    assert (
+        client.patch(forbidden + "/journey", json={"status": "in_progress"}).status_code
+        == 404
+    )
+    login(client, company="empresa-b", email="admin@example.com")
+    assert (
+        client.patch(prefix + "/journey", json={"status": "completed"}).status_code
+        == 404
+    )
+
+
 def test_tickets_individual_per_leg_private_and_hash_only(client, seeded, owner):
     _, reservation, _ = prepare(client, seeded)
     issued = issue(client, reservation)

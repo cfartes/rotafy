@@ -128,6 +128,31 @@ class OperationController extends ChangeNotifier {
     String action, {
     String? token,
   }) => run(() => store.enqueue(manifest, passenger, action, token: token));
+  Future<bool> disembarkAll(String manifest) => run(() async {
+    await store.disembarkAll(manifest);
+  });
+
+  Future<bool> changeJourney(String manifest, String status) => run(() async {
+    final snapshot = await store.snapshot(manifest);
+    if ((await store.queue(manifest)).isNotEmpty) {
+      throw StateError(
+        'Sincronize ou revise os registros deste trecho antes de iniciar ou fechar.',
+      );
+    }
+    final current = Json.from(await api.request('GET', '/auth/me'));
+    if (user == null || store.owner(current) != store.owner(user!)) {
+      throw StateError('Entre com o usuário que preparou este trecho.');
+    }
+    final response = Json.from(
+      await api.request('PATCH', '${snapshot['endpoint']}/journey', {
+        'status': status,
+      }),
+    );
+    await store.prepare(snapshot['endpoint'], {
+      ...Json.from(snapshot['data']),
+      ...response,
+    });
+  });
   Future<bool> synchronize() => run(() async {
     final current = Json.from(await api.request('GET', '/auth/me'));
     if (user == null || store.owner(current) != store.owner(user!)) {

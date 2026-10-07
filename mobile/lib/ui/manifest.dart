@@ -16,7 +16,7 @@ const presenceLabels = {
   'alighted': 'Desembarcado',
 };
 
-class ManifestPage extends StatelessWidget {
+class ManifestPage extends StatefulWidget {
   final OperationController controller;
   final String manifestId;
   const ManifestPage({
@@ -24,6 +24,67 @@ class ManifestPage extends StatelessWidget {
     required this.controller,
     required this.manifestId,
   });
+  @override
+  State<ManifestPage> createState() => _ManifestPageState();
+}
+
+class _ManifestPageState extends State<ManifestPage> {
+  OperationController get controller => widget.controller;
+  String get manifestId => widget.manifestId;
+  String filter = 'all';
+  bool listOpen = true;
+
+  Future<bool> confirm(String title, String description, String action) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(description),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(action),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+
+  Future<void> journey(String status) async {
+    final start = status == 'in_progress';
+    if (await confirm(
+      start ? 'Iniciar viagem?' : 'Fechar viagem neste trecho?',
+      start
+          ? 'Registrar a saída deste veículo e trecho. É necessário estar conectado.'
+          : 'Registrar a chegada deste veículo ao destino. Os passageiros a bordo precisam estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
+      start ? 'Iniciar viagem' : 'Confirmar chegada',
+    )) {
+      await controller.changeJourney(manifestId, status);
+    }
+  }
+
+  Future<void> disembark(int count) async {
+    if (await confirm(
+      'Desembarcar todos?',
+      'Registrar o desembarque de $count passageiros a bordo deste veículo e trecho. Quem não embarcou permanece aguardando.',
+      'Desembarcar todos',
+    )) {
+      if (await controller.disembarkAll(manifestId) && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Desembarques registrados no celular. Sincronize para confirmar no sistema.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> scan(BuildContext context, Json data) async {
     final raw = await Navigator.push<String>(
       context,
@@ -122,6 +183,17 @@ class ManifestPage extends StatelessWidget {
           .where((r) => r['manifest'] == manifestId)
           .toList();
       final passengers = projectPassengers(data, records);
+      final visible = passengers
+          .where((person) => filter == 'all' || person['status'] == filter)
+          .toList();
+      final onboard = passengers
+          .where((person) => person['status'] == 'onboard')
+          .length;
+      final waiting = passengers
+          .where((person) => person['status'] == 'waiting')
+          .length;
+      final journeyStatus = data['journey']?['status'] ?? 'scheduled';
+      final canOperate = data['can_write'] == true && !controller.busy;
       final expired = !DateTime.parse(data['expires_at'])
           .isAfter(DateTime.now().toUtc());
       final canWrite =
@@ -155,6 +227,42 @@ class ManifestPage extends StatelessWidget {
                   controller.error!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
+              Text(
+                'Trecho: ${journeyStatus == 'scheduled'
+                    ? 'Não iniciado'
+                    : journeyStatus == 'in_progress'
+                    ? 'Em viagem'
+                    : 'Chegada registrada'}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (journeyStatus == 'scheduled')
+                FilledButton.icon(
+                  onPressed: canOperate && records.isEmpty
+                      ? () => journey('in_progress')
+                      : null,
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Iniciar viagem'),
+                ),
+              if (journeyStatus == 'in_progress')
+                FilledButton.icon(
+                  onPressed: canOperate && records.isEmpty && onboard == 0
+                      ? () => journey('completed')
+                      : null,
+                  icon: const Icon(Icons.flag),
+                  label: const Text('Fechar viagem · chegada no destino'),
+                ),
+              if (journeyStatus != 'completed' &&
+                  (records.isNotEmpty || onboard > 0))
+                const Text(
+                  'Desembarque os passageiros a bordo e sincronize os registros antes de fechar a chegada.',
+                ),
+              OutlinedButton.icon(
+                onPressed: canWrite && onboard > 0
+                    ? () => disembark(onboard)
+                    : null,
+                icon: const Icon(Icons.groups),
+                label: Text('Desembarcar todos · $onboard a bordo'),
+              ),
               FilledButton.icon(
                 onPressed: canWrite ? () => scan(context, data) : null,
                 icon: const Icon(Icons.qr_code_scanner),
@@ -180,54 +288,90 @@ class ManifestPage extends StatelessWidget {
                       ),
                     ),
               const SizedBox(height: 16),
-              Text(
-                '${passengers.length} passageiros',
-                style: Theme.of(context).textTheme.titleLarge,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('${passengers.length} passageiros'),
+                subtitle: Text('$waiting não embarcados · $onboard a bordo'),
+                trailing: IconButton(
+                  tooltip: listOpen
+                      ? 'Recolher passageiros'
+                      : 'Expandir passageiros',
+                  onPressed: () => setState(() {
+                    listOpen = !listOpen;
+                  }),
+                  icon: Icon(listOpen ? Icons.expand_less : Icons.expand_more),
+                ),
               ),
-              ...passengers.map(
-                (p) => Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          p['full_name'],
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text('${p['boarding']} → ${p['dropoff']}'),
-                        Text(
-                          '${presenceLabels[p['status']]}${p['pending'] == true ? ' · aguardando envio' : ''}',
-                        ),
-                        if (p['status'] != 'alighted')
-                          OutlinedButton(
-                            onPressed:
-                                canWrite &&
-                                    !records.any(
-                                      (r) =>
-                                          r['payload']['passenger_id'] ==
-                                              p['id'] &&
-                                          r['status'] != 'pending',
-                                    )
-                                ? () => controller.enqueue(
-                                    manifestId,
-                                    p['id'],
-                                    p['status'] == 'waiting'
-                                        ? 'board'
-                                        : 'disembark',
-                                  )
-                                : null,
-                            child: Text(
-                              p['status'] == 'waiting'
-                                  ? 'Embarcar pela lista'
-                                  : 'Registrar desembarque',
-                            ),
+              if (listOpen) ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in [
+                      ('all', 'Todos'),
+                      ('waiting', 'Não embarcados'),
+                      ('onboard', 'Embarcados'),
+                    ])
+                      ChoiceChip(
+                        label: Text(option.$2),
+                        selected: filter == option.$1,
+                        onSelected: (_) => setState(() {
+                          filter = option.$1;
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (visible.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('Nenhum passageiro neste filtro.'),
+                  ),
+                ...visible.map(
+                  (p) => Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            p['full_name'],
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
-                      ],
+                          Text('${p['boarding']} → ${p['dropoff']}'),
+                          Text(
+                            '${presenceLabels[p['status']]}${p['pending'] == true ? ' · aguardando envio' : ''}',
+                          ),
+                          if (p['status'] != 'alighted')
+                            OutlinedButton(
+                              onPressed:
+                                  canWrite &&
+                                      !records.any(
+                                        (r) =>
+                                            r['payload']['passenger_id'] ==
+                                                p['id'] &&
+                                            r['status'] != 'pending',
+                                      )
+                                  ? () => controller.enqueue(
+                                      manifestId,
+                                      p['id'],
+                                      p['status'] == 'waiting'
+                                          ? 'board'
+                                          : 'disembark',
+                                    )
+                                  : null,
+                              child: Text(
+                                p['status'] == 'waiting'
+                                    ? 'Embarcar pela lista'
+                                    : 'Registrar desembarque',
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
               if (records.isNotEmpty)
                 Text(
                   'Envio e revisão',

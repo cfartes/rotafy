@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão 1.1.0 inclui iniciar viagem, registrar chegada, desembarcar todos os passageiros a bordo, recolher a lista e filtrar Todos / Não embarcados / Embarcados, para motorista e guia. Veja [operação da viagem](../docs/JORNADA_MOBILE.md).
+
 Flutter está em `C:\Users\ThinkPad\develop\flutter`; Android SDK em `%LOCALAPPDATA%\Android\Sdk`. Projeto requer Flutter 3.47.6 / Dart 3.13.5 ou versão compatível com o lockfile. Não precisa de conexão direta ao PostgreSQL.
 
 Na raiz, `powershell -File scripts/build_mobile.ps1` executa análise, testes e gera um APK debug para homologação. O script aceita `-FlutterSdk` e `-Config`. A saída fica em `artifacts/mobile/nexus-rotafy-debug.apk`.
