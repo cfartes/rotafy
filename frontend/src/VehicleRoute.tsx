@@ -24,9 +24,13 @@ type Route = {
 export function VehicleRoute({
   tripId,
   allocationId,
+  disabled = false,
+  closedLegIds = [],
 }: {
   tripId: string;
   allocationId: string;
+  disabled?: boolean;
+  closedLegIds?: string[];
 }) {
   const route = useQuery({
     queryKey: ["vehicle-route", tripId, allocationId],
@@ -41,19 +45,27 @@ export function VehicleRoute({
       {route.data?.legs.map((leg) => (
         <section key={leg.id} className="operation-card">
           <h3>Rota · {leg.position === 1 ? "Ida" : "Volta"}</h3>
-          {leg.navigation_stages.map((stage, index) => (
-            <a
-              className="button primary"
-              key={index}
-              href={stage.maps_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {leg.navigation_stages.length === 1
-                ? "Abrir rota no Google Maps"
-                : `Abrir etapa ${index + 1} no Google Maps`}
-            </a>
-          ))}
+          {leg.navigation_stages.map((stage, index) =>
+            disabled || closedLegIds.includes(leg.id) ? (
+              <button className="button primary" key={index} disabled>
+                {leg.navigation_stages.length === 1
+                  ? "Abrir rota no Google Maps"
+                  : `Abrir etapa ${index + 1} no Google Maps`}
+              </button>
+            ) : (
+              <a
+                className="button primary"
+                key={index}
+                href={stage.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {leg.navigation_stages.length === 1
+                  ? "Abrir rota no Google Maps"
+                  : `Abrir etapa ${index + 1} no Google Maps`}
+              </a>
+            ),
+          )}
           <ol>
             {leg.points.map((point) => (
               <li key={point.position}>
@@ -64,22 +76,31 @@ export function VehicleRoute({
                   timeZone: "America/Sao_Paulo",
                 }).format(new Date(point.scheduled_at))}
                 <p>{point.address}</p>
-                <a
-                  className="button secondary"
-                  href={point.maps_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {point.position === 0
-                    ? "Navegar até a saída"
-                    : "Navegar até este ponto"}
-                </a>
+                {disabled || closedLegIds.includes(leg.id) ? (
+                  <button className="button secondary" disabled>
+                    {point.position === 0
+                      ? "Navegar até a saída"
+                      : "Navegar até este ponto"}
+                  </button>
+                ) : (
+                  <a
+                    className="button secondary"
+                    href={point.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {point.position === 0
+                      ? "Navegar até a saída"
+                      : "Navegar até este ponto"}
+                  </a>
+                )}
               </li>
             ))}
           </ol>
           <p className="muted">
-            Siga a ordem definida pela agência. A navegação abre no Google Maps
-            do aparelho, a partir da sua localização.
+            {disabled || closedLegIds.includes(leg.id)
+              ? "Trecho encerrado. Navegação desabilitada; itinerário disponível para consulta."
+              : "Siga a ordem definida pela agência. A navegação abre no Google Maps do aparelho, a partir da sua localização."}
           </p>
         </section>
       ))}

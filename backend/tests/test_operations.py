@@ -234,6 +234,7 @@ def test_capacity_snapshot_and_completed_trip_history(client, seeded):
     )
     detail = client.get(f"/api/v1/trips/{trip['id']}").json()
     assert sorted(v["capacity"] for v in detail["vehicles"]) == [40, 41]
+    assert detail["completion"] is None
     assert (
         client.patch(
             f"/api/v1/trips/{trip['id']}/status", json={"status": "completed"}
@@ -247,6 +248,14 @@ def test_capacity_snapshot_and_completed_trip_history(client, seeded):
             ).status_code
             == 200
         )
+    completed = client.get(f"/api/v1/trips/{trip['id']}").json()
+    assert completed["completion"]["recorded_at"]
+    assert completed["completion"]["actor_id"]
+    assert completed["completion"]["actor_name"]
+    repeated = client.patch(
+        f"/api/v1/trips/{trip['id']}/status", json={"status": "completed"}
+    ).json()
+    assert repeated["completion"] == completed["completion"]
     assert (
         client.patch(
             f"/api/v1/trips/{trip['id']}/status", json={"status": "cancelled"}

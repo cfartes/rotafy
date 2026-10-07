@@ -114,19 +114,24 @@ export function Reservations({
   tripId,
   onBack,
   onLogout,
+  initialCreate = false,
+  backLabel = "Voltar às viagens",
 }: {
   tripId: string;
   onBack: () => void;
   onLogout: () => void;
+  initialCreate?: boolean;
+  backLabel?: string;
 }) {
   const client = useQueryClient();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(initialCreate);
   const [importing, setImporting] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState("");
   const trip = useQuery({
     queryKey: ["operations", "trip", tripId],
     queryFn: () => api<Trip>(`/trips/${tripId}`),
+    refetchInterval: 30000,
   });
   const reservations = useQuery({
     queryKey: ["reservations", tripId],
@@ -153,7 +158,7 @@ export function Reservations({
   return (
     <div className="reservation-workspace">
       <button className="button secondary" onClick={onBack}>
-        Voltar às viagens
+        {backLabel}
       </button>
       <div className="reservation-heading">
         <div>
@@ -295,7 +300,7 @@ export function Reservations({
           </div>
         )}
       </section>
-      {creating && trip.data && (
+      {creating && trip.data && bookable && (
         <ReservationModal
           trip={trip.data}
           onClose={() => setCreating(false)}

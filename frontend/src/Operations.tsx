@@ -7,6 +7,11 @@ import { Boarding } from "./Boarding";
 import { Alert, Field, Modal } from "./components/ui";
 import { money, parseMoney, moneyInput } from "./billing/types";
 import { Reservations } from "./Reservations";
+import {
+  TripCompletion,
+  type JourneyStates,
+  type Completion,
+} from "./TripCompletion";
 
 type Vehicle = {
   id: string;
@@ -63,6 +68,7 @@ type Allocation = {
   guide_ids: string[];
 };
 type Detail = Trip & {
+  completion?: Completion | null;
   package_id: string | null;
   legs: (Leg & { id: string })[];
   vehicles: {
@@ -73,22 +79,7 @@ type Detail = Trip & {
     plate: string;
     capacity: number;
     driver_name: string;
-    journey_states?: Record<
-      string,
-      {
-        status: string;
-        arrived_at?: string;
-        arrival_location?: {
-          status: string;
-          latitude?: number;
-          longitude?: number;
-          accuracy_m?: number;
-          captured_at?: string;
-          reason?: string;
-          actor_name?: string;
-        };
-      }
-    >;
+    journey_states?: JourneyStates;
     guides: { id: string; full_name: string }[];
     routes?: { leg_position: number; stop_positions: number[] }[];
   }[];
@@ -196,6 +187,7 @@ export function Operations({
   } | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [tripFilter, setTripFilter] = useState("all");
   const vehicles = useQuery({
     queryKey: ["operations", "vehicles"],
     queryFn: () => api<Vehicle[]>("/vehicles"),
@@ -259,6 +251,13 @@ export function Operations({
       : tab === "packages"
         ? packages.isPending
         : trips.isPending;
+  const filteredTrips = (trips.data ?? []).filter(
+    (t) =>
+      tripFilter === "all" ||
+      (tripFilter === "open"
+        ? ["scheduled", "in_progress"].includes(t.status)
+        : t.status === tripFilter),
+  );
   if (reservationTrip)
     return (
       <Reservations
@@ -339,6 +338,27 @@ export function Operations({
             </button>
           )}
         </header>
+        {tab === "trips" && (
+          <div className="trip-filters">
+            <Field label="Situação da viagem">
+              <select
+                value={tripFilter}
+                onChange={(e) => setTripFilter(e.target.value)}
+              >
+                <option value="all">Todas</option>
+                <option value="open">Abertas</option>
+                <option value="scheduled">Agendadas</option>
+                <option value="in_progress">Em andamento</option>
+                <option value="completed">Fechadas / concluídas</option>
+                <option value="cancelled">Canceladas</option>
+              </select>
+            </Field>
+            <p className="muted">
+              {filteredTrips.length} de {trips.data?.length ?? 0} viagens ·
+              Abertas inclui agendadas e em andamento.
+            </p>
+          </div>
+        )}
         {listLoading ? (
           <p className="empty-state">Carregando…</p>
         ) : (
@@ -370,7 +390,7 @@ export function Operations({
               </thead>
               <tbody>
                 {tab === "trips" &&
-                  trips.data?.map((t) => (
+                  filteredTrips.map((t) => (
                     <tr key={t.id}>
                       <td>
                         <strong>{t.name}</strong>
@@ -394,8 +414,9 @@ export function Operations({
                           <button
                             className="button primary"
                             disabled={
-                              action === "allocations" &&
-                              t.status !== "scheduled"
+                              action === "allocations"
+                                ? t.status !== "scheduled"
+                                : ["completed", "cancelled"].includes(t.status)
                             }
                             onClick={async () => {
                               if (action === "passengers")
@@ -428,6 +449,13 @@ export function Operations({
                       </td>
                     </tr>
                   ))}
+                {tab === "trips" && filteredTrips.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="empty-state">
+                      Nenhuma viagem nesta situação.
+                    </td>
+                  </tr>
+                )}
                 {tab === "vehicles" &&
                   vehicles.data?.map((v) => (
                     <tr key={v.id}>
@@ -508,7 +536,11 @@ export function Operations({
         />
       )}
       {selected && (
-        <Modal title="Detalhes da viagem" onClose={() => setSelected(null)}>
+        <Modal
+          title="Detalhes da viagem"
+          wide
+          onClose={() => setSelected(null)}
+        >
           {detail.isPending ? (
             <p>Carregando…</p>
           ) : (
@@ -519,122 +551,98 @@ export function Operations({
                   {status[detail.data.status]} ·{" "}
                   {money(detail.data.price_cents)} por passageiro
                 </p>
-                {detail.data.legs.map((l, i) => (
-                  <section className="operation-card" key={i}>
-                    <h3>
-                      {i === 0 ? "Ida" : "Volta"}: {l.origin} → {l.destination}
-                    </h3>
-                    <p>
-                      {date(l.starts_at)} até {date(l.ends_at)}
-                    </p>
-                    {l.stops.map((s, i) => (
-                      <p key={i}>
-                        {stopKind[s.kind]}: {s.name} · {date(s.scheduled_at)}
-                      </p>
-                    ))}
-                  </section>
-                ))}
-                {detail.data.vehicles
-                  .filter(
+                <TripCompletion
+                  status={detail.data.status}
+                  completion={detail.data.completion}
+                  legs={detail.data.legs}
+                  vehicles={detail.data.vehicles.filter(
                     (v) =>
                       manage ||
                       v.driver_id === user.id ||
                       v.guides.some((g) => g.id === user.id),
-                  )
-                  .map((v) => (
-                    <section key={v.id} className="operation-card">
+                  )}
+                />
+                <h3>Itinerário previsto</h3>
+                <div className="trip-detail-grid">
+                  {detail.data.legs.map((l, i) => (
+                    <section className="operation-card" key={i}>
                       <h3>
-                        {v.name} · {v.plate}
+                        {i === 0 ? "Ida" : "Volta"}: {l.origin} →{" "}
+                        {l.destination}
                       </h3>
                       <p>
-                        {v.capacity} lugares · Motorista: {v.driver_name}
+                        {date(l.starts_at)} até {date(l.ends_at)}
                       </p>
-                      <VehicleRoute
-                        tripId={detail.data!.id}
-                        allocationId={v.id}
-                      />
-                      <p>
-                        Guias:{" "}
-                        {v.guides.map((g) => g.full_name).join(", ") ||
-                          "Sem guia"}
-                      </p>
-                      {detail.data!.legs.map((leg, index) => {
-                        const journey = v.journey_states?.[leg.id];
-                        if (!journey?.arrived_at) return null;
-                        const location = journey.arrival_location;
-                        const reasons: Record<string, string> = {
-                          permission_denied: "Permissão de localização negada",
-                          permission_denied_forever:
-                            "Permissão de localização bloqueada",
-                          service_disabled: "Localização desativada no celular",
-                          timeout: "Tempo esgotado ao obter localização",
-                          stale_position: "Posição recebida desatualizada",
-                          position_unavailable:
-                            "Não foi possível obter a posição",
-                          not_provided:
-                            "Localização não enviada pelo aplicativo",
-                        };
-                        return (
-                          <div key={leg.id}>
-                            <p>
-                              Chegada · {index === 0 ? "Ida" : "Volta"}:{" "}
-                              {date(journey.arrived_at)}
-                              {location?.actor_name &&
-                                ` · ${location.actor_name}`}
-                            </p>
-                            {location?.status === "captured" &&
-                            typeof location.latitude === "number" &&
-                            typeof location.longitude === "number" ? (
-                              <>
-                                <p>
-                                  GPS: {location.latitude.toFixed(6)},{" "}
-                                  {location.longitude.toFixed(6)}
-                                  {typeof location.accuracy_m === "number" &&
-                                    ` · precisão ${location.accuracy_m.toFixed(0)} m`}
-                                  {location.captured_at &&
-                                    ` · captura ${date(location.captured_at)}`}
-                                </p>
-                                <a
-                                  className="button secondary"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.latitude},${location.longitude}`)}`}
-                                >
-                                  Ver local da chegada no Google Maps
-                                </a>
-                              </>
-                            ) : (
-                              <p>
-                                Sem coordenadas ·{" "}
-                                {reasons[location?.reason ?? "not_provided"] ??
-                                  "Localização indisponível"}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {(manage ||
-                        (user.role === "driver"
-                          ? v.driver_id === user.id
-                          : v.guides.some((g) => g.id === user.id))) &&
-                        detail.data.legs.map((leg, index) => (
-                          <button
-                            key={leg.id}
-                            className="button secondary"
-                            onClick={() => {
-                              setBoarding({
-                                tripId: detail.data!.id,
-                                allocationId: v.id,
-                                legId: leg.id,
-                              });
-                              setSelected(null);
-                            }}
-                          >
-                            Abrir embarque · {index === 0 ? "Ida" : "Volta"}
-                          </button>
-                        ))}
+                      {l.stops.map((s, i) => (
+                        <p key={i}>
+                          {stopKind[s.kind]}: {s.name} · {date(s.scheduled_at)}
+                        </p>
+                      ))}
                     </section>
                   ))}
+                </div>
+                <h3>Veículos e rotas</h3>
+                <div className="trip-detail-grid">
+                  {detail.data.vehicles
+                    .filter(
+                      (v) =>
+                        manage ||
+                        v.driver_id === user.id ||
+                        v.guides.some((g) => g.id === user.id),
+                    )
+                    .map((v) => (
+                      <section key={v.id} className="operation-card">
+                        <h3>
+                          {v.name} · {v.plate}
+                        </h3>
+                        <p>
+                          {v.capacity} lugares · Motorista: {v.driver_name}
+                        </p>
+                        <VehicleRoute
+                          tripId={detail.data!.id}
+                          allocationId={v.id}
+                          disabled={["completed", "cancelled"].includes(
+                            detail.data!.status,
+                          )}
+                          closedLegIds={Object.entries(v.journey_states ?? {})
+                            .filter(([, j]) => j.status === "completed")
+                            .map(([id]) => id)}
+                        />
+                        <p>
+                          Guias:{" "}
+                          {v.guides.map((g) => g.full_name).join(", ") ||
+                            "Sem guia"}
+                        </p>
+                        {(manage ||
+                          (user.role === "driver"
+                            ? v.driver_id === user.id
+                            : v.guides.some((g) => g.id === user.id))) &&
+                          detail.data.legs.map((leg, index) => (
+                            <button
+                              key={leg.id}
+                              className="button secondary"
+                              disabled={
+                                ["completed", "cancelled"].includes(
+                                  detail.data!.status,
+                                ) ||
+                                v.journey_states?.[leg.id]?.status ===
+                                  "completed"
+                              }
+                              onClick={() => {
+                                setBoarding({
+                                  tripId: detail.data!.id,
+                                  allocationId: v.id,
+                                  legId: leg.id,
+                                });
+                                setSelected(null);
+                              }}
+                            >
+                              Abrir embarque · {index === 0 ? "Ida" : "Volta"}
+                            </button>
+                          ))}
+                      </section>
+                    ))}
+                </div>
                 {error && <Alert>{error}</Alert>}
                 {manage && (
                   <footer className="modal-actions">
@@ -651,7 +659,10 @@ export function Operations({
                     )}
                     <button
                       className="button primary"
-                      disabled={pending}
+                      disabled={
+                        pending ||
+                        ["completed", "cancelled"].includes(detail.data.status)
+                      }
                       onClick={() => {
                         setReservationTrip(detail.data!.id);
                         setSelected(null);

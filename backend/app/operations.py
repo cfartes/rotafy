@@ -305,6 +305,16 @@ async def detail(db, trip_id):
             "SELECT u.id,u.full_name FROM trip_guides tg JOIN users u ON u.id=tg.user_id WHERE tg.allocation_id=:id ORDER BY u.full_name",
             id=allocation["id"],
         )
+    completion = await rows(
+        db,
+        """SELECT e.created_at AS recorded_at,e.actor_id,u.full_name AS actor_name
+        FROM audit_events e LEFT JOIN users u ON u.id=e.actor_id
+        WHERE e.target_id=:id AND e.company_id=:company AND e.action='trip.completed'
+        ORDER BY e.created_at DESC,e.id DESC LIMIT 1""",
+        id=trip_id,
+        company=result["company_id"],
+    )
+    result["completion"] = completion[0] if completion else None
     return result
 
 

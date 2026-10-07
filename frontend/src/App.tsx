@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
 import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
+import { TicketSales } from "./TicketSales";
 import { Reports } from "./Reports";
 import { DocumentInput } from "./components/DocumentInput";
 import { PhoneInput } from "./components/PhoneInput";
@@ -36,6 +37,7 @@ import {
   Search,
   ShieldCheck,
   Users,
+  Ticket,
 } from "lucide-react";
 import {
   api,
@@ -933,6 +935,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "billing"
     | "operations"
     | "sales"
+    | "ticket-sales"
     | "reports"
   >("overview");
   const [menu, setMenu] = useState(false);
@@ -1034,28 +1037,32 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "reports"
-      ? "Relatórios"
-      : page === "operations"
-        ? {
-            vehicles: "Veículos",
-            trips: "Viagens",
-            allocations: "Alocar veículos em viagens",
-            passengers: "Passageiros",
-          }[operationModule] || "Operação de viagens"
-        : page === "overview"
-          ? "Visão geral"
-          : page === "billing"
-            ? isNexus
-              ? companyPlanOnly
-                ? "Plano da empresa"
-                : "Planos e assinaturas"
-              : "Meu plano"
-            : page === "audit"
-              ? "Histórico de atividades"
-              : isNexus
-                ? "Empresas"
-                : "Equipe";
+    page === "ticket-sales"
+      ? "Vender bilhete"
+      : page === "sales"
+        ? "Página pública e integrações"
+        : page === "reports"
+          ? "Relatórios"
+          : page === "operations"
+            ? {
+                vehicles: "Veículos",
+                trips: "Viagens",
+                allocations: "Alocar veículos em viagens",
+                passengers: "Passageiros",
+              }[operationModule] || "Operação de viagens"
+            : page === "overview"
+              ? "Visão geral"
+              : page === "billing"
+                ? isNexus
+                  ? companyPlanOnly
+                    ? "Plano da empresa"
+                    : "Planos e assinaturas"
+                  : "Meu plano"
+                : page === "audit"
+                  ? "Histórico de atividades"
+                  : isNexus
+                    ? "Empresas"
+                    : "Equipe";
   return (
     <div className="app-layout">
       <a className="skip-link" href="#main-content">
@@ -1117,6 +1124,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     label: "Página pública e integrações",
                     icon: Compass,
                   },
+                  { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
                 ]
               : []),
             ...(canManage
@@ -1278,6 +1286,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "sales" && company.data && (
             <Sales company={company.data} isAdmin={isAdmin} />
           )}
+          {page === "ticket-sales" &&
+            !isNexus &&
+            (isAdmin || user.role === "attendant") && (
+              <TicketSales onLogout={onLogout} />
+            )}
           {page === "operations" && (
             <Operations
               key={operationModule}
