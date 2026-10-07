@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão 1.4.0 inclui a opção **Usar biometria nos próximos acessos** no login. Após um login válido, o acesso é salvo em um cofre Android separado, protegido por biometria forte. Ao reiniciar, use **Entrar com biometria** ou senha. O menu permite desativar; Sair também remove o acesso biométrico. Consulte [biometria no Android](../docs/BIOMETRIA_MOBILE.md).
+
 A versão 1.3.0 captura a localização ao confirmar chegada, para motorista e guia, quando a permissão e o serviço estiverem disponíveis. A captura inclui precisão e horário, com limite de 15 segundos. Sem localização, registra o motivo e permite fechar. Atualize a API/painel antes de instalar; consulte [localização da chegada](../docs/JORNADA_MOBILE.md).
 
 A versão 1.2.0 adiciona o menu lateral **Agenda**, para motorista e guia. Exibe as próximas saídas entre hoje e os seis dias seguintes, em ordem cronológica, com data, horário local do celular em 24 horas e destino. Somente viagens atribuídas e abertas aparecem. A consulta/atualização exige conexão; a fila offline de embarques continua independente.
@@ -44,7 +46,7 @@ Assinatura de distribuição, ícone/marca definitiva, publicação e geração 
 
 ## Offline e segurança
 
-- Manifestos e comandos são gravados em SQLite com conteúdo criptografado AES-GCM; a chave e a sessão ficam no armazenamento seguro do sistema. Senha não é persistida. Backup automático Android desativado.
+- Manifestos e comandos são gravados em SQLite com conteúdo criptografado AES-GCM; a chave e a sessão ficam no armazenamento seguro do sistema. A senha só é persistida quando o usuário opta pelo login biométrico, em cofre Android separado cuja chave exige biometria forte a cada operação. Não fica em SQLite nem nas configurações do app. Backup automático Android desativado.
 - Cada manifesto pertence à empresa e ao operador. Preparação vale até oito horas, limitada também pela sessão do servidor. Expiração bloqueia novas ações, mas preserva a fila.
 - Um comando só sai da fila depois da resposta válida do servidor, na mesma transação da atualização local. Reenvio usa a mesma chave de operação para evitar duplicidade quando a resposta se perde.
 - Conflitos/rejeições bloqueiam comandos dependentes do passageiro. **Revisar → Manter servidor** requer confirmação e descarta a cadeia local daquele passageiro/trecho.

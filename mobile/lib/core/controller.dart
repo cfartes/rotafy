@@ -5,22 +5,36 @@ import 'package:flutter/foundation.dart';
 import 'api.dart';
 import 'store.dart';
 import 'location.dart';
+import 'biometrics.dart';
+import 'config.dart';
 
 class OperationController extends ChangeNotifier {
   final RotafyApi api;
   final LocalStore store;
   final ArrivalLocationService location;
+  final BiometricLogin biometrics;
+  bool biometricEnabled = false;
+  String? biometricNotice;
   Json? user;
   List<Json> prepared = [];
   List<Json> records = [];
   bool busy = false;
   String? error;
-  OperationController(this.api, this.store, {ArrivalLocationService? location})
-    : location = location ?? ArrivalLocationService();
+  OperationController(
+    this.api,
+    this.store, {
+    ArrivalLocationService? location,
+    BiometricLogin? biometrics,
+  }) : location = location ?? ArrivalLocationService(),
+       biometrics = biometrics ?? BiometricLogin();
 
   Future<void> initialize() async {
     await api.restore();
-    user = await store.meta('user');
+    final saved = await store.meta('user');
+    biometricEnabled =
+        saved != null &&
+        await store.meta('biometric-owner') == store.owner(Json.from(saved));
+    user = biometricEnabled ? null : saved;
     await reload();
   }
 
@@ -78,9 +92,27 @@ class OperationController extends ChangeNotifier {
   Future<bool> login(
     String company,
     String email,
-    String password,
-  ) => run(() async {
+    String password, {
+    bool enableBiometrics = false,
+  }) => run(
+    () => passwordLogin(
+      company,
+      email,
+      password,
+      enableBiometrics: enableBiometrics,
+    ),
+  );
+
+  Future<void> passwordLogin(
+    String company,
+    String email,
+    String password, {
+    bool enableBiometrics = false,
+    String? expectedOwner,
+  }) async {
     final oldCookies = Map<String, String>.from(api.cookies);
+    final oldBiometricOwner = await store.meta('biometric-owner');
+    biometricNotice = null;
     try {
       final result = Json.from(
         await api.request('POST', '/auth/login', {
@@ -92,9 +124,36 @@ class OperationController extends ChangeNotifier {
       if (!['guide', 'driver'].contains(result['role'])) {
         throw StateError('Este aplicativo é destinado a motoristas e guias.');
       }
+      if (expectedOwner != null && store.owner(result) != expectedOwner) {
+        throw StateError(
+          'O acesso salvo não corresponde a esta conta. Entre com sua senha.',
+        );
+      }
       await store.activate(result);
       closedTrips.clear();
       await api.saveSession();
+      if (expectedOwner == null) {
+        if (enableBiometrics) {
+          try {
+            await biometrics.save({
+              'company': company,
+              'email': email.trim(),
+              'password': password,
+              'owner': store.owner(result),
+            });
+            await store.setMeta('biometric-owner', store.owner(result));
+            biometricEnabled = true;
+          } catch (_) {
+            await store.setMeta('biometric-owner', null);
+            biometricEnabled = false;
+            biometricNotice = 'Login realizado. A biometria não foi ativada; verifique se há uma biometria forte cadastrada no celular e tente novamente no próximo login.';
+          }
+        } else {
+          if (oldBiometricOwner != null) await biometrics.clear();
+          await store.setMeta('biometric-owner', null);
+          biometricEnabled = false;
+        }
+      }
       user = result;
     } catch (_) {
       // Keep the original operator session if another identity has queued work.
@@ -106,7 +165,56 @@ class OperationController extends ChangeNotifier {
       api.cookies = oldCookies;
       rethrow;
     }
+  }
+
+  Future<bool> loginWithBiometrics() => run(() async {
+    if (!biometricEnabled) {
+      throw StateError('Ative a biometria entrando com sua senha.');
+    }
+    final credentials = await biometrics.read();
+    final owner = await store.meta('biometric-owner');
+    if (owner == null ||
+        credentials['owner'] != owner ||
+        (AppConfig.company.isNotEmpty &&
+            credentials['company'] != AppConfig.company)) {
+      throw StateError(
+        'O acesso biométrico pertence a outra conta. Entre com sua senha.',
+      );
+    }
+    try {
+      await passwordLogin(
+        credentials['company'],
+        credentials['email'],
+        credentials['password'],
+        expectedOwner: owner,
+      );
+    } on ApiFailure catch (e) {
+      if (e.status == 0) {
+        final saved = await store.meta('user');
+        if (saved == null ||
+            store.owner(Json.from(saved)) != owner ||
+            !['driver', 'guide'].contains(saved['role'])) {
+          rethrow;
+        }
+        user = Json.from(saved);
+        biometricNotice = 'Sem conexão. Acesso aos dados locais liberado; sincronize quando houver internet.';
+      } else {
+        if (e.status == 401 || e.status == 403) {
+          await disableBiometricsWork();
+        }
+        rethrow;
+      }
+    }
   });
+
+  Future<void> disableBiometricsWork() async {
+    await biometrics.clear();
+    await store.setMeta('biometric-owner', null);
+    biometricEnabled = false;
+    biometricNotice = null;
+  }
+
+  Future<bool> disableBiometrics() => run(disableBiometricsWork);
   Future<bool> logout() => run(() async {
     if (await store.pendingCount() > 0) {
       throw StateError('Sincronize ou revise os registros antes de sair.');
@@ -116,7 +224,10 @@ class OperationController extends ChangeNotifier {
     } on ApiFailure catch (e) {
       if (e.status != 401) rethrow;
     }
+    if (biometricEnabled) await biometrics.clear();
     await store.clear();
+    biometricEnabled = false;
+    biometricNotice = null;
     closedTrips.clear();
     await api.clearSession();
     user = null;

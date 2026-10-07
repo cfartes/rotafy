@@ -56,7 +56,21 @@ class _LoginFormState extends State<LoginForm> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool loading = false;
+  bool biometricAvailable = false;
+  bool enableBiometrics = false;
   String? error;
+  @override
+  void initState() {
+    super.initState();
+    enableBiometrics = widget.controller.biometricEnabled;
+    checkBiometrics();
+  }
+
+  Future<void> checkBiometrics() async {
+    final available = await widget.controller.biometrics.available();
+    if (mounted) setState(() => biometricAvailable = available);
+  }
+
   @override
   void dispose() {
     company.dispose();
@@ -75,7 +89,22 @@ class _LoginFormState extends State<LoginForm> {
       company.text.trim(),
       email.text,
       password.text,
+      enableBiometrics: enableBiometrics,
     );
+    if (!mounted) return;
+    setState(() {
+      loading = false;
+      error = widget.controller.error;
+    });
+    if (ok) widget.onSuccess?.call();
+  }
+
+  Future<void> biometricLogin() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    final ok = await widget.controller.loginWithBiometrics();
     if (!mounted) return;
     setState(() {
       loading = false;
@@ -104,6 +133,16 @@ class _LoginFormState extends State<LoginForm> {
             'Acesso de motorista e guia. Prepare os trechos enquanto houver internet.',
           ),
           const SizedBox(height: 24),
+          if (widget.controller.biometricEnabled) ...[
+            FilledButton.icon(
+              onPressed: loading ? null : biometricLogin,
+              icon: const Icon(Icons.fingerprint),
+              label: const Text('Entrar com biometria'),
+            ),
+            const SizedBox(height: 16),
+            const Text('Ou entre com empresa, e-mail e senha.'),
+            const SizedBox(height: 16),
+          ],
           TextFormField(
             controller: company,
             readOnly: AppConfig.company.isNotEmpty,
@@ -136,6 +175,20 @@ class _LoginFormState extends State<LoginForm> {
               error!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: enableBiometrics,
+            onChanged: loading || (!biometricAvailable && !enableBiometrics)
+                ? null
+                : (value) => setState(() => enableBiometrics = value ?? false),
+            title: const Text('Usar biometria nos próximos acessos'),
+            subtitle: Text(
+              biometricAvailable
+                  ? 'Salvar meu acesso protegido pela biometria neste celular.'
+                  : 'Cadastre uma biometria no celular para ativar esta opção.',
+            ),
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
           FilledButton(
             onPressed: loading ? null : submit,
             child: Text(loading ? 'Entrando…' : 'Entrar'),
@@ -234,6 +287,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   );
                 },
               ),
+              if (c.biometricEnabled)
+                ListTile(
+                  leading: const Icon(Icons.fingerprint),
+                  title: const Text('Desativar biometria'),
+                  enabled: !c.busy,
+                  onTap: () {
+                    Navigator.pop(context);
+                    c.disableBiometrics();
+                  },
+                ),
             ],
           ),
         ),
@@ -274,6 +337,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             Text(c.user!['role'] == 'driver' ? 'Motorista' : 'Guia'),
+            if (c.biometricNotice != null)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(c.biometricNotice!),
+                ),
+              ),
             if (c.busy) const LinearProgressIndicator(),
             if (c.error != null)
               Card(
