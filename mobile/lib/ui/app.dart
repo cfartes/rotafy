@@ -485,35 +485,49 @@ class _TripCardState extends State<TripCard> {
                     ),
               )
               .expand(
-                (v) => (detail!['legs'] as List).map(
-                  (leg) => ListTile(
-                    title: Text(
-                      '${v['name']} · ${leg['position'] == 1 ? 'Ida' : 'Volta'}',
+                (v) => (detail!['legs'] as List)
+                    .where(
+                      (leg) =>
+                          ((v['leg_positions'] as List?)?.isEmpty ?? true) ||
+                          (v['leg_positions'] as List).contains(
+                            leg['position'],
+                          ),
+                    )
+                    .map(
+                      (leg) => ListTile(
+                        title: Text(
+                          '${v['name']} · ${detail!['mode'] == 'multi_destination'
+                              ? 'Deslocamento ${leg['position']}'
+                              : leg['position'] == 1
+                              ? 'Ida'
+                              : 'Volta'}',
+                        ),
+                        subtitle: Text(
+                          '${leg['origin']} → ${leg['destination']}',
+                        ),
+                        trailing: FilledButton(
+                          onPressed: widget.controller.busy
+                              ? null
+                              : () async {
+                                  if (await widget.controller.prepare(
+                                        detail!,
+                                        Json.from(v),
+                                        Json.from(leg),
+                                      ) &&
+                                      context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Trecho preparado para uso offline.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                          child: const Text('Preparar'),
+                        ),
+                      ),
                     ),
-                    subtitle: Text('${leg['origin']} → ${leg['destination']}'),
-                    trailing: FilledButton(
-                      onPressed: widget.controller.busy
-                          ? null
-                          : () async {
-                              if (await widget.controller.prepare(
-                                    detail!,
-                                    Json.from(v),
-                                    Json.from(leg),
-                                  ) &&
-                                  context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Trecho preparado para uso offline.',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                      child: const Text('Preparar'),
-                    ),
-                  ),
-                ),
               ),
       ],
     ),

@@ -6,7 +6,24 @@ import '../core/controller.dart';
 List<Json> upcomingTrips(List<Json> trips, DateTime now) {
   final local = now.toLocal();
   final end = DateTime(local.year, local.month, local.day + 7);
-  final result = trips.where((trip) {
+  final expanded = trips.expand<Json>((trip) {
+    final legs = trip['agenda_legs'] as List?;
+    if (legs == null) return [trip];
+    return legs
+        .where((leg) => leg['completed'] != true)
+        .map(
+          (leg) => {
+            ...trip,
+            'leg_id': leg['id'],
+            'starts_at': leg['starts_at'],
+            'destination': leg['destination'],
+            'name': trip['mode'] == 'multi_destination'
+                ? '${trip['name']} · Deslocamento ${leg['position']}'
+                : '${trip['name']} · ${leg['position'] == 1 ? 'Ida' : 'Volta'}',
+          },
+        );
+  });
+  final result = expanded.where((trip) {
     final starts = DateTime.tryParse(trip['starts_at'] as String? ?? '')
         ?.toLocal();
     return starts != null &&

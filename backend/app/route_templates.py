@@ -157,28 +157,28 @@ async def route_for_trip(db, data: Trip, old=None):
             422, "O tipo de viagem deve corresponder à Rota selecionada."
         )
     for actual, template in zip(data.legs, snapshot["legs"]):
-        expected = RouteLeg.model_validate(template)
-        for field in (
-            "origin_city_id",
-            "destination_city_id",
-            "origin_address",
-            "destination_address",
-        ):
-            if getattr(actual, field) != getattr(expected, field):
-                raise HTTPException(
-                    422, "O percurso deve corresponder à Rota selecionada."
-                )
-        if [s.model_dump(exclude={"scheduled_at"}) for s in actual.stops] != [
-            s.model_dump() for s in expected.stops
-        ]:
-            raise HTTPException(
-                422, "As paradas devem corresponder à Rota selecionada."
-            )
-        if any(s.scheduled_at is not None for s in actual.stops):
-            raise HTTPException(422, "Paradas da Rota não possuem horário individual.")
-        duration = timedelta(minutes=expected.duration_minutes + expected.stop_minutes)
-        if actual.ends_at != actual.starts_at + duration:
-            raise HTTPException(
-                422, "A chegada prevista deve corresponder à duração da Rota."
-            )
+        validate_leg_template(actual, template)
     return snapshot
+
+
+def validate_leg_template(actual, template):
+    expected = RouteLeg.model_validate(template)
+    for field in (
+        "origin_city_id",
+        "destination_city_id",
+        "origin_address",
+        "destination_address",
+    ):
+        if getattr(actual, field) != getattr(expected, field):
+            raise HTTPException(422, "O percurso deve corresponder à Rota selecionada.")
+    if [s.model_dump(exclude={"scheduled_at"}) for s in actual.stops] != [
+        s.model_dump() for s in expected.stops
+    ]:
+        raise HTTPException(422, "As paradas devem corresponder à Rota selecionada.")
+    if any(s.scheduled_at is not None for s in actual.stops):
+        raise HTTPException(422, "Paradas da Rota não possuem horário individual.")
+    duration = timedelta(minutes=expected.duration_minutes + expected.stop_minutes)
+    if actual.ends_at != actual.starts_at + duration:
+        raise HTTPException(
+            422, "A chegada prevista deve corresponder à duração da Rota."
+        )

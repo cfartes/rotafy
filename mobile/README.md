@@ -57,6 +57,8 @@ Assinatura de distribuição, ícone/marca definitiva, publicação e geração 
 
 ## Homologação pendente
 
+Android 1.5.0 (7): pacotes com vários destinos mostram os deslocamentos atribuídos ao motorista/guia. A agenda inclui etapas futuras nos próximos sete dias, mesmo com o pacote já iniciado. O embarque e QR usam o veículo de cada etapa. Homologar também esse fluxo com troca de veículos em aparelho real; regras em [PACOTES_MULTIDESTINOS.md](../docs/PACOTES_MULTIDESTINOS.md).
+
 Testar em aparelhos reais: permissão e foco da câmera, QR impresso/tela, recusa de câmera com uso da lista, modo avião, fechamento/reabertura, sessão expirada, alteração simultânea por motorista/guia, viagem sem guia e consumo de bateria. Não há aparelho conectado a esta máquina; testes automatizados não substituem essa etapa.
 
 ## Entrega HTTPS / Hostinger

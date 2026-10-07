@@ -96,6 +96,7 @@ async def change_journey(
             db, actor, trip_id, allocation_id, write=True
         )
         leg = await leg_for_trip(db, trip_id, leg_id)
+        check_leg_allocation(allocation, leg)
         trip = await trip_detail(db, trip_id)
         states = allocation["journey_states"]
         current = states.get(str(leg_id), {"status": "scheduled"})
@@ -113,6 +114,29 @@ async def change_journey(
                 trip=trip_id,
                 position=leg["position"],
             )
+            if trip["mode"] == "multi_destination":
+                previous_legs = [
+                    l for l in trip["legs"] if l["position"] < leg["position"]
+                ]
+                if data.status == "in_progress" and any(
+                    v["journey_states"].get(str(l["id"]), {}).get("status")
+                    != "completed"
+                    for l in previous_legs
+                    for v in trip["vehicles"]
+                    if not v["leg_positions"] or l["position"] in v["leg_positions"]
+                ):
+                    raise HTTPException(
+                        409,
+                        "Finalize os deslocamentos anteriores do pacote antes de iniciar o próximo.",
+                    )
+                previous_legs = []
+            elif allocation.get("leg_positions"):
+                assigned_ids = {
+                    l["id"]
+                    for l in trip["legs"]
+                    if l["position"] in allocation["leg_positions"]
+                }
+                previous_legs = [l for l in previous_legs if l["id"] in assigned_ids]
             if data.status == "in_progress" and any(
                 states.get(str(previous["id"]), {}).get("status") != "completed"
                 for previous in previous_legs
@@ -170,7 +194,8 @@ async def change_journey(
             )
             incomplete = await db.scalar(
                 text("""SELECT 1 FROM trip_vehicles v JOIN trip_legs l ON l.trip_id=v.trip_id
-              WHERE v.trip_id=:trip AND (v.journey_states -> l.id::text ->> 'status') IS DISTINCT FROM 'completed' LIMIT 1"""),
+              WHERE v.trip_id=:trip AND (v.leg_positions='[]'::jsonb OR v.leg_positions @> to_jsonb(l.position))
+              AND (v.journey_states -> l.id::text ->> 'status') IS DISTINCT FROM 'completed' LIMIT 1"""),
                 {"trip": trip_id},
             )
             if not incomplete and not await db.scalar(
@@ -233,6 +258,16 @@ async def leg_for_trip(db, trip_id, leg_id):
     return leg
 
 
+def check_leg_allocation(allocation, leg):
+    if (
+        allocation.get("leg_positions")
+        and leg["position"] not in allocation["leg_positions"]
+    ):
+        raise HTTPException(
+            404, "Este veículo e equipe não estão atribuídos ao deslocamento."
+        )
+
+
 def journey_points(leg, boarding, dropoff):
     points = [
         {"name": leg["origin"], "scheduled_at": leg["starts_at"]},
@@ -252,6 +287,7 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
     allocation = await allocation_access(actor.db, actor, trip_id, allocation_id)
     trip = await trip_detail(actor.db, trip_id)
     leg = await leg_for_trip(actor.db, trip_id, leg_id)
+    check_leg_allocation(allocation, leg)
     passengers = await rows(
         actor.db,
         """SELECT p.id,p.full_name,rl.boarding_position,rl.dropoff_position,
@@ -259,7 +295,7 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
       FROM reservations r JOIN passengers p ON p.reservation_id=r.id
       JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=:leg
       LEFT JOIN boarding_states bs ON bs.passenger_id=p.id AND bs.leg_id=rl.leg_id
-      WHERE r.trip_id=:trip AND r.allocation_id=:allocation AND r.status='confirmed' ORDER BY p.full_name,p.id""",
+      WHERE r.trip_id=:trip AND rl.allocation_id=:allocation AND r.status='confirmed' ORDER BY p.full_name,p.id""",
         trip=trip_id,
         allocation=allocation_id,
         leg=leg_id,
@@ -314,7 +350,8 @@ async def offline_manifest(
         "tickets": await rows(
             actor.db,
             """SELECT tk.passenger_id,tk.token_hash FROM tickets tk JOIN reservations r ON r.id=tk.reservation_id
-          WHERE tk.trip_id=:trip AND r.allocation_id=:allocation AND tk.leg_id=:leg AND tk.revoked_at IS NULL AND r.status='confirmed'""",
+          JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=tk.leg_id
+          WHERE tk.trip_id=:trip AND rl.allocation_id=:allocation AND tk.leg_id=:leg AND tk.revoked_at IS NULL AND r.status='confirmed'""",
             trip=trip_id,
             allocation=allocation_id,
             leg=leg_id,
@@ -323,13 +360,13 @@ async def offline_manifest(
 
 
 TICKET_SELECT = """SELECT tk.id,tk.trip_id,tk.reservation_id,tk.passenger_id,tk.leg_id,tk.revoked_at,tk.created_at,
- p.full_name,r.allocation_id,r.status AS reservation_status,t.name AS trip_name,t.status AS trip_status,
+ p.full_name,rl.allocation_id,r.status AS reservation_status,t.name AS trip_name,t.status AS trip_status,
  v.name AS vehicle_name,rl.boarding_position,rl.dropoff_position,
  COALESCE(bs.status,'waiting') AS boarding_status,COALESCE(bs.version,0) AS version
  FROM tickets tk JOIN passengers p ON p.id=tk.passenger_id
  JOIN reservations r ON r.id=tk.reservation_id JOIN trips t ON t.id=tk.trip_id
- JOIN trip_vehicles tv ON tv.id=r.allocation_id JOIN vehicles v ON v.id=tv.vehicle_id
  JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=tk.leg_id
+ JOIN trip_vehicles tv ON tv.id=rl.allocation_id JOIN vehicles v ON v.id=tv.vehicle_id
  LEFT JOIN boarding_states bs ON bs.passenger_id=p.id AND bs.leg_id=tk.leg_id"""
 
 
@@ -595,7 +632,7 @@ async def command(
             db,
             """SELECT p.id,r.id AS reservation_id FROM passengers p JOIN reservations r ON r.id=p.reservation_id
            JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=:leg
-           WHERE p.id=:passenger AND r.trip_id=:trip AND r.allocation_id=:allocation AND r.status='confirmed'""",
+           WHERE p.id=:passenger AND r.trip_id=:trip AND rl.allocation_id=:allocation AND r.status='confirmed'""",
             passenger=data.passenger_id,
             trip=trip_id,
             allocation=allocation_id,

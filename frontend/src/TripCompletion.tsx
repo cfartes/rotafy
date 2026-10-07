@@ -33,11 +33,13 @@ const reasons: Record<string, string> = {
 };
 
 export function TripCompletion({
+  mode,
   status,
   completion,
   legs,
   vehicles,
 }: {
+  mode?: string;
   status: string;
   completion?: Completion | null;
   legs: { id: string; origin: string; destination: string }[];
@@ -46,6 +48,7 @@ export function TripCompletion({
     name: string;
     plate: string;
     journey_states?: JourneyStates;
+    leg_positions?: number[];
   }[];
 }) {
   return (
@@ -67,7 +70,12 @@ export function TripCompletion({
       )}
       <div className="trip-detail-grid">
         {vehicles.flatMap((vehicle) =>
-          legs.map((leg, index) => {
+          legs.flatMap((leg, index) => {
+            if (
+              vehicle.leg_positions?.length &&
+              !vehicle.leg_positions.includes(index + 1)
+            )
+              return [];
             const journey = vehicle.journey_states?.[leg.id];
             const location = journey?.arrival_location;
             return (
@@ -77,7 +85,11 @@ export function TripCompletion({
               >
                 <h4>
                   {vehicle.name} · {vehicle.plate} ·{" "}
-                  {index === 0 ? "Ida" : "Volta"}
+                  {mode === "multi_destination"
+                    ? `Deslocamento ${index + 1}`
+                    : index === 0
+                      ? "Ida"
+                      : "Volta"}
                 </h4>
                 <p>
                   {leg.origin} → {leg.destination}

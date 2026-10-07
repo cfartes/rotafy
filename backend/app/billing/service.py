@@ -316,14 +316,19 @@ async def consume_trip(
     trip_id: UUID,
     operation_key: UUID,
     now: datetime | None = None,
+    quantity: int = 1,
 ) -> dict:
     """Serviço interno chamado na mesma transação que cria a viagem comercial."""
     now = now or utc_now()
+    if type(quantity) is not int or not 1 <= quantity <= 20:
+        raise HTTPException(422, "Consumo inválido da franquia.")
     await lock_company(db, company_id, require_active=True)
     existing = await existing_operation(
         db, company_id, trip_id, operation_key, "consume"
     )
     if existing:
+        if existing["quantity"] != quantity:
+            raise HTTPException(409, "Esta operação já consumiu outra quantidade.")
         return existing
     if await active_consumption(db, company_id, trip_id):
         raise HTTPException(409, "Esta viagem já consumiu a franquia.")
@@ -343,13 +348,14 @@ async def consume_trip(
         (
             await db.execute(
                 text("""INSERT INTO usage_events(id,company_id,period_id,trip_id,kind,quantity,operation_key)
-        VALUES(:id,:company,:period,:trip,'consume',1,:key) RETURNING *"""),
+        VALUES(:id,:company,:period,:trip,'consume',:quantity,:key) RETURNING *"""),
                 {
                     "id": uuid4(),
                     "company": company_id,
                     "period": period_id,
                     "trip": trip_id,
                     "key": operation_key,
+                    "quantity": quantity,
                 },
             )
         )
@@ -375,7 +381,7 @@ async def reverse_trip(
         (
             await db.execute(
                 text("""INSERT INTO usage_events(id,company_id,period_id,trip_id,kind,quantity,operation_key,reverses_event_id)
-        VALUES(:id,:company,:period,:trip,'reverse',-1,:key,:original) RETURNING *"""),
+        VALUES(:id,:company,:period,:trip,'reverse',:quantity,:key,:original) RETURNING *"""),
                 {
                     "id": uuid4(),
                     "company": company_id,
@@ -383,6 +389,7 @@ async def reverse_trip(
                     "trip": trip_id,
                     "key": operation_key,
                     "original": consumed["id"],
+                    "quantity": -consumed["quantity"],
                 },
             )
         )

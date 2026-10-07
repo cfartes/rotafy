@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert } from "./components/ui";
 type Route = {
+  mode?: string;
   vehicle_name: string;
   plate: string;
   legs: {
@@ -44,7 +45,14 @@ export function VehicleRoute({
     <div>
       {route.data?.legs.map((leg) => (
         <section key={leg.id} className="operation-card">
-          <h3>Rota · {leg.position === 1 ? "Ida" : "Volta"}</h3>
+          <h3>
+            Rota ·{" "}
+            {route.data.mode === "multi_destination"
+              ? `Deslocamento ${leg.position}`
+              : leg.position === 1
+                ? "Ida"
+                : "Volta"}
+          </h3>
           {leg.navigation_stages.map((stage, index) =>
             disabled || closedLegIds.includes(leg.id) ? (
               <button className="button primary" key={index} disabled>

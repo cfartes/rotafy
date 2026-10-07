@@ -98,9 +98,15 @@ def test_two_companies_twenty_vehicles_eight_hundred_passengers(client, seeded, 
                 for leg in legs:
                     db.execute(
                         text(
-                            "INSERT INTO reservation_legs(company_id,trip_id,reservation_id,leg_id,boarding_position,dropoff_position) VALUES(:c,:t,:r,:l,0,1)"
+                            "INSERT INTO reservation_legs(company_id,trip_id,reservation_id,leg_id,boarding_position,dropoff_position,allocation_id) VALUES(:c,:t,:r,:l,0,1,:a)"
                         ),
-                        {"c": company, "t": trip, "r": reservation, "l": leg},
+                        {
+                            "c": company,
+                            "t": trip,
+                            "r": reservation,
+                            "l": leg,
+                            "a": allocation,
+                        },
                     )
     cookies = {}
     for key in ("a", "b"):

@@ -12,6 +12,7 @@ from sqlalchemy import text
 from app.billing.service import consume_trip, lock_company, reverse_trip
 from app.geography import city
 from app.identity import Auth, audit, scope
+from app.package_itineraries import PackageItinerary
 from app.schemas import Input
 
 router = APIRouter(prefix="/api/v1", tags=["Operação"])
@@ -46,6 +47,8 @@ class Package(OperationalInput):
     description: str = Field(default="", max_length=10000)
     price_cents: int = Field(ge=0, le=1_000_000_000, strict=True)
     is_active: bool = True
+    itinerary: PackageItinerary | None = None
+    expected_version: int | None = Field(default=None, ge=1, strict=True)
 
 
 class Stop(OperationalInput):
@@ -95,7 +98,7 @@ class Leg(OperationalInput):
 
 
 class VehicleRoute(OperationalInput):
-    leg_position: int = Field(ge=1, le=2, strict=True)
+    leg_position: int = Field(ge=1, le=60, strict=True)
     stop_positions: list[int] = Field(max_length=50)
 
     @field_validator("stop_positions")
@@ -111,29 +114,43 @@ class VehicleRoute(OperationalInput):
 
 
 class Allocation(OperationalInput):
+    allocation_id: UUID | None = None
     vehicle_id: UUID
     driver_id: UUID
     guide_ids: list[UUID] = Field(default_factory=list, max_length=20)
-    routes: list[VehicleRoute] = Field(default_factory=list, max_length=2)
+    routes: list[VehicleRoute] = Field(default_factory=list, max_length=60)
+    leg_positions: list[int] = Field(default_factory=list, max_length=60)
 
 
 class Trip(OperationalInput):
+    package_version: int | None = Field(default=None, ge=1, strict=True)
     route_id: UUID | None = None
     route_version: int | None = Field(default=None, ge=1, strict=True)
     operation_key: UUID
     package_id: UUID | None = None
     name: str = Field(min_length=2, max_length=150)
     destination: str = Field(min_length=2, max_length=150)
-    mode: Literal["round_trip", "one_way"]
+    mode: Literal["round_trip", "one_way", "multi_destination"]
     price_cents: int = Field(ge=0, le=1_000_000_000, strict=True)
-    legs: list[Leg] = Field(min_length=1, max_length=2)
+    legs: list[Leg] = Field(min_length=1, max_length=60)
     vehicles: list[Allocation] = Field(min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def itinerary(self):
-        if len(self.legs) != (2 if self.mode == "round_trip" else 1):
+        if self.mode != "multi_destination" and len(self.legs) != (
+            2 if self.mode == "round_trip" else 1
+        ):
             raise ValueError("Ida e volta exige dois trechos; somente ida exige um.")
-        if len(self.legs) == 2:
+        if self.mode == "multi_destination":
+            for previous, following in zip(self.legs, self.legs[1:]):
+                if (
+                    following.starts_at < previous.ends_at
+                    or previous.destination_city_id != following.origin_city_id
+                ):
+                    raise ValueError(
+                        "Ordene os deslocamentos sem sobreposição, mantendo a continuidade das cidades."
+                    )
+        if self.mode == "round_trip":
             first, second = self.legs
             if all(
                 [
@@ -154,8 +171,14 @@ class Trip(OperationalInput):
                 second.origin.casefold(),
             ):
                 raise ValueError("A volta deve inverter origem e destino da ida.")
-        vehicle_ids = [v.vehicle_id for v in self.vehicles]
         for vehicle in self.vehicles:
+            if len(set(vehicle.leg_positions)) != len(vehicle.leg_positions) or any(
+                type(p) is not int or p < 1 or p > len(self.legs)
+                for p in vehicle.leg_positions
+            ):
+                raise ValueError(
+                    "Selecione trechos distintos e válidos para cada veículo."
+                )
             if len({r.leg_position for r in vehicle.routes}) != len(vehicle.routes):
                 raise ValueError("Não repita um trecho na rota do veículo.")
             for route in vehicle.routes:
@@ -166,11 +189,22 @@ class Trip(OperationalInput):
                     raise ValueError(
                         "Parada ou trecho inválido para a rota do veículo."
                     )
-        crew = [v.driver_id for v in self.vehicles]
-        for vehicle in self.vehicles:
-            crew.extend(vehicle.guide_ids)
-        if len(set(vehicle_ids)) != len(vehicle_ids) or len(set(crew)) != len(crew):
-            raise ValueError("Veículos e pessoas não podem repetir na mesma viagem.")
+        for position in range(1, len(self.legs) + 1):
+            assigned = [
+                v
+                for v in self.vehicles
+                if not v.leg_positions or position in v.leg_positions
+            ]
+            if not assigned:
+                raise ValueError(
+                    "Cada deslocamento precisa ter ao menos um veículo e motorista."
+                )
+            vehicle_ids = [v.vehicle_id for v in assigned]
+            crew = [p for v in assigned for p in [v.driver_id, *v.guide_ids]]
+            if len(set(vehicle_ids)) != len(vehicle_ids) or len(set(crew)) != len(crew):
+                raise ValueError(
+                    "Veículos e pessoas não podem repetir no mesmo trecho."
+                )
         return self
 
 
@@ -213,14 +247,44 @@ async def save_catalog(request, actor, table, data, item_id=None):
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
         await lock_company(db, actor.company_id, require_active=True)
-        values = data.model_dump() | {
+        fields = data.model_dump(exclude={"expected_version"})
+        if table == "packages":
+            from app.package_itineraries import compile_itinerary
+
+            previous = (
+                await db.execute(
+                    text("SELECT * FROM packages WHERE id=:id FOR UPDATE"),
+                    {"id": item_id},
+                )
+                if item_id
+                else None
+            )
+            previous = previous.mappings().first() if previous is not None else None
+            if (
+                previous
+                and (previous["itinerary"] or data.itinerary)
+                and data.expected_version != previous["version"]
+            ):
+                raise HTTPException(
+                    409, "O pacote mudou. Atualize a lista antes de editar o roteiro."
+                )
+            fields["itinerary"] = (
+                json.dumps(await compile_itinerary(db, data.itinerary))
+                if data.itinerary
+                else None
+            )
+        values = fields | {
             "id": item_id or uuid4(),
             "company_id": actor.company_id,
         }
         if item_id:
             sql = (
                 f"UPDATE {table} SET "
-                + ",".join(f"{k}=:{k}" for k in data.model_dump())
+                + ",".join(
+                    f"{k}=CAST(:{k} AS jsonb)" if k == "itinerary" else f"{k}=:{k}"
+                    for k in fields
+                )
+                + (",version=version+1" if table == "packages" else "")
                 + " WHERE id=:id RETURNING *"
             )
         else:
@@ -228,7 +292,10 @@ async def save_catalog(request, actor, table, data, item_id=None):
                 f"INSERT INTO {table}("
                 + ",".join(values)
                 + ") VALUES("
-                + ",".join(f":{k}" for k in values)
+                + ",".join(
+                    f"CAST(:{k} AS jsonb)" if k == "itinerary" else f":{k}"
+                    for k in values
+                )
                 + ") RETURNING *"
             )
         result = (await db.execute(text(sql), values)).mappings().first()
@@ -272,14 +339,33 @@ VISIBILITY = """( :manage OR EXISTS (SELECT 1 FROM trip_vehicles tv
 @router.get("/trips")
 async def trips(actor: Auth):
     tenant(actor)
-    return await rows(
+    result = await rows(
         actor.db,
-        f"""SELECT t.*, (SELECT sum(capacity) FROM trip_vehicles WHERE trip_id=t.id) AS capacity,
+        f"""SELECT t.*, (SELECT min(total) FROM (SELECT sum(v.capacity) AS total FROM trip_legs l JOIN trip_vehicles v ON v.trip_id=l.trip_id
+          AND (v.leg_positions='[]'::jsonb OR v.leg_positions @> to_jsonb(l.position)) WHERE l.trip_id=t.id GROUP BY l.id) totals) AS capacity,
     (SELECT count(*) FROM trip_vehicles WHERE trip_id=t.id) AS vehicle_count
     FROM trips t WHERE {VISIBILITY} ORDER BY starts_at DESC,id""",
         manage=actor.user["role"] in {"admin", "attendant"},
         user_id=actor.user["id"],
     )
+    if result:
+        agenda = await rows(
+            actor.db,
+            """SELECT l.trip_id,l.id,l.position,l.origin,l.destination,l.starts_at,l.ends_at,
+          bool_and((v.journey_states -> l.id::text ->> 'status')='completed') IS TRUE AS completed
+          FROM trip_legs l JOIN trip_vehicles v ON v.trip_id=l.trip_id
+            AND (v.leg_positions='[]'::jsonb OR v.leg_positions @> to_jsonb(l.position))
+          WHERE l.trip_id=ANY(:ids) AND (:manage OR v.driver_id=:user OR EXISTS(SELECT 1 FROM trip_guides g WHERE g.allocation_id=v.id AND g.user_id=:user))
+          GROUP BY l.id ORDER BY l.starts_at,l.position""",
+            ids=[t["id"] for t in result],
+            manage=actor.user["role"] in {"admin", "attendant"},
+            user=actor.user["id"],
+        )
+        for trip in result:
+            trip["agenda_legs"] = [
+                leg for leg in agenda if leg["trip_id"] == trip["id"]
+            ]
+    return result
 
 
 async def detail(db, trip_id):
@@ -370,6 +456,10 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
         from app.route_templates import route_for_trip
 
         route_snapshot = await route_for_trip(db, data)
+        from app.package_itineraries import package_for_trip
+
+        package_snapshot = await package_for_trip(db, data)
+        usage_units = len(package_snapshot["destinations"]) if package_snapshot else 1
         start, end = data.legs[0].starts_at, data.legs[-1].ends_at
         # Reserva os intervalos de cada trecho, permitindo outras rotas entre ida e volta.
         for allocation in data.vehicles:
@@ -394,11 +484,17 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
                         409,
                         "Motorista ou guia não está ativo nesta empresa ou tem outro perfil.",
                     )
-                for reserved_leg in data.legs:
+                for position, reserved_leg in enumerate(data.legs, 1):
+                    if (
+                        allocation.leg_positions
+                        and position not in allocation.leg_positions
+                    ):
+                        continue
                     conflict = await db.scalar(
                         text("""SELECT t.id FROM trips t JOIN trip_vehicles tv ON tv.trip_id=t.id JOIN trip_legs scheduled_leg ON scheduled_leg.trip_id=t.id
                        LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id
                        WHERE t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
+                       AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
                        AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
                         {
                             "start": reserved_leg.starts_at,
@@ -442,6 +538,16 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
         )
         await db.execute(
             text(
+                "UPDATE trips SET package_snapshot=CAST(:snapshot AS jsonb),usage_units=:units WHERE id=:id"
+            ),
+            {
+                "id": trip_id,
+                "snapshot": json.dumps(package_snapshot) if package_snapshot else None,
+                "units": usage_units,
+            },
+        )
+        await db.execute(
+            text(
                 "UPDATE trips SET requires_cpf=:cpf,geography_complete=true WHERE id=:id"
             ),
             {
@@ -479,13 +585,14 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
         for allocation in data.vehicles:
             allocation_id = uuid4()
             await db.execute(
-                text("""INSERT INTO trip_vehicles(id,company_id,trip_id,vehicle_id,driver_id,capacity,routes)
-              SELECT :id,company_id,:trip,id,:driver,capacity,CAST(:routes AS jsonb) FROM vehicles WHERE id=:vehicle"""),
+                text("""INSERT INTO trip_vehicles(id,company_id,trip_id,vehicle_id,driver_id,capacity,routes,leg_positions)
+              SELECT :id,company_id,:trip,id,:driver,capacity,CAST(:routes AS jsonb),CAST(:legs AS jsonb) FROM vehicles WHERE id=:vehicle"""),
                 {
                     "id": allocation_id,
                     "trip": trip_id,
                     "driver": allocation.driver_id,
                     "vehicle": allocation.vehicle_id,
+                    "legs": json.dumps(allocation.leg_positions),
                     "routes": json.dumps(
                         [route.model_dump() for route in allocation.routes]
                     ),
@@ -502,7 +609,9 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
                         "user": guide,
                     },
                 )
-        await consume_trip(db, actor.company_id, trip_id, data.operation_key)
+        await consume_trip(
+            db, actor.company_id, trip_id, data.operation_key, quantity=usage_units
+        )
         await audit(db, actor.company_id, actor.user["id"], "trip.created", trip_id)
         return await detail(db, trip_id)
 
@@ -531,6 +640,20 @@ async def change_status(trip_id: UUID, data: Status, request: Request, actor: Au
             raise HTTPException(
                 409,
                 "Há passageiros a bordo. Registre desembarque ou reverta os embarques antes de encerrar a viagem.",
+            )
+        if (
+            data.status == "completed"
+            and trip["mode"] == "multi_destination"
+            and any(
+                v["journey_states"].get(str(l["id"]), {}).get("status") != "completed"
+                for l in trip["legs"]
+                for v in trip["vehicles"]
+                if not v["leg_positions"] or l["position"] in v["leg_positions"]
+            )
+        ):
+            raise HTTPException(
+                409,
+                "Finalize todos os deslocamentos do pacote antes de concluir a viagem.",
             )
         if data.status == "cancelled":
             from app.reservations import cancel_trip_reservations

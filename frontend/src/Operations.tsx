@@ -1,3 +1,11 @@
+import {
+  PackageItineraryEditor,
+  PackageProgram,
+  emptyPackageItinerary,
+  packageItineraryInput,
+  type PackageItinerary,
+  type PackageSnapshot,
+} from "./PackageItinerary";
 import { type SavedRoute } from "./RouteCatalog";
 import { CitySelect } from "./components/CitySelect";
 import { VehicleRoute } from "./VehicleRoute";
@@ -22,6 +30,8 @@ type Vehicle = {
   is_active: boolean;
 };
 type Package = {
+  version?: number;
+  itinerary?: PackageItinerary | null;
   id: string;
   name: string;
   destination: string;
@@ -63,12 +73,16 @@ type Leg = {
   stops: Stop[];
 };
 type Allocation = {
+  allocation_id?: string;
+  leg_positions?: number[];
   routes?: { leg_position: number; stop_positions: number[] }[];
   vehicle_id: string;
   driver_id: string;
   guide_ids: string[];
 };
 type Detail = Trip & {
+  package_snapshot?: PackageSnapshot | null;
+  usage_units?: number;
   route_id?: string | null;
   route_snapshot?: SavedRoute | null;
   completion?: Completion | null;
@@ -78,6 +92,7 @@ type Detail = Trip & {
     id: string;
     vehicle_id: string;
     driver_id: string;
+    leg_positions?: number[];
     name: string;
     plate: string;
     capacity: number;
@@ -93,6 +108,12 @@ const status: Record<string, string> = {
   completed: "Concluída",
   cancelled: "Cancelada",
 };
+const legLabel = (mode: string, index: number) =>
+  mode === "multi_destination"
+    ? `Deslocamento ${index + 1}`
+    : index === 0
+      ? "Ida"
+      : "Volta";
 const stopKind: Record<string, string> = {
   boarding: "Embarque",
   dropoff: "Desembarque",
@@ -320,7 +341,7 @@ export function Operations({
                 : tab === "trips" && action === "allocations"
                   ? "Escolha uma viagem agendada para adicionar veículos e definir motoristas/guias. Os veículos já usados pelas reservas são preservados."
                   : tab === "trips"
-                    ? "Cada viagem consome uma unidade da franquia, independentemente da quantidade de veículos."
+                    ? "Viagem avulsa consome uma unidade. Pacotes consomem uma unidade por destino comercial, com retorno incluído."
                     : "Cadastros não consomem a franquia. Arquive para preservar o histórico."}
             </p>
           </div>
@@ -399,9 +420,11 @@ export function Operations({
                         <strong>{t.name}</strong>
                         <div className="muted">
                           {t.destination} ·{" "}
-                          {t.mode === "round_trip"
-                            ? "Ida e volta"
-                            : "Somente ida"}
+                          {t.mode === "multi_destination"
+                            ? "Pacote completo"
+                            : t.mode === "round_trip"
+                              ? "Ida e volta"
+                              : "Somente ida"}
                         </div>
                       </td>
                       <td>
@@ -555,6 +578,7 @@ export function Operations({
                   {money(detail.data.price_cents)} por passageiro
                 </p>
                 <TripCompletion
+                  mode={detail.data.mode}
                   status={detail.data.status}
                   completion={detail.data.completion}
                   legs={detail.data.legs}
@@ -565,12 +589,15 @@ export function Operations({
                       v.guides.some((g) => g.id === user.id),
                   )}
                 />
+                {detail.data.package_snapshot && (
+                  <PackageProgram itinerary={detail.data.package_snapshot} />
+                )}
                 <h3>Itinerário previsto</h3>
                 <div className="trip-detail-grid">
                   {detail.data.legs.map((l, i) => (
                     <section className="operation-card" key={i}>
                       <h3>
-                        {i === 0 ? "Ida" : "Volta"}: {l.origin} →{" "}
+                        {legLabel(detail.data!.mode, i)}: {l.origin} →{" "}
                         {l.destination}
                       </h3>
                       <p>
@@ -621,29 +648,34 @@ export function Operations({
                           (user.role === "driver"
                             ? v.driver_id === user.id
                             : v.guides.some((g) => g.id === user.id))) &&
-                          detail.data.legs.map((leg, index) => (
-                            <button
-                              key={leg.id}
-                              className="button secondary"
-                              disabled={
-                                ["completed", "cancelled"].includes(
-                                  detail.data!.status,
-                                ) ||
-                                v.journey_states?.[leg.id]?.status ===
-                                  "completed"
-                              }
-                              onClick={() => {
-                                setBoarding({
-                                  tripId: detail.data!.id,
-                                  allocationId: v.id,
-                                  legId: leg.id,
-                                });
-                                setSelected(null);
-                              }}
-                            >
-                              Abrir embarque · {index === 0 ? "Ida" : "Volta"}
-                            </button>
-                          ))}
+                          detail.data.legs.map(
+                            (leg, index) =>
+                              (!v.leg_positions?.length ||
+                                v.leg_positions.includes(index + 1)) && (
+                                <button
+                                  key={leg.id}
+                                  className="button secondary"
+                                  disabled={
+                                    ["completed", "cancelled"].includes(
+                                      detail.data!.status,
+                                    ) ||
+                                    v.journey_states?.[leg.id]?.status ===
+                                      "completed"
+                                  }
+                                  onClick={() => {
+                                    setBoarding({
+                                      tripId: detail.data!.id,
+                                      allocationId: v.id,
+                                      legId: leg.id,
+                                    });
+                                    setSelected(null);
+                                  }}
+                                >
+                                  Abrir embarque ·{" "}
+                                  {legLabel(detail.data!.mode, index)}
+                                </button>
+                              ),
+                          )}
                       </section>
                     ))}
                 </div>
@@ -663,7 +695,9 @@ export function Operations({
                     )}
                     <button
                       className="button secondary"
-                      disabled={pending}
+                      disabled={
+                        pending || detail.data.mode === "multi_destination"
+                      }
                       onClick={async () => {
                         setPending(true);
                         setError("");
@@ -793,6 +827,9 @@ function CatalogModal({
   const [pending, setPending] = useState(false);
   const vehicle = kind === "vehicles";
   const existing = item === "new" ? null : item;
+  const [itinerary, setItinerary] = useState<PackageItinerary | null>(
+    (existing as Package)?.itinerary || null,
+  );
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
@@ -805,6 +842,8 @@ function CatalogModal({
         ...(vehicle
           ? { plate: f.get("plate"), capacity: Number(f.get("capacity")) }
           : {
+              itinerary: itinerary ? packageItineraryInput(itinerary) : null,
+              expected_version: (existing as Package)?.version || null,
               destination: f.get("destination"),
               description: f.get("description"),
               price_cents: parseMoney(String(f.get("price"))),
@@ -827,6 +866,7 @@ function CatalogModal({
   return (
     <Modal
       title={`${existing ? "Editar" : "Novo"} ${vehicle ? "veículo" : "pacote"}`}
+      wide={!vehicle}
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
@@ -891,6 +931,28 @@ function CatalogModal({
             </Field>
           </>
         )}
+        {!vehicle && (
+          <>
+            <label>
+              <input
+                type="checkbox"
+                checked={!!itinerary}
+                onChange={(e) =>
+                  setItinerary(
+                    e.target.checked ? emptyPackageItinerary() : null,
+                  )
+                }
+              />{" "}
+              Pacote com roteiro de vários destinos
+            </label>
+            {itinerary && (
+              <PackageItineraryEditor
+                value={itinerary}
+                onChange={setItinerary}
+              />
+            )}
+          </>
+        )}
         <label>
           <input
             name="is_active"
@@ -937,7 +999,13 @@ function TripModal({
   const [selectedRoute, setSelectedRoute] = useState<SavedRoute | null>(
     initial?.route_snapshot || null,
   );
-  const legacyEdit = edit && !initial?.route_snapshot && !selectedRoute;
+  const [selectedPackage, setSelectedPackage] =
+    useState<PackageSnapshot | null>(initial?.package_snapshot || null);
+  const [baseDate, setBaseDate] = useState(
+    edit && initial ? localInput(initial.legs[0].starts_at).slice(0, 10) : "",
+  );
+  const legacyEdit =
+    edit && !initial?.route_snapshot && !selectedRoute && !selectedPackage;
   const [key] = useState(() => crypto.randomUUID());
   const [mode, setMode] = useState(initial?.mode || "round_trip");
   const [legs, setLegs] = useState<Leg[]>(
@@ -968,6 +1036,8 @@ function TripModal({
     ...(initial
       ? initial.vehicles.map((v) => ({
           vehicle_id: v.vehicle_id,
+          allocation_id: edit ? v.id : undefined,
+          leg_positions: v.leg_positions || [],
           driver_id: v.driver_id,
           guide_ids: v.guides.map((g) => g.id),
           routes: v.routes || [],
@@ -981,6 +1051,38 @@ function TripModal({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const activeVehicles = vehicles.filter((v) => v.is_active);
+  const legCount = selectedPackage
+    ? legs.length
+    : mode === "round_trip"
+      ? 2
+      : 1;
+  function packageLegs(snapshot: PackageSnapshot, dateValue: string): Leg[] {
+    return snapshot.steps.map((step) => {
+      const { duration_minutes, stop_minutes, ...leg } = step.leg!;
+      const day = dateValue
+        ? new Date(
+            Date.parse(`${dateValue}T12:00:00Z`) + (step.day - 1) * 86400000,
+          )
+            .toISOString()
+            .slice(0, 10)
+        : "";
+      const starts = day ? `${day}T${step.departure_time}` : "";
+      return {
+        ...leg,
+        starts_at: starts,
+        ends_at: starts
+          ? localInput(
+              new Date(
+                Date.parse(instant(starts)) +
+                  (duration_minutes + stop_minutes) * 60000,
+              ).toISOString(),
+            )
+          : "",
+        stops: leg.stops.map((stop) => ({ ...stop, scheduled_at: null })),
+      };
+    });
+  }
+
   function updateLeg(index: number, update: Partial<Leg>) {
     if (update.stops && update.stops.length !== legs[index].stops.length)
       setAllocations((current) =>
@@ -1009,7 +1111,8 @@ function TripModal({
           ),
         })),
       );
-    const template = selectedRoute?.legs[index];
+    const template =
+      selectedPackage?.steps[index].leg || selectedRoute?.legs[index];
     if (update.starts_at && template) {
       update.ends_at = localInput(
         new Date(
@@ -1032,10 +1135,11 @@ function TripModal({
     setPending(true);
     setError("");
     try {
-      if (!selectedRoute && !legacyEdit)
+      if (!selectedRoute && !selectedPackage && !legacyEdit)
         throw new Error("Selecione uma Rota ativa antes de criar a viagem.");
       await (edit ? patch : post)(edit ? `/trips/${initial!.id}` : "/trips", {
         ...(edit ? { expected_version: initial!.edit_version } : {}),
+        package_version: selectedPackage?.version || null,
         route_id: selectedRoute?.id || null,
         route_version: selectedRoute?.version || null,
         operation_key: key,
@@ -1044,7 +1148,7 @@ function TripModal({
         destination,
         mode,
         price_cents: parseMoney(price),
-        legs: legs.slice(0, mode === "round_trip" ? 2 : 1).map((l) => ({
+        legs: legs.slice(0, legCount).map((l) => ({
           ...l,
           starts_at: instant(l.starts_at),
           ends_at: instant(l.ends_at),
@@ -1056,7 +1160,7 @@ function TripModal({
         vehicles: allocations.map((allocation) => ({
           ...allocation,
           routes: (allocation.routes || []).filter(
-            (route) => route.leg_position <= (mode === "round_trip" ? 2 : 1),
+            (route) => route.leg_position <= legCount,
           ),
         })),
       });
@@ -1078,16 +1182,41 @@ function TripModal({
         <p className="muted">
           {edit
             ? "A edição mantém o consumo da franquia e os valores das reservas existentes. Preserve os veículos já alocados e os trechos. Com reservas, mantenha as paradas existentes; endereços, nomes e horários podem mudar e novas paradas podem ser acrescentadas antes do destino."
-            : "A criação consome uma viagem da franquia."}{" "}
-          Horários no fuso de São Paulo. Veículos e equipe ficam reservados até
-          o fim do último trecho.
+            : selectedPackage
+              ? `A criação consome ${selectedPackage.destinations.length} viagens da franquia, com retorno incluído.`
+              : "Viagem avulsa consome uma viagem; pacote consome uma por destino comercial."}{" "}
+          Horários no fuso de São Paulo. Veículos e equipe ficam reservados nos
+          deslocamentos selecionados.
         </p>
         <Field label="Pacote (opcional)">
           <select
             value={packageId}
+            disabled={edit && !!initial?.package_snapshot}
             onChange={(e) => {
               setPackageId(e.target.value);
               const p = packages.find((p) => p.id === e.target.value);
+              if (p?.itinerary) {
+                const snapshot = {
+                  ...p.itinerary,
+                  id: p.id,
+                  name: p.name,
+                  version: p.version || 1,
+                };
+                setSelectedPackage(snapshot);
+                setSelectedRoute(null);
+                setMode("multi_destination");
+                setLegs(packageLegs(snapshot, baseDate));
+                setAllocations((current) =>
+                  current.map((a) => ({ ...a, routes: [], leg_positions: [] })),
+                );
+              } else if (selectedPackage) {
+                setSelectedPackage(null);
+                setMode("round_trip");
+                setLegs([blankLeg(), blankLeg()]);
+                setAllocations((current) =>
+                  current.map((a) => ({ ...a, routes: [], leg_positions: [] })),
+                );
+              }
               if (p) {
                 setName(p.name);
                 setDestination(p.destination);
@@ -1097,6 +1226,12 @@ function TripModal({
             }}
           >
             <option value="">Viagem avulsa</option>
+            {selectedPackage &&
+              !packages.some((p) => p.id === packageId && p.is_active) && (
+                <option value={packageId}>
+                  {selectedPackage.name} · roteiro desta saída
+                </option>
+              )}
             {packages
               .filter((p) => p.is_active)
               .map((p) => (
@@ -1134,122 +1269,195 @@ function TripModal({
             />
           </Field>
         </div>
-        <Field label="Rota">
-          <select
-            required={!legacyEdit}
-            value={selectedRoute?.id || ""}
-            disabled={edit && !!initial?.route_snapshot}
-            onChange={(e) => {
-              const route = routeList.data?.find(
-                (r) => r.id === e.target.value,
-              );
-              if (!route) {
-                setSelectedRoute(null);
-                return;
-              }
-              setSelectedRoute(route);
-              setMode(route.mode);
-              if (!name) setName(route.name);
-              if (!destination) setDestination(route.legs[0].destination);
-              setLegs(
-                route.legs
-                  .map<Leg>(
-                    ({ duration_minutes, stop_minutes, ...leg }, i) => ({
-                      ...leg,
-                      starts_at: legs[i]?.starts_at || "",
-                      ends_at: legs[i]?.starts_at
-                        ? localInput(
-                            new Date(
-                              Date.parse(instant(legs[i].starts_at)) +
-                                (duration_minutes + stop_minutes) * 60000,
-                            ).toISOString(),
-                          )
-                        : "",
-                      stops: leg.stops.map((stop) => ({
-                        ...stop,
-                        scheduled_at: null,
-                      })),
-                    }),
-                  )
-                  .concat(route.legs.length === 1 ? [blankLeg()] : []),
-              );
-              setAllocations((current) =>
-                current.map((a) => ({ ...a, routes: [] })),
-              );
-            }}
-          >
-            <option value="">
-              {legacyEdit
-                ? "Percurso da viagem existente"
-                : "Selecione uma Rota"}
-            </option>
-            {selectedRoute &&
-              !routeList.data?.some(
-                (r) => r.id === selectedRoute.id && r.is_active,
-              ) && (
-                <option value={selectedRoute.id}>
-                  {selectedRoute.name} · percurso salvo na viagem
-                </option>
-              )}
-            {routeList.data
-              ?.filter((r) => r.is_active)
-              .map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ·{" "}
-                  {r.mode === "round_trip" ? "Ida e volta" : "Somente ida"}
-                </option>
-              ))}
-          </select>
-        </Field>
-        {routeList.error && <Alert>{routeList.error.message}</Alert>}
-        {!selectedRoute && !legacyEdit && (
-          <p className="muted">
-            Cadastre o percurso no menu Rotas antes de agendar a viagem.
-          </p>
-        )}
-        {selectedRoute &&
-          legs.slice(0, mode === "round_trip" ? 2 : 1).map((leg, index) => (
-            <fieldset className="operation-card" key={index}>
-              <legend>{index === 0 ? "Ida" : "Volta"}</legend>
-              <p>
-                <strong>
+        {selectedPackage && (
+          <>
+            <PackageProgram itinerary={selectedPackage} />
+            <p>
+              <strong>
+                Esta saída consumirá {selectedPackage.destinations.length}{" "}
+                {selectedPackage.destinations.length === 1
+                  ? "viagem"
+                  : "viagens"}{" "}
+                da franquia, com retorno incluído.
+              </strong>
+            </p>
+            <Field label="Data inicial do pacote">
+              <input
+                type="date"
+                required
+                value={baseDate}
+                onChange={(e) => {
+                  setBaseDate(e.target.value);
+                  setLegs(packageLegs(selectedPackage, e.target.value));
+                }}
+              />
+            </Field>
+            {legs.map((leg, index) => (
+              <fieldset className="operation-card" key={index}>
+                <legend>
+                  Deslocamento {index + 1} ·{" "}
+                  {selectedPackage.steps[index].destination_position
+                    ? "Destino comercial"
+                    : "Passeio / retorno"}
+                </legend>
+                <p>
                   {leg.origin} / {leg.origin_uf} → {leg.destination} /{" "}
                   {leg.destination_uf}
-                </strong>
-              </p>
-              <p>
-                {leg.origin_address} → {leg.destination_address}
-              </p>
-              <ol>
-                {leg.stops.map((stop, i) => (
-                  <li key={i}>
-                    {stop.name} · {stopKind[stop.kind]}
-                    <p className="muted">{stop.address}</p>
-                  </li>
-                ))}
-              </ol>
-              <Field label={`Saída da ${index === 0 ? "ida" : "volta"}`}>
-                <input
-                  type="datetime-local"
-                  required
-                  value={leg.starts_at}
-                  onChange={(e) =>
-                    updateLeg(index, {
-                      starts_at: e.target.value,
-                      ...(e.target.value ? {} : { ends_at: "" }),
-                    })
+                </p>
+                <p className="muted">
+                  {leg.origin_address} → {leg.destination_address}
+                </p>
+                <ol>
+                  {leg.stops.map((stop, i) => (
+                    <li key={i}>
+                      {stop.name} · {stopKind[stop.kind]}
+                    </li>
+                  ))}
+                </ol>
+                <Field label={`Saída do deslocamento ${index + 1}`}>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={leg.starts_at}
+                    onChange={(e) =>
+                      updateLeg(index, {
+                        starts_at: e.target.value,
+                        ...(e.target.value ? {} : { ends_at: "" }),
+                      })
+                    }
+                  />
+                </Field>
+                <p>
+                  Chegada prevista:{" "}
+                  {leg.ends_at ? date(instant(leg.ends_at)) : "Informe a saída"}
+                </p>
+              </fieldset>
+            ))}
+          </>
+        )}
+        {!selectedPackage && (
+          <>
+            <Field label="Rota">
+              <select
+                required={!legacyEdit}
+                value={selectedRoute?.id || ""}
+                disabled={edit && !!initial?.route_snapshot}
+                onChange={(e) => {
+                  const route = routeList.data?.find(
+                    (r) => r.id === e.target.value,
+                  );
+                  if (!route) {
+                    setSelectedRoute(null);
+                    return;
                   }
-                />
-              </Field>
+                  setSelectedRoute(route);
+                  setMode(route.mode);
+                  if (!name) setName(route.name);
+                  if (!destination) setDestination(route.legs[0].destination);
+                  setLegs(
+                    route.legs
+                      .map<Leg>(
+                        ({ duration_minutes, stop_minutes, ...leg }, i) => ({
+                          ...leg,
+                          starts_at: legs[i]?.starts_at || "",
+                          ends_at: legs[i]?.starts_at
+                            ? localInput(
+                                new Date(
+                                  Date.parse(instant(legs[i].starts_at)) +
+                                    (duration_minutes + stop_minutes) * 60000,
+                                ).toISOString(),
+                              )
+                            : "",
+                          stops: leg.stops.map((stop) => ({
+                            ...stop,
+                            scheduled_at: null,
+                          })),
+                        }),
+                      )
+                      .concat(route.legs.length === 1 ? [blankLeg()] : []),
+                  );
+                  setAllocations((current) =>
+                    current.map((a) => ({ ...a, routes: [] })),
+                  );
+                }}
+              >
+                <option value="">
+                  {legacyEdit
+                    ? "Percurso da viagem existente"
+                    : "Selecione uma Rota"}
+                </option>
+                {selectedRoute &&
+                  !routeList.data?.some(
+                    (r) => r.id === selectedRoute.id && r.is_active,
+                  ) && (
+                    <option value={selectedRoute.id}>
+                      {selectedRoute.name} · percurso salvo na viagem
+                    </option>
+                  )}
+                {routeList.data
+                  ?.filter((r) => r.is_active)
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} ·{" "}
+                      {r.mode === "round_trip" ? "Ida e volta" : "Somente ida"}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            {routeList.error && <Alert>{routeList.error.message}</Alert>}
+            {!selectedRoute && !legacyEdit && (
               <p className="muted">
-                Duração prevista:{" "}
-                {selectedRoute.legs[index].duration_minutes +
-                  selectedRoute.legs[index].stop_minutes}{" "}
-                minutos. Chegada prevista:{" "}
-                {leg.ends_at ? date(instant(leg.ends_at)) : "Informe a saída"}.
+                Cadastre o percurso no menu Rotas antes de agendar a viagem.
               </p>
-            </fieldset>
-          ))}
+            )}
+            {selectedRoute &&
+              legs.slice(0, mode === "round_trip" ? 2 : 1).map((leg, index) => (
+                <fieldset className="operation-card" key={index}>
+                  <legend>{index === 0 ? "Ida" : "Volta"}</legend>
+                  <p>
+                    <strong>
+                      {leg.origin} / {leg.origin_uf} → {leg.destination} /{" "}
+                      {leg.destination_uf}
+                    </strong>
+                  </p>
+                  <p>
+                    {leg.origin_address} → {leg.destination_address}
+                  </p>
+                  <ol>
+                    {leg.stops.map((stop, i) => (
+                      <li key={i}>
+                        {stop.name} · {stopKind[stop.kind]}
+                        <p className="muted">{stop.address}</p>
+                      </li>
+                    ))}
+                  </ol>
+                  <Field label={`Saída da ${index === 0 ? "ida" : "volta"}`}>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={leg.starts_at}
+                      onChange={(e) =>
+                        updateLeg(index, {
+                          starts_at: e.target.value,
+                          ...(e.target.value ? {} : { ends_at: "" }),
+                        })
+                      }
+                    />
+                  </Field>
+                  <p className="muted">
+                    Duração prevista:{" "}
+                    {selectedRoute.legs[index].duration_minutes +
+                      selectedRoute.legs[index].stop_minutes}{" "}
+                    minutos. Chegada prevista:{" "}
+                    {leg.ends_at
+                      ? date(instant(leg.ends_at))
+                      : "Informe a saída"}
+                    .
+                  </p>
+                </fieldset>
+              ))}
+          </>
+        )}
         {legacyEdit && (
           <>
             <Field label="Tipo de viagem">
@@ -1465,6 +1673,35 @@ function TripModal({
         {allocations.map((a, index) => (
           <fieldset className="operation-card" key={index}>
             <legend>Veículo {index + 1}</legend>
+            {selectedPackage && (
+              <div>
+                <p>Deslocamentos atendidos por este veículo e equipe</p>
+                {legs.map((leg, i) => {
+                  const positions = a.leg_positions?.length
+                    ? a.leg_positions
+                    : legs.map((_, j) => j + 1);
+                  return (
+                    <label className="operation-checkbox" key={i}>
+                      <input
+                        type="checkbox"
+                        checked={positions.includes(i + 1)}
+                        disabled={
+                          positions.length === 1 && positions.includes(i + 1)
+                        }
+                        onChange={(e) =>
+                          updateAllocation(index, {
+                            leg_positions: e.target.checked
+                              ? [...positions, i + 1].sort((x, y) => x - y)
+                              : positions.filter((p) => p !== i + 1),
+                          })
+                        }
+                      />{" "}
+                      Deslocamento {i + 1}: {leg.origin} → {leg.destination}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
             <Field label={`Veículo ${index + 1}`}>
               <select
                 required
@@ -1478,9 +1715,12 @@ function TripModal({
                   <option
                     key={v.id}
                     value={v.id}
-                    disabled={allocations.some(
-                      (a, i) => i !== index && a.vehicle_id === v.id,
-                    )}
+                    disabled={
+                      !selectedPackage &&
+                      allocations.some(
+                        (a, i) => i !== index && a.vehicle_id === v.id,
+                      )
+                    }
                   >
                     {v.name} · {v.plate} · {v.capacity} lugares
                   </option>
@@ -1505,52 +1745,53 @@ function TripModal({
                   ))}
               </select>
             </Field>
-            {legs
-              .slice(0, mode === "round_trip" ? 2 : 1)
-              .map((leg, legIndex) => (
-                <div key={legIndex}>
-                  <p>
-                    Paradas atendidas neste veículo -{" "}
-                    {legIndex === 0 ? "Ida" : "Volta"}
-                  </p>
-                  {leg.stops.map((stop, stopIndex) => {
-                    const route = a.routes?.find(
-                      (r) => r.leg_position === legIndex + 1,
-                    );
-                    const selected =
-                      route?.stop_positions || leg.stops.map((_, i) => i + 1);
-                    return (
-                      <label className="operation-checkbox" key={stopIndex}>
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(stopIndex + 1)}
-                          onChange={(e) =>
-                            updateAllocation(index, {
-                              routes: [
-                                ...(a.routes || []).filter(
-                                  (r) => r.leg_position !== legIndex + 1,
-                                ),
-                                {
-                                  leg_position: legIndex + 1,
-                                  stop_positions: e.target.checked
-                                    ? [...selected, stopIndex + 1].sort(
-                                        (a, b) => a - b,
-                                      )
-                                    : selected.filter(
-                                        (p) => p !== stopIndex + 1,
-                                      ),
-                                },
-                              ],
-                            })
-                          }
-                        />
-                        {stop.name || `Parada ${stopIndex + 1}`} - veículo{" "}
-                        {index + 1}
-                      </label>
-                    );
-                  })}
-                </div>
-              ))}
+            {legs.slice(0, legCount).map((leg, legIndex) => (
+              <div
+                key={legIndex}
+                hidden={
+                  !!a.leg_positions?.length &&
+                  !a.leg_positions.includes(legIndex + 1)
+                }
+              >
+                <p>
+                  Paradas atendidas neste veículo - {legLabel(mode, legIndex)}
+                </p>
+                {leg.stops.map((stop, stopIndex) => {
+                  const route = a.routes?.find(
+                    (r) => r.leg_position === legIndex + 1,
+                  );
+                  const selected =
+                    route?.stop_positions || leg.stops.map((_, i) => i + 1);
+                  return (
+                    <label className="operation-checkbox" key={stopIndex}>
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(stopIndex + 1)}
+                        onChange={(e) =>
+                          updateAllocation(index, {
+                            routes: [
+                              ...(a.routes || []).filter(
+                                (r) => r.leg_position !== legIndex + 1,
+                              ),
+                              {
+                                leg_position: legIndex + 1,
+                                stop_positions: e.target.checked
+                                  ? [...selected, stopIndex + 1].sort(
+                                      (a, b) => a - b,
+                                    )
+                                  : selected.filter((p) => p !== stopIndex + 1),
+                              },
+                            ],
+                          })
+                        }
+                      />
+                      {stop.name || `Parada ${stopIndex + 1}`} - veículo{" "}
+                      {index + 1}
+                    </label>
+                  );
+                })}
+              </div>
+            ))}
             <p>Guias deste veículo</p>
             {crew
               .filter((c) => c.role === "guide")

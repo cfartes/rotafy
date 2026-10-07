@@ -122,10 +122,10 @@ async def operational_report(actor, start, end, trip_id=None):
         COALESCE(sum(r.passenger_count) FILTER(WHERE rl.reservation_id IS NOT NULL AND r.status='pending' AND r.expires_at>:now),0)::integer AS held
       FROM trips t JOIN trip_vehicles a ON a.trip_id=t.id JOIN vehicles v ON v.id=a.vehicle_id
       JOIN trip_legs l ON l.trip_id=t.id JOIN segments s ON s.leg_id=l.id AND s.destination IS NOT NULL
-      LEFT JOIN reservations r ON r.allocation_id=a.id
-      LEFT JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=l.id
+      LEFT JOIN reservation_legs rl ON rl.allocation_id=a.id AND rl.leg_id=l.id
         AND rl.boarding_position<=s.position AND rl.dropoff_position>s.position
-      WHERE t.id=ANY(:ids)
+      LEFT JOIN reservations r ON r.id=rl.reservation_id
+      WHERE t.id=ANY(:ids) AND (a.leg_positions='[]'::jsonb OR a.leg_positions @> to_jsonb(l.position))
       GROUP BY t.id,a.id,v.id,l.id,s.position,s.name,s.destination
       ORDER BY t.starts_at,t.id,v.name,a.id,l.position,s.position LIMIT 5001
       """,
@@ -146,20 +146,20 @@ async def operational_report(actor, start, end, trip_id=None):
     result["presence"] = await rows(
         actor.db,
         """WITH counts AS (
-      SELECT r.allocation_id,rl.leg_id,
+      SELECT rl.allocation_id,rl.leg_id,
         count(*) FILTER(WHERE COALESCE(b.status,'waiting')='waiting')::integer AS waiting,
         count(*) FILTER(WHERE b.status='onboard')::integer AS onboard,
         count(*) FILTER(WHERE b.status='alighted')::integer AS alighted
       FROM reservations r JOIN passengers p ON p.reservation_id=r.id
       JOIN reservation_legs rl ON rl.reservation_id=r.id
       LEFT JOIN boarding_states b ON b.passenger_id=p.id AND b.leg_id=rl.leg_id
-      WHERE r.trip_id=ANY(:ids) AND r.status='confirmed' GROUP BY r.allocation_id,rl.leg_id)
+      WHERE r.trip_id=ANY(:ids) AND r.status='confirmed' GROUP BY rl.allocation_id,rl.leg_id)
       SELECT t.id AS trip_id,t.name AS trip_name,t.starts_at,v.name AS vehicle_name,
         a.id AS allocation_id,l.id AS leg_id,l.position AS leg_position,l.origin,l.destination,
         COALESCE(c.waiting,0) AS waiting,COALESCE(c.onboard,0) AS onboard,COALESCE(c.alighted,0) AS alighted
       FROM trips t JOIN trip_vehicles a ON a.trip_id=t.id JOIN vehicles v ON v.id=a.vehicle_id
       JOIN trip_legs l ON l.trip_id=t.id LEFT JOIN counts c ON c.allocation_id=a.id AND c.leg_id=l.id
-      WHERE t.id=ANY(:ids) ORDER BY t.starts_at,t.id,v.name,a.id,l.position LIMIT 5001""",
+      WHERE t.id=ANY(:ids) AND (a.leg_positions='[]'::jsonb OR a.leg_positions @> to_jsonb(l.position)) ORDER BY t.starts_at,t.id,v.name,a.id,l.position LIMIT 5001""",
         ids=ids,
     )
     if any(

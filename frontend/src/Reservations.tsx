@@ -27,6 +27,7 @@ type Leg = {
   stops: { name: string; kind: string }[];
 };
 type Trip = {
+  mode?: string;
   requires_cpf?: boolean;
   geography_complete?: boolean;
   id: string;
@@ -44,6 +45,7 @@ type Vehicle = {
   available: number;
   fits_family: boolean;
   legs: {
+    vehicle_name?: string;
     leg_id: string;
     available: number;
     segments: {
@@ -61,6 +63,13 @@ type Availability = {
   message: string;
 };
 type Reservation = {
+  leg_allocations?: {
+    position: number;
+    origin: string;
+    destination: string;
+    vehicle_name: string;
+    plate: string;
+  }[];
   edit_version: number;
   is_paid: boolean;
   id: string;
@@ -206,8 +215,15 @@ export function Reservations({
             {v.legs.map((l, index) => (
               <details key={l.leg_id}>
                 <summary>
-                  {index === 0 ? "Ida" : "Volta"} · {l.available} lugares na
-                  rota completa
+                  {trip.data?.mode === "multi_destination"
+                    ? `Deslocamento ${index + 1}`
+                    : index === 0
+                      ? "Ida"
+                      : "Volta"}{" "}
+                  · {l.available} lugares na rota completa
+                  {trip.data?.mode === "multi_destination" &&
+                    l.vehicle_name &&
+                    ` · ${l.vehicle_name}`}
                 </summary>
                 {l.segments.map((s, i) => (
                   <p key={i}>
@@ -504,7 +520,12 @@ function ReservationModal({
         {trip.legs.map((leg, i) => (
           <fieldset className="operation-card" key={leg.id}>
             <legend>
-              {i === 0 ? "Ida" : "Volta"}: {leg.origin} → {leg.destination}
+              {trip.mode === "multi_destination"
+                ? `Deslocamento ${i + 1}`
+                : i === 0
+                  ? "Ida"
+                  : "Volta"}
+              : {leg.origin} → {leg.destination}
             </legend>
             <div className="form-grid">
               <Field label={`Embarque da ${i === 0 ? "ida" : "volta"}`}>
@@ -925,14 +946,19 @@ function ReservationDetail({
           detail.data && (
             <>
               <h3>{detail.data.contact_name}</h3>
-              {active && ["scheduled", "in_progress"].includes(trip.status) && (
-                <button
-                  className="button secondary"
-                  onClick={() => setEditing(true)}
-                >
-                  Editar reserva
-                </button>
-              )}
+              {active &&
+                ["scheduled", "in_progress"].includes(trip.status) &&
+                !(
+                  trip.mode === "multi_destination" &&
+                  trip.status === "in_progress"
+                ) && (
+                  <button
+                    className="button secondary"
+                    onClick={() => setEditing(true)}
+                  >
+                    Editar reserva
+                  </button>
+                )}
               <p>
                 {detail.data.phone} · {status[detail.data.status]}
               </p>
@@ -1010,6 +1036,13 @@ function ReservationDetail({
                   </p>
                 );
               })}
+              {trip.mode === "multi_destination" &&
+                detail.data.leg_allocations?.map((a) => (
+                  <p key={a.position}>
+                    Deslocamento {a.position}: {a.origin} → {a.destination} ·{" "}
+                    {a.vehicle_name} · {a.plate}
+                  </p>
+                ))}
               {active && ["scheduled", "in_progress"].includes(trip.status) && (
                 <>
                   <p className="muted">
@@ -1160,8 +1193,8 @@ function ImportModal({
         <p className="muted">
           CSV UTF-8 ou XLSX com uma única aba e células de texto, sem fórmulas.
           Máximo de 2 MB e 500 passageiros. CPF é exigido em viagens
-          interestaduais, salvo as exceções. A importação usa a rota completa de
-          ida e volta e confirma as reservas.
+          interestaduais, salvo as exceções. A importação usa todos os
+          deslocamentos da viagem ou pacote e confirma as reservas.
         </p>
         <button className="button secondary" onClick={template}>
           Baixar modelo CSV

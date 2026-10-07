@@ -64,7 +64,7 @@ class Journey(OperationalInput):
 
 class Availability(OperationalInput):
     group_size: int = Field(default=1, ge=1, le=200, strict=True)
-    journeys: list[Journey] | None = Field(default=None, min_length=1, max_length=2)
+    journeys: list[Journey] | None = Field(default=None, min_length=1, max_length=60)
 
 
 class Reservation(OperationalInput):
@@ -74,7 +74,7 @@ class Reservation(OperationalInput):
     phone_country: str | None = Field(default=None, pattern=r"^[A-Z]{2}$")
     passengers: list[Passenger] = Field(min_length=1, max_length=200)
     allocation_id: UUID | None = None
-    journeys: list[Journey] | None = Field(default=None, min_length=1, max_length=2)
+    journeys: list[Journey] | None = Field(default=None, min_length=1, max_length=60)
     status: Literal["pending", "confirmed"] = "confirmed"
 
     @field_validator("phone_country", mode="before")
@@ -183,12 +183,12 @@ def itinerary(trip, journeys):
     return journeys
 
 
-async def capacity(db, trip, size, journeys=None, exclude=None):
+async def _capacity_fixed(db, trip, size, journeys=None, exclude=None):
     journeys = itinerary(trip, journeys)
     selected = {j.leg_id: j for j in journeys}
     uses = await rows(
         db,
-        """SELECT r.allocation_id,r.passenger_count,rl.leg_id,rl.boarding_position,rl.dropoff_position
+        """SELECT rl.allocation_id,r.passenger_count,rl.leg_id,rl.boarding_position,rl.dropoff_position
         FROM reservations r JOIN reservation_legs rl ON rl.reservation_id=r.id
         WHERE r.trip_id=:trip AND (r.status='confirmed' OR (r.status='pending' AND r.expires_at>:now))
         AND (CAST(:exclude AS uuid) IS NULL OR r.id<>CAST(:exclude AS uuid))""",
@@ -277,6 +277,105 @@ async def capacity(db, trip, size, journeys=None, exclude=None):
     }
 
 
+async def capacity(db, trip, size, journeys=None, exclude=None):
+    if trip["mode"] != "multi_destination":
+        return await _capacity_fixed(db, trip, size, journeys, exclude)
+    selection = {j.leg_id: j for j in itinerary(trip, journeys)}
+    reports = []
+    for leg in trip["legs"]:
+        stage = trip | {
+            "legs": [leg],
+            "vehicles": [
+                v
+                for v in trip["vehicles"]
+                if not v.get("leg_positions") or leg["position"] in v["leg_positions"]
+            ],
+        }
+        reports.append(
+            await _capacity_fixed(db, stage, size, [selection[leg["id"]]], exclude)
+        )
+    existing = (
+        await rows(
+            db,
+            "SELECT leg_id,allocation_id FROM reservation_legs WHERE reservation_id=:id",
+            id=exclude,
+        )
+        if exclude
+        else []
+    )
+    original = {row["leg_id"]: row["allocation_id"] for row in existing}
+    vehicle_ids = {v["id"]: v["vehicle_id"] for v in trip["vehicles"]}
+    options = []
+    for first in reports[0]["vehicles"]:
+        plan = []
+        for index, report in enumerate(reports):
+            candidates = [v for v in report["vehicles"] if v["fits_family"]]
+            candidates.sort(
+                key=lambda v: (
+                    0
+                    if original.get(trip["legs"][index]["id"]) == v["allocation_id"]
+                    and original.get(trip["legs"][0]["id"]) == first["allocation_id"]
+                    else 1,
+                    0
+                    if vehicle_ids[v["allocation_id"]]
+                    == vehicle_ids[first["allocation_id"]]
+                    else 1,
+                    v["available"] - size,
+                    str(v["allocation_id"]),
+                )
+            )
+            keeping = original.get(trip["legs"][0]["id"]) == first["allocation_id"]
+            chosen = (
+                first
+                if index == 0
+                else (
+                    next(
+                        (
+                            v
+                            for v in report["vehicles"]
+                            if v["allocation_id"]
+                            == original.get(trip["legs"][index]["id"])
+                        ),
+                        None,
+                    )
+                    if keeping
+                    else (candidates[0] if candidates else None)
+                )
+            )
+            if chosen:
+                plan.append(
+                    chosen["legs"][0]
+                    | {
+                        "allocation_id": chosen["allocation_id"],
+                        "vehicle_name": chosen["name"],
+                        "plate": chosen["plate"],
+                    }
+                )
+        available = (
+            min((l["available"] for l in plan), default=0)
+            if len(plan) == len(reports)
+            else 0
+        )
+        options.append(
+            first
+            | {"legs": plan, "available": available, "fits_family": available >= size}
+        )
+    fits = sorted(
+        [v for v in options if v["fits_family"]],
+        key=lambda v: (v["available"] - size, str(v["allocation_id"])),
+    )
+    return reports[0] | {
+        "vehicles": options,
+        "suggested_allocation_id": fits[0]["allocation_id"] if fits else None,
+        "can_book": bool(fits)
+        and trip["status"] == "scheduled"
+        and trip["starts_at"] > utc_now(),
+        "message": "Família com lugares em todos os deslocamentos do pacote."
+        if fits
+        else "Sem lugares para a família inteira em todos os deslocamentos. O pacote é vendido completo.",
+    }
+
+
 def bookable(trip):
     if not trip.get("geography_complete", False):
         raise HTTPException(
@@ -347,6 +446,13 @@ async def reservation_detail(db, reservation_id):
     result["journeys"] = await rows(
         db,
         "SELECT leg_id,boarding_position,dropoff_position FROM reservation_legs WHERE reservation_id=:id ORDER BY leg_id",
+        id=reservation_id,
+    )
+    result["leg_allocations"] = await rows(
+        db,
+        """SELECT rl.leg_id,rl.allocation_id,l.position,l.origin,l.destination,v.name AS vehicle_name,v.plate
+      FROM reservation_legs rl JOIN trip_legs l ON l.id=rl.leg_id JOIN trip_vehicles tv ON tv.id=rl.allocation_id JOIN vehicles v ON v.id=tv.vehicle_id
+      WHERE rl.reservation_id=:id ORDER BY l.position""",
         id=reservation_id,
     )
     return result
@@ -450,13 +556,21 @@ async def create_reservation(db, actor, trip, data, import_id=None, reference=No
     for journey in journeys:
         await db.execute(
             text(
-                "INSERT INTO reservation_legs(company_id,trip_id,reservation_id,leg_id,boarding_position,dropoff_position) VALUES(:company,:trip,:reservation,:leg_id,:boarding_position,:dropoff_position)"
+                "INSERT INTO reservation_legs(company_id,trip_id,reservation_id,leg_id,boarding_position,dropoff_position,allocation_id) VALUES(:company,:trip,:reservation,:leg_id,:boarding_position,:dropoff_position,:allocation)"
             ),
             journey.model_dump()
             | {
                 "company": actor.company_id,
                 "trip": trip["id"],
                 "reservation": reservation_id,
+                "allocation": next(
+                    (
+                        l.get("allocation_id", allocation_id)
+                        for l in allocation["legs"]
+                        if l["leg_id"] == journey.leg_id
+                    ),
+                    allocation_id,
+                ),
             },
         )
     await audit(
@@ -596,6 +710,11 @@ async def reallocate(
         trip = await trip_detail(db, reservation["trip_id"])
         if trip["status"] not in {"scheduled", "in_progress"}:
             raise HTTPException(409, "Somente viagens abertas permitem realocação.")
+        if trip["mode"] == "multi_destination" and trip["status"] != "scheduled":
+            raise HTTPException(
+                409,
+                "A realocação do pacote completo deve ocorrer antes do início, preservando os veículos dos deslocamentos já realizados.",
+            )
         report = await capacity(
             db,
             trip,
@@ -613,15 +732,31 @@ async def reallocate(
                 "O veículo escolhido não comporta a família inteira nos trechos reservados.",
             )
         if reservation["allocation_id"] != data.allocation_id:
+            for leg in allocation["legs"]:
+                stage_allocation = leg.get("allocation_id", data.allocation_id)
+                await db.execute(
+                    text(
+                        "UPDATE reservation_legs SET allocation_id=:allocation WHERE reservation_id=:id AND leg_id=:leg"
+                    ),
+                    {
+                        "allocation": stage_allocation,
+                        "id": reservation_id,
+                        "leg": leg["leg_id"],
+                    },
+                )
+                await db.execute(
+                    text(
+                        "UPDATE boarding_states SET allocation_id=:allocation,version=version+1,updated_at=now() WHERE reservation_id=:id AND leg_id=:leg AND status='waiting'"
+                    ),
+                    {
+                        "allocation": stage_allocation,
+                        "id": reservation_id,
+                        "leg": leg["leg_id"],
+                    },
+                )
             await db.execute(
                 text(
                     "UPDATE reservations SET allocation_id=:allocation,edit_version=edit_version+1 WHERE id=:id"
-                ),
-                {"allocation": data.allocation_id, "id": reservation_id},
-            )
-            await db.execute(
-                text(
-                    "UPDATE boarding_states SET allocation_id=:allocation,version=version+1,updated_at=now() WHERE reservation_id=:id AND status='waiting'"
                 ),
                 {"allocation": data.allocation_id, "id": reservation_id},
             )

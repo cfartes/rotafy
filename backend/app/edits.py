@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/v1", tags=["Edição"])
 async def invalidate_waiting(db, *, trip_id=None, reservation_id=None):
     await db.execute(
         text("""INSERT INTO boarding_states(company_id,trip_id,reservation_id,passenger_id,leg_id,allocation_id,status,version)
-      SELECT r.company_id,r.trip_id,r.id,p.id,rl.leg_id,r.allocation_id,'waiting',1
+      SELECT r.company_id,r.trip_id,r.id,p.id,rl.leg_id,rl.allocation_id,'waiting',1
       FROM reservations r JOIN passengers p ON p.reservation_id=r.id
       JOIN reservation_legs rl ON rl.reservation_id=r.id
       WHERE r.status IN ('pending','confirmed') AND
@@ -41,6 +41,25 @@ async def invalidate_waiting(db, *, trip_id=None, reservation_id=None):
 
 class TripEdit(Trip):
     expected_version: int = Field(ge=0, strict=True)
+
+
+def previous_allocation(old, allocation):
+    found = [
+        v
+        for v in old["vehicles"]
+        if (
+            v["id"] == allocation.allocation_id
+            if allocation.allocation_id
+            else v["vehicle_id"] == allocation.vehicle_id
+        )
+    ]
+    if len(found) > 1:
+        raise HTTPException(
+            409, "Identifique a alocação por trecho ao editar este pacote."
+        )
+    if found and found[0]["vehicle_id"] != allocation.vehicle_id:
+        raise HTTPException(409, "Preserve o veículo da alocação existente.")
+    return found[0] if found else None
 
 
 class PassengerEdit(Passenger):
@@ -89,6 +108,13 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                 409,
                 "Mantenha os veículos já alocados; novos veículos podem ser adicionados antes dos embarques.",
             )
+        preserved = {
+            v["id"] for a in data.vehicles if (v := previous_allocation(old, a))
+        }
+        if not {v["id"] for v in old["vehicles"]}.issubset(preserved):
+            raise HTTPException(
+                409, "Preserve as alocações existentes e seus passageiros."
+            )
         reserved = await db.scalar(
             text("SELECT 1 FROM reservations WHERE trip_id=:id LIMIT 1"),
             {"id": trip_id},
@@ -122,21 +148,14 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                     "Você pode editar endereços, nomes e horários ou acrescentar paradas antes do destino.",
                 )
         for allocation in data.vehicles:
-            previous_vehicle = next(
-                (
-                    v
-                    for v in old["vehicles"]
-                    if v["vehicle_id"] == allocation.vehicle_id
-                ),
-                None,
-            )
+            previous_vehicle = previous_allocation(old, allocation)
             if not previous_vehicle:
                 continue
             bookings = (
                 (
                     await db.execute(
                         text("""SELECT rl.* FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
-            WHERE r.allocation_id=:id AND r.status IN ('pending','confirmed')"""),
+            WHERE rl.allocation_id=:id AND r.status IN ('pending','confirmed')"""),
                         {"id": previous_vehicle["id"]},
                     )
                 )
@@ -167,14 +186,21 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                         409,
                         "O veículo precisa manter os pontos usados pelas reservas ativas.",
                     )
-        if data.package_id and not await db.scalar(
-            text("SELECT 1 FROM packages WHERE id=:id AND is_active"),
-            {"id": data.package_id},
+        if (
+            data.package_id
+            and not old.get("package_snapshot")
+            and not await db.scalar(
+                text("SELECT 1 FROM packages WHERE id=:id AND is_active"),
+                {"id": data.package_id},
+            )
         ):
             raise HTTPException(409, "Selecione um pacote ativo desta empresa.")
         from app.route_templates import route_for_trip
 
         route_snapshot = await route_for_trip(db, data, old)
+        from app.package_itineraries import package_for_trip
+
+        await package_for_trip(db, data, old)
         start, end = data.legs[0].starts_at, data.legs[-1].ends_at
         for allocation in data.vehicles:
             if not await db.scalar(
@@ -196,11 +222,17 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                         409,
                         "Selecione equipe ativa com o perfil correto nesta empresa.",
                     )
-                for reserved_leg in data.legs:
+                for position, reserved_leg in enumerate(data.legs, 1):
+                    if (
+                        allocation.leg_positions
+                        and position not in allocation.leg_positions
+                    ):
+                        continue
                     if await db.scalar(
                         text("""SELECT 1 FROM trips t JOIN trip_vehicles tv ON tv.trip_id=t.id JOIN trip_legs scheduled_leg ON scheduled_leg.trip_id=t.id
                       LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id WHERE t.id<>:id
                       AND t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
+                      AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
                       AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
                         {
                             "id": trip_id,
@@ -295,18 +327,8 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                         "new": len(leg.stops) + 1,
                     },
                 )
-        await db.execute(
-            text("SET CONSTRAINTS trip_vehicles_trip_id_driver_id_key DEFERRED")
-        )
         for allocation in data.vehicles:
-            previous = next(
-                (
-                    v
-                    for v in old["vehicles"]
-                    if v["vehicle_id"] == allocation.vehicle_id
-                ),
-                None,
-            )
+            previous = previous_allocation(old, allocation)
             if previous is None:
                 allocation_id = uuid4()
                 await db.execute(
@@ -327,11 +349,12 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                 )
             await db.execute(
                 text(
-                    "UPDATE trip_vehicles SET routes=CAST(:routes AS jsonb) WHERE id=:id"
+                    "UPDATE trip_vehicles SET routes=CAST(:routes AS jsonb),leg_positions=CAST(:legs AS jsonb) WHERE id=:id"
                 ),
                 {
                     "id": previous["id"],
                     "routes": json.dumps([r.model_dump() for r in allocation.routes]),
+                    "legs": json.dumps(allocation.leg_positions),
                 },
             )
             await db.execute(

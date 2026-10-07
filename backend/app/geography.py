@@ -21,6 +21,8 @@ def city(city_id):
 
 
 def served_positions(vehicle, leg):
+    if vehicle.get("leg_positions") and leg["position"] not in vehicle["leg_positions"]:
+        return set()
     routes = vehicle.get("routes") or []
     custom = next(
         (route for route in routes if route["leg_position"] == leg["position"]), None
@@ -62,6 +64,11 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
         raise HTTPException(404, "Rota não encontrada para este acesso.")
     legs = []
     for leg in trip["legs"]:
+        if (
+            vehicle.get("leg_positions")
+            and leg["position"] not in vehicle["leg_positions"]
+        ):
+            continue
         points = [
             {
                 "name": leg["origin"],
@@ -131,6 +138,7 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
         )
     return {
         "trip_id": trip["id"],
+        "mode": trip["mode"],
         "vehicle_name": vehicle["name"],
         "plate": vehicle["plate"],
         "legs": legs,

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, post } from "./api";
 import { Alert, Field } from "./components/ui";
 import { money } from "./billing/types";
+import { PackageProgram, type PackageItinerary } from "./PackageItinerary";
 import "./public-sales.css";
 
 type Company = {
@@ -18,6 +19,10 @@ type Company = {
   has_logo: boolean;
 };
 type Trip = {
+  package_itinerary?: Pick<
+    PackageItinerary,
+    "destinations" | "activities"
+  > | null;
   requires_cpf?: boolean;
   geography_complete?: boolean;
   id: string;
@@ -164,7 +169,11 @@ export function PublicBooking() {
                     <br />
                     <span className="muted">
                       Até {date(t.ends_at)} ·{" "}
-                      {t.mode === "round_trip" ? "Ida e volta" : "Somente ida"}
+                      {t.mode === "multi_destination"
+                        ? "Pacote completo"
+                        : t.mode === "round_trip"
+                          ? "Ida e volta"
+                          : "Somente ida"}
                     </span>
                   </p>
                   {t.description && <p>{t.description}</p>}
@@ -260,6 +269,9 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
           {date(trip.starts_at)} até {date(trip.ends_at)}
         </p>
         <strong>{money(trip.price_cents)} por passageiro</strong>
+        {trip.package_itinerary && (
+          <PackageProgram itinerary={trip.package_itinerary} />
+        )}
       </section>
       <div className="public-booking-grid">
         <form className="public-trip-card modal-form" onSubmit={submit}>
@@ -365,7 +377,12 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
           {trip.legs.map((l, i) => (
             <fieldset key={l.id} className="operation-card">
               <legend>
-                {i === 0 ? "Ida" : "Volta"}: {l.origin} → {l.destination}
+                {trip.mode === "multi_destination"
+                  ? `Deslocamento ${i + 1}`
+                  : i === 0
+                    ? "Ida"
+                    : "Volta"}
+                : {l.origin} → {l.destination}
               </legend>
               <Field label={`Embarque da ${i === 0 ? "ida" : "volta"}`}>
                 <select

@@ -130,6 +130,11 @@ def public_trip(trip):
             "geography_complete",
         ]
     } | {
+        "package_itinerary": {
+            k: trip["package_snapshot"][k] for k in ("destinations", "activities")
+        }
+        if trip.get("package_snapshot")
+        else None,
         "legs": [
             {
                 k: leg[k]
@@ -152,7 +157,7 @@ def public_trip(trip):
                 ]
             }
             for leg in trip["legs"]
-        ]
+        ],
     }
 
 

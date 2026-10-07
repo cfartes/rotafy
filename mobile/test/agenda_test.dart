@@ -53,6 +53,46 @@ void main() {
     expect(find.textContaining('Destino: Maragogi'), findsOneWidget);
   });
 
+  test('package already started still shows upcoming assigned stages', () {
+    final package =
+        trip(
+            'Circuito SC',
+            now.subtract(const Duration(days: 2)),
+            status: 'in_progress',
+          )
+          ..['mode'] = 'multi_destination'
+          ..['agenda_legs'] = [
+            {
+              'id': 'old',
+              'position': 1,
+              'starts_at': now
+                  .subtract(const Duration(days: 2))
+                  .toIso8601String(),
+              'destination': 'Destino anterior',
+              'completed': true,
+            },
+            {
+              'id': 'next',
+              'position': 3,
+              'starts_at': now.add(const Duration(days: 1)).toIso8601String(),
+              'destination': 'Urubici',
+              'completed': false,
+            },
+            {
+              'id': 'done',
+              'position': 4,
+              'starts_at': now.add(const Duration(days: 2)).toIso8601String(),
+              'destination': 'Concluído',
+              'completed': true,
+            },
+          ];
+    final result = upcomingTrips([package], now);
+    expect(result, hasLength(1));
+    expect(result.single['leg_id'], 'next');
+    expect(result.single['destination'], 'Urubici');
+    expect(result.single['name'], 'Circuito SC · Deslocamento 3');
+  });
+
   testWidgets('empty agenda explains seven day period', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
