@@ -22,10 +22,28 @@ class OperationController extends ChangeNotifier {
   }
 
   Future<void> reload() async {
-    prepared = await store.snapshots();
     records = await store.queue();
+    final snapshots = await store.snapshots();
+    closedTrips.addAll(
+      snapshots
+          .where((s) => s['data']['trip']['status'] == 'completed')
+          .map((s) => s['data']['trip']['id'] as String),
+    );
+    prepared = snapshots
+        .where(
+          (s) =>
+              !closedSnapshot(s) ||
+              records.any((r) => r['manifest'] == s['id']),
+        )
+        .toList();
     notifyListeners();
   }
+
+  bool closedSnapshot(Json snapshot) =>
+      ['completed', 'cancelled'].contains(snapshot['data']['trip']['status']) ||
+      snapshot['data']['journey']?['status'] == 'completed';
+
+  final Set<String> closedTrips = {};
 
   Future<bool> run(Future<void> Function() work) async {
     if (busy) return false;
@@ -72,6 +90,7 @@ class OperationController extends ChangeNotifier {
         throw StateError('Este aplicativo é destinado a motoristas e guias.');
       }
       await store.activate(result);
+      closedTrips.clear();
       await api.saveSession();
       user = result;
     } catch (_) {
@@ -95,13 +114,21 @@ class OperationController extends ChangeNotifier {
       if (e.status != 401) rethrow;
     }
     await store.clear();
+    closedTrips.clear();
     await api.clearSession();
     user = null;
   });
 
   Future<List<Json>> trips() async {
     final result = await api.request('GET', '/trips');
-    return (result as List)
+    for (final trip in result as List) {
+      if (trip['status'] == 'completed') {
+        closedTrips.add(trip['id']);
+        await store.closeTrip(trip['id']);
+      }
+    }
+    await reload();
+    return result
         .map((t) => Json.from(t))
         .where((t) => ['scheduled', 'in_progress'].contains(t['status']))
         .toList();
@@ -152,6 +179,10 @@ class OperationController extends ChangeNotifier {
       ...Json.from(snapshot['data']),
       ...response,
     });
+    if (response['trip']['status'] == 'completed') {
+      closedTrips.add(response['trip']['id']);
+      await store.closeTrip(response['trip']['id']);
+    }
   });
   Future<bool> synchronize() => run(() async {
     final current = Json.from(await api.request('GET', '/auth/me'));
@@ -178,6 +209,10 @@ class OperationController extends ChangeNotifier {
         );
         await store.acknowledge(record, response);
       } on ApiFailure catch (e) {
+        if (e.code == 'trip_closed') {
+          closedTrips.add(snapshot['data']['trip']['id']);
+          await store.closeTrip(snapshot['data']['trip']['id']);
+        }
         if (e.status == 0 ||
             e.status == 401 ||
             e.status == 403 ||
@@ -204,6 +239,11 @@ class OperationController extends ChangeNotifier {
         );
         await store.prepare(snapshot['endpoint'], data);
       } on ApiFailure catch (e) {
+        if (e.code == 'trip_closed') {
+          closedTrips.add(snapshot['data']['trip']['id']);
+          await store.closeTrip(snapshot['data']['trip']['id']);
+          continue;
+        }
         if ([404, 409].contains(e.status)) {
           final data = Json.from(snapshot['data']);
           data['can_write'] = false;
@@ -224,7 +264,11 @@ class OperationController extends ChangeNotifier {
       );
     } on ApiFailure catch (e) {
       if (e.status != 404 && e.code != 'trip_closed') rethrow;
-      data = Json.from(snapshot['data']);
+      if (e.code == 'trip_closed') {
+        closedTrips.add(snapshot['data']['trip']['id']);
+        await store.closeTrip(snapshot['data']['trip']['id']);
+      }
+      data = Json.from((await store.snapshot(record['manifest']))['data']);
       data['can_write'] = false;
       data['expires_at'] = DateTime.now().toUtc().toIso8601String();
     }

@@ -63,7 +63,11 @@ class _ManifestPageState extends State<ManifestPage> {
           : 'Registrar a chegada deste veículo ao destino. Os passageiros a bordo precisam estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
       start ? 'Iniciar viagem' : 'Confirmar chegada',
     )) {
-      await controller.changeJourney(manifestId, status);
+      if (await controller.changeJourney(manifestId, status) &&
+          mounted &&
+          !controller.prepared.any((s) => s['id'] == manifestId)) {
+        Navigator.pop(context);
+      }
     }
   }
 

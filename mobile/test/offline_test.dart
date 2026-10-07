@@ -62,6 +62,56 @@ void main() {
   });
   tearDown(() => store.db.close());
 
+  test(
+    'completed trips hide all cached legs and stay hidden after restart',
+    () async {
+      final data = fixture();
+      await store.prepare('/trips/t/vehicles/v/legs/ida', data);
+      await store.prepare('/trips/t/vehicles/v/legs/volta', data);
+      final controller = OperationController(
+        FakeApi(
+          (m, p, b) async => [
+            {'id': 'trip', 'status': 'completed'},
+            {'id': 'other', 'status': 'scheduled'},
+          ],
+        ),
+        store,
+      );
+      expect((await controller.trips()).single['id'], 'other');
+      expect(controller.prepared, isEmpty);
+      final restarted = OperationController(controller.api, store);
+      await restarted.reload();
+      expect(restarted.prepared, isEmpty);
+      expect(restarted.closedTrips, contains('trip'));
+      controller.dispose();
+      restarted.dispose();
+    },
+  );
+
+  test(
+    'closed leg hides only itself and closed trip keeps pending review',
+    () async {
+      final data = fixture();
+      data['journey'] = {'status': 'completed'};
+      await store.prepare('/trips/t/vehicles/v/legs/ida', data);
+      final active = fixture();
+      final id = await store.prepare('/trips/t/vehicles/v/legs/volta', active);
+      final controller = OperationController(
+        FakeApi((m, p, b) async => []),
+        store,
+      );
+      await controller.reload();
+      expect(controller.prepared.single['id'], id);
+      await store.enqueue(id, 'p1', 'board', capturedAt: now);
+      await store.closeTrip('trip');
+      await controller.reload();
+      expect(controller.prepared.single['id'], id);
+      expect(controller.prepared.single['data']['can_write'], false);
+      expect(controller.records, hasLength(1));
+      controller.dispose();
+    },
+  );
+
   test('bulk disembark preserves waiting and alighted passengers and is repeat safe', () async {
     final data = fixture();
     data['passengers'] = [

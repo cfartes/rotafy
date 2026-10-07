@@ -293,7 +293,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   leading: const Icon(Icons.offline_pin),
                   title: Text(s['data']['trip']['name']),
                   subtitle: Text(
-                    '${s['data']['vehicle']['name']} · ${s['data']['leg']['origin']} → ${s['data']['leg']['destination']}',
+                    c.closedSnapshot(s)
+                        ? 'Viagem encerrada · registros pendentes de revisão'
+                        : '${s['data']['vehicle']['name']} · ${s['data']['leg']['origin']} → ${s['data']['leg']['destination']}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.push(
@@ -324,7 +326,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             if (loading) const LinearProgressIndicator(),
             if (error != null) Text(error!),
-            ...trips.map((trip) => TripCard(controller: c, trip: trip)),
+            ...trips
+                .where((trip) => !c.closedTrips.contains(trip['id']))
+                .map((trip) => TripCard(controller: c, trip: trip)),
           ],
         ),
       ),

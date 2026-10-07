@@ -150,6 +150,21 @@ class LocalStore {
     return result;
   }
 
+  Future<void> closeTrip(String tripId) async {
+    for (final snapshot in await snapshots()) {
+      final data = Json.from(snapshot['data']);
+      if (data['trip']['id'] != tripId) continue;
+      data['trip'] = {...Json.from(data['trip']), 'status': 'completed'};
+      data['can_write'] = false;
+      await db.update(
+        'snapshots',
+        {'payload': await encode(data)},
+        where: 'id=? AND owner=?',
+        whereArgs: [snapshot['id'], snapshot['owner']],
+      );
+    }
+  }
+
   Future<List<Json>> queue([String? manifest]) async {
     final user = await meta('user');
     final rows = await db.query(

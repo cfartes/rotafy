@@ -1,5 +1,7 @@
 # Operação de viagem no Android — versão 1.1.0
 
+Na versão 1.1.1, viagens concluídas deixam de aparecer em Minhas viagens e nos trechos preparados. O fechamento local remove o trecho imediatamente; a conclusão geral oculta todos os trechos da viagem e persiste após reabrir o app. Conclusões feitas por outro usuário são reconhecidas ao atualizar as viagens ou sincronizar com conexão. Registros locais pendentes são preservados em um acesso de revisão, sem permitir operação da viagem encerrada. Foram aprovados 18 testes Flutter para esta atualização.
+
 Motorista e guia têm os mesmos controles, limitados aos veículos atribuídos ao usuário e à sua empresa. Uma viagem pode funcionar somente com motorista.
 
 ## Saída e chegada
