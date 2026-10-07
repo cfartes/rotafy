@@ -1,5 +1,19 @@
 # Operação de viagem no Android — versão 1.1.0
 
+## Localização da chegada — versão 1.3.0
+
+Ao confirmar a chegada, motorista ou guia pode autorizar a localização do celular. O app solicita apenas a localização em uso e tenta obter uma posição atual por até 15 segundos. Registra latitude, longitude, precisão em metros e horário informado pelo dispositivo. Posições antigas (mais de dois minutos) são descartadas. Localização aproximada também é aceita e a precisão fica visível.
+
+Se a permissão for negada/bloqueada, a localização estiver desativada ou a captura falhar, a chegada continua permitida e o motivo é enviado à API. A chegada exige conexão; esta funcionalidade não realiza rastreamento contínuo. O servidor associa o registro ao usuário autenticado e acrescenta seu próprio horário de recebimento. Repetir a confirmação preserva o primeiro registro e suas coordenadas.
+
+No painel da empresa, abra **Frota, pacotes e viagens → Viagens → Detalhes**. Cada veículo mostra a chegada por trecho, responsável, coordenadas, precisão e link **Ver local da chegada no Google Maps**, ou a justificativa de ausência da localização.
+
+Atualize o backend e o painel na VPS antes do APK 1.3.0: `cd /opt/nexus-rotafy` e `bash scripts/install_vps.sh`. Não há nova migração: os dados ficam no histórico JSON existente da migração 0015, protegido pelo isolamento da empresa. Apps anteriores continuam aceitos e chegadas sem o campo de localização são identificadas como não enviadas. Instale sobre a versão atual para preservar a fila local.
+
+Validação desta versão: 182 testes da API, 30 testes Flutter e build de produção do painel. GPS físico e diálogo de permissão ainda precisam de homologação no aparelho.
+
+Referência da integração de localização: [documentação oficial do Geolocator](https://pub.dev/packages/geolocator).
+
 Na versão 1.1.1, viagens concluídas deixam de aparecer em Minhas viagens e nos trechos preparados. O fechamento local remove o trecho imediatamente; a conclusão geral oculta todos os trechos da viagem e persiste após reabrir o app. Conclusões feitas por outro usuário são reconhecidas ao atualizar as viagens ou sincronizar com conexão. Registros locais pendentes são preservados em um acesso de revisão, sem permitir operação da viagem encerrada. Foram aprovados 18 testes Flutter para esta atualização.
 
 Motorista e guia têm os mesmos controles, limitados aos veículos atribuídos ao usuário e à sua empresa. Uma viagem pode funcionar somente com motorista.

@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão 1.3.0 captura a localização ao confirmar chegada, para motorista e guia, quando a permissão e o serviço estiverem disponíveis. A captura inclui precisão e horário, com limite de 15 segundos. Sem localização, registra o motivo e permite fechar. Atualize a API/painel antes de instalar; consulte [localização da chegada](../docs/JORNADA_MOBILE.md).
+
 A versão 1.2.0 adiciona o menu lateral **Agenda**, para motorista e guia. Exibe as próximas saídas entre hoje e os seis dias seguintes, em ordem cronológica, com data, horário local do celular em 24 horas e destino. Somente viagens atribuídas e abertas aparecem. A consulta/atualização exige conexão; a fila offline de embarques continua independente.
 
 A versão 1.1.0 inclui iniciar viagem, registrar chegada, desembarcar todos os passageiros a bordo, recolher a lista e filtrar Todos / Não embarcados / Embarcados, para motorista e guia. Veja [operação da viagem](../docs/JORNADA_MOBILE.md).

@@ -9,6 +9,7 @@ import 'package:nexus_rotafy/core/api.dart';
 import 'package:nexus_rotafy/core/offline.dart';
 import 'package:nexus_rotafy/core/store.dart';
 import 'package:nexus_rotafy/core/controller.dart';
+import 'package:nexus_rotafy/core/location.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const company = '11111111-1111-1111-1111-111111111111';
@@ -45,6 +46,17 @@ class FakeApi extends RotafyApi {
       handler(method, path, data);
 }
 
+class FixedArrivalLocation extends ArrivalLocationService {
+  final Json result;
+  int captures = 0;
+  FixedArrivalLocation(this.result);
+  @override
+  Future<Json> capture() async {
+    captures++;
+    return result;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
@@ -61,6 +73,47 @@ void main() {
     await store.activate(Json.from(fixture()['operator']));
   });
   tearDown(() => store.db.close());
+
+  for (final gps in [
+    {
+      'status': 'captured',
+      'latitude': -9.01,
+      'longitude': -35.22,
+      'accuracy_m': 10.0,
+      'captured_at': '2026-10-07T15:00:00Z',
+    },
+    {'status': 'unavailable', 'reason': 'permission_denied'},
+  ]) {
+    test(
+      'arrival sends ${gps['status']} location; start does not capture',
+      () async {
+        final data = fixture();
+        final id = await store.prepare('/trips/t/vehicles/v/legs/l', data);
+        final location = FixedArrivalLocation(gps);
+        final bodies = <Json>[];
+        final controller = OperationController(
+          FakeApi((method, path, body) async {
+            if (path == '/auth/me') return data['operator'];
+            bodies.add(body!);
+            return {
+              ...data,
+              'journey': {'status': body['status']},
+            };
+          }),
+          store,
+          location: location,
+        )..user = Json.from(data['operator']);
+        expect(await controller.changeJourney(id, 'in_progress'), true);
+        expect(location.captures, 0);
+        expect(bodies.first.containsKey('arrival_location'), false);
+        expect(await controller.changeJourney(id, 'completed'), true);
+        expect(bodies.last['arrival_location'], gps);
+        expect(location.captures, 1);
+        expect(controller.prepared, isEmpty);
+        controller.dispose();
+      },
+    );
+  }
 
   test(
     'completed trips hide all cached legs and stay hidden after restart',

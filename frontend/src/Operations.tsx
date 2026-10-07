@@ -73,6 +73,22 @@ type Detail = Trip & {
     plate: string;
     capacity: number;
     driver_name: string;
+    journey_states?: Record<
+      string,
+      {
+        status: string;
+        arrived_at?: string;
+        arrival_location?: {
+          status: string;
+          latitude?: number;
+          longitude?: number;
+          accuracy_m?: number;
+          captured_at?: string;
+          reason?: string;
+          actor_name?: string;
+        };
+      }
+    >;
     guides: { id: string; full_name: string }[];
     routes?: { leg_position: number; stop_positions: number[] }[];
   }[];
@@ -542,6 +558,61 @@ export function Operations({
                         {v.guides.map((g) => g.full_name).join(", ") ||
                           "Sem guia"}
                       </p>
+                      {detail.data!.legs.map((leg, index) => {
+                        const journey = v.journey_states?.[leg.id];
+                        if (!journey?.arrived_at) return null;
+                        const location = journey.arrival_location;
+                        const reasons: Record<string, string> = {
+                          permission_denied: "Permissão de localização negada",
+                          permission_denied_forever:
+                            "Permissão de localização bloqueada",
+                          service_disabled: "Localização desativada no celular",
+                          timeout: "Tempo esgotado ao obter localização",
+                          stale_position: "Posição recebida desatualizada",
+                          position_unavailable:
+                            "Não foi possível obter a posição",
+                          not_provided:
+                            "Localização não enviada pelo aplicativo",
+                        };
+                        return (
+                          <div key={leg.id}>
+                            <p>
+                              Chegada · {index === 0 ? "Ida" : "Volta"}:{" "}
+                              {date(journey.arrived_at)}
+                              {location?.actor_name &&
+                                ` · ${location.actor_name}`}
+                            </p>
+                            {location?.status === "captured" &&
+                            typeof location.latitude === "number" &&
+                            typeof location.longitude === "number" ? (
+                              <>
+                                <p>
+                                  GPS: {location.latitude.toFixed(6)},{" "}
+                                  {location.longitude.toFixed(6)}
+                                  {typeof location.accuracy_m === "number" &&
+                                    ` · precisão ${location.accuracy_m.toFixed(0)} m`}
+                                  {location.captured_at &&
+                                    ` · captura ${date(location.captured_at)}`}
+                                </p>
+                                <a
+                                  className="button secondary"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.latitude},${location.longitude}`)}`}
+                                >
+                                  Ver local da chegada no Google Maps
+                                </a>
+                              </>
+                            ) : (
+                              <p>
+                                Sem coordenadas ·{" "}
+                                {reasons[location?.reason ?? "not_provided"] ??
+                                  "Localização indisponível"}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                       {(manage ||
                         (user.role === "driver"
                           ? v.driver_id === user.id

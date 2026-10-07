@@ -8,7 +8,7 @@ from typing import Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request, Response
-from pydantic import AwareDatetime, Field
+from pydantic import AwareDatetime, Field, model_validator
 from sqlalchemy import text
 
 from app.billing.calendar import utc_now
@@ -35,8 +35,48 @@ class BoardingCommand(OperationalInput):
     expected_actor_id: UUID | None = None
 
 
+class ArrivalLocation(OperationalInput):
+    status: Literal["captured", "unavailable"]
+    latitude: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    accuracy_m: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    captured_at: AwareDatetime | None = None
+    reason: (
+        Literal[
+            "permission_denied",
+            "permission_denied_forever",
+            "service_disabled",
+            "timeout",
+            "stale_position",
+            "position_unavailable",
+        ]
+        | None
+    ) = None
+
+    @model_validator(mode="after")
+    def validate_capture(self):
+        coordinates = [self.latitude, self.longitude, self.accuracy_m, self.captured_at]
+        if self.status == "captured":
+            if any(value is None for value in coordinates) or self.reason is not None:
+                raise ValueError(
+                    "Localização capturada exige coordenadas, precisão e horário."
+                )
+        elif any(value is not None for value in coordinates) or self.reason is None:
+            raise ValueError(
+                "Localização indisponível exige motivo e não permite coordenadas."
+            )
+        return self
+
+
 class JourneyCommand(OperationalInput):
     status: Literal["in_progress", "completed"]
+    arrival_location: ArrivalLocation | None = None
+
+    @model_validator(mode="after")
+    def arrival_only(self):
+        if self.status != "completed" and self.arrival_location is not None:
+            raise ValueError("Localização de chegada somente ao fechar o trecho.")
+        return self
 
 
 @router.patch("/trips/{trip_id}/vehicles/{allocation_id}/legs/{leg_id}/journey")
@@ -96,6 +136,17 @@ async def change_journey(
                 "status": data.status,
                 "started_at" if data.status == "in_progress" else "arrived_at": now,
             }
+            if data.status == "completed":
+                states[str(leg_id)]["arrival_location"] = (
+                    data.arrival_location.model_dump(mode="json", exclude_none=True)
+                    if data.arrival_location
+                    else {"status": "unavailable", "reason": "not_provided"}
+                ) | {
+                    "actor_id": str(actor.user["id"]),
+                    "actor_name": actor.user["full_name"],
+                    "actor_role": actor.user["role"],
+                    "received_at": now,
+                }
             await db.execute(
                 text(
                     "UPDATE trip_vehicles SET journey_states=CAST(:states AS jsonb) WHERE id=:id"

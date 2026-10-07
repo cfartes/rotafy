@@ -123,6 +123,96 @@ def test_journey_guide_permissions_return_order_and_company_isolation(client, se
     )
 
 
+def test_arrival_gps_is_private_validated_and_preserved_on_retry(client, seeded):
+    trip, reservation, prefix = prepare(client, seeded)
+    login(client, email="driver0@example.com")
+    location = {
+        "status": "captured",
+        "latitude": -9.0123,
+        "longitude": -35.2222,
+        "accuracy_m": 12.5,
+        "captured_at": "2026-10-07T15:30:00Z",
+    }
+    assert (
+        client.patch(
+            prefix + "/journey",
+            json={"status": "in_progress", "arrival_location": location},
+        ).status_code
+        == 422
+    )
+    assert (
+        client.patch(prefix + "/journey", json={"status": "in_progress"}).status_code
+        == 200
+    )
+    for invalid in [
+        location | {"latitude": 91},
+        location | {"longitude": -181},
+        location | {"accuracy_m": -1},
+        location | {"captured_at": None},
+        {"status": "captured"},
+        {"status": "unavailable"},
+        location | {"status": "unavailable", "reason": "timeout"},
+    ]:
+        assert (
+            client.patch(
+                prefix + "/journey",
+                json={"status": "completed", "arrival_location": invalid},
+            ).status_code
+            == 422
+        )
+    arrived = client.patch(
+        prefix + "/journey", json={"status": "completed", "arrival_location": location}
+    )
+    assert arrived.status_code == 200, arrived.text
+    saved = arrived.json()["journey"]["arrival_location"]
+    assert saved["latitude"] == location["latitude"]
+    assert saved["longitude"] == location["longitude"]
+    assert saved["accuracy_m"] == 12.5
+    assert saved["actor_role"] == "driver" and saved["actor_id"] and saved["actor_name"]
+    assert saved["received_at"]
+    repeat = client.patch(
+        prefix + "/journey",
+        json={
+            "status": "completed",
+            "arrival_location": {"status": "unavailable", "reason": "timeout"},
+        },
+    )
+    assert repeat.json()["journey"]["arrival_location"] == saved
+    login(client)
+    detail = client.get(f"/api/v1/trips/{trip['id']}").json()
+    vehicle = next(
+        v for v in detail["vehicles"] if v["id"] == reservation["allocation_id"]
+    )
+    assert vehicle["journey_states"][trip["legs"][0]["id"]]["arrival_location"] == saved
+    login(client, company="empresa-b", email="admin@example.com")
+    assert client.get(prefix + "/manifest").status_code == 404
+
+
+def test_guide_can_arrive_without_gps_and_reason_is_saved(client, seeded):
+    _, _, prefix = prepare(client, seeded)
+    login(client, email="guide@example.com")
+    assert (
+        client.patch(prefix + "/journey", json={"status": "in_progress"}).status_code
+        == 200
+    )
+    result = client.patch(
+        prefix + "/journey",
+        json={
+            "status": "completed",
+            "arrival_location": {
+                "status": "unavailable",
+                "reason": "permission_denied",
+            },
+        },
+    )
+    assert result.status_code == 200, result.text
+    location = result.json()["journey"]["arrival_location"]
+    assert (
+        location["reason"] == "permission_denied" and location["actor_role"] == "guide"
+    )
+    assert "latitude" not in location
+
+
 def test_tickets_individual_per_leg_private_and_hash_only(client, seeded, owner):
     _, reservation, _ = prepare(client, seeded)
     issued = issue(client, reservation)

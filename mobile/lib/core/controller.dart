@@ -4,16 +4,19 @@ import 'package:flutter/foundation.dart';
 
 import 'api.dart';
 import 'store.dart';
+import 'location.dart';
 
 class OperationController extends ChangeNotifier {
   final RotafyApi api;
   final LocalStore store;
+  final ArrivalLocationService location;
   Json? user;
   List<Json> prepared = [];
   List<Json> records = [];
   bool busy = false;
   String? error;
-  OperationController(this.api, this.store);
+  OperationController(this.api, this.store, {ArrivalLocationService? location})
+    : location = location ?? ArrivalLocationService();
 
   Future<void> initialize() async {
     await api.restore();
@@ -173,6 +176,7 @@ class OperationController extends ChangeNotifier {
     final response = Json.from(
       await api.request('PATCH', '${snapshot['endpoint']}/journey', {
         'status': status,
+        if (status == 'completed') 'arrival_location': await location.capture(),
       }),
     );
     await store.prepare(snapshot['endpoint'], {

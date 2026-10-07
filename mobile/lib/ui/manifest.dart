@@ -60,7 +60,7 @@ class _ManifestPageState extends State<ManifestPage> {
       start ? 'Iniciar viagem?' : 'Fechar viagem neste trecho?',
       start
           ? 'Registrar a saída deste veículo e trecho. É necessário estar conectado.'
-          : 'Registrar a chegada deste veículo ao destino. Os passageiros a bordo precisam estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
+          : 'Registrar a chegada deste veículo ao destino e tentar capturar sua localização. Autorize o GPS quando solicitado. Se estiver indisponível, a chegada será registrada sem coordenadas. Os passageiros devem estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
       start ? 'Iniciar viagem' : 'Confirmar chegada',
     )) {
       if (await controller.changeJourney(manifestId, status) &&
