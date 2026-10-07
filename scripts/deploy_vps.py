@@ -227,6 +227,9 @@ def deploy(args):
         )
         return
     write_env(path, values)
+    # This tracked public script is mounted into Postgres, which reads it as
+    # its own user. Do not change permissions of environment/backup files.
+    os.chmod(ROOT / "infra" / "init-db.sh", 0o644)
     compose = [
         "docker",
         "compose",
@@ -244,6 +247,9 @@ def deploy(args):
 
     run("config", "--quiet")
     run("build", "api", "web")
+    # Load the complete graph as the image's non-root user before replacing
+    # running services. No migration or database connection occurs here.
+    run("run", "--rm", "--no-deps", "migrate", "alembic", "heads")
     if volume_exists:
         print("Banco existente: backup obrigatório antes das migrações.")
         run("up", "-d", "--wait", "--wait-timeout", "120", "db")

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-umask 077
+# Git sources must be readable by container users. The Python installer sets
+# umask 077 for credentials, locks and database backups separately.
+umask 022
 
 # Run this script on the VPS; existing Docker/Traefik are prerequisites.
 repo_url='https://github.com/cfartes/rotafy.git'

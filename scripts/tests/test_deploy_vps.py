@@ -116,6 +116,8 @@ class DeploymentTests(unittest.TestCase):
     def test_failed_backup_prevents_application_start_and_migrations(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            (root / "infra").mkdir()
+            (root / "infra" / "init-db.sh").write_text("#!/bin/sh\n", encoding="utf-8")
             values = {
                 key: "a" * 64
                 for key in (
@@ -161,6 +163,16 @@ class DeploymentTests(unittest.TestCase):
                 ]
                 self.assertEqual(len(started), 1)
                 self.assertEqual(started[0][-1], "db")
+                commands = [call.args[0] for call in execute.call_args_list]
+                graph_check = next(
+                    i
+                    for i, command in enumerate(commands)
+                    if command[-2:] == ["alembic", "heads"]
+                )
+                database_start = next(
+                    i for i, command in enumerate(commands) if "up" in command
+                )
+                self.assertLess(graph_check, database_start)
                 self.assertEqual(
                     deploy.read_env(root / ".env.production")["BOOTSTRAP_PASSWORD"],
                     values["BOOTSTRAP_PASSWORD"],

@@ -77,4 +77,20 @@ Resend depende de `RESEND_API_KEY`/`EMAIL_FROM` configurados no servidor; depois
 
 ## Validação
 
+### Permissões de arquivos e recuperação
+
+O código Git precisa ser legível pelos usuários dos containers. O wrapper usa `umask 022` para o checkout; o instalador Python mantém `umask 077` para credenciais e backups. As imagens ajustam leitura/travessia do código e dos arquivos estáticos, mantendo a execução da API sem root. O script público de inicialização PostgreSQL tem permissão 644; `.env.production` continua 600.
+
+Antes de substituir serviços, o instalador executa `alembic heads` na imagem de migração para conferir carregamento dos arquivos sem acessar ou alterar o banco.
+
+Se uma versão anterior falhar com `PermissionError` ao ler uma migração, atualize e reaplique:
+
+```sh
+cd /opt/nexus-rotafy
+git pull --ff-only origin main
+bash scripts/install_vps.sh
+```
+
+Não é necessário remover o banco, alterar a revisão Alembic manualmente ou liberar as permissões das credenciais.
+
 Sete testes do instalador aprovados em container Linux: preservação de credenciais, banco sem ambiente, configuração de proxy, modo de inspeção e falha de backup antes das migrações. Sintaxe Bash validada. Não houve execução na VPS nem homologação no Traefik real nesta entrega.
