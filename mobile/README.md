@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão 1.2.0 adiciona o menu lateral **Agenda**, para motorista e guia. Exibe as próximas saídas entre hoje e os seis dias seguintes, em ordem cronológica, com data, horário local do celular em 24 horas e destino. Somente viagens atribuídas e abertas aparecem. A consulta/atualização exige conexão; a fila offline de embarques continua independente.
+
 A versão 1.1.0 inclui iniciar viagem, registrar chegada, desembarcar todos os passageiros a bordo, recolher a lista e filtrar Todos / Não embarcados / Embarcados, para motorista e guia. Veja [operação da viagem](../docs/JORNADA_MOBILE.md).
 
 Flutter está em `C:\Users\ThinkPad\develop\flutter`; Android SDK em `%LOCALAPPDATA%\Android\Sdk`. Projeto requer Flutter 3.47.6 / Dart 3.13.5 ou versão compatível com o lockfile. Não precisa de conexão direta ao PostgreSQL.

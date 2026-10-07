@@ -6,6 +6,7 @@ import '../core/api.dart';
 import '../core/config.dart';
 import '../core/controller.dart';
 import 'manifest.dart';
+import 'agenda.dart';
 
 class RotafyApp extends StatelessWidget {
   final OperationController controller;
@@ -210,6 +211,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final c = widget.controller;
     return Scaffold(
+      drawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            children: [
+              const DrawerHeader(child: Text(AppConfig.name)),
+              ListTile(
+                leading: const Icon(Icons.directions_bus),
+                title: const Text('Viagens'),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month),
+                title: const Text('Agenda'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AgendaPage(controller: c),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         title: const Text(AppConfig.name),
         actions: [
