@@ -156,8 +156,8 @@ type PublicTicket = {
     vehicle_name: string;
     boarding: string;
     dropoff: string;
-    boarding_at: string;
-    dropoff_at: string;
+    boarding_at: string | null;
+    dropoff_at: string | null;
     boarding_status: string;
     reservation_status: string;
     trip_status: string;
@@ -245,11 +245,15 @@ export function TicketPage() {
             <p>{ticket.data.ticket.vehicle_name}</p>
             <p>
               Embarque: {ticket.data.ticket.boarding} ·{" "}
-              {date(ticket.data.ticket.boarding_at)}
+              {ticket.data.ticket.boarding_at
+                ? date(ticket.data.ticket.boarding_at)
+                : "Conforme orienta??o da ag?ncia"}
             </p>
             <p>
               Desembarque: {ticket.data.ticket.dropoff} ·{" "}
-              {date(ticket.data.ticket.dropoff_at)}
+              {ticket.data.ticket.dropoff_at
+                ? date(ticket.data.ticket.dropoff_at)
+                : "Sem hor?rio individual"}
             </p>
             <p className="tracking-status">
               {labels[ticket.data.ticket.boarding_status]}

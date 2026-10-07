@@ -36,6 +36,7 @@ from app.public_sales import router as public_sales_router
 from app.reports import router as reports_router
 from app.reservation_imports import router as reservation_imports_router
 from app.reservations import router as reservations_router
+from app.route_templates import router as route_templates_router
 from app.schemas import (
     ActiveUpdate,
     BrandingUpdate,
@@ -678,6 +679,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(logos_router)
     application.include_router(reports_router)
     application.include_router(edits_router)
+    application.include_router(route_templates_router)
     application.include_router(geography_router)
     application.include_router(email_auth_router)
     return application

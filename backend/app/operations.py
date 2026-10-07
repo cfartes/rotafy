@@ -51,7 +51,7 @@ class Package(OperationalInput):
 class Stop(OperationalInput):
     name: str = Field(min_length=2, max_length=150)
     kind: Literal["boarding", "dropoff", "both"]
-    scheduled_at: AwareDatetime
+    scheduled_at: AwareDatetime | None = None
     address: str = Field(default="", max_length=300)
 
 
@@ -86,6 +86,8 @@ class Leg(OperationalInput):
             raise ValueError("A chegada precisa ser posterior à saída.")
         previous = self.starts_at
         for stop in self.stops:
+            if stop.scheduled_at is None:
+                continue
             if not previous <= stop.scheduled_at <= self.ends_at:
                 raise ValueError("As paradas devem estar em ordem e dentro do trecho.")
             previous = stop.scheduled_at
@@ -116,6 +118,8 @@ class Allocation(OperationalInput):
 
 
 class Trip(OperationalInput):
+    route_id: UUID | None = None
+    route_version: int | None = Field(default=None, ge=1, strict=True)
     operation_key: UUID
     package_id: UUID | None = None
     name: str = Field(min_length=2, max_length=150)
@@ -363,6 +367,9 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
             {"id": data.package_id},
         ):
             raise HTTPException(409, "Selecione um pacote ativo da sua empresa.")
+        from app.route_templates import route_for_trip
+
+        route_snapshot = await route_for_trip(db, data)
         start, end = data.legs[0].starts_at, data.legs[-1].ends_at
         # Reserva os intervalos de cada trecho, permitindo outras rotas entre ida e volta.
         for allocation in data.vehicles:
@@ -421,6 +428,16 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
                 "end": end,
                 "key": data.operation_key,
                 "hash": fingerprint,
+            },
+        )
+        await db.execute(
+            text(
+                "UPDATE trips SET route_id=:route,route_snapshot=CAST(:snapshot AS jsonb) WHERE id=:id"
+            ),
+            {
+                "id": trip_id,
+                "route": data.route_id,
+                "snapshot": json.dumps(route_snapshot) if route_snapshot else None,
             },
         )
         await db.execute(

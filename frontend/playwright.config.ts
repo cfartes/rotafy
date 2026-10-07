@@ -5,6 +5,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: "list",
-  use: { baseURL: "http://localhost:5178", trace: "retain-on-failure" },
+  use: {
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:5178",
+    trace: "retain-on-failure",
+  },
   projects: [{ name: "chromium", use: { browserName: "chromium" } }],
 });

@@ -172,6 +172,9 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
             {"id": data.package_id},
         ):
             raise HTTPException(409, "Selecione um pacote ativo desta empresa.")
+        from app.route_templates import route_for_trip
+
+        route_snapshot = await route_for_trip(db, data, old)
         start, end = data.legs[0].starts_at, data.legs[-1].ends_at
         for allocation in data.vehicles:
             if not await db.scalar(
@@ -221,6 +224,16 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
                 "price": data.price_cents,
                 "start": start,
                 "end": end,
+            },
+        )
+        await db.execute(
+            text(
+                "UPDATE trips SET route_id=:route,route_snapshot=CAST(:snapshot AS jsonb) WHERE id=:id"
+            ),
+            {
+                "id": trip_id,
+                "route": data.route_id,
+                "snapshot": json.dumps(route_snapshot) if route_snapshot else None,
             },
         )
         await db.execute(

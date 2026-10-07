@@ -1,3 +1,4 @@
+import { type SavedRoute } from "./RouteCatalog";
 import { CitySelect } from "./components/CitySelect";
 import { VehicleRoute } from "./VehicleRoute";
 import { useEffect, useState, type FormEvent } from "react";
@@ -45,7 +46,7 @@ type Trip = {
 type Stop = {
   name: string;
   kind: string;
-  scheduled_at: string;
+  scheduled_at: string | null;
   address?: string;
 };
 type Leg = {
@@ -68,6 +69,8 @@ type Allocation = {
   guide_ids: string[];
 };
 type Detail = Trip & {
+  route_id?: string | null;
+  route_snapshot?: SavedRoute | null;
   completion?: Completion | null;
   package_id: string | null;
   legs: (Leg & { id: string })[];
@@ -575,7 +578,8 @@ export function Operations({
                       </p>
                       {l.stops.map((s, i) => (
                         <p key={i}>
-                          {stopKind[s.kind]}: {s.name} · {date(s.scheduled_at)}
+                          {stopKind[s.kind]}: {s.name}
+                          {s.scheduled_at ? ` · ${date(s.scheduled_at)}` : ""}
                         </p>
                       ))}
                     </section>
@@ -657,6 +661,59 @@ export function Operations({
                         Editar viagem
                       </button>
                     )}
+                    <button
+                      className="button secondary"
+                      disabled={pending}
+                      onClick={async () => {
+                        setPending(true);
+                        setError("");
+                        try {
+                          const trip = detail.data!;
+                          await post("/routes", {
+                            name: trip.name,
+                            mode: trip.mode,
+                            is_active: true,
+                            legs: trip.legs.map((leg) => ({
+                              origin: leg.origin,
+                              destination: leg.destination,
+                              origin_city_id: leg.origin_city_id,
+                              destination_city_id: leg.destination_city_id,
+                              origin_uf: leg.origin_uf,
+                              destination_uf: leg.destination_uf,
+                              origin_address: leg.origin_address || "",
+                              destination_address:
+                                leg.destination_address || "",
+                              duration_minutes: Math.max(
+                                1,
+                                Math.ceil(
+                                  (Date.parse(leg.ends_at) -
+                                    Date.parse(leg.starts_at)) /
+                                    60000,
+                                ),
+                              ),
+                              stop_minutes: 0,
+                              stops: leg.stops.map((stop) => ({
+                                name: stop.name,
+                                kind: stop.kind,
+                                address: stop.address || "",
+                              })),
+                            })),
+                          });
+                          await client.invalidateQueries({
+                            queryKey: ["routes"],
+                          });
+                          window.alert(
+                            "Rota criada. Disponível no menu Rotas; a duração foi copiada do intervalo previsto da viagem.",
+                          );
+                        } catch (err) {
+                          setError(message(err));
+                        } finally {
+                          setPending(false);
+                        }
+                      }}
+                    >
+                      Salvar percurso como Rota
+                    </button>
                     <button
                       className="button primary"
                       disabled={
@@ -873,6 +930,14 @@ function TripModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const routeList = useQuery({
+    queryKey: ["routes"],
+    queryFn: () => api<SavedRoute[]>("/routes"),
+  });
+  const [selectedRoute, setSelectedRoute] = useState<SavedRoute | null>(
+    initial?.route_snapshot || null,
+  );
+  const legacyEdit = edit && !initial?.route_snapshot && !selectedRoute;
   const [key] = useState(() => crypto.randomUUID());
   const [mode, setMode] = useState(initial?.mode || "round_trip");
   const [legs, setLegs] = useState<Leg[]>(
@@ -893,7 +958,7 @@ function TripModal({
               address: s.address,
               name: s.name,
               kind: s.kind,
-              scheduled_at: edit ? localInput(s.scheduled_at) : "",
+              scheduled_at: null,
             })),
           }))
           .concat(initial.legs.length === 1 ? [blankLeg()] : [])
@@ -944,6 +1009,15 @@ function TripModal({
           ),
         })),
       );
+    const template = selectedRoute?.legs[index];
+    if (update.starts_at && template) {
+      update.ends_at = localInput(
+        new Date(
+          Date.parse(instant(update.starts_at)) +
+            (template.duration_minutes + template.stop_minutes) * 60000,
+        ).toISOString(),
+      );
+    }
     setLegs((prev) =>
       prev.map((l, i) => (i === index ? { ...l, ...update } : l)),
     );
@@ -958,8 +1032,12 @@ function TripModal({
     setPending(true);
     setError("");
     try {
+      if (!selectedRoute && !legacyEdit)
+        throw new Error("Selecione uma Rota ativa antes de criar a viagem.");
       await (edit ? patch : post)(edit ? `/trips/${initial!.id}` : "/trips", {
         ...(edit ? { expected_version: initial!.edit_version } : {}),
+        route_id: selectedRoute?.id || null,
+        route_version: selectedRoute?.version || null,
         operation_key: key,
         package_id: packageId || null,
         name,
@@ -972,7 +1050,7 @@ function TripModal({
           ends_at: instant(l.ends_at),
           stops: l.stops.map((s) => ({
             ...s,
-            scheduled_at: instant(s.scheduled_at),
+            scheduled_at: s.scheduled_at ? instant(s.scheduled_at) : null,
           })),
         })),
         vehicles: allocations.map((allocation) => ({
@@ -993,6 +1071,7 @@ function TripModal({
   return (
     <Modal
       title={edit ? "Editar viagem" : "Nova viagem comercial"}
+      wide
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
@@ -1013,7 +1092,7 @@ function TripModal({
                 setName(p.name);
                 setDestination(p.destination);
                 setPrice(moneyInput(p.price_cents));
-                updateLeg(0, { destination: p.destination });
+                if (legacyEdit) updateLeg(0, { destination: p.destination });
               }
             }}
           >
@@ -1055,225 +1134,333 @@ function TripModal({
             />
           </Field>
         </div>
-        <Field label="Tipo de viagem">
-          <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="round_trip">Ida e volta</option>
-            <option value="one_way">Somente ida / trecho</option>
+        <Field label="Rota">
+          <select
+            required={!legacyEdit}
+            value={selectedRoute?.id || ""}
+            disabled={edit && !!initial?.route_snapshot}
+            onChange={(e) => {
+              const route = routeList.data?.find(
+                (r) => r.id === e.target.value,
+              );
+              if (!route) {
+                setSelectedRoute(null);
+                return;
+              }
+              setSelectedRoute(route);
+              setMode(route.mode);
+              if (!name) setName(route.name);
+              if (!destination) setDestination(route.legs[0].destination);
+              setLegs(
+                route.legs
+                  .map<Leg>(
+                    ({ duration_minutes, stop_minutes, ...leg }, i) => ({
+                      ...leg,
+                      starts_at: legs[i]?.starts_at || "",
+                      ends_at: legs[i]?.starts_at
+                        ? localInput(
+                            new Date(
+                              Date.parse(instant(legs[i].starts_at)) +
+                                (duration_minutes + stop_minutes) * 60000,
+                            ).toISOString(),
+                          )
+                        : "",
+                      stops: leg.stops.map((stop) => ({
+                        ...stop,
+                        scheduled_at: null,
+                      })),
+                    }),
+                  )
+                  .concat(route.legs.length === 1 ? [blankLeg()] : []),
+              );
+              setAllocations((current) =>
+                current.map((a) => ({ ...a, routes: [] })),
+              );
+            }}
+          >
+            <option value="">
+              {legacyEdit
+                ? "Percurso da viagem existente"
+                : "Selecione uma Rota"}
+            </option>
+            {selectedRoute &&
+              !routeList.data?.some(
+                (r) => r.id === selectedRoute.id && r.is_active,
+              ) && (
+                <option value={selectedRoute.id}>
+                  {selectedRoute.name} · percurso salvo na viagem
+                </option>
+              )}
+            {routeList.data
+              ?.filter((r) => r.is_active)
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name} ·{" "}
+                  {r.mode === "round_trip" ? "Ida e volta" : "Somente ida"}
+                </option>
+              ))}
           </select>
         </Field>
-        {legs.slice(0, mode === "round_trip" ? 2 : 1).map((l, index) => (
-          <fieldset className="operation-card" key={index}>
-            <legend>{index === 0 ? "Ida" : "Volta"}</legend>
-            <div className="form-grid">
-              <CitySelect
-                label={`origem da ${index === 0 ? "ida" : "volta"}`}
-                cityId={l.origin_city_id}
-                uf={l.origin_uf}
-                onChange={(city, uf) =>
-                  updateLeg(index, {
-                    origin: city?.name || "",
-                    origin_city_id: city?.id || null,
-                    origin_uf: uf || null,
-                  })
-                }
-              />
-              <CitySelect
-                label={`destino da ${index === 0 ? "ida" : "volta"}`}
-                cityId={l.destination_city_id}
-                uf={l.destination_uf}
-                onChange={(city, uf) =>
-                  updateLeg(index, {
-                    destination: city?.name || "",
-                    destination_city_id: city?.id || null,
-                    destination_uf: uf || null,
-                  })
-                }
-              />
-              <Field
-                label={`Endereço de saída da ${index === 0 ? "ida" : "volta"}`}
-              >
-                <input
-                  value={l.origin_address || ""}
-                  maxLength={300}
-                  placeholder="Terminal, rua, cidade e UF"
-                  onChange={(e) =>
-                    updateLeg(index, { origin_address: e.target.value })
-                  }
-                />
-              </Field>
-              <Field
-                label={`Endereço de chegada da ${index === 0 ? "ida" : "volta"}`}
-              >
-                <input
-                  value={l.destination_address || ""}
-                  maxLength={300}
-                  onChange={(e) =>
-                    updateLeg(index, { destination_address: e.target.value })
-                  }
-                />
-              </Field>
+        {routeList.error && <Alert>{routeList.error.message}</Alert>}
+        {!selectedRoute && !legacyEdit && (
+          <p className="muted">
+            Cadastre o percurso no menu Rotas antes de agendar a viagem.
+          </p>
+        )}
+        {selectedRoute &&
+          legs.slice(0, mode === "round_trip" ? 2 : 1).map((leg, index) => (
+            <fieldset className="operation-card" key={index}>
+              <legend>{index === 0 ? "Ida" : "Volta"}</legend>
+              <p>
+                <strong>
+                  {leg.origin} / {leg.origin_uf} → {leg.destination} /{" "}
+                  {leg.destination_uf}
+                </strong>
+              </p>
+              <p>
+                {leg.origin_address} → {leg.destination_address}
+              </p>
+              <ol>
+                {leg.stops.map((stop, i) => (
+                  <li key={i}>
+                    {stop.name} · {stopKind[stop.kind]}
+                    <p className="muted">{stop.address}</p>
+                  </li>
+                ))}
+              </ol>
               <Field label={`Saída da ${index === 0 ? "ida" : "volta"}`}>
                 <input
                   type="datetime-local"
                   required
-                  value={l.starts_at}
+                  value={leg.starts_at}
                   onChange={(e) =>
-                    updateLeg(index, { starts_at: e.target.value })
+                    updateLeg(index, {
+                      starts_at: e.target.value,
+                      ...(e.target.value ? {} : { ends_at: "" }),
+                    })
                   }
                 />
               </Field>
-              <Field label={`Chegada da ${index === 0 ? "ida" : "volta"}`}>
-                <input
-                  type="datetime-local"
-                  required
-                  value={l.ends_at}
-                  onChange={(e) =>
-                    updateLeg(index, { ends_at: e.target.value })
-                  }
-                />
-              </Field>
-            </div>
-            {l.stops.map((s, i) => (
-              <div className="operation-card" key={i}>
-                <Field label={`Parada ${i + 1}`}>
-                  <input
-                    required
-                    minLength={2}
-                    maxLength={150}
-                    value={s.name}
-                    onChange={(e) =>
-                      updateLeg(index, {
-                        stops: l.stops.map((s, j) =>
-                          j === i ? { ...s, name: e.target.value } : s,
-                        ),
-                      })
-                    }
-                  />
-                </Field>
-                <Field label={`Endereço da parada ${i + 1}`}>
-                  <input
-                    value={s.address || ""}
-                    maxLength={300}
-                    placeholder="Hotel, rua, número, cidade e UF"
-                    onChange={(e) =>
-                      updateLeg(index, {
-                        stops: l.stops.map((stop, j) =>
-                          j === i ? { ...stop, address: e.target.value } : stop,
-                        ),
-                      })
-                    }
-                  />
-                </Field>
-                <a
-                  className="text-button"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address || `${s.name}, ${l.origin}, ${l.origin_uf || ""}`)}`}
-                >
-                  Conferir local no Google Maps
-                </a>
+              <p className="muted">
+                Duração prevista:{" "}
+                {selectedRoute.legs[index].duration_minutes +
+                  selectedRoute.legs[index].stop_minutes}{" "}
+                minutos. Chegada prevista:{" "}
+                {leg.ends_at ? date(instant(leg.ends_at)) : "Informe a saída"}.
+              </p>
+            </fieldset>
+          ))}
+        {legacyEdit && (
+          <>
+            <Field label="Tipo de viagem">
+              <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                <option value="round_trip">Ida e volta</option>
+                <option value="one_way">Somente ida / trecho</option>
+              </select>
+            </Field>
+            {legs.slice(0, mode === "round_trip" ? 2 : 1).map((l, index) => (
+              <fieldset className="operation-card" key={index}>
+                <legend>{index === 0 ? "Ida" : "Volta"}</legend>
                 <div className="form-grid">
-                  <Field label="Operação da parada">
-                    <select
-                      value={s.kind}
-                      onChange={(e) =>
-                        updateLeg(index, {
-                          stops: l.stops.map((s, j) =>
-                            j === i ? { ...s, kind: e.target.value } : s,
-                          ),
-                        })
-                      }
-                    >
-                      {Object.entries(stopKind).map(([id, label]) => (
-                        <option key={id} value={id}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Horário da parada">
+                  <CitySelect
+                    label={`origem da ${index === 0 ? "ida" : "volta"}`}
+                    cityId={l.origin_city_id}
+                    uf={l.origin_uf}
+                    onChange={(city, uf) =>
+                      updateLeg(index, {
+                        origin: city?.name || "",
+                        origin_city_id: city?.id || null,
+                        origin_uf: uf || null,
+                      })
+                    }
+                  />
+                  <CitySelect
+                    label={`destino da ${index === 0 ? "ida" : "volta"}`}
+                    cityId={l.destination_city_id}
+                    uf={l.destination_uf}
+                    onChange={(city, uf) =>
+                      updateLeg(index, {
+                        destination: city?.name || "",
+                        destination_city_id: city?.id || null,
+                        destination_uf: uf || null,
+                      })
+                    }
+                  />
+                  <Field
+                    label={`Endereço de saída da ${index === 0 ? "ida" : "volta"}`}
+                  >
                     <input
-                      type="datetime-local"
-                      required
-                      value={s.scheduled_at}
+                      value={l.origin_address || ""}
+                      maxLength={300}
+                      placeholder="Terminal, rua, cidade e UF"
+                      onChange={(e) =>
+                        updateLeg(index, { origin_address: e.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    label={`Endereço de chegada da ${index === 0 ? "ida" : "volta"}`}
+                  >
+                    <input
+                      value={l.destination_address || ""}
+                      maxLength={300}
                       onChange={(e) =>
                         updateLeg(index, {
-                          stops: l.stops.map((s, j) =>
-                            j === i
-                              ? { ...s, scheduled_at: e.target.value }
-                              : s,
-                          ),
+                          destination_address: e.target.value,
                         })
                       }
                     />
                   </Field>
+                  <Field label={`Saída da ${index === 0 ? "ida" : "volta"}`}>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={l.starts_at}
+                      onChange={(e) =>
+                        updateLeg(index, { starts_at: e.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field label={`Chegada da ${index === 0 ? "ida" : "volta"}`}>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={l.ends_at}
+                      onChange={(e) =>
+                        updateLeg(index, { ends_at: e.target.value })
+                      }
+                    />
+                  </Field>
                 </div>
+                {l.stops.map((s, i) => (
+                  <div className="operation-card" key={i}>
+                    <Field label={`Parada ${i + 1}`}>
+                      <input
+                        required
+                        minLength={2}
+                        maxLength={150}
+                        value={s.name}
+                        onChange={(e) =>
+                          updateLeg(index, {
+                            stops: l.stops.map((s, j) =>
+                              j === i ? { ...s, name: e.target.value } : s,
+                            ),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label={`Endereço da parada ${i + 1}`}>
+                      <input
+                        value={s.address || ""}
+                        maxLength={300}
+                        placeholder="Hotel, rua, número, cidade e UF"
+                        onChange={(e) =>
+                          updateLeg(index, {
+                            stops: l.stops.map((stop, j) =>
+                              j === i
+                                ? { ...stop, address: e.target.value }
+                                : stop,
+                            ),
+                          })
+                        }
+                      />
+                    </Field>
+                    <a
+                      className="text-button"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address || `${s.name}, ${l.origin}, ${l.origin_uf || ""}`)}`}
+                    >
+                      Conferir local no Google Maps
+                    </a>
+                    <div className="form-grid">
+                      <Field label="Operação da parada">
+                        <select
+                          value={s.kind}
+                          onChange={(e) =>
+                            updateLeg(index, {
+                              stops: l.stops.map((s, j) =>
+                                j === i ? { ...s, kind: e.target.value } : s,
+                              ),
+                            })
+                          }
+                        >
+                          {Object.entries(stopKind).map(([id, label]) => (
+                            <option key={id} value={id}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() =>
+                        updateLeg(index, {
+                          stops: l.stops.filter((_, j) => j !== i),
+                        })
+                      }
+                    >
+                      Remover parada
+                    </button>
+                  </div>
+                ))}
                 <button
                   type="button"
                   className="button secondary"
+                  disabled={l.stops.length >= 50}
                   onClick={() =>
                     updateLeg(index, {
-                      stops: l.stops.filter((_, j) => j !== i),
+                      stops: [
+                        ...l.stops,
+                        { name: "", kind: "boarding", scheduled_at: "" },
+                      ],
                     })
                   }
                 >
-                  Remover parada
+                  Adicionar parada à {index === 0 ? "ida" : "volta"}
                 </button>
-              </div>
+                {index === 0 && mode === "round_trip" && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() =>
+                      updateLeg(1, {
+                        origin: l.destination,
+                        destination: l.origin,
+                        origin_city_id: l.destination_city_id,
+                        destination_city_id: l.origin_city_id,
+                        origin_uf: l.destination_uf,
+                        destination_uf: l.origin_uf,
+                        origin_address: l.destination_address,
+                        destination_address: l.origin_address,
+                        ...(!edit
+                          ? {
+                              stops: [...l.stops].reverse().map((stop) => ({
+                                ...stop,
+                                kind:
+                                  stop.kind === "boarding"
+                                    ? "dropoff"
+                                    : stop.kind === "dropoff"
+                                      ? "boarding"
+                                      : "both",
+                                scheduled_at: "",
+                              })),
+                            }
+                          : {}),
+                      })
+                    }
+                  >
+                    {edit
+                      ? "Inverter origem e destino da volta"
+                      : "Inverter rota para a volta"}
+                  </button>
+                )}
+              </fieldset>
             ))}
-            <button
-              type="button"
-              className="button secondary"
-              disabled={l.stops.length >= 50}
-              onClick={() =>
-                updateLeg(index, {
-                  stops: [
-                    ...l.stops,
-                    { name: "", kind: "boarding", scheduled_at: "" },
-                  ],
-                })
-              }
-            >
-              Adicionar parada à {index === 0 ? "ida" : "volta"}
-            </button>
-            {index === 0 && mode === "round_trip" && (
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() =>
-                  updateLeg(1, {
-                    origin: l.destination,
-                    destination: l.origin,
-                    origin_city_id: l.destination_city_id,
-                    destination_city_id: l.origin_city_id,
-                    origin_uf: l.destination_uf,
-                    destination_uf: l.origin_uf,
-                    origin_address: l.destination_address,
-                    destination_address: l.origin_address,
-                    ...(!edit
-                      ? {
-                          stops: [...l.stops].reverse().map((stop) => ({
-                            ...stop,
-                            kind:
-                              stop.kind === "boarding"
-                                ? "dropoff"
-                                : stop.kind === "dropoff"
-                                  ? "boarding"
-                                  : "both",
-                            scheduled_at: "",
-                          })),
-                        }
-                      : {}),
-                  })
-                }
-              >
-                {edit
-                  ? "Inverter origem e destino da volta"
-                  : "Inverter rota para a volta"}
-              </button>
-            )}
-          </fieldset>
-        ))}
+          </>
+        )}
         <h3>Veículos e equipe</h3>
         {allocations.map((a, index) => (
           <fieldset className="operation-card" key={index}>

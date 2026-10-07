@@ -16,7 +16,7 @@ type Route = {
       position: number;
       name: string;
       address: string;
-      scheduled_at: string;
+      scheduled_at: string | null;
       maps_url: string;
     }[];
   }[];
@@ -70,11 +70,13 @@ export function VehicleRoute({
             {leg.points.map((point) => (
               <li key={point.position}>
                 <strong>{point.name}</strong> ·{" "}
-                {new Intl.DateTimeFormat("pt-BR", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                  timeZone: "America/Sao_Paulo",
-                }).format(new Date(point.scheduled_at))}
+                {point.scheduled_at
+                  ? new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                      timeZone: "America/Sao_Paulo",
+                    }).format(new Date(point.scheduled_at))
+                  : "Hor?rio n?o definido"}
                 <p>{point.address}</p>
                 {disabled || closedLegIds.includes(leg.id) ? (
                   <button className="button secondary" disabled>
