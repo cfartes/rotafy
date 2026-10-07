@@ -53,6 +53,7 @@ def test_company_document_and_identifier_duplicates_are_explained(client):
         == 201
     )
     payload = {
+        "operational_profile": "tourism",
         "plan_id": plan_id,
         "slug": "company-document-test",
         "trade_name": "Teste Documento",

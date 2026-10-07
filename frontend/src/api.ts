@@ -8,6 +8,13 @@ export type User = {
   is_active: boolean;
 };
 export type Company = {
+  operational_profile?: "tourism" | "regular";
+  capabilities?: {
+    packages: boolean;
+    multi_destination: boolean;
+    recurring_lines: boolean;
+    independent_segments: boolean;
+  };
   id: string;
   slug: string;
   trade_name: string;
@@ -49,6 +56,8 @@ const fieldNames: Record<string, string> = {
   slug: "Identificador de acesso",
   cnpj: "CPF/CNPJ",
   plan_id: "Plano escolhido",
+  operational_profile: "Perfil operacional",
+  expected_profile: "Perfil anterior da empresa",
   full_name: "Nome completo",
   email: "E-mail",
   password: "Senha",

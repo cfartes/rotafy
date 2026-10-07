@@ -63,6 +63,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
     data: {
       cnpj: testDocument(),
       plan_id: plan.id,
+      operational_profile: "tourism",
       slug,
       trade_name: "Agência Homologação Operações",
       corporate_name: "Agência Homologação Operações LTDA",

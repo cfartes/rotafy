@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-async function setup(page: Page, role = "admin") {
+async function setup(page: Page, role = "admin", profile = "tourism") {
   const routes: Record<string, any>[] = [];
   const trips: Record<string, any>[] = [];
   const submissions: Record<string, any>[] = [];
@@ -27,6 +27,7 @@ async function setup(page: Page, role = "admin") {
         id: "company",
         trade_name: "Agência Teste",
         slug: "teste",
+        operational_profile: profile,
         is_active: true,
       };
     else if (path === "/locations/states")
@@ -224,6 +225,46 @@ test("driver does not see route administration", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Rotas", exact: true }),
   ).toHaveCount(0);
+});
+
+test("regular company schedules a simple trip without package controls", async ({
+  page,
+}) => {
+  const { submissions } = await setup(page, "admin", "regular");
+  await createRoute(page);
+  await expect(
+    page.getByText("Transporte regular", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Frota e viagens", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Pacotes", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Nova viagem", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Nova viagem comercial" });
+  await expect(
+    dialog.getByRole("combobox", { name: "Pacote (opcional)", exact: true }),
+  ).toHaveCount(0);
+  await dialog
+    .getByRole("combobox", { name: "Rota", exact: true })
+    .selectOption("route-0");
+  await dialog
+    .getByLabel("Saída da ida", { exact: true })
+    .fill("2027-01-10T08:00");
+  await dialog
+    .getByRole("combobox", { name: "Veículo 1", exact: true })
+    .selectOption("vehicle");
+  await dialog
+    .getByRole("combobox", { name: "Motorista 1", exact: true })
+    .selectOption("driver");
+  await dialog
+    .getByRole("button", { name: "Criar viagem", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  const sent = submissions.at(-1)!.data;
+  expect(sent.package_id).toBeNull();
+  expect(sent.mode).toBe("one_way");
 });
 
 test("route creation fits a phone screen", async ({ page }) => {

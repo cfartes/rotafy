@@ -62,6 +62,9 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
   expect(planResponse.status()).toBe(201);
   const plan = await planResponse.json();
   await page.getByRole("button", { name: "Nova empresa" }).click();
+  await page
+    .getByRole("combobox", { name: "Perfil operacional", exact: true })
+    .selectOption("tourism");
   await page.getByLabel("Plano escolhido").selectOption(plan.id);
   await page.getByLabel("Nome comercial").fill("Receptivo de Homologação");
   await page.getByLabel("Razão social").fill("Receptivo de Homologação LTDA");
@@ -99,6 +102,9 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
     .click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button", { name: "Nova empresa", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Perfil operacional", exact: true })
+    .selectOption("tourism");
   await page.getByLabel("Plano escolhido").selectOption(plan.id);
   await page.getByLabel("CPF/CNPJ").fill(testDocument());
   await page.getByLabel("Nome comercial").fill("Outra Empresa");

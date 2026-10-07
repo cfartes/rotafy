@@ -249,7 +249,10 @@ async def save_catalog(request, actor, table, data, item_id=None):
         await lock_company(db, actor.company_id, require_active=True)
         fields = data.model_dump(exclude={"expected_version"})
         if table == "packages":
+            from app.operational_profiles import require_tourism
             from app.package_itineraries import compile_itinerary
+
+            await require_tourism(db, actor.company_id)
 
             previous = (
                 await db.execute(

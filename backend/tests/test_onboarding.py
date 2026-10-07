@@ -8,6 +8,7 @@ from sqlalchemy import text
 
 BASIC = "10000000-0000-4000-8000-000000000001"
 PAYLOAD = {
+    "operational_profile": "tourism",
     "slug": "new-customer",
     "trade_name": "Novo cliente",
     "corporate_name": "Novo cliente LTDA",

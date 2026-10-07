@@ -83,6 +83,9 @@ test("primeiro acesso: plano e documento obrigatórios, assinatura automática e
       .getByLabel("Plano escolhido")
       .evaluate((input: HTMLSelectElement) => input.checkValidity()),
   ).toBe(false);
+  await page
+    .getByRole("combobox", { name: "Perfil operacional", exact: true })
+    .selectOption("tourism");
   await page.getByLabel("Plano escolhido").selectOption(plan.id);
   await page.getByLabel("CPF/CNPJ").fill("11111111111");
   await page

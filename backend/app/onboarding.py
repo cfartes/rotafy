@@ -9,7 +9,7 @@ from app.identity import audit
 from app.schemas import CompanyCreate
 from app.security import passwords
 
-COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at"
+COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile"
 
 
 async def register_company(db, payload: CompanyCreate, actor_id=None):
@@ -33,8 +33,8 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
     audit_actor = actor_id or user_id
     values = payload.model_dump(exclude={"admin", "plan_id"}) | {"id": company_id}
     await db.execute(
-        text("""INSERT INTO companies(id,slug,trade_name,corporate_name,cnpj,contact_phone,primary_color,accent_color)
-                                  VALUES(:id,:slug,:trade_name,:corporate_name,:cnpj,:contact_phone,:primary_color,:accent_color)"""),
+        text("""INSERT INTO companies(id,slug,trade_name,corporate_name,cnpj,contact_phone,primary_color,accent_color,operational_profile)
+                                  VALUES(:id,:slug,:trade_name,:corporate_name,:cnpj,:contact_phone,:primary_color,:accent_color,:operational_profile)"""),
         values,
     )
     await db.execute(

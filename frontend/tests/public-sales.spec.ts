@@ -63,6 +63,7 @@ test("página pública, acompanhamento privado, PAGO e alertas", async ({
     data: {
       cnpj: testDocument(),
       plan_id: plan.id,
+      operational_profile: "tourism",
       slug,
       trade_name: "Agência Homologação Reservas",
       corporate_name: "Agência Homologação Reservas LTDA",
@@ -249,9 +250,9 @@ test("página pública, acompanhamento privado, PAGO e alertas", async ({
   for (let i = 0; i < 5; i++)
     await buyer.getByRole("button", { name: "Adicionar passageiro" }).click();
   await expect(
-    buyer.getByRole("button", { name: "Avisar agência" }),
+    buyer.getByRole("button", { name: "Avisar empresa" }),
   ).toBeVisible();
-  await buyer.getByRole("button", { name: "Avisar agência" }).click();
+  await buyer.getByRole("button", { name: "Avisar empresa" }).click();
   await expect(buyer.getByText(/Agência avisada/)).toBeVisible();
   await page
     .getByRole("button", { name: "Revogar link de acompanhamento" })

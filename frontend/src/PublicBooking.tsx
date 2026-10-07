@@ -11,6 +11,7 @@ import { PackageProgram, type PackageItinerary } from "./PackageItinerary";
 import "./public-sales.css";
 
 type Company = {
+  operational_profile?: "tourism" | "regular";
   id: string;
   slug: string;
   trade_name: string;
@@ -152,11 +153,13 @@ export function PublicBooking() {
               <h1>
                 Escolha o destino.
                 <br />
-                Viaje com sua família.
+                {company?.operational_profile === "regular"
+                  ? "Encontre sua próxima saída."
+                  : "Viaje com sua família."}
               </h1>
               <p>
                 Consulte datas, pontos e lugares. Solicite sua reserva e
-                acompanhe a confirmação da agência.
+                acompanhe a confirmação da empresa.
               </p>
             </section>
             <div className="public-catalog">
@@ -192,14 +195,14 @@ export function PublicBooking() {
             {!catalog.data?.trips.length && (
               <section className="public-trip-card">
                 <h2>Novas viagens em breve</h2>
-                <p>A agência ainda não publicou viagens disponíveis.</p>
+                <p>A empresa ainda não publicou viagens disponíveis.</p>
               </section>
             )}
           </>
         )}
       </div>
       <footer className="public-footer">
-        Nexus Rotafy · Reservas com confirmação pela agência
+        Nexus Rotafy · Reservas com confirmação pela empresa
       </footer>
     </main>
   );
@@ -463,7 +466,7 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
                     { group_size: passengers.length, journeys },
                   );
                   setError(
-                    "Agência avisada sobre a falta de lugares para sua família.",
+                    "Empresa avisada sobre a falta de lugares para sua família.",
                   );
                 } catch (e) {
                   setError(message(e));
@@ -472,7 +475,7 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
                 }
               }}
             >
-              Avisar agência
+              Avisar empresa
             </button>
           )}
           {availability.error && <Alert>{message(availability.error)}</Alert>}
@@ -492,12 +495,12 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
           </p>
           <strong>{money(trip.price_cents * passengers.length)}</strong>
           <p>
-            Os lugares ficam bloqueados por 15 minutos. A agência precisa
+            Os lugares ficam bloqueados por 15 minutos. A empresa precisa
             confirmar a reserva dentro desse prazo.
           </p>
           <p>
             Esta página não recebe pagamentos. Combine o pagamento diretamente
-            com a agência.
+            com a empresa.
           </p>
           <p>
             Após solicitar, você receberá um link privado para acompanhar sua
@@ -536,7 +539,7 @@ export function TrackingPage() {
   });
   const data = tracking.data;
   const labels: Record<string, string> = {
-    pending: "Aguardando confirmação da agência",
+    pending: "Aguardando confirmação da empresa",
     confirmed: "Reserva confirmada",
     cancelled: "Reserva cancelada",
     expired: "O bloqueio de lugares expirou",
@@ -576,13 +579,13 @@ export function TrackingPage() {
             {data.status === "pending" && data.expires_at && (
               <Alert>
                 Confirmação necessária até {date(data.expires_at)}. Combine os
-                próximos passos diretamente com a agência.
+                próximos passos diretamente com a empresa.
               </Alert>
             )}
             {data.status === "expired" && (
               <p>
                 O prazo encerrou e os lugares foram liberados. Consulte a
-                agência para solicitar outra reserva.
+                empresa para solicitar outra reserva.
               </p>
             )}
             <Field label="Link privado da reserva">

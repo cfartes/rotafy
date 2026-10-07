@@ -3,7 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, patch, post, type Company } from "./api";
 import { Alert, Field } from "./components/ui";
 
-type Trip = { id: string; name: string; is_published: boolean; status: string };
+type Trip = {
+  id: string;
+  name: string;
+  is_published: boolean;
+  status: string;
+  package_id?: string | null;
+};
 type Key = { id: string; name: string; is_active: boolean; expires_at: string };
 type Notice = {
   id: string;
@@ -97,7 +103,7 @@ export function Sales({
           <img
             key={logoVersion}
             src={`/api/v1/public/${company.slug}/logo?v=${logoVersion}`}
-            alt="Logo da agência"
+            alt="Logo da empresa"
             width="96"
             onError={(e) => {
               e.currentTarget.style.display = "none";
@@ -138,7 +144,13 @@ export function Sales({
             <p>{t.is_published ? "Publicada" : "Privada"}</p>
             <button
               className="button secondary"
-              disabled={busy || (!t.is_published && t.status !== "scheduled")}
+              disabled={
+                busy ||
+                (!t.is_published &&
+                  (t.status !== "scheduled" ||
+                    (company.operational_profile === "regular" &&
+                      !!t.package_id)))
+              }
               onClick={() =>
                 run(() =>
                   patch(`/trips/${t.id}/publication`, {

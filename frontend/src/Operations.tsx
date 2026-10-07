@@ -187,12 +187,14 @@ export function Operations({
   onLogout,
   initialTab = "trips",
   action,
+  allowPackages = true,
 }: {
   manage: boolean;
   user: User;
   onLogout: () => void;
   initialTab?: "vehicles" | "trips";
   action?: "passengers" | "allocations";
+  allowPackages?: boolean;
 }) {
   const client = useQueryClient();
   const [tab, setTab] = useState<string>(initialTab);
@@ -220,7 +222,7 @@ export function Operations({
   const packages = useQuery({
     queryKey: ["operations", "packages"],
     queryFn: () => api<Package[]>("/packages"),
-    enabled: manage,
+    enabled: manage && allowPackages,
   });
   const crew = useQuery({
     queryKey: ["operations", "crew"],
@@ -305,7 +307,7 @@ export function Operations({
           {[
             ["trips", "Viagens"],
             ["vehicles", "Frota"],
-            ["packages", "Pacotes"],
+            ...(allowPackages ? [["packages", "Pacotes"]] : []),
           ].map(([id, label]) => (
             <button
               key={id}
@@ -341,7 +343,9 @@ export function Operations({
                 : tab === "trips" && action === "allocations"
                   ? "Escolha uma viagem agendada para adicionar veículos e definir motoristas/guias. Os veículos já usados pelas reservas são preservados."
                   : tab === "trips"
-                    ? "Viagem avulsa consome uma unidade. Pacotes consomem uma unidade por destino comercial, com retorno incluído."
+                    ? allowPackages
+                      ? "Viagem avulsa consome uma unidade. Pacotes consomem uma unidade por destino comercial, com retorno incluído."
+                      : "Cada viagem avulsa consome uma unidade da franquia."
                     : "Cadastros não consomem a franquia. Arquive para preservar o histórico."}
             </p>
           </div>
@@ -545,6 +549,7 @@ export function Operations({
           initial={duplicate}
           vehicles={vehicles.data || []}
           packages={packages.data || []}
+          allowPackages={allowPackages}
           crew={crew.data || []}
           onClose={() => setCreating(false)}
           onSaved={refresh}
@@ -556,6 +561,7 @@ export function Operations({
           edit
           vehicles={vehicles.data || []}
           packages={packages.data || []}
+          allowPackages={allowPackages}
           crew={crew.data || []}
           onClose={() => setEditingTrip(null)}
           onSaved={refresh}
@@ -682,17 +688,18 @@ export function Operations({
                 {error && <Alert>{error}</Alert>}
                 {manage && (
                   <footer className="modal-actions">
-                    {detail.data.status === "scheduled" && (
-                      <button
-                        className="button secondary"
-                        onClick={() => {
-                          setEditingTrip(detail.data!);
-                          setSelected(null);
-                        }}
-                      >
-                        Editar viagem
-                      </button>
-                    )}
+                    {detail.data.status === "scheduled" &&
+                      (allowPackages || !detail.data.package_id) && (
+                        <button
+                          className="button secondary"
+                          onClick={() => {
+                            setEditingTrip(detail.data!);
+                            setSelected(null);
+                          }}
+                        >
+                          Editar viagem
+                        </button>
+                      )}
                     <button
                       className="button secondary"
                       disabled={
@@ -763,7 +770,9 @@ export function Operations({
                     </button>
                     <button
                       className="button secondary"
-                      disabled={pending}
+                      disabled={
+                        pending || (!allowPackages && !!detail.data.package_id)
+                      }
                       onClick={() => {
                         setDuplicate(detail.data!);
                         setSelected(null);
@@ -980,6 +989,7 @@ function TripModal({
   edit = false,
   vehicles,
   packages,
+  allowPackages = true,
   crew,
   onClose,
   onSaved,
@@ -988,6 +998,7 @@ function TripModal({
   edit?: boolean;
   vehicles: Vehicle[];
   packages: Package[];
+  allowPackages?: boolean;
   crew: Crew[];
   onClose: () => void;
   onSaved: () => Promise<void>;
@@ -1184,63 +1195,75 @@ function TripModal({
             ? "A edição mantém o consumo da franquia e os valores das reservas existentes. Preserve os veículos já alocados e os trechos. Com reservas, mantenha as paradas existentes; endereços, nomes e horários podem mudar e novas paradas podem ser acrescentadas antes do destino."
             : selectedPackage
               ? `A criação consome ${selectedPackage.destinations.length} viagens da franquia, com retorno incluído.`
-              : "Viagem avulsa consome uma viagem; pacote consome uma por destino comercial."}{" "}
+              : allowPackages
+                ? "Viagem avulsa consome uma viagem; pacote consome uma por destino comercial."
+                : "A criação consome uma viagem da franquia."}{" "}
           Horários no fuso de São Paulo. Veículos e equipe ficam reservados nos
           deslocamentos selecionados.
         </p>
-        <Field label="Pacote (opcional)">
-          <select
-            value={packageId}
-            disabled={edit && !!initial?.package_snapshot}
-            onChange={(e) => {
-              setPackageId(e.target.value);
-              const p = packages.find((p) => p.id === e.target.value);
-              if (p?.itinerary) {
-                const snapshot = {
-                  ...p.itinerary,
-                  id: p.id,
-                  name: p.name,
-                  version: p.version || 1,
-                };
-                setSelectedPackage(snapshot);
-                setSelectedRoute(null);
-                setMode("multi_destination");
-                setLegs(packageLegs(snapshot, baseDate));
-                setAllocations((current) =>
-                  current.map((a) => ({ ...a, routes: [], leg_positions: [] })),
-                );
-              } else if (selectedPackage) {
-                setSelectedPackage(null);
-                setMode("round_trip");
-                setLegs([blankLeg(), blankLeg()]);
-                setAllocations((current) =>
-                  current.map((a) => ({ ...a, routes: [], leg_positions: [] })),
-                );
-              }
-              if (p) {
-                setName(p.name);
-                setDestination(p.destination);
-                setPrice(moneyInput(p.price_cents));
-                if (legacyEdit) updateLeg(0, { destination: p.destination });
-              }
-            }}
-          >
-            <option value="">Viagem avulsa</option>
-            {selectedPackage &&
-              !packages.some((p) => p.id === packageId && p.is_active) && (
-                <option value={packageId}>
-                  {selectedPackage.name} · roteiro desta saída
-                </option>
-              )}
-            {packages
-              .filter((p) => p.is_active)
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-          </select>
-        </Field>
+        {allowPackages && (
+          <Field label="Pacote (opcional)">
+            <select
+              value={packageId}
+              disabled={edit && !!initial?.package_snapshot}
+              onChange={(e) => {
+                setPackageId(e.target.value);
+                const p = packages.find((p) => p.id === e.target.value);
+                if (p?.itinerary) {
+                  const snapshot = {
+                    ...p.itinerary,
+                    id: p.id,
+                    name: p.name,
+                    version: p.version || 1,
+                  };
+                  setSelectedPackage(snapshot);
+                  setSelectedRoute(null);
+                  setMode("multi_destination");
+                  setLegs(packageLegs(snapshot, baseDate));
+                  setAllocations((current) =>
+                    current.map((a) => ({
+                      ...a,
+                      routes: [],
+                      leg_positions: [],
+                    })),
+                  );
+                } else if (selectedPackage) {
+                  setSelectedPackage(null);
+                  setMode("round_trip");
+                  setLegs([blankLeg(), blankLeg()]);
+                  setAllocations((current) =>
+                    current.map((a) => ({
+                      ...a,
+                      routes: [],
+                      leg_positions: [],
+                    })),
+                  );
+                }
+                if (p) {
+                  setName(p.name);
+                  setDestination(p.destination);
+                  setPrice(moneyInput(p.price_cents));
+                  if (legacyEdit) updateLeg(0, { destination: p.destination });
+                }
+              }}
+            >
+              <option value="">Viagem avulsa</option>
+              {selectedPackage &&
+                !packages.some((p) => p.id === packageId && p.is_active) && (
+                  <option value={packageId}>
+                    {selectedPackage.name} · roteiro desta saída
+                  </option>
+                )}
+              {packages
+                .filter((p) => p.is_active)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+        )}
         <Field label="Nome da viagem">
           <input
             value={name}

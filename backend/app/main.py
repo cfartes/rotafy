@@ -30,7 +30,8 @@ from app.identity import (
 )
 from app.logos import router as logos_router
 from app.observability import Metrics, Telemetry
-from app.onboarding import register_company
+from app.onboarding import COMPANY_FIELDS, register_company
+from app.operational_profiles import capabilities, change_profile
 from app.operations import router as operations_router
 from app.public_sales import router as public_sales_router
 from app.reports import router as reports_router
@@ -52,7 +53,6 @@ from app.schemas import (
 from app.security import DUMMY_HASH, digest, passwords, verify_password
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
-COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at"
 
 
 def create_app(settings: Settings | None = None):
@@ -394,11 +394,20 @@ def create_app(settings: Settings | None = None):
         company_id: UUID, payload: CompanyDetailsUpdate, actor: Auth
     ):
         nexus(actor)
-        if not await actor.db.scalar(
-            text("SELECT id FROM companies WHERE id=:id FOR UPDATE"),
+        previous_profile = await actor.db.scalar(
+            text("SELECT operational_profile FROM companies WHERE id=:id FOR UPDATE"),
             {"id": company_id},
-        ):
+        )
+        if not previous_profile:
             raise HTTPException(404, "Empresa não encontrada.")
+        await change_profile(
+            actor.db,
+            company_id,
+            previous_profile,
+            payload.operational_profile,
+            payload.expected_profile,
+            actor.user["id"],
+        )
         if await actor.db.scalar(
             text("SELECT 1 FROM companies WHERE slug=:slug AND id<>:id"),
             {"slug": payload.slug, "id": company_id},
@@ -418,7 +427,9 @@ def create_app(settings: Settings | None = None):
                 corporate_name=:corporate_name,cnpj=:cnpj,
                 contact_phone=CASE WHEN :update_phone THEN :contact_phone ELSE contact_phone END
                 WHERE id=:id RETURNING {COMPANY_FIELDS}"""),
-                    payload.model_dump()
+                    payload.model_dump(
+                        exclude={"operational_profile", "expected_profile"}
+                    )
                     | {
                         "id": company_id,
                         "update_phone": "contact_phone" in payload.model_fields_set,
@@ -437,7 +448,7 @@ def create_app(settings: Settings | None = None):
     async def own_company(actor: Auth):
         if actor.platform:
             raise HTTPException(403, "Entre pelo acesso da empresa.")
-        return dict(
+        result = dict(
             (
                 await actor.db.execute(
                     text(f"SELECT {COMPANY_FIELDS} FROM companies WHERE id=:id"),
@@ -447,6 +458,7 @@ def create_app(settings: Settings | None = None):
             .mappings()
             .one()
         )
+        return result | {"capabilities": capabilities(result["operational_profile"])}
 
     @application.patch("/api/v1/company")
     async def update_branding(payload: BrandingUpdate, actor: Auth):

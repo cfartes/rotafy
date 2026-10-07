@@ -6,6 +6,11 @@ import { TicketSales } from "./TicketSales";
 import { Reports } from "./Reports";
 import { DocumentInput } from "./components/DocumentInput";
 import { PhoneInput } from "./components/PhoneInput";
+import {
+  ProfileField,
+  profileName,
+  companyCapabilities,
+} from "./operationalProfiles";
 import { ForgotPassword, EmailDeliveries } from "./AccessEmail";
 import { TicketPage } from "./Tickets";
 const OfflineHub = lazy(() =>
@@ -366,6 +371,7 @@ function CreateCompany({
           cnpj: String(data.get("cnpj") || "").trim() || null,
           contact_phone: String(data.get("contact_phone") || "").trim() || null,
           plan_id: data.get("plan_id"),
+          operational_profile: data.get("operational_profile"),
           admin: {
             full_name: data.get("full_name"),
             email: data.get("email"),
@@ -449,6 +455,8 @@ function CreateCompany({
             </Field>
           </div>
         </div>
+        <h3 className="form-section">Tipo de operação</h3>
+        <ProfileField />
         <h3 className="form-section">Plano da empresa</h3>
         <Field label="Plano escolhido">
           <select
@@ -550,6 +558,8 @@ function EditCompany({
         slug: form.get("slug"),
         cnpj: String(form.get("cnpj") || "").trim() || null,
         contact_phone: String(form.get("contact_phone") || "").trim() || null,
+        operational_profile: form.get("operational_profile"),
+        expected_profile: company.operational_profile || "tourism",
       });
       await client.invalidateQueries({ queryKey: ["companies"] });
       await client.invalidateQueries({ queryKey: ["audit"] });
@@ -609,6 +619,10 @@ function EditCompany({
             </small>
           </Field>
         </div>
+        <ProfileField
+          initial={company.operational_profile || "tourism"}
+          editing
+        />
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
           <button type="button" className="button secondary" onClick={onClose}>
@@ -1098,7 +1112,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           <div>
             <strong>{subtitle}</strong>
             <small>
-              {isNexus ? "Gestão da plataforma" : "Espaço da empresa"}
+              {isNexus
+                ? "Gestão da plataforma"
+                : profileName(company.data?.operational_profile)}
             </small>
           </div>
         </div>
@@ -1116,7 +1132,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     label:
                       user.role === "guide" || user.role === "driver"
                         ? "Minhas viagens"
-                        : "Frota, pacotes e viagens",
+                        : companyCapabilities(company.data).packages
+                          ? "Frota, pacotes e viagens"
+                          : "Frota e viagens",
                     icon: Route,
                   },
                 ]
@@ -1250,7 +1268,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {page === "reports"
                   ? isNexus
                     ? "Acompanhe o consumo por empresa e ciclo."
-                    : "Consulte ocupação, reservas e presença da agência."
+                    : "Consulte ocupação, reservas e presença da empresa."
                   : page === "billing"
                     ? isNexus
                       ? "Configure planos e acompanhe as assinaturas das empresas."
@@ -1310,6 +1328,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   : undefined
               }
               manage={isAdmin || user.role === "attendant"}
+              allowPackages={companyCapabilities(company.data).packages}
               user={user}
               onLogout={onLogout}
             />
@@ -1531,6 +1550,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                       ? row.corporate_name
                                       : row.email}
                                   </small>
+                                  {"trade_name" in row && (
+                                    <small>
+                                      {profileName(row.operational_profile)}
+                                    </small>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -1658,7 +1682,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                       </span>
                       <div>
                         <strong>
-                          {actionNames[event.action] || event.action}
+                          {actionNames[event.action] ||
+                            (event.action.startsWith("company.profile_changed.")
+                              ? `Perfil alterado: ${event.action.endsWith(".regular") ? "Turismo → Regular" : "Regular → Turismo"}`
+                              : event.action)}
                         </strong>
                         <small>{date(event.created_at)}</small>
                       </div>

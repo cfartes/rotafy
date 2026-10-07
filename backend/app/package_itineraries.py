@@ -135,7 +135,11 @@ async def compile_itinerary(db, data: PackageItinerary):
 
 
 async def package_for_trip(db, data, old=None):
+    from app.operational_profiles import require_tourism
     from app.route_templates import validate_leg_template
+
+    if data.package_id or data.mode == "multi_destination":
+        await require_tourism(db)
 
     if data.mode != "multi_destination":
         if old and old.get("package_snapshot"):

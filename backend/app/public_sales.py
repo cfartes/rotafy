@@ -96,7 +96,7 @@ async def limited(request, identity, limit=30, seconds=60):
 async def public_company(db, slug):
     found = await rows(
         db,
-        "SELECT id,slug,trade_name,primary_color,accent_color,logo IS NOT NULL AS has_logo FROM companies WHERE slug=:slug AND is_active",
+        "SELECT id,slug,trade_name,primary_color,accent_color,operational_profile,logo IS NOT NULL AS has_logo FROM companies WHERE slug=:slug AND is_active",
         slug=slug,
     )
     if not found:
@@ -112,7 +112,12 @@ async def published_trip(db, trip_id):
         {"id": trip_id, "now": utc_now()},
     ):
         raise HTTPException(404, "Esta viagem não está disponível para novas reservas.")
-    return await trip_detail(db, trip_id)
+    trip = await trip_detail(db, trip_id)
+    if trip["package_id"]:
+        from app.operational_profiles import require_tourism
+
+        await require_tourism(db, trip["company_id"])
+    return trip
 
 
 def public_trip(trip):
@@ -226,8 +231,10 @@ async def catalog(slug: str, request: Request):
             db,
             """SELECT t.id,t.name,t.destination,t.starts_at,t.ends_at,t.price_cents,t.mode,
           COALESCE(p.description,'') AS description FROM trips t LEFT JOIN packages p ON p.id=t.package_id
-          WHERE t.is_published AND t.status='scheduled' AND t.starts_at>:now ORDER BY t.starts_at,t.id""",
+          WHERE t.is_published AND t.status='scheduled' AND t.starts_at>:now
+          AND (:tourism OR t.package_id IS NULL) ORDER BY t.starts_at,t.id""",
             now=utc_now(),
+            tourism=company["operational_profile"] == "tourism",
         )
         return {"company": company, "trips": trips}
 
@@ -398,6 +405,10 @@ async def publication(trip_id: UUID, data: Publish, request: Request, actor: Aut
         await scope(db, actor.company_id)
         await lock_company(db, actor.company_id, require_active=True)
         trip = await trip_detail(db, trip_id)
+        if data.is_published and trip["package_id"]:
+            from app.operational_profiles import require_tourism
+
+            await require_tourism(db, actor.company_id)
         if data.is_published and not trip["geography_complete"]:
             raise HTTPException(409, "Complete cidade e UF antes de publicar a viagem.")
         if data.is_published and (

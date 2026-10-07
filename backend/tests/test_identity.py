@@ -165,6 +165,7 @@ def test_platform_can_create_company_and_suspend_existing_access(client, seeded)
         "/api/v1/nexus/companies",
         json={
             "slug": "empresa-c",
+            "operational_profile": "tourism",
             "cnpj": "52998224725",
             "plan_id": plan_id,
             "trade_name": "Empresa C",

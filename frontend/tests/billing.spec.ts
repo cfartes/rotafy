@@ -68,6 +68,7 @@ test("planos, assinatura, histórico e consulta da agência em desktop e mobile"
     data: {
       cnpj: testDocument(),
       plan_id: plan.id,
+      operational_profile: "tourism",
       slug,
       trade_name: "Agência Homologação Planos",
       corporate_name: "Agência Homologação Planos LTDA",

@@ -70,6 +70,7 @@ class CompanyContact(Input):
 
 
 class CompanyCreate(CompanyContact):
+    operational_profile: Literal["tourism", "regular"]
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)
@@ -93,6 +94,8 @@ class ActiveUpdate(Input):
 
 
 class CompanyDetailsUpdate(CompanyContact):
+    operational_profile: Literal["tourism", "regular"] | None = None
+    expected_profile: Literal["tourism", "regular"] | None = None
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)

@@ -475,6 +475,10 @@ async def create_reservation(db, actor, trip, data, import_id=None, reference=No
             raise HTTPException(409, "Chave de operação já utilizada com outros dados.")
         return await reservation_detail(db, prior[0]["id"])
     bookable(trip)
+    if trip["package_id"]:
+        from app.operational_profiles import require_tourism
+
+        await require_tourism(db, trip["company_id"])
     validate_passengers(trip, data.passengers)
     journeys = itinerary(trip, data.journeys)
     family_hash = fingerprint(
