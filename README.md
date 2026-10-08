@@ -111,7 +111,7 @@ Bilhetes individuais por trecho são emitidos em **Detalhes da reserva** após c
 
 Na tela de embarque, **Preparar para uso offline** guarda o manifesto por veículo/trecho e abre `/offline`. A PWA permite leitura QR e presença sem rede, com fila persistente, sincronização idempotente e revisão de conflitos. Veja [uso e limites do offline](docs/OFFLINE_E_SINCRONIZACAO.md). Validação em iPhone/Android físicos pendente.
 
-Em **Relatórios**, consulte ocupação por segmento, reservas/PAGO e presença. Administradores consultam consumo da franquia; a Nexus filtra ciclos por empresa. Datas em Brasília e exportação CSV com proteção de fórmulas. Veja [RELATORIOS.md](docs/RELATORIOS.md).
+Em **Relatórios → Visão gerencial**, administradores e atendentes consultam deslocamentos diários, viagens comerciais, ocupação dos veículos, valores confirmados/PAGO, passageiros, ranking de destinos e próximas saídas com baixa ocupação. Os relatórios detalhados de ocupação por segmento, reservas e presença continuam disponíveis com CSV. Administradores consultam consumo da franquia; a Nexus filtra ciclos por empresa. Datas em Brasília. Veja [RELATORIOS.md](docs/RELATORIOS.md) e as [pendências futuras](docs/PENDENCIAS_FUTURAS.md).
 
 Logs JSON e métricas autenticadas da Nexus disponíveis. Configuração de produção independente, HTTPS/Traefik existente e serviço de backup externo criptografado preparados em `compose.production.yaml`. Restauração ensaiada em container isolado; carga local medida com duas empresas, 20 veículos e 800 passageiros. Consulte [implantação e operação](docs/IMPLANTACAO_E_OPERACAO.md) e [pendências de homologação](docs/HOMOLOGACAO.md). A VPS e o envio de backups externos ainda não foram configurados.
 

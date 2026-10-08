@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, type Company, type User } from "./api";
 import { Alert, Field } from "./components/ui";
 import "./reports.css";
+import { ManagementDashboard } from "./ManagementDashboard";
 
 type Row = Record<string, string | number | boolean>;
 type OperationsReport = {
@@ -85,11 +86,14 @@ function display(key: string, value: Row[string]) {
 export function Reports({
   user,
   companies,
+  onOpenTrip,
 }: {
   user: User;
   companies: Company[];
+  onOpenTrip?: (id: string) => void;
 }) {
   const isNexus = user.role === "nexus";
+  const [management, setManagement] = useState(!isNexus);
   const [category, setCategory] = useState<Category>(
     isNexus ? "consumption" : "occupancy",
   );
@@ -116,6 +120,7 @@ export function Reports({
     queryKey: ["reports", url],
     queryFn: () => api<OperationsReport | ConsumptionReport>(url),
     retry: false,
+    enabled: !management,
   });
   const data = report.data;
   const allRows = data
@@ -164,6 +169,15 @@ export function Reports({
   return (
     <section className="reports-page">
       <div className="reports-tabs" role="group" aria-label="Tipo de relatório">
+        {!isNexus && (
+          <button
+            className={`button ${management ? "primary" : "secondary"}`}
+            aria-pressed={management}
+            onClick={() => setManagement(true)}
+          >
+            Visão gerencial
+          </button>
+        )}
         {(
           [
             ["occupancy", "Ocupação"],
@@ -180,10 +194,11 @@ export function Reports({
           .map(([id, label]) => (
             <button
               key={id}
-              className={`button ${category === id ? "primary" : "secondary"}`}
-              aria-pressed={category === id}
+              className={`button ${!management && category === id ? "primary" : "secondary"}`}
+              aria-pressed={!management && category === id}
               onClick={() => {
                 setCategory(id);
+                setManagement(false);
                 setExportError("");
               }}
             >
@@ -191,177 +206,197 @@ export function Reports({
             </button>
           ))}
       </div>
-      <form className="reports-filters" onSubmit={submit}>
-        <Field label="Data inicial">
-          <input
-            type="date"
-            required
-            value={filters.start}
-            onChange={(e) => setFilters({ ...filters, start: e.target.value })}
-          />
-        </Field>
-        <Field label="Data final">
-          <input
-            type="date"
-            required
-            min={filters.start}
-            value={filters.end}
-            onChange={(e) => setFilters({ ...filters, end: e.target.value })}
-          />
-        </Field>
-        {isNexus && (
-          <Field label="Empresa do relatório">
-            <select
-              value={filters.company_id}
-              onChange={(e) =>
-                setFilters({ ...filters, company_id: e.target.value })
-              }
-            >
-              <option value="">Todas as empresas</option>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.trade_name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        )}
-        {!isNexus && category !== "consumption" && (
-          <Field label="Viagem do relatório">
-            <select
-              value={filters.trip_id}
-              onChange={(e) =>
-                setFilters({ ...filters, trip_id: e.target.value })
-              }
-            >
-              <option value="">Todas no período</option>
-              {data &&
-                "trips" in data &&
-                data.trips.map((t) => (
-                  <option key={String(t.id)} value={String(t.id)}>
-                    {String(t.name)}
-                  </option>
-                ))}
-            </select>
-          </Field>
-        )}
-        <button className="button primary" disabled={report.isFetching}>
-          Aplicar filtros
-        </button>
-      </form>
-      <p className="muted">
-        {category === "consumption"
-          ? "Ciclos iniciados no período selecionado. Valores estimados do plano e extras; nenhum pagamento é processado."
-          : "Viagens com partida no período, considerando as datas de Brasília. Presença inclui apenas registros aceitos pelo servidor; ações offline pendentes não aparecem."}
-      </p>
-      {category === "occupancy" && (
-        <p className="muted">
-          Cada linha representa um segmento do trecho. Bloqueios vencidos não
-          ocupam vagas; contagens de segmentos e ida/volta não devem ser somadas
-          como passageiros únicos.
-        </p>
-      )}
-      {category === "reservations" && (
-        <Field label="Mostrar pagamento">
-          <select value={payment} onChange={(e) => setPayment(e.target.value)}>
-            <option value="all">Todos</option>
-            <option value="paid">PAGO</option>
-            <option value="unpaid">NÃO PAGO</option>
-          </select>
-        </Field>
-      )}
-      {(report.error || exportError) && (
-        <Alert>
-          {exportError ||
-            (report.error instanceof Error
-              ? report.error.message
-              : "Não foi possível carregar.")}
-        </Alert>
-      )}
-      {report.isPending ? (
-        <p role="status">Carregando relatório…</p>
+      {management ? (
+        <ManagementDashboard
+          user={user}
+          onOpenTrip={onOpenTrip}
+          onConsumption={() => {
+            setCategory("consumption");
+            setManagement(false);
+          }}
+        />
       ) : (
-        !report.error && (
-          <>
-            <div className="reports-summary">
-              <span role="status">{rows.length} registros exibidos</span>
-              {data && (
-                <span className="muted">
-                  Atualizado em{" "}
-                  {new Date(data.generated_at).toLocaleString("pt-BR", {
-                    timeZone: "America/Sao_Paulo",
-                  })}
-                </span>
-              )}
-              <button
-                className="button secondary"
-                onClick={() => void download()}
-                disabled={exporting || !allRows.length}
-              >
-                {exporting ? "Exportando…" : "Exportar CSV completo"}
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => void report.refetch()}
-                disabled={report.isFetching}
-              >
-                Atualizar relatório
-              </button>
-            </div>
-            {category === "reservations" && payment !== "all" && (
-              <p className="muted">
-                A exportação contém todos os pagamentos no período aplicado. O
-                filtro PAGO/NÃO PAGO é uma visualização da tabela.
-              </p>
+        <>
+          <form className="reports-filters" onSubmit={submit}>
+            <Field label="Data inicial">
+              <input
+                type="date"
+                required
+                value={filters.start}
+                onChange={(e) =>
+                  setFilters({ ...filters, start: e.target.value })
+                }
+              />
+            </Field>
+            <Field label="Data final">
+              <input
+                type="date"
+                required
+                min={filters.start}
+                value={filters.end}
+                onChange={(e) =>
+                  setFilters({ ...filters, end: e.target.value })
+                }
+              />
+            </Field>
+            {isNexus && (
+              <Field label="Empresa do relatório">
+                <select
+                  value={filters.company_id}
+                  onChange={(e) =>
+                    setFilters({ ...filters, company_id: e.target.value })
+                  }
+                >
+                  <option value="">Todas as empresas</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.trade_name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             )}
-            {!rows.length ? (
-              <div className="empty-state">
-                <h2>Sem registros neste período</h2>
-                <p>
-                  Altere as datas e aplique os filtros para consultar outras
-                  viagens ou ciclos.
-                </p>
-              </div>
-            ) : (
-              <div
-                className="reports-table"
-                tabIndex={0}
-                aria-label="Tabela do relatório com rolagem horizontal"
-                role="region"
-              >
-                <table>
-                  <caption>
-                    {category === "consumption"
-                      ? "Consumo por empresa e ciclo"
-                      : category === "occupancy"
-                        ? "Ocupação por veículo e segmento"
-                        : category === "presence"
-                          ? "Presença por veículo e trecho"
-                          : "Reservas familiares e pagamento manual"}
-                  </caption>
-                  <thead>
-                    <tr>
-                      {columns[category].map(([key, title]) => (
-                        <th scope="col" key={key}>
-                          {title}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, i) => (
-                      <tr key={i}>
-                        {columns[category].map(([key]) => (
-                          <td key={key}>{display(key, row[key])}</td>
-                        ))}
-                      </tr>
+            {!isNexus && category !== "consumption" && (
+              <Field label="Viagem do relatório">
+                <select
+                  value={filters.trip_id}
+                  onChange={(e) =>
+                    setFilters({ ...filters, trip_id: e.target.value })
+                  }
+                >
+                  <option value="">Todas no período</option>
+                  {data &&
+                    "trips" in data &&
+                    data.trips.map((t) => (
+                      <option key={String(t.id)} value={String(t.id)}>
+                        {String(t.name)}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                </select>
+              </Field>
             )}
-          </>
-        )
+            <button className="button primary" disabled={report.isFetching}>
+              Aplicar filtros
+            </button>
+          </form>
+          <p className="muted">
+            {category === "consumption"
+              ? "Ciclos iniciados no período selecionado. Valores estimados do plano e extras; nenhum pagamento é processado."
+              : "Viagens com partida no período, considerando as datas de Brasília. Presença inclui apenas registros aceitos pelo servidor; ações offline pendentes não aparecem."}
+          </p>
+          {category === "occupancy" && (
+            <p className="muted">
+              Cada linha representa um segmento do trecho. Bloqueios vencidos
+              não ocupam vagas; contagens de segmentos e ida/volta não devem ser
+              somadas como passageiros únicos.
+            </p>
+          )}
+          {category === "reservations" && (
+            <Field label="Mostrar pagamento">
+              <select
+                value={payment}
+                onChange={(e) => setPayment(e.target.value)}
+              >
+                <option value="all">Todos</option>
+                <option value="paid">PAGO</option>
+                <option value="unpaid">NÃO PAGO</option>
+              </select>
+            </Field>
+          )}
+          {(report.error || exportError) && (
+            <Alert>
+              {exportError ||
+                (report.error instanceof Error
+                  ? report.error.message
+                  : "Não foi possível carregar.")}
+            </Alert>
+          )}
+          {report.isPending ? (
+            <p role="status">Carregando relatório…</p>
+          ) : (
+            !report.error && (
+              <>
+                <div className="reports-summary">
+                  <span role="status">{rows.length} registros exibidos</span>
+                  {data && (
+                    <span className="muted">
+                      Atualizado em{" "}
+                      {new Date(data.generated_at).toLocaleString("pt-BR", {
+                        timeZone: "America/Sao_Paulo",
+                      })}
+                    </span>
+                  )}
+                  <button
+                    className="button secondary"
+                    onClick={() => void download()}
+                    disabled={exporting || !allRows.length}
+                  >
+                    {exporting ? "Exportando…" : "Exportar CSV completo"}
+                  </button>
+                  <button
+                    className="button secondary"
+                    onClick={() => void report.refetch()}
+                    disabled={report.isFetching}
+                  >
+                    Atualizar relatório
+                  </button>
+                </div>
+                {category === "reservations" && payment !== "all" && (
+                  <p className="muted">
+                    A exportação contém todos os pagamentos no período aplicado.
+                    O filtro PAGO/NÃO PAGO é uma visualização da tabela.
+                  </p>
+                )}
+                {!rows.length ? (
+                  <div className="empty-state">
+                    <h2>Sem registros neste período</h2>
+                    <p>
+                      Altere as datas e aplique os filtros para consultar outras
+                      viagens ou ciclos.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className="reports-table"
+                    tabIndex={0}
+                    aria-label="Tabela do relatório com rolagem horizontal"
+                    role="region"
+                  >
+                    <table>
+                      <caption>
+                        {category === "consumption"
+                          ? "Consumo por empresa e ciclo"
+                          : category === "occupancy"
+                            ? "Ocupação por veículo e segmento"
+                            : category === "presence"
+                              ? "Presença por veículo e trecho"
+                              : "Reservas familiares e pagamento manual"}
+                      </caption>
+                      <thead>
+                        <tr>
+                          {columns[category].map(([key, title]) => (
+                            <th scope="col" key={key}>
+                              {title}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, i) => (
+                          <tr key={i}>
+                            {columns[category].map(([key]) => (
+                              <td key={key}>{display(key, row[key])}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )
+          )}
+        </>
       )}
     </section>
   );

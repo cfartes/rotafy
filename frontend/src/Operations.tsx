@@ -188,6 +188,7 @@ export function Operations({
   initialTab = "trips",
   action,
   allowPackages = true,
+  initialTripId = null,
 }: {
   manage: boolean;
   user: User;
@@ -195,6 +196,7 @@ export function Operations({
   initialTab?: "vehicles" | "trips";
   action?: "passengers" | "allocations";
   allowPackages?: boolean;
+  initialTripId?: string | null;
 }) {
   const client = useQueryClient();
   const [tab, setTab] = useState<string>(initialTab);
@@ -205,7 +207,7 @@ export function Operations({
   const [editingTrip, setEditingTrip] = useState<Detail | null>(null);
   const [reservationTrip, setReservationTrip] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<Detail | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialTripId);
   const [boarding, setBoarding] = useState<{
     tripId: string;
     allocationId: string;

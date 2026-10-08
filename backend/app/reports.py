@@ -211,6 +211,20 @@ async def operations(actor: Auth, start: date, end: date, trip_id: UUID | None =
     return await operational_report(actor, start, end, trip_id)
 
 
+@router.get("/reports/management")
+async def management(
+    actor: Auth,
+    start: date,
+    end: date,
+    trip_id: UUID | None = None,
+    vehicle_id: UUID | None = None,
+    status: Literal["scheduled", "in_progress", "completed", "cancelled"] | None = None,
+):
+    from app.management_reports import management_report
+
+    return await management_report(actor, start, end, trip_id, vehicle_id, status)
+
+
 @router.get("/reports/consumption")
 async def consumption(
     actor: Auth, start: date, end: date, company_id: UUID | None = None

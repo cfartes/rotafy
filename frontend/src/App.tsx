@@ -943,6 +943,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const isNexus = user.role === "nexus";
   const isAdmin = user.role === "admin";
   const [operationModule, setOperationModule] = useState("trips");
+  const [reportTripId, setReportTripId] = useState<string | null>(null);
   const [page, setPage] = useState<
     | "overview"
     | "directory"
@@ -1172,7 +1173,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               onClick={() => {
                 setPage(item.id as typeof page);
                 if (item.id === "billing") setCompanyPlanOnly(false);
-                if (item.id === "operations") setOperationModule("trips");
+                if (item.id === "operations") {
+                  setOperationModule("trips");
+                  setReportTripId(null);
+                }
                 setSearch("");
                 setMenu(false);
               }}
@@ -1211,6 +1215,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 }
                 onClick={() => {
                   setOperationModule(module);
+                  setReportTripId(null);
                   setPage("operations");
                   setMenu(false);
                 }}
@@ -1304,7 +1309,15 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             />
           )}
           {page === "reports" && (
-            <Reports user={user} companies={companies.data || []} />
+            <Reports
+              user={user}
+              companies={companies.data || []}
+              onOpenTrip={(id) => {
+                setReportTripId(id);
+                setOperationModule("trips");
+                setPage("operations");
+              }}
+            />
           )}
           {page === "sales" && company.data && (
             <Sales company={company.data} isAdmin={isAdmin} />
@@ -1319,7 +1332,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             (isAdmin || user.role === "attendant") && <RouteCatalog />}
           {page === "operations" && (
             <Operations
-              key={operationModule}
+              key={`${operationModule}:${reportTripId || ""}`}
+              initialTripId={reportTripId}
               initialTab={operationModule === "vehicles" ? "vehicles" : "trips"}
               action={
                 operationModule === "passengers" ||
@@ -1355,6 +1369,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                         key={module}
                         onClick={() => {
                           setOperationModule(module);
+                          setReportTripId(null);
                           setPage("operations");
                         }}
                       >

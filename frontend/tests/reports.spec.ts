@@ -221,6 +221,7 @@ test("Relatorios de ocupacao, PAGO, presenca, consumo e CSV", async ({
     ).status(),
   ).toBe(201);
   await page.getByRole("button", { name: "Relatórios", exact: true }).click();
+  await page.getByRole("button", { name: "Ocupação", exact: true }).click();
   await expect(
     page.getByText("Sem registros neste período", { exact: true }),
   ).toBeVisible();
