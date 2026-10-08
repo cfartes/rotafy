@@ -57,6 +57,9 @@ import {
   type User,
 } from "./api";
 
+// Visibilidade temporária; preserva o módulo para reativação futura.
+const SHOW_PUBLIC_SALES_MENU = false;
+
 const message = (error: unknown) =>
   error instanceof Error
     ? error.message
@@ -1143,11 +1146,15 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               : []),
             ...(!isNexus && (isAdmin || user.role === "attendant")
               ? [
-                  {
-                    id: "sales",
-                    label: "Página pública e integrações",
-                    icon: Compass,
-                  },
+                  ...(SHOW_PUBLIC_SALES_MENU
+                    ? [
+                        {
+                          id: "sales",
+                          label: "Página pública e integrações",
+                          icon: Compass,
+                        },
+                      ]
+                    : []),
                   { id: "routes", label: "Rotas", icon: Route },
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
                 ]
