@@ -90,6 +90,89 @@ def setup_package(client, seeded, split_fleet=False):
     return payload, package, model
 
 
+def test_daily_outings_return_to_base_between_destinations(client, seeded):
+    payload = prepare(client, seeded)
+    destinations = [4211306, 4205407]
+    steps = []
+    for index, destination in enumerate(destinations):
+        response = client.post(
+            "/api/v1/routes",
+            json={
+                "name": f"Passeio {index + 1}",
+                "mode": "round_trip",
+                "legs": [
+                    {
+                        "origin_city_id": 4202404,
+                        "destination_city_id": destination,
+                        "duration_minutes": 60,
+                        "stops": [],
+                    },
+                    {
+                        "origin_city_id": destination,
+                        "destination_city_id": 4202404,
+                        "duration_minutes": 60,
+                        "stops": [],
+                    },
+                ],
+            },
+        )
+        assert response.status_code == 201, response.text
+        for position, time in [(1, "08:00"), (2, "16:00")]:
+            steps.append(
+                {
+                    "day": 1 if index == 0 else 4,
+                    "departure_time": time,
+                    "route_id": response.json()["id"],
+                    "route_leg_position": position,
+                    "destination_position": index + 1 if position == 1 else None,
+                }
+            )
+    response = client.post(
+        "/api/v1/packages",
+        json={
+            "name": "Dois passeios",
+            "destination": "Passeios SC",
+            "price_cents": 50000,
+            "itinerary": {
+                "destinations": [
+                    {"name": f"Destino {i + 1}", "city_id": city}
+                    for i, city in enumerate(destinations)
+                ],
+                "steps": steps,
+            },
+        },
+    )
+    assert response.status_code == 201, response.text
+    package = response.json()
+    legs = []
+    for step in package["itinerary"]["steps"]:
+        leg = dict(step["leg"])
+        minutes = leg.pop("duration_minutes") + leg.pop("stop_minutes")
+        hours, minute = map(int, step["departure_time"].split(":"))
+        start = datetime.fromisoformat("2027-02-01T00:00:00-03:00") + timedelta(
+            days=step["day"] - 1, hours=hours, minutes=minute
+        )
+        leg.update(
+            starts_at=start.isoformat(),
+            ends_at=(start + timedelta(minutes=minutes)).isoformat(),
+        )
+        legs.append(leg)
+    payload.update(
+        package_id=package["id"],
+        package_version=package["version"],
+        mode="multi_destination",
+        price_cents=50000,
+        legs=legs,
+    )
+    trip = create(client, payload)
+    assert len(trip["legs"]) == 4
+    assert trip["usage_units"] == 2
+    assert used(client) == 2
+    assert trip["legs"][1]["destination_city_id"] == 4202404
+    assert trip["legs"][2]["origin_city_id"] == 4202404
+    assert trip["legs"][3]["destination_city_id"] == 4202404
+
+
 def test_four_destinations_charge_once_return_included_and_cancel(
     client, seeded, owner
 ):

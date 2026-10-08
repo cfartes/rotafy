@@ -3,6 +3,8 @@ import { api } from "./api";
 import { type SavedRoute, type RouteLeg } from "./RouteCatalog";
 import { Alert, Field } from "./components/ui";
 import { CitySelect } from "./components/CitySelect";
+import { useState } from "react";
+import { DailyPackageEditor, isDailyPackage } from "./DailyPackageEditor";
 
 export type PackageItinerary = {
   destinations: {
@@ -126,13 +128,62 @@ export function PackageItineraryEditor({
   value: PackageItinerary;
   onChange: (value: PackageItinerary) => void;
 }) {
+  const [format, setFormat] = useState<"daily" | "sequence">(() =>
+    isDailyPackage(value) ? "daily" : "sequence",
+  );
   const routes = useQuery({
     queryKey: ["routes"],
     queryFn: () => api<SavedRoute[]>("/routes"),
   });
   const issues = packageItineraryErrors(value);
+  const formatChoice = (
+    <Field label="Formato do pacote">
+      <select
+        value={format}
+        onChange={(e) => {
+          const next = e.target.value as "daily" | "sequence";
+          if (next === "daily" && !isDailyPackage(value)) {
+            const populated =
+              value.steps.some((step) => step.route_id) ||
+              value.destinations.some((d) => d.name || d.city_id);
+            if (
+              populated &&
+              !window.confirm(
+                "Para montar passeios com ida e volta, será necessário refazer os destinos e deslocamentos deste formulário. Deseja continuar?",
+              )
+            )
+              return;
+            const blank = emptyPackageItinerary();
+            blank.steps[1] = {
+              ...blank.steps[1],
+              day: 1,
+              route_leg_position: 2,
+            };
+            onChange(blank);
+          }
+          setFormat(next);
+        }}
+      >
+        <option value="sequence">Viagem com destinos em sequência</option>
+        <option value="daily">Passeios com ida e volta</option>
+      </select>
+    </Field>
+  );
+  if (format === "daily")
+    return (
+      <section className="package-itinerary-editor">
+        {formatChoice}
+        <DailyPackageEditor
+          value={value}
+          onChange={onChange}
+          routes={routes.data || []}
+        />
+        {routes.error && <Alert>{routes.error.message}</Alert>}
+      </section>
+    );
   return (
     <section className="package-itinerary-editor">
+      {formatChoice}
       <div className="package-rules">
         <h3>Como montar o pacote</h3>
         <ol>

@@ -10,6 +10,13 @@
 
 ## Cadastro e agendamento
 
+Escolha o **Formato do pacote**:
+
+- **Passeios com ida e volta:** uma caixa por passeio, com Rota de ida e volta, nome comercial do destino, dia relativo, saída e horário de retorno saindo do destino. Cidade/UF vêm da Rota. Ida, volta e finalidade são montadas automaticamente. Os passeios retornam à mesma cidade-base e podem ocorrer em dias espaçados, por exemplo dias 1 e 4. O primeiro passeio começa no dia 1. Para roteiros mais complexos, use o outro formato.
+- **Viagem com destinos em sequência:** configure cada sentido separadamente, permitindo hospedagem e permanência entre destinos. Exemplo: Maceió → Fortaleza no dia 1, Fortaleza → Natal no dia 3 e Natal → Maceió no dia 6. Cada destino comercial é associado à sua chegada; o último trecho é o retorno, sem consumo adicional.
+
+Os dois formatos geram o mesmo modelo de deslocamentos, com venda completa, capacidade por trecho e franquia por destino. O formato de passeios é reconhecido ao reabrir modelos que possuem pares de ida/volta da mesma Rota no mesmo dia. É possível abrir esses pares no editor em sequência sem perder dados. Converter uma sequência incompatível para passeios solicita confirmação antes de refazer o formulário; alterações só são persistidas ao salvar. Rotas inativas precisam ser substituídas antes de salvar.
+
 1. Cadastre as Rotas necessárias, incluindo os sentidos de retorno, endereços, paradas e duração aproximada manual. Não há consulta à API Google.
 2. Abra **Frota, pacotes e viagens → Pacotes → Novo pacote** e marque **Pacote com roteiro de vários destinos**.
 3. Informe os destinos comerciais, em ordem, com suas cidades/UFs. Configure cada deslocamento com dia relativo, horário, Rota/sentido e finalidade. Cada destino comercial precisa aparecer exatamente uma vez. O primeiro deslocamento inicia no dia 1 e o último retorna à cidade de origem, sem destino comercial adicional.
