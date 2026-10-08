@@ -79,3 +79,40 @@
     width: 100%;
   }
 }
+.reservation-passenger-card {
+  border: 2px solid #0c7772;
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
+}
+
+.reservation-passenger-card legend {
+  color: #075e5a;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+.reservation-passenger-fields {
+  row-gap: 18px;
+}
+
+.reservation-passenger-fields > div {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  padding-top: 22px;
+}
+
+.reservation-passenger-fields > .field {
+  grid-column: 1;
+}
+
+@media (max-width: 640px) {
+  .reservation-passenger-card {
+    padding: 14px;
+  }
+  .reservation-passenger-fields > div {
+    grid-column: 1;
+    grid-row: auto;
+    padding-top: 0;
+  }
+}

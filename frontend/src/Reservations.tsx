@@ -408,7 +408,7 @@ function ReservationModal({
     }
   }
   return (
-    <Modal title="Nova reserva familiar" onClose={onClose}>
+    <Modal title="Nova reserva familiar" wide onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <Field label="Nome do responsável">
           <input name="contact_name" required minLength={2} maxLength={150} />
@@ -444,9 +444,12 @@ function ReservationModal({
           </p>
         )}
         {passengers.map((p, i) => (
-          <fieldset className="operation-card" key={i}>
+          <fieldset
+            className="operation-card reservation-passenger-card"
+            key={i}
+          >
             <legend>Passageiro {i + 1}</legend>
-            <div className="form-grid">
+            <div className="form-grid reservation-passenger-fields">
               <Field label={`Nome do passageiro ${i + 1}`}>
                 <input
                   value={p.full_name}
@@ -701,7 +704,7 @@ function ReservationEditor({
     }
   }
   return (
-    <Modal title="Editar reserva" onClose={onClose}>
+    <Modal title="Editar reserva" wide onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
         <p className="muted">
           Passageiros, bilhetes, valor e pagamento são preservados. Pontos de um
@@ -725,50 +728,58 @@ function ReservationEditor({
           />
         </Field>
         {passengers.map((p, index) => (
-          <div className="form-grid" key={p.id}>
-            <Field label={`Nome do passageiro ${index + 1}`}>
-              <input
-                required
-                minLength={2}
-                maxLength={150}
-                value={p.full_name}
-                onChange={(e) =>
+          <fieldset
+            className="operation-card reservation-passenger-card"
+            key={p.id}
+          >
+            <legend>Passageiro {index + 1}</legend>
+            <div className="form-grid reservation-passenger-fields">
+              <Field label={`Nome do passageiro ${index + 1}`}>
+                <input
+                  required
+                  minLength={2}
+                  maxLength={150}
+                  value={p.full_name}
+                  onChange={(e) =>
+                    setPassengers(
+                      passengers.map((p, i) =>
+                        i === index ? { ...p, full_name: e.target.value } : p,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <PassengerExceptions
+                value={p}
+                index={index}
+                onChange={(change) =>
                   setPassengers(
-                    passengers.map((p, i) =>
-                      i === index ? { ...p, full_name: e.target.value } : p,
+                    passengers.map((item, j) =>
+                      j === index ? { ...item, ...change } : item,
                     ),
                   )
                 }
               />
-            </Field>
-            <PassengerExceptions
-              value={p}
-              index={index}
-              onChange={(change) =>
-                setPassengers(
-                  passengers.map((item, j) =>
-                    j === index ? { ...item, ...change } : item,
-                  ),
-                )
-              }
-            />
-            <Field
-              label={`CPF do passageiro ${index + 1} ${trip.requires_cpf && !p.is_foreign && !p.under_five ? "(obrigat\u00f3rio)" : "(opcional)"}`}
-            >
-              <input
-                required={!!trip.requires_cpf && !p.is_foreign && !p.under_five}
-                value={p.cpf || ""}
-                maxLength={14}
-                onChange={(e) =>
-                  setPassengers(
-                    passengers.map((p, i) =>
-                      i === index ? { ...p, cpf: e.target.value } : p,
-                    ),
-                  )
-                }
-              />
-            </Field>
-          </div>
+              <Field
+                label={`CPF do passageiro ${index + 1} ${trip.requires_cpf && !p.is_foreign && !p.under_five ? "(obrigat\u00f3rio)" : "(opcional)"}`}
+              >
+                <input
+                  required={
+                    !!trip.requires_cpf && !p.is_foreign && !p.under_five
+                  }
+                  value={p.cpf || ""}
+                  maxLength={14}
+                  onChange={(e) =>
+                    setPassengers(
+                      passengers.map((p, i) =>
+                        i === index ? { ...p, cpf: e.target.value } : p,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+            </div>
+          </fieldset>
         ))}
         {journeys.map((journey, index) => {
           const leg = trip.legs.find((l) => l.id === journey.leg_id)!;
