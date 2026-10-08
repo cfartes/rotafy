@@ -174,6 +174,16 @@ function instant(value: string) {
   }
   return new Date(utc).toISOString();
 }
+// Inputs nativos podem emitir anos como 0002, 0020 e 0202 durante a digitação.
+// Esses valores intermediários não devem entrar nos cálculos operacionais.
+function completeOperationalDate(value: string) {
+  if (!/^[2-9]\d{3}-\d{2}-\d{2}$/.test(value)) return false;
+  const timestamp = Date.parse(`${value}T12:00:00Z`);
+  return (
+    Number.isFinite(timestamp) &&
+    new Date(timestamp).toISOString().slice(0, 10) === value
+  );
+}
 const blankLeg = (): Leg => ({
   origin: "",
   destination: "",
@@ -1077,7 +1087,7 @@ function TripModal({
   function packageLegs(snapshot: PackageSnapshot, dateValue: string): Leg[] {
     return snapshot.steps.map((step) => {
       const { duration_minutes, stop_minutes, ...leg } = step.leg!;
-      const day = dateValue
+      const day = completeOperationalDate(dateValue)
         ? new Date(
             Date.parse(`${dateValue}T12:00:00Z`) + (step.day - 1) * 86400000,
           )
@@ -1131,13 +1141,20 @@ function TripModal({
       );
     const template =
       selectedPackage?.steps[index].leg || selectedRoute?.legs[index];
-    if (update.starts_at && template) {
-      update.ends_at = localInput(
-        new Date(
-          Date.parse(instant(update.starts_at)) +
-            (template.duration_minutes + template.stop_minutes) * 60000,
-        ).toISOString(),
-      );
+    if (update.starts_at !== undefined && template) {
+      if (
+        !completeOperationalDate(update.starts_at.slice(0, 10)) ||
+        !/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/.test(update.starts_at)
+      ) {
+        update.ends_at = "";
+      } else {
+        update.ends_at = localInput(
+          new Date(
+            Date.parse(instant(update.starts_at)) +
+              (template.duration_minutes + template.stop_minutes) * 60000,
+          ).toISOString(),
+        );
+      }
     }
     setLegs((prev) =>
       prev.map((l, i) => (i === index ? { ...l, ...update } : l)),
@@ -1314,6 +1331,8 @@ function TripModal({
             <Field label="Data inicial do pacote">
               <input
                 type="date"
+                min="2000-01-01"
+                max="9999-12-31"
                 required
                 value={baseDate}
                 onChange={(e) => {
@@ -1390,7 +1409,9 @@ function TripModal({
                         ({ duration_minutes, stop_minutes, ...leg }, i) => ({
                           ...leg,
                           starts_at: legs[i]?.starts_at || "",
-                          ends_at: legs[i]?.starts_at
+                          ends_at: completeOperationalDate(
+                            legs[i]?.starts_at?.slice(0, 10) || "",
+                          )
                             ? localInput(
                                 new Date(
                                   Date.parse(instant(legs[i].starts_at)) +

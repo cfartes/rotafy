@@ -4,6 +4,8 @@ for (const daily of [false, true]) {
   test(`create and schedule a complete package (${daily ? "daily outings" : "sequence"})`, async ({
     page,
   }) => {
+    const browserErrors: string[] = [];
+    page.on("pageerror", (error) => browserErrors.push(error.message));
     const cities = [
       { id: 4202404, name: "Blumenau", uf: "SC" },
       { id: 4211306, name: "Navegantes", uf: "SC" },
@@ -214,9 +216,30 @@ for (const daily of [false, true]) {
     await dialog
       .getByRole("combobox", { name: "Pacote (opcional)", exact: true })
       .selectOption("package");
-    await dialog
-      .getByLabel("Data inicial do pacote", { exact: true })
-      .fill("2027-02-01");
+    const initialDate = dialog.getByLabel("Data inicial do pacote", {
+      exact: true,
+    });
+    for (const partial of ["0002-10-20", "0020-10-20", "0202-10-20", ""]) {
+      await initialDate.fill(partial);
+      await expect(dialog).toBeVisible();
+      await expect(
+        dialog.getByLabel("Saída do deslocamento 1", { exact: true }),
+      ).toHaveValue("");
+      expect(browserErrors).toEqual([]);
+    }
+    await initialDate.fill("2026-10-20");
+    await expect(
+      dialog.getByLabel("Saída do deslocamento 1", { exact: true }),
+    ).toHaveValue("2026-10-20T08:00");
+    await initialDate.fill("2027-02-01");
+    const firstDeparture = dialog.getByLabel("Saída do deslocamento 1", {
+      exact: true,
+    });
+    await firstDeparture.fill("0020-02-01T08:00");
+    await expect(dialog).toBeVisible();
+    expect(browserErrors).toEqual([]);
+    await initialDate.fill("2027-02-02");
+    await initialDate.fill("2027-02-01");
     await expect(dialog).toContainText("Não há venda de destinos separados");
     await expect(
       dialog.getByLabel("Saída do deslocamento 1", { exact: true }),
