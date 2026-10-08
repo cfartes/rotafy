@@ -35,6 +35,12 @@ Rota em novas datas ou use **Duplicar viagem**.
 
 ## Preservação do histórico
 
+Nos detalhes da viagem, administradores e atendentes podem usar **Atualizar com a versão atual da Rota**. A ação exige confirmação e só é permitida enquanto a viagem estiver agendada e sem eventos de embarque. Nas saídas de pacote, atualiza todas as Rotas referenciadas pelos deslocamentos, preservando o modelo comercial, os destinos, atividades, preço e consumo da franquia.
+
+A atualização copia os endereços, nomes, paradas e durações atuais. Mantém as partidas e recalcula as chegadas previstas, verificando sobreposição entre deslocamentos e conflitos de veículos/equipe. Com reservas, preserva a quantidade, finalidade e posições das paradas, além dos IDs dos trechos, paradas, alocações e bilhetes. Uma reordenação reconhecida ou mudança incompatível bloqueia a operação. Para mudar cidades ou formato do percurso, crie outra viagem. Rotas inativas não são aplicadas.
+
+As versões e a auditoria registram a atualização explícita. Se alguma Rota ou horário for incompatível, nenhuma alteração é aplicada. Após atualizar, prepare novamente os manifestos offline nos dispositivos da equipe. O endpoint é `POST /api/v1/trips/{trip_id}/refresh-routes`, com `expected_version` da viagem; respeita permissões, isolamento por empresa e controle de concorrência. Esta funcionalidade não exige migração nem novo APK.
+
 A Viagem salva a identidade, versão e uma cópia do percurso da Rota. Alterar o
 catálogo não altera automaticamente viagens agendadas, reservas ou bilhetes.
 Na edição de uma viagem vinculada, os horários podem ser ajustados usando a

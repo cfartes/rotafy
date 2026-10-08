@@ -262,6 +262,7 @@ export function Operations({
   }, [queryError, onLogout]);
   async function refresh() {
     await client.invalidateQueries({ queryKey: ["operations"] });
+    await client.invalidateQueries({ queryKey: ["vehicle-route"] });
     await client.invalidateQueries({ queryKey: ["audit"] });
     await client.invalidateQueries({ queryKey: ["billing"] });
   }
@@ -701,6 +702,38 @@ export function Operations({
                 {error && <Alert>{error}</Alert>}
                 {manage && (
                   <footer className="modal-actions">
+                    {(detail.data.route_snapshot ||
+                      detail.data.package_snapshot) && (
+                      <button
+                        className="button secondary"
+                        disabled={pending || detail.data.status !== "scheduled"}
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              "Atualizar os endereços, paradas e durações com as Rotas atuais? As partidas, reservas e veículos serão mantidos; as chegadas previstas serão recalculadas. Em pacotes, todas as Rotas do roteiro serão verificadas. Após a atualização, prepare novamente os manifestos offline.",
+                            )
+                          )
+                            return;
+                          setPending(true);
+                          setError("");
+                          try {
+                            await post(
+                              `/trips/${detail.data!.id}/refresh-routes`,
+                              {
+                                expected_version: detail.data!.edit_version,
+                              },
+                            );
+                            await refresh();
+                          } catch (e) {
+                            setError(message(e));
+                          } finally {
+                            setPending(false);
+                          }
+                        }}
+                      >
+                        Atualizar com a versão atual da Rota
+                      </button>
+                    )}
                     {detail.data.status === "scheduled" &&
                       (allowPackages || !detail.data.package_id) && (
                         <button

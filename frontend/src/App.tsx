@@ -834,6 +834,7 @@ const actionNames: Record<string, string> = {
   "trip.cancelled": "Viagem cancelada e consumo estornado",
   "reservation.created": "Reserva familiar criada",
   "trip.published": "Viagem publicada na página pública",
+  "trip.routes_refreshed": "Rotas da viagem atualizadas com o catálogo atual",
   "trip.unpublished": "Viagem retirada da página pública",
   "reservation.paid": "Reserva marcada PAGO",
   "reservation.unpaid": "Marcação PAGO removida",

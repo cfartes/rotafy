@@ -91,10 +91,15 @@ async function setup(page: Page, role = "admin") {
         status = 201;
         body = { id: "reservation" };
       } else body = [];
+    } else if (path.endsWith("/refresh-routes")) {
+      saved.push({ path, ...request.postDataJSON() });
+      body = { id: "open" };
     } else if (path.startsWith("/trips/")) {
       const trip = trips.find((t) => t.id === path.split("/")[2]);
       body = {
         ...trip,
+        edit_version: 3,
+        route_snapshot: { id: "route", name: "Rota do transfer", version: 1 },
         legs: [leg],
         completion:
           trip?.status === "completed"
@@ -142,6 +147,48 @@ async function setup(page: Page, role = "admin") {
   ).toBeVisible();
   return saved;
 }
+
+test("route refresh requires confirmation and is disabled for closed trips", async ({
+  page,
+}) => {
+  let routeReads = 0;
+  page.on("request", (request) => {
+    if (/\/vehicles\/[^/]+\/route$/.test(new URL(request.url()).pathname))
+      routeReads++;
+  });
+  const saved = await setup(page);
+  await page
+    .getByRole("button", { name: "Frota, pacotes e viagens", exact: true })
+    .click();
+  await page
+    .locator("tbody tr")
+    .filter({ hasText: "Transfer futuro" })
+    .getByRole("button", { name: "Detalhes" })
+    .click();
+  const refresh = page.getByRole("button", {
+    name: "Atualizar com a versão atual da Rota",
+    exact: true,
+  });
+  await expect(refresh).toBeEnabled();
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await refresh.click();
+  expect(saved).toHaveLength(0);
+  page.once("dialog", (dialog) => dialog.accept());
+  await refresh.click();
+  await expect.poll(() => saved.length).toBe(1);
+  expect(saved[0]).toEqual({
+    path: "/trips/open/refresh-routes",
+    expected_version: 3,
+  });
+  await expect.poll(() => routeReads).toBeGreaterThan(1);
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
+  await page
+    .locator("tbody tr")
+    .filter({ hasText: "Transfer concluído" })
+    .getByRole("button", { name: "Detalhes" })
+    .click();
+  await expect(refresh).toBeDisabled();
+});
 
 test("trip list filters open, ongoing, completed and cancelled states", async ({
   page,

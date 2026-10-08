@@ -82,299 +82,306 @@ async def edit_trip(trip_id: UUID, data: TripEdit, request: Request, actor: Auth
         await scope(db, actor.company_id)
         await lock_company(db, actor.company_id, require_active=True)
         old = await detail(db, trip_id)
-        if old["edit_version"] != data.expected_version:
-            raise HTTPException(
-                409, "A viagem foi alterada. Reabra o editor antes de salvar."
-            )
-        if old["status"] != "scheduled":
-            raise HTTPException(409, "Somente viagens agendadas podem ser editadas.")
-        if await db.scalar(
-            text("SELECT 1 FROM boarding_events WHERE trip_id=:id LIMIT 1"),
-            {"id": trip_id},
-        ):
-            raise HTTPException(
-                409,
-                "O itinerário e a equipe ficam protegidos após iniciar os embarques.",
-            )
-        if data.mode != old["mode"] or len(data.legs) != len(old["legs"]):
-            raise HTTPException(
-                409,
-                "Mantenha os trechos existentes para preservar reservas e bilhetes.",
-            )
-        if not {v["vehicle_id"] for v in old["vehicles"]}.issubset(
-            {v.vehicle_id for v in data.vehicles}
-        ):
-            raise HTTPException(
-                409,
-                "Mantenha os veículos já alocados; novos veículos podem ser adicionados antes dos embarques.",
-            )
-        preserved = {
-            v["id"] for a in data.vehicles if (v := previous_allocation(old, a))
-        }
-        if not {v["id"] for v in old["vehicles"]}.issubset(preserved):
-            raise HTTPException(
-                409, "Preserve as alocações existentes e seus passageiros."
-            )
-        reserved = await db.scalar(
-            text("SELECT 1 FROM reservations WHERE trip_id=:id LIMIT 1"),
-            {"id": trip_id},
+        return await apply_trip_edit(db, trip_id, data, old, actor)
+
+
+async def apply_trip_edit(db, trip_id, data, old, actor, *, route_state=None):
+    if old["edit_version"] != data.expected_version:
+        raise HTTPException(
+            409, "A viagem foi alterada. Reabra o editor antes de salvar."
         )
-        prospective = {
-            "requires_cpf": any(l.origin_uf != l.destination_uf for l in data.legs),
-            "legs": [l.model_dump() for l in data.legs],
-        }
-        existing_passengers = (
+    if old["status"] != "scheduled":
+        raise HTTPException(409, "Somente viagens agendadas podem ser editadas.")
+    if await db.scalar(
+        text("SELECT 1 FROM boarding_events WHERE trip_id=:id LIMIT 1"),
+        {"id": trip_id},
+    ):
+        raise HTTPException(
+            409,
+            "O itinerário e a equipe ficam protegidos após iniciar os embarques.",
+        )
+    if data.mode != old["mode"] or len(data.legs) != len(old["legs"]):
+        raise HTTPException(
+            409,
+            "Mantenha os trechos existentes para preservar reservas e bilhetes.",
+        )
+    if not {v["vehicle_id"] for v in old["vehicles"]}.issubset(
+        {v.vehicle_id for v in data.vehicles}
+    ):
+        raise HTTPException(
+            409,
+            "Mantenha os veículos já alocados; novos veículos podem ser adicionados antes dos embarques.",
+        )
+    preserved = {v["id"] for a in data.vehicles if (v := previous_allocation(old, a))}
+    if not {v["id"] for v in old["vehicles"]}.issubset(preserved):
+        raise HTTPException(409, "Preserve as alocações existentes e seus passageiros.")
+    reserved = await db.scalar(
+        text("SELECT 1 FROM reservations WHERE trip_id=:id LIMIT 1"),
+        {"id": trip_id},
+    )
+    prospective = {
+        "requires_cpf": any(l.origin_uf != l.destination_uf for l in data.legs),
+        "legs": [l.model_dump() for l in data.legs],
+    }
+    existing_passengers = (
+        (
+            await db.execute(
+                text("""SELECT p.* FROM passengers p JOIN reservations r ON r.id=p.reservation_id
+    WHERE r.trip_id=:id AND r.status IN ('pending','confirmed')"""),
+                {"id": trip_id},
+            )
+        )
+        .mappings()
+        .all()
+    )
+    validate_passengers(prospective, existing_passengers)
+    for previous, leg in zip(old["legs"], data.legs):
+        if reserved and (
+            len(leg.stops) < len(previous["stops"])
+            or any(a["kind"] != b.kind for a, b in zip(previous["stops"], leg.stops))
+        ):
+            raise HTTPException(
+                409,
+                "Com reservas, preserve as paradas existentes e sua finalidade. "
+                "Você pode editar endereços, nomes e horários ou acrescentar paradas antes do destino.",
+            )
+    for allocation in data.vehicles:
+        previous_vehicle = previous_allocation(old, allocation)
+        if not previous_vehicle:
+            continue
+        bookings = (
             (
                 await db.execute(
-                    text("""SELECT p.* FROM passengers p JOIN reservations r ON r.id=p.reservation_id
-        WHERE r.trip_id=:id AND r.status IN ('pending','confirmed')"""),
-                    {"id": trip_id},
+                    text("""SELECT rl.* FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
+        WHERE rl.allocation_id=:id AND r.status IN ('pending','confirmed')"""),
+                    {"id": previous_vehicle["id"]},
                 )
             )
             .mappings()
             .all()
         )
-        validate_passengers(prospective, existing_passengers)
-        for previous, leg in zip(old["legs"], data.legs):
-            if reserved and (
-                len(leg.stops) < len(previous["stops"])
-                or any(
-                    a["kind"] != b.kind for a, b in zip(previous["stops"], leg.stops)
+        for journey in bookings:
+            previous_leg = next(l for l in old["legs"] if l["id"] == journey["leg_id"])
+            leg_index = previous_leg["position"] - 1
+            candidate_leg = data.legs[leg_index].model_dump() | {
+                "position": previous_leg["position"]
+            }
+            old_destination = len(previous_leg["stops"]) + 1
+            new_destination = len(candidate_leg["stops"]) + 1
+            points = {
+                new_destination if point == old_destination else point
+                for point in (
+                    journey["boarding_position"],
+                    journey["dropoff_position"],
                 )
+            }
+            if not points.issubset(
+                served_positions(allocation.model_dump(), candidate_leg)
             ):
                 raise HTTPException(
                     409,
-                    "Com reservas, preserve as paradas existentes e sua finalidade. "
-                    "Você pode editar endereços, nomes e horários ou acrescentar paradas antes do destino.",
+                    "O veículo precisa manter os pontos usados pelas reservas ativas.",
                 )
-        for allocation in data.vehicles:
-            previous_vehicle = previous_allocation(old, allocation)
-            if not previous_vehicle:
-                continue
-            bookings = (
-                (
-                    await db.execute(
-                        text("""SELECT rl.* FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
-            WHERE rl.allocation_id=:id AND r.status IN ('pending','confirmed')"""),
-                        {"id": previous_vehicle["id"]},
-                    )
-                )
-                .mappings()
-                .all()
-            )
-            for journey in bookings:
-                previous_leg = next(
-                    l for l in old["legs"] if l["id"] == journey["leg_id"]
-                )
-                leg_index = previous_leg["position"] - 1
-                candidate_leg = data.legs[leg_index].model_dump() | {
-                    "position": previous_leg["position"]
-                }
-                old_destination = len(previous_leg["stops"]) + 1
-                new_destination = len(candidate_leg["stops"]) + 1
-                points = {
-                    new_destination if point == old_destination else point
-                    for point in (
-                        journey["boarding_position"],
-                        journey["dropoff_position"],
-                    )
-                }
-                if not points.issubset(
-                    served_positions(allocation.model_dump(), candidate_leg)
-                ):
-                    raise HTTPException(
-                        409,
-                        "O veículo precisa manter os pontos usados pelas reservas ativas.",
-                    )
-        if (
-            data.package_id
-            and not old.get("package_snapshot")
-            and not await db.scalar(
-                text("SELECT 1 FROM packages WHERE id=:id AND is_active"),
-                {"id": data.package_id},
-            )
+    if (
+        data.package_id
+        and not old.get("package_snapshot")
+        and not await db.scalar(
+            text("SELECT 1 FROM packages WHERE id=:id AND is_active"),
+            {"id": data.package_id},
+        )
+    ):
+        raise HTTPException(409, "Selecione um pacote ativo desta empresa.")
+    from app.route_templates import route_for_trip
+
+    route_snapshot = await route_for_trip(db, data, route_state or old)
+    from app.package_itineraries import package_for_trip
+
+    package_snapshot = await package_for_trip(db, data, route_state or old)
+    start, end = data.legs[0].starts_at, data.legs[-1].ends_at
+    for allocation in data.vehicles:
+        if not await db.scalar(
+            text("SELECT 1 FROM vehicles WHERE id=:id AND is_active"),
+            {"id": allocation.vehicle_id},
         ):
-            raise HTTPException(409, "Selecione um pacote ativo desta empresa.")
-        from app.route_templates import route_for_trip
-
-        route_snapshot = await route_for_trip(db, data, old)
-        from app.package_itineraries import package_for_trip
-
-        await package_for_trip(db, data, old)
-        start, end = data.legs[0].starts_at, data.legs[-1].ends_at
-        for allocation in data.vehicles:
+            raise HTTPException(409, "Selecione um veículo ativo desta empresa.")
+        for user_id, role in [
+            (allocation.driver_id, "driver"),
+            *[(g, "guide") for g in allocation.guide_ids],
+        ]:
             if not await db.scalar(
-                text("SELECT 1 FROM vehicles WHERE id=:id AND is_active"),
-                {"id": allocation.vehicle_id},
+                text(
+                    "SELECT 1 FROM users WHERE id=:id AND company_id=:company AND role=:role AND is_active"
+                ),
+                {"id": user_id, "company": actor.company_id, "role": role},
             ):
-                raise HTTPException(409, "Selecione um veículo ativo desta empresa.")
-            for user_id, role in [
-                (allocation.driver_id, "driver"),
-                *[(g, "guide") for g in allocation.guide_ids],
-            ]:
-                if not await db.scalar(
-                    text(
-                        "SELECT 1 FROM users WHERE id=:id AND company_id=:company AND role=:role AND is_active"
-                    ),
-                    {"id": user_id, "company": actor.company_id, "role": role},
+                raise HTTPException(
+                    409,
+                    "Selecione equipe ativa com o perfil correto nesta empresa.",
+                )
+            for position, reserved_leg in enumerate(data.legs, 1):
+                if (
+                    allocation.leg_positions
+                    and position not in allocation.leg_positions
+                ):
+                    continue
+                if await db.scalar(
+                    text("""SELECT 1 FROM trips t JOIN trip_vehicles tv ON tv.trip_id=t.id JOIN trip_legs scheduled_leg ON scheduled_leg.trip_id=t.id
+                  LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id WHERE t.id<>:id
+                  AND t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
+                  AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
+                  AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
+                    {
+                        "id": trip_id,
+                        "start": reserved_leg.starts_at,
+                        "end": reserved_leg.ends_at,
+                        "vehicle": allocation.vehicle_id,
+                        "user": user_id,
+                    },
                 ):
                     raise HTTPException(
-                        409,
-                        "Selecione equipe ativa com o perfil correto nesta empresa.",
+                        409, "Veículo ou equipe já reservado no novo intervalo."
                     )
-                for position, reserved_leg in enumerate(data.legs, 1):
-                    if (
-                        allocation.leg_positions
-                        and position not in allocation.leg_positions
-                    ):
-                        continue
-                    if await db.scalar(
-                        text("""SELECT 1 FROM trips t JOIN trip_vehicles tv ON tv.trip_id=t.id JOIN trip_legs scheduled_leg ON scheduled_leg.trip_id=t.id
-                      LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id WHERE t.id<>:id
-                      AND t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
-                      AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
-                      AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
-                        {
-                            "id": trip_id,
-                            "start": reserved_leg.starts_at,
-                            "end": reserved_leg.ends_at,
-                            "vehicle": allocation.vehicle_id,
-                            "user": user_id,
-                        },
-                    ):
-                        raise HTTPException(
-                            409, "Veículo ou equipe já reservado no novo intervalo."
-                        )
-        await db.execute(
-            text("""UPDATE trips SET name=:name,destination=:destination,
-          package_id=:package,price_cents=:price,starts_at=:start,ends_at=:end,edit_version=edit_version+1 WHERE id=:id"""),
-            {
-                "id": trip_id,
-                "name": data.name,
-                "destination": data.destination,
-                "package": data.package_id,
-                "price": data.price_cents,
-                "start": start,
-                "end": end,
-            },
-        )
+    await db.execute(
+        text("""UPDATE trips SET name=:name,destination=:destination,
+      package_id=:package,price_cents=:price,starts_at=:start,ends_at=:end,edit_version=edit_version+1 WHERE id=:id"""),
+        {
+            "id": trip_id,
+            "name": data.name,
+            "destination": data.destination,
+            "package": data.package_id,
+            "price": data.price_cents,
+            "start": start,
+            "end": end,
+        },
+    )
+    await db.execute(
+        text(
+            "UPDATE trips SET route_id=:route,route_snapshot=CAST(:snapshot AS jsonb) WHERE id=:id"
+        ),
+        {
+            "id": trip_id,
+            "route": data.route_id,
+            "snapshot": json.dumps(route_snapshot) if route_snapshot else None,
+        },
+    )
+    await db.execute(
+        text("UPDATE trips SET requires_cpf=:cpf,geography_complete=true WHERE id=:id"),
+        {"id": trip_id, "cpf": prospective["requires_cpf"]},
+    )
+    for previous, leg in zip(old["legs"], data.legs):
         await db.execute(
             text(
-                "UPDATE trips SET route_id=:route,route_snapshot=CAST(:snapshot AS jsonb) WHERE id=:id"
+                "UPDATE trip_legs SET origin=:origin,destination=:destination,starts_at=:starts_at,ends_at=:ends_at,origin_city_id=:origin_city_id,destination_city_id=:destination_city_id,origin_uf=:origin_uf,destination_uf=:destination_uf,origin_address=:origin_address,destination_address=:destination_address WHERE id=:id"
             ),
-            {
-                "id": trip_id,
-                "route": data.route_id,
-                "snapshot": json.dumps(route_snapshot) if route_snapshot else None,
-            },
+            leg.model_dump(exclude={"stops"}) | {"id": previous["id"]},
         )
-        await db.execute(
-            text(
-                "UPDATE trips SET requires_cpf=:cpf,geography_complete=true WHERE id=:id"
-            ),
-            {"id": trip_id, "cpf": prospective["requires_cpf"]},
-        )
-        for previous, leg in zip(old["legs"], data.legs):
+        if not reserved:
             await db.execute(
-                text(
-                    "UPDATE trip_legs SET origin=:origin,destination=:destination,starts_at=:starts_at,ends_at=:ends_at,origin_city_id=:origin_city_id,destination_city_id=:destination_city_id,origin_uf=:origin_uf,destination_uf=:destination_uf,origin_address=:origin_address,destination_address=:destination_address WHERE id=:id"
-                ),
-                leg.model_dump(exclude={"stops"}) | {"id": previous["id"]},
-            )
-            if not reserved:
-                await db.execute(
-                    text("DELETE FROM trip_stops WHERE leg_id=:id"),
-                    {"id": previous["id"]},
-                )
-            for position, stop in enumerate(leg.stops, 1):
-                if reserved and position <= len(previous["stops"]):
-                    await db.execute(
-                        text(
-                            "UPDATE trip_stops SET name=:name,scheduled_at=:scheduled_at,address=:address WHERE id=:id"
-                        ),
-                        {
-                            "id": previous["stops"][position - 1]["id"],
-                            "name": stop.name,
-                            "scheduled_at": stop.scheduled_at,
-                            "address": stop.address,
-                        },
-                    )
-                else:
-                    await db.execute(
-                        text(
-                            "INSERT INTO trip_stops(id,company_id,leg_id,position,name,kind,scheduled_at,address) VALUES(:id,:company,:leg,:position,:name,:kind,:scheduled_at,:address)"
-                        ),
-                        stop.model_dump()
-                        | {
-                            "id": uuid4(),
-                            "company": actor.company_id,
-                            "leg": previous["id"],
-                            "position": position,
-                        },
-                    )
-            if reserved and len(leg.stops) > len(previous["stops"]):
-                # Existing intermediate positions stay stable; the terminal moves
-                # after the appended stops. Tickets resolve points from these rows.
-                await db.execute(
-                    text("""WITH changed AS (
-                      UPDATE reservation_legs SET dropoff_position=:new
-                      WHERE leg_id=:leg AND dropoff_position=:old RETURNING reservation_id
-                    ) UPDATE reservations SET edit_version=edit_version+1
-                      WHERE id IN (SELECT reservation_id FROM changed)"""),
-                    {
-                        "leg": previous["id"],
-                        "old": len(previous["stops"]) + 1,
-                        "new": len(leg.stops) + 1,
-                    },
-                )
-        for allocation in data.vehicles:
-            previous = previous_allocation(old, allocation)
-            if previous is None:
-                allocation_id = uuid4()
-                await db.execute(
-                    text("""INSERT INTO trip_vehicles(id,company_id,trip_id,vehicle_id,driver_id,capacity)
-                  SELECT :id,company_id,:trip,id,:driver,capacity FROM vehicles WHERE id=:vehicle"""),
-                    {
-                        "id": allocation_id,
-                        "trip": trip_id,
-                        "driver": allocation.driver_id,
-                        "vehicle": allocation.vehicle_id,
-                    },
-                )
-                previous = {"id": allocation_id}
-            else:
-                await db.execute(
-                    text("UPDATE trip_vehicles SET driver_id=:driver WHERE id=:id"),
-                    {"driver": allocation.driver_id, "id": previous["id"]},
-                )
-            await db.execute(
-                text(
-                    "UPDATE trip_vehicles SET routes=CAST(:routes AS jsonb),leg_positions=CAST(:legs AS jsonb) WHERE id=:id"
-                ),
-                {
-                    "id": previous["id"],
-                    "routes": json.dumps([r.model_dump() for r in allocation.routes]),
-                    "legs": json.dumps(allocation.leg_positions),
-                },
-            )
-            await db.execute(
-                text("DELETE FROM trip_guides WHERE allocation_id=:id"),
+                text("DELETE FROM trip_stops WHERE leg_id=:id"),
                 {"id": previous["id"]},
             )
-            for guide in allocation.guide_ids:
+        for position, stop in enumerate(leg.stops, 1):
+            if reserved and position <= len(previous["stops"]):
                 await db.execute(
                     text(
-                        "INSERT INTO trip_guides(company_id,allocation_id,user_id) VALUES(:company,:allocation,:user)"
+                        "UPDATE trip_stops SET name=:name,scheduled_at=:scheduled_at,address=:address WHERE id=:id"
                     ),
                     {
-                        "company": actor.company_id,
-                        "allocation": previous["id"],
-                        "user": guide,
+                        "id": previous["stops"][position - 1]["id"],
+                        "name": stop.name,
+                        "scheduled_at": stop.scheduled_at,
+                        "address": stop.address,
                     },
                 )
-        await invalidate_waiting(db, trip_id=trip_id)
-        await audit(db, actor.company_id, actor.user["id"], "trip.updated", trip_id)
-        return await detail(db, trip_id)
+            else:
+                await db.execute(
+                    text(
+                        "INSERT INTO trip_stops(id,company_id,leg_id,position,name,kind,scheduled_at,address) VALUES(:id,:company,:leg,:position,:name,:kind,:scheduled_at,:address)"
+                    ),
+                    stop.model_dump()
+                    | {
+                        "id": uuid4(),
+                        "company": actor.company_id,
+                        "leg": previous["id"],
+                        "position": position,
+                    },
+                )
+        if reserved and len(leg.stops) > len(previous["stops"]):
+            # Existing intermediate positions stay stable; the terminal moves
+            # after the appended stops. Tickets resolve points from these rows.
+            await db.execute(
+                text("""WITH changed AS (
+                  UPDATE reservation_legs SET dropoff_position=:new
+                  WHERE leg_id=:leg AND dropoff_position=:old RETURNING reservation_id
+                ) UPDATE reservations SET edit_version=edit_version+1
+                  WHERE id IN (SELECT reservation_id FROM changed)"""),
+                {
+                    "leg": previous["id"],
+                    "old": len(previous["stops"]) + 1,
+                    "new": len(leg.stops) + 1,
+                },
+            )
+    for allocation in data.vehicles:
+        previous = previous_allocation(old, allocation)
+        if previous is None:
+            allocation_id = uuid4()
+            await db.execute(
+                text("""INSERT INTO trip_vehicles(id,company_id,trip_id,vehicle_id,driver_id,capacity)
+              SELECT :id,company_id,:trip,id,:driver,capacity FROM vehicles WHERE id=:vehicle"""),
+                {
+                    "id": allocation_id,
+                    "trip": trip_id,
+                    "driver": allocation.driver_id,
+                    "vehicle": allocation.vehicle_id,
+                },
+            )
+            previous = {"id": allocation_id}
+        else:
+            await db.execute(
+                text("UPDATE trip_vehicles SET driver_id=:driver WHERE id=:id"),
+                {"driver": allocation.driver_id, "id": previous["id"]},
+            )
+        await db.execute(
+            text(
+                "UPDATE trip_vehicles SET routes=CAST(:routes AS jsonb),leg_positions=CAST(:legs AS jsonb) WHERE id=:id"
+            ),
+            {
+                "id": previous["id"],
+                "routes": json.dumps([r.model_dump() for r in allocation.routes]),
+                "legs": json.dumps(allocation.leg_positions),
+            },
+        )
+        await db.execute(
+            text("DELETE FROM trip_guides WHERE allocation_id=:id"),
+            {"id": previous["id"]},
+        )
+        for guide in allocation.guide_ids:
+            await db.execute(
+                text(
+                    "INSERT INTO trip_guides(company_id,allocation_id,user_id) VALUES(:company,:allocation,:user)"
+                ),
+                {
+                    "company": actor.company_id,
+                    "allocation": previous["id"],
+                    "user": guide,
+                },
+            )
+    if route_state is not None:
+        await db.execute(
+            text(
+                "UPDATE trips SET package_snapshot=CAST(:snapshot AS jsonb) WHERE id=:id"
+            ),
+            {
+                "id": trip_id,
+                "snapshot": json.dumps(package_snapshot) if package_snapshot else None,
+            },
+        )
+        await audit(
+            db, actor.company_id, actor.user["id"], "trip.routes_refreshed", trip_id
+        )
+    await invalidate_waiting(db, trip_id=trip_id)
+    await audit(db, actor.company_id, actor.user["id"], "trip.updated", trip_id)
+    return await detail(db, trip_id)
 
 
 @router.patch("/reservations/{reservation_id}")
