@@ -43,6 +43,9 @@ export function Sales({
     queryFn: () => api<Notice[]>("/availability-alerts"),
     refetchInterval: 15000,
   });
+  const activeTrips = trips.data?.filter(
+    (trip) => trip.status === "scheduled" || trip.status === "in_progress",
+  );
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError("");
@@ -138,7 +141,10 @@ export function Sales({
       )}
       <section className="operation-card">
         <h3>Publicação das viagens</h3>
-        {trips.data?.map((t) => (
+        {activeTrips?.length === 0 && (
+          <p>Nenhuma viagem ativa disponível para publicação.</p>
+        )}
+        {activeTrips?.map((t) => (
           <div className="operation-card" key={t.id}>
             <strong>{t.name}</strong>
             <p>{t.is_published ? "Publicada" : "Privada"}</p>
