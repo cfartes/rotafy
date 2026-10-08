@@ -137,6 +137,28 @@ test("create a reusable complete package and schedule every displacement", async
   await catalog
     .getByRole("combobox", { name: "Rota do deslocamento 2", exact: true })
     .selectOption("route:2");
+  const firstPurpose = catalog.getByRole("combobox", {
+    name: "Finalidade do deslocamento 1",
+    exact: true,
+  });
+  await firstPurpose.selectOption("");
+  await catalog.getByRole("button", { name: "Salvar", exact: true }).click();
+  await expect(catalog.getByRole("alert")).toContainText(
+    "Destino 1 (Navegantes)",
+  );
+  expect(submissions).toHaveLength(0);
+  await firstPurpose.selectOption("1");
+  const secondPurpose = catalog.getByRole("combobox", {
+    name: "Finalidade do deslocamento 2",
+    exact: true,
+  });
+  await secondPurpose.selectOption("1");
+  await catalog.getByRole("button", { name: "Salvar", exact: true }).click();
+  await expect(catalog.getByRole("alert")).toContainText(
+    "marque a chegada somente uma vez",
+  );
+  expect(submissions).toHaveLength(0);
+  await secondPurpose.selectOption("");
   await catalog.getByRole("button", { name: "Salvar", exact: true }).click();
   await expect(catalog).not.toBeVisible();
   expect(

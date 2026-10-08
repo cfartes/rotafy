@@ -3,6 +3,7 @@ import {
   PackageProgram,
   emptyPackageItinerary,
   packageItineraryInput,
+  packageItineraryErrors,
   type PackageItinerary,
   type PackageSnapshot,
 } from "./PackageItinerary";
@@ -847,6 +848,10 @@ function CatalogModal({
     setError("");
     const f = new FormData(e.currentTarget);
     try {
+      if (!vehicle && itinerary) {
+        const issues = packageItineraryErrors(itinerary);
+        if (issues.length) throw new Error(issues.join(" "));
+      }
       const data = {
         name: f.get("name"),
         is_active: f.get("is_active") === "on",

@@ -19,6 +19,10 @@
 
 Limites desta entrega: até 20 destinos comerciais, 60 deslocamentos, 60 dias relativos e 120 atividades por modelo.
 
+O formulário separa destinos, deslocamentos e atividades, destacando cada destino/deslocamento com borda verde petróleo. Um guia explica a montagem e uma lista identifica destinos sem chegada associada, chegadas duplicadas, ordem incorreta e retorno ausente antes de salvar. As verificações do servidor continuam validando cidades, continuidade das Rotas e duração dos deslocamentos.
+
+Não são necessários CEP nem datas fixas no modelo do pacote. Os dias relativos podem ter intervalos: primeiro destino no dia 1, segundo no dia 4 e retorno no dia 7. As datas reais são calculadas ao agendar a viagem. Cada chegada comercial deve ser associada ao destino correspondente no campo **Finalidade do deslocamento**; passeios, transferências e retorno não acrescentam destinos à franquia.
+
 ## Reservas e operação
 
 Toda reserva precisa incluir os deslocamentos do pacote. A disponibilidade é verificada em cada trecho entre paradas e em cada veículo; o sistema sugere uma combinação que mantém a família inteira no mesmo veículo em cada deslocamento. É possível trocar de veículo entre os deslocamentos. Sem capacidade para a família em todos eles, a venda não é permitida.

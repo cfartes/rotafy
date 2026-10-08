@@ -111,3 +111,45 @@
     width: 100%;
   }
 }
+.package-itinerary-editor {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.package-itinerary-editor .package-route-card {
+  border: 2px solid #0c7772;
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.package-route-card legend {
+  color: #075e5a;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+.package-rules {
+  background: #edf7f6;
+  border-left: 4px solid #0c7772;
+  border-radius: 10px;
+  padding: 16px 20px;
+  line-height: 1.65;
+}
+
+.package-rules h3,
+.package-rules h4 {
+  margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .package-itinerary-editor .package-route-card {
+    padding: 14px;
+  }
+  .package-rules {
+    padding: 12px 14px;
+  }
+}

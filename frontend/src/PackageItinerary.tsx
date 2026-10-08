@@ -71,6 +71,54 @@ export function packageItineraryInput(value: PackageItinerary) {
   };
 }
 
+export function packageItineraryErrors(value: PackageItinerary): string[] {
+  const errors: string[] = [];
+  value.destinations.forEach((destination, index) => {
+    const count = value.steps.filter(
+      (step) => step.destination_position === index + 1,
+    ).length;
+    const label = `Destino ${index + 1}${destination.name ? ` (${destination.name})` : ""}`;
+    if (count === 0)
+      errors.push(
+        `${label}: selecione a chegada a este destino na finalidade de um deslocamento.`,
+      );
+    if (count > 1)
+      errors.push(
+        `${label}: marque a chegada somente uma vez; nas demais visitas, selecione passeio ou transferência.`,
+      );
+  });
+  const positions = value.steps.flatMap((s) =>
+    s.destination_position ? [s.destination_position] : [],
+  );
+  if (
+    positions.some(
+      (position, index) => index > 0 && position < positions[index - 1],
+    )
+  )
+    errors.push(
+      "As chegadas devem seguir a ordem dos destinos cadastrados. Ajuste a finalidade ou a ordem dos deslocamentos.",
+    );
+  if (value.steps.at(-1)?.destination_position != null)
+    errors.push(
+      "O último deslocamento deve ser o retorno à origem, sem destino comercial adicional.",
+    );
+  if (value.steps[0]?.day !== 1)
+    errors.push("O primeiro deslocamento deve começar no dia 1 do pacote.");
+  value.steps.forEach((step, index) => {
+    const previous = value.steps[index - 1];
+    if (
+      previous &&
+      (step.day < previous.day ||
+        (step.day === previous.day &&
+          step.departure_time <= previous.departure_time))
+    )
+      errors.push(
+        `Deslocamento ${index + 1}: escolha um dia e horário posteriores à saída anterior.`,
+      );
+  });
+  return errors;
+}
+
 export function PackageItineraryEditor({
   value,
   onChange,
@@ -82,15 +130,36 @@ export function PackageItineraryEditor({
     queryKey: ["routes"],
     queryFn: () => api<SavedRoute[]>("/routes"),
   });
+  const issues = packageItineraryErrors(value);
   return (
-    <section>
-      <h3>Destinos comerciais</h3>
+    <section className="package-itinerary-editor">
+      <div className="package-rules">
+        <h3>Como montar o pacote</h3>
+        <ol>
+          <li>Cadastre os destinos na ordem em que serão visitados.</li>
+          <li>
+            Selecione uma Rota para cada deslocamento e indique qual destino
+            será alcançado na sua finalidade.
+          </li>
+          <li>
+            Marque a chegada a cada destino uma única vez. Passeios e
+            transferências não são novos destinos comerciais.
+          </li>
+          <li>Inclua o retorno à origem no último deslocamento.</li>
+        </ol>
+        <p>
+          Os dias são relativos: dia 1 é o início da viagem. Você pode visitar
+          um destino no dia 1, outro no dia 4 e retornar no dia 7. As datas
+          reais serão definidas ao agendar a viagem.
+        </p>
+      </div>
+      <h3>1. Destinos comerciais</h3>
       <p className="muted">
         Cada destino consome uma viagem da franquia ao agendar o pacote. Retorno
         e paradas não acrescentam consumo. Venda somente do pacote completo.
       </p>
       {value.destinations.map((destination, index) => (
-        <fieldset className="operation-card" key={index}>
+        <fieldset className="operation-card package-route-card" key={index}>
           <legend>Destino {index + 1}</legend>
           <Field label={`Nome do destino ${index + 1}`}>
             <input
@@ -166,7 +235,7 @@ export function PackageItineraryEditor({
       >
         Adicionar destino
       </button>
-      <h3>Deslocamentos do roteiro</h3>
+      <h3>2. Deslocamentos do roteiro</h3>
       <p className="muted">
         Selecione um sentido de Rota para cada deslocamento, em ordem. Inclua o
         retorno à origem no último deslocamento. O dia 1 corresponde à data
@@ -174,8 +243,16 @@ export function PackageItineraryEditor({
       </p>
       {routes.error && <Alert>{routes.error.message}</Alert>}
       {value.steps.map((step, index) => (
-        <fieldset className="operation-card" key={index}>
+        <fieldset className="operation-card package-route-card" key={index}>
           <legend>Deslocamento {index + 1}</legend>
+          <p className="muted">
+            Dia {step.day} · saída às {step.departure_time} ·{" "}
+            {step.destination_position
+              ? `chegada ao destino ${step.destination_position}`
+              : index === value.steps.length - 1
+                ? "retorno à origem"
+                : "passeio ou transferência"}
+          </p>
           <div className="form-grid">
             <Field label={`Dia do deslocamento ${index + 1}`}>
               <input
@@ -347,7 +424,7 @@ export function PackageItineraryEditor({
       >
         Adicionar deslocamento
       </button>
-      <h3>Atividades e dias livres</h3>
+      <h3>3. Atividades e dias livres (opcional)</h3>
       {value.activities.map((activity, index) => (
         <div className="operation-card" key={index}>
           <Field label={`Dia da atividade ${index + 1}`}>
@@ -434,6 +511,16 @@ export function PackageItineraryEditor({
           com retorno incluído.
         </strong>
       </p>
+      {issues.length > 0 && (
+        <div className="package-rules" aria-label="Pendências do roteiro">
+          <h4>Antes de salvar, complete o roteiro</h4>
+          <ul>
+            {issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
