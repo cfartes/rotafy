@@ -2,6 +2,7 @@
 
 import secrets
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 from urllib.parse import quote, urlparse
 from uuid import UUID, uuid4
 
@@ -10,8 +11,9 @@ from pydantic import EmailStr, Field
 from sqlalchemy import text
 
 from app.identity import Auth, admin, audit, check_origin, scope, throttle
+from app.integration_secrets import encrypt
 from app.integration_settings import email_settings
-from app.schemas import Input, Role
+from app.schemas import CompanyContact, Input, Role
 from app.security import digest, passwords
 
 router = APIRouter(prefix="/api/v1", tags=["E-mails de acesso"])
@@ -23,7 +25,11 @@ class Forgot(Input):
     nexus: bool = False
 
 
-class Invite(Input):
+class InvitationOptions(CompanyContact):
+    channel: Literal["email", "whatsapp", "both"] = "email"
+
+
+class Invite(InvitationOptions):
     full_name: str = Field(min_length=2, max_length=150)
     email: EmailStr
     role: Role = "attendant"
@@ -51,7 +57,9 @@ def require_email(settings):
         )
 
 
-async def queue_reset(db, settings, company_id, user, invitation=False):
+async def queue_reset(
+    db, settings, company_id, user, invitation=False, channel="email"
+):
     table = "password_resets" if company_id else "platform_password_resets"
     token = (
         f"t.{company_id}.{secrets.token_urlsafe(32)}"
@@ -89,6 +97,44 @@ async def queue_reset(db, settings, company_id, user, invitation=False):
             text("SELECT slug FROM companies WHERE id=:id"), {"id": company_id}
         )
     body = f"Olá, {user['full_name']}.\n\n{label}.\nEmpresa: {company_label}\n\nDefina sua senha neste link:\n{link}\n\nValidade: {'24 horas' if invitation else '1 hora'}. O link pode ser usado uma vez. Se não solicitou este acesso, ignore a mensagem."
+    if channel in {"whatsapp", "both"}:
+        config = (
+            (
+                await db.execute(
+                    text(
+                        "SELECT session_id FROM company_whatsapp WHERE company_id=:company AND enabled"
+                    ),
+                    {"company": company_id},
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if not config or not await db.scalar(
+            text("SELECT 1 FROM integration_settings WHERE id=true AND openwa_key<>''")
+        ):
+            raise HTTPException(
+                503, "O WhatsApp desta empresa ainda não foi habilitado pela Nexus."
+            )
+        if not user.get("contact_phone"):
+            raise HTTPException(422, "Informe o telefone/WhatsApp do colaborador.")
+        await db.execute(
+            text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body,expires_at,reset_id,user_id)
+          VALUES(:id,:company,NULL,:session,'invitation',:key,:phone,:body,:expires,:reset,:user)"""),
+            {
+                "id": uuid4(),
+                "company": company_id,
+                "session": config["session_id"],
+                "key": f"invite:{reset_id}",
+                "phone": user["contact_phone"],
+                "body": encrypt(body),
+                "expires": expires,
+                "reset": reset_id,
+                "user": user["id"],
+            },
+        )
+    if channel == "whatsapp":
+        return
     await db.execute(
         text("""INSERT INTO email_outbox(id,company_id,reset_id,recipient,subject,body,expires_at)
       VALUES(:id,:company,:reset,:recipient,:subject,:body,:expires)"""),
@@ -164,10 +210,15 @@ async def forgot(data: Forgot, request: Request):
 @router.post("/users/invitations", status_code=201)
 async def invite(data: Invite, request: Request, actor: Auth):
     admin(actor)
-    settings = await email_settings(
-        request.app.state.platform_engine, request.app.state.settings
+    settings = (
+        request.app.state.settings
+        if data.channel == "whatsapp"
+        else await email_settings(
+            request.app.state.platform_engine, request.app.state.settings
+        )
     )
-    require_email(settings)
+    if data.channel != "whatsapp":
+        require_email(settings)
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
         # Serializa com alterações de usuários feitas pela administração.
@@ -188,7 +239,7 @@ async def invite(data: Invite, request: Request, actor: Auth):
         user_id = uuid4()
         await db.execute(
             text(
-                "INSERT INTO users(id,company_id,full_name,email,password_hash,role) VALUES(:id,:company,:name,:email,:hash,:role)"
+                "INSERT INTO users(id,company_id,full_name,email,password_hash,role,contact_phone) VALUES(:id,:company,:name,:email,:hash,:role,:phone)"
             ),
             {
                 "id": user_id,
@@ -197,25 +248,45 @@ async def invite(data: Invite, request: Request, actor: Auth):
                 "email": str(data.email).lower(),
                 "hash": passwords.hash(secrets.token_urlsafe(48)),
                 "role": data.role,
+                "phone": data.contact_phone,
             },
         )
         user = {
             "id": user_id,
             "full_name": data.full_name,
+            "contact_phone": data.contact_phone,
             "email": str(data.email).lower(),
         }
-        await queue_reset(db, settings, actor.company_id, user, invitation=True)
+        await queue_reset(
+            db, settings, actor.company_id, user, invitation=True, channel=data.channel
+        )
         await audit(db, actor.company_id, actor.user["id"], "user.invited", user_id)
-        return {"id": user_id, "email_status": "pending"}
+        return {
+            "id": user_id,
+            "channel": data.channel,
+            "email_status": "pending" if data.channel != "whatsapp" else None,
+            "whatsapp_status": "pending" if data.channel != "email" else None,
+        }
 
 
 @router.post("/users/{user_id}/invitation", status_code=202)
-async def reinvite(user_id: UUID, request: Request, actor: Auth):
+async def reinvite(
+    user_id: UUID,
+    request: Request,
+    actor: Auth,
+    data: InvitationOptions | None = None,
+):
     admin(actor)
-    settings = await email_settings(
-        request.app.state.platform_engine, request.app.state.settings
+    data = data or InvitationOptions()
+    settings = (
+        request.app.state.settings
+        if data.channel == "whatsapp"
+        else await email_settings(
+            request.app.state.platform_engine, request.app.state.settings
+        )
     )
-    require_email(settings)
+    if data.channel != "whatsapp":
+        require_email(settings)
     await throttle(request, f"invite:{actor.company_id}:{user_id}", platform=True)
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
@@ -223,7 +294,7 @@ async def reinvite(user_id: UUID, request: Request, actor: Auth):
             (
                 await db.execute(
                     text(
-                        "SELECT id,full_name,email FROM users WHERE company_id=:company AND id=:id AND is_active FOR UPDATE"
+                        "SELECT id,full_name,email,contact_phone FROM users WHERE company_id=:company AND id=:id AND is_active FOR UPDATE"
                     ),
                     {"company": actor.company_id, "id": user_id},
                 )
@@ -233,11 +304,24 @@ async def reinvite(user_id: UUID, request: Request, actor: Auth):
         )
         if not user:
             raise HTTPException(404, "Usuário ativo não encontrado nesta empresa.")
-        await queue_reset(db, settings, actor.company_id, user, invitation=True)
+        user = dict(user)
+        if data.contact_phone is not None:
+            user["contact_phone"] = data.contact_phone
+            await db.execute(
+                text("UPDATE users SET contact_phone=:phone WHERE id=:id"),
+                {"phone": data.contact_phone, "id": user_id},
+            )
+        await queue_reset(
+            db, settings, actor.company_id, user, invitation=True, channel=data.channel
+        )
         await audit(
             db, actor.company_id, actor.user["id"], "user.invitation_resent", user_id
         )
-    return {"email_status": "pending"}
+    return {
+        "channel": data.channel,
+        "email_status": "pending" if data.channel != "whatsapp" else None,
+        "whatsapp_status": "pending" if data.channel != "email" else None,
+    }
 
 
 @router.get("/emails/status")
@@ -249,6 +333,19 @@ async def email_status(request: Request, actor: Auth):
         result = await db.execute(
             text("""SELECT id,recipient,status,attempts,created_at,sent_at
           FROM email_outbox ORDER BY created_at DESC LIMIT 100""")
+        )
+        return [dict(row) for row in result.mappings()]
+
+
+@router.get("/users/invitations/whatsapp/status")
+async def invitation_whatsapp_status(request: Request, actor: Auth):
+    admin(actor)
+    async with request.app.state.platform_engine.begin() as db:
+        await scope(db, actor.company_id)
+        result = await db.execute(
+            text(
+                "SELECT id,phone AS recipient,status,attempts,created_at,sent_at FROM whatsapp_outbox WHERE kind='invitation' ORDER BY created_at DESC LIMIT 100"
+            )
         )
         return [dict(row) for row in result.mappings()]
 

@@ -44,6 +44,13 @@ class Login(Input):
 
 
 class UserCreate(Input):
+    contact_phone: str | None = Field(default=None, max_length=50)
+
+    @field_validator("contact_phone")
+    @classmethod
+    def validate_phone(cls, value):
+        return CompanyContact.validate_contact(value)
+
     full_name: str = Field(min_length=2, max_length=150)
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
@@ -134,6 +141,7 @@ class ResetRedeem(Input):
 
 
 class UserView(BaseModel):
+    contact_phone: str | None = None
     id: UUID
     company_id: UUID | None = None
     full_name: str

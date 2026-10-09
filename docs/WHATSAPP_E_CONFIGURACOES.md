@@ -21,6 +21,7 @@ Antes do primeiro salvamento pelo painel, Resend continua aceitando a configura�
 - PAGO: quando a marcação muda para PAGO. Não envia ao simplesmente salvar novamente o mesmo estado nem ao desmarcar.
 - Resumo manual: em **Detalhes da reserva → Enviar resumo pelo WhatsApp**. Cada solicitação tem uma chave de operação para não repetir uma requisição perdida por falha de conexão.
 - Bilhete individual: após emitir ou reemitir, use **Enviar bilhete pelo WhatsApp** na seção de bilhetes da reserva. O link vai para o telefone da família. Um único link/QR por passageiro atende todos os trechos contratados; embarques e desembarques continuam separados por trecho. O conteúdo com link é cifrado na fila e descartado se o bilhete for revogado/reemitido ou a viagem encerrada antes do envio.
+- Convite de colaborador: escolha E-mail, WhatsApp ou ambos em **Equipe → Adicionar pessoa** ou **Enviar convite**. Usa o telefone do colaborador e o mesmo link privado de criação de senha nos dois canais. Consulte [CONVITES_WHATSAPP.md](CONVITES_WHATSAPP.md).
 
 O resumo contém empresa, responsável, viagem/pacote, destino, saída em Brasília, quantidade de passageiros, valor nominal, referência curta da reserva, situação e marcação PAGO. Não inclui CPF ou nomes individuais dos passageiros. Usa o único telefone internacional da família, no formato `<DDI><DDD><número>@c.us`. O envio do bilhete inclui o link privado para a página com QR. Não há cobrança integrada, anexos, senha de passageiro, lembretes, grupos ou recebimento de mensagens nesta etapa.
 

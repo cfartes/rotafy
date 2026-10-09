@@ -494,7 +494,9 @@ def create_app(settings: Settings | None = None):
             dict(row)
             for row in (
                 await actor.db.execute(
-                    text(f"SELECT {USER_FIELDS} FROM users ORDER BY full_name")
+                    text(
+                        f"SELECT {USER_FIELDS},contact_phone FROM users ORDER BY full_name"
+                    )
                 )
             ).mappings()
         ]
@@ -506,8 +508,8 @@ def create_app(settings: Settings | None = None):
         row = (
             (
                 await actor.db.execute(
-                    text(f"""INSERT INTO users(id,company_id,full_name,email,password_hash,role)
-            VALUES(:id,:company,:name,:email,:hash,:role) RETURNING {USER_FIELDS}"""),
+                    text(f"""INSERT INTO users(id,company_id,full_name,email,password_hash,role,contact_phone)
+            VALUES(:id,:company,:name,:email,:hash,:role,:phone) RETURNING {USER_FIELDS},contact_phone"""),
                     {
                         "id": user_id,
                         "company": actor.company_id,
@@ -515,6 +517,7 @@ def create_app(settings: Settings | None = None):
                         "email": str(payload.email).lower(),
                         "hash": passwords.hash(payload.password),
                         "role": payload.role,
+                        "phone": payload.contact_phone,
                     },
                 )
             )

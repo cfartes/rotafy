@@ -203,7 +203,7 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
     exact: true,
   });
   await inviteDialog
-    .getByLabel("Enviar convite por e-mail para a pessoa definir sua senha")
+    .getByLabel("Enviar convite para a pessoa definir sua senha")
     .check();
   await expect(inviteDialog.getByLabel("Senha inicial")).toHaveCount(0);
   await inviteDialog.getByLabel("Nome completo").fill("Pessoa Convidada");

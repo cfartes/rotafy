@@ -12,7 +12,11 @@ import {
   profileName,
   companyCapabilities,
 } from "./operationalProfiles";
-import { ForgotPassword, EmailDeliveries } from "./AccessEmail";
+import {
+  ForgotPassword,
+  EmailDeliveries,
+  InvitationModal,
+} from "./AccessEmail";
 import { TicketPage } from "./Tickets";
 const OfflineHub = lazy(() =>
   import("./offline/OfflineHub").then((module) => ({
@@ -643,6 +647,7 @@ function EditCompany({
 
 function CreateUser({ onClose }: { onClose: () => void }) {
   const [invitation, setInvitation] = useState(false);
+  const [channel, setChannel] = useState("email");
   const client = useQueryClient();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -652,7 +657,10 @@ function CreateUser({ onClose }: { onClose: () => void }) {
     setError("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      if (invitation) delete data.password;
+      if (invitation) {
+        delete data.password;
+        data.channel = channel;
+      }
       await post(invitation ? "/users/invitations" : "/users", data);
       await client.invalidateQueries({ queryKey: ["users"] });
       onClose();
@@ -671,6 +679,9 @@ function CreateUser({ onClose }: { onClose: () => void }) {
         <Field label="E-mail">
           <input name="email" type="email" required />
         </Field>
+        <Field label="Telefone/WhatsApp do colaborador">
+          <PhoneInput required={invitation && channel !== "email"} />
+        </Field>
         <Field label="Perfil">
           <select name="role" defaultValue="attendant">
             {Object.entries(roleName)
@@ -688,8 +699,20 @@ function CreateUser({ onClose }: { onClose: () => void }) {
             checked={invitation}
             onChange={(e) => setInvitation(e.target.checked)}
           />{" "}
-          Enviar convite por e-mail para a pessoa definir sua senha
+          Enviar convite para a pessoa definir sua senha
         </label>
+        {invitation && (
+          <Field label="Enviar convite por">
+            <select
+              value={channel}
+              onChange={(event) => setChannel(event.target.value)}
+            >
+              <option value="email">E-mail</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="both">E-mail e WhatsApp</option>
+            </select>
+          </Field>
+        )}
         {!invitation && (
           <Field label="Senha inicial">
             <input
@@ -814,8 +837,8 @@ const actionNames: Record<string, string> = {
   "user.updated": "Cadastro da equipe atualizado",
   "auth.reset_issued": "Link de recuperação emitido",
   "auth.reset_email_queued": "Recuperação por e-mail solicitada",
-  "user.invited": "Pessoa convidada por e-mail",
-  "user.invitation_resent": "Convite por e-mail reenviado",
+  "user.invited": "Pessoa convidada para definir senha",
+  "user.invitation_resent": "Convite de acesso reenviado",
   "trip.updated": "Viagem atualizada",
   "reservation.updated": "Reserva atualizada",
   "auth.password_changed": "Senha alterada",
@@ -975,6 +998,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [error, setError] = useState("");
   const [resetLink, setResetLink] = useState("");
   const [deliveries, setDeliveries] = useState(false);
+  const [invitingUser, setInvitingUser] = useState<User | null>(null);
   const [busyId, setBusyId] = useState("");
   const companies = useQuery({
     queryKey: ["companies"],
@@ -1644,21 +1668,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                   <button
                                     className="text-button"
                                     disabled={busyId === row.id}
-                                    onClick={async () => {
-                                      setBusyId(row.id);
-                                      setError("");
-                                      try {
-                                        await post(
-                                          `/users/${row.id}/invitation`,
-                                          {},
-                                        );
-                                        setDeliveries(true);
-                                      } catch (e) {
-                                        setError(message(e));
-                                      } finally {
-                                        setBusyId("");
-                                      }
-                                    }}
+                                    onClick={() => setInvitingUser(row as User)}
                                   >
                                     Enviar convite
                                   </button>
@@ -1762,6 +1772,17 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <PasswordModal onClose={() => setPassword(false)} onLogout={onLogout} />
       )}
       {deliveries && <EmailDeliveries onClose={() => setDeliveries(false)} />}
+      {invitingUser && (
+        <InvitationModal
+          user={invitingUser}
+          onClose={() => setInvitingUser(null)}
+          onSent={() => {
+            setInvitingUser(null);
+            setDeliveries(true);
+            void client.invalidateQueries({ queryKey: ["users"] });
+          }}
+        />
+      )}
       {resetLink && (
         <Modal title="Link de recuperação" onClose={() => setResetLink("")}>
           <div className="modal-form">

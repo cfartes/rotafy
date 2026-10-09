@@ -10,11 +10,18 @@ function format(value: string) {
   return `(${raw.slice(0, 2)}) ${local.slice(0, split)}${local.length > split ? `-${local.slice(split)}` : ""}`;
 }
 
-export function PhoneInput({ initialValue = "" }: { initialValue?: string }) {
+export function PhoneInput({
+  initialValue = "",
+  required = false,
+}: {
+  initialValue?: string;
+  required?: boolean;
+}) {
   const [value, setValue] = useState(() => format(initialValue));
   return (
     <input
       name="contact_phone"
+      required={required}
       type="tel"
       autoComplete="tel"
       placeholder="(47) 99999-9999"

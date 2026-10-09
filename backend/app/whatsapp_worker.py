@@ -72,12 +72,24 @@ async def process_company(engine, company_id, transport=openwa_request):
             {"id": company_id},
         ):
             return False
-        valid = await db.scalar(
-            text("""SELECT 1 FROM reservations r JOIN whatsapp_outbox w ON w.reservation_id=r.id WHERE w.id=:id AND w.expires_at>now()
-          AND r.phone=w.phone AND (w.ticket_hash IS NULL OR (r.status='confirmed' AND EXISTS(SELECT 1 FROM tickets tk JOIN trips t ON t.id=tk.trip_id WHERE tk.reservation_id=r.id AND tk.revoked_at IS NULL AND t.status IN ('scheduled','in_progress') AND (tk.token_hash=w.ticket_hash OR tk.shared_token_hash=w.ticket_hash)))) AND (w.kind='manual' OR (w.kind='cancelled' AND r.status='cancelled') OR (w.kind='confirmed' AND r.status='confirmed')
-          OR (w.kind='paid' AND r.is_paid AND r.status IN ('pending','confirmed')))"""),
-            {"id": item["id"]},
-        )
+        if item["kind"] == "invitation":
+            valid = await db.scalar(
+                text("""SELECT 1 FROM password_resets r JOIN users u ON u.id=r.user_id
+              WHERE r.id=:reset AND u.id=:user AND u.is_active AND r.used_at IS NULL AND r.expires_at>now()
+              AND u.contact_phone=:phone"""),
+                {
+                    "reset": item["reset_id"],
+                    "user": item["user_id"],
+                    "phone": item["phone"],
+                },
+            )
+        else:
+            valid = await db.scalar(
+                text("""SELECT 1 FROM reservations r JOIN whatsapp_outbox w ON w.reservation_id=r.id WHERE w.id=:id AND w.expires_at>now()
+              AND r.phone=w.phone AND (w.ticket_hash IS NULL OR (r.status='confirmed' AND EXISTS(SELECT 1 FROM tickets tk JOIN trips t ON t.id=tk.trip_id WHERE tk.reservation_id=r.id AND tk.revoked_at IS NULL AND t.status IN ('scheduled','in_progress') AND (tk.token_hash=w.ticket_hash OR tk.shared_token_hash=w.ticket_hash)))) AND (w.kind='manual' OR (w.kind='cancelled' AND r.status='cancelled') OR (w.kind='confirmed' AND r.status='confirmed')
+              OR (w.kind='paid' AND r.is_paid AND r.status IN ('pending','confirmed')))"""),
+                {"id": item["id"]},
+            )
         if not valid:
             await db.execute(
                 text(

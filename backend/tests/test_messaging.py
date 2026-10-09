@@ -69,6 +69,111 @@ def ready(_key, path, payload=None):
     )
 
 
+def test_whatsapp_invitation_without_resend_and_shared_link_for_both(
+    client, seeded, owner, protected_key
+):
+    configure(client, seeded)
+    login(client, email="nexus@example.com", nexus=True)
+    client.put(
+        "/api/v1/nexus/integrations",
+        json={"expected_version": 1, "clear_resend_api_key": True},
+    )
+    login(client)
+    payload = {
+        "full_name": "Motorista convidado",
+        "email": "driver-invite@example.com",
+        "role": "driver",
+        "contact_phone": "47999999999",
+        "channel": "whatsapp",
+    }
+    response = client.post("/api/v1/users/invitations", json=payload)
+    assert response.status_code == 201, response.text
+    user_id = response.json()["id"]
+    assert response.json()["email_status"] is None
+    with owner.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM email_outbox")) == 0
+        row = db.execute(text("SELECT * FROM whatsapp_outbox")).mappings().one()
+        body = decrypt(row["body"])
+        assert "/redefinir#token=" in body
+        assert row["phone"] == "+5547999999999" and row["reservation_id"] is None
+        assert "token=" not in row["body"]
+    history = client.get("/api/v1/users/invitations/whatsapp/status")
+    assert (
+        history.status_code == 200
+        and "body" not in history.text
+        and "reset_id" not in history.text
+    )
+    assert (
+        client.post(
+            f"/api/v1/users/{user_id}/invitation", json={"channel": "whatsapp"}
+        ).status_code
+        == 202
+    )
+    assert process(seeded["a"], ready)  # Link antigo foi substituído.
+    sent = []
+
+    def sender(key, path, payload=None):
+        if payload:
+            sent.append(payload)
+        return ready(key, path, payload)
+
+    assert process(seeded["a"], sender)
+    assert len(sent) == 1 and "/redefinir#token=" in sent[0]["text"]
+    login(client, email="nexus@example.com", nexus=True)
+    client.put(
+        "/api/v1/nexus/integrations",
+        json={"expected_version": 2, "resend_api_key": "re_placeholder_secret"},
+    )
+    login(client)
+    assert (
+        client.post(
+            f"/api/v1/users/{user_id}/invitation", json={"channel": "both"}
+        ).status_code
+        == 202
+    )
+    with owner.connect() as db:
+        email = db.scalar(text("SELECT body FROM email_outbox"))
+        whatsapp = db.scalar(
+            text("SELECT body FROM whatsapp_outbox WHERE status='pending'")
+        )
+        assert email == decrypt(whatsapp)
+    login(client, company="empresa-b")
+    assert (
+        client.post(
+            f"/api/v1/users/{user_id}/invitation",
+            json={"channel": "whatsapp", "contact_phone": "47999999999"},
+        ).status_code
+        == 404
+    )
+    login(client, email="guide@example.com")
+    assert client.get("/api/v1/users/invitations/whatsapp/status").status_code == 403
+
+
+def test_invitation_whatsapp_validation_rolls_back_user_and_reset(
+    client, seeded, owner, protected_key
+):
+    configure(client, seeded)
+    payload = {
+        "full_name": "Guia",
+        "email": "invalid-invite@example.com",
+        "role": "guide",
+        "channel": "whatsapp",
+    }
+    assert client.post("/api/v1/users/invitations", json=payload).status_code == 422
+    payload["contact_phone"] = "123"
+    assert client.post("/api/v1/users/invitations", json=payload).status_code == 422
+    with owner.connect() as db:
+        assert (
+            db.scalar(
+                text(
+                    "SELECT count(*) FROM users WHERE email='invalid-invite@example.com'"
+                )
+            )
+            == 0
+        )
+        assert db.scalar(text("SELECT count(*) FROM password_resets")) == 0
+
+
 def test_ticket_link_queue_is_private_idempotent_and_revocation_discards(
     client, seeded, owner, protected_key
 ):
