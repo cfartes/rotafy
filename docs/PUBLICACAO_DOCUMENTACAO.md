@@ -1,6 +1,6 @@
 # Apresentação e manual do Nexus Rotafy
 
-Edição 2026.10, revisada em 09/10/2026. A documentação descreve os recursos implementados e identifica expressamente as funcionalidades futuras ou ocultas.
+Edição 2026.10, revisada em 09/10/2026. Os materiais públicos apresentam somente funcionalidades disponíveis. A apresentação tem foco comercial e o manual explica o uso, sem nomes de fornecedores de comunicação, detalhes de infraestrutura ou funcionalidades planejadas.
 
 ## Acesso no aplicativo
 

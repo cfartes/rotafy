@@ -36,7 +36,7 @@ Cada empresa tem seu espaço e seus usuários. Um profissional que atende duas e
 
 **Turismo e transfers:** permite viagens simples e pacotes com vários destinos, incluindo passeios diários com retorno à base e circuitos com permanência entre cidades.
 
-**Transporte regular:** utiliza viagens simples, rotas, frota, reservas e embarque. Os controles turísticos de pacotes ficam ocultos. Linhas recorrentes automáticas e venda independente de segmentos ainda não fazem parte da entrega.
+**Transporte regular:** utiliza viagens simples, rotas, frota, reservas e embarque. Os controles turísticos de pacotes ficam ocultos.
 
 O perfil operacional não é o plano contratado. Basic, Professional e Enterprise são planos comerciais configurados pela Nexus. A troca do tipo de empresa é controlada pela Nexus e pode ser bloqueada enquanto houver viagens turísticas abertas.
 
@@ -93,7 +93,7 @@ Se receber erro de credenciais, confira a empresa, o e-mail, o perfil ativo e a 
 5. Escolha **E-mail**, **WhatsApp** ou **E-mail e WhatsApp**. O telefone é obrigatório para os dois últimos.
 6. Salve. O envio entra na fila e depende da integração do canal escolhido estar habilitada.
 
-O número pode ser nacional com DDD ou internacional com `+` e código do país. O sistema valida e normaliza o telefone. O convite somente por WhatsApp não depende do Resend.
+O número pode ser nacional com DDD ou internacional com `+` e código do país. O sistema valida e normaliza o telefone.
 
 ### Reenviar, suspender e consultar
 
@@ -101,7 +101,7 @@ Na linha do colaborador, clique em **Enviar convite**, escolha o canal e confira
 
 Utilize **Suspender/Ativar** para controlar o acesso. O sistema preserva pelo menos um administrador ativo e impede remover seu próprio acesso administrativo nessa tela.
 
-Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convites por WhatsApp**. Aceito pelo Resend/OpenWA significa aceitação pelo provedor, não comprovação de entrega ou leitura. Um envio incerto precisa ser conferido antes do reenvio.
+Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convites por WhatsApp**. A aceitação do envio não comprova entrega ou leitura. Um envio incerto precisa ser conferido antes do reenvio.
 
 ## 6. Veículos e capacidade {#veiculos}
 
@@ -128,7 +128,7 @@ A capacidade atribuída é preservada na viagem. Alterar a frota depois não rec
 6. Informe o deslocamento estimado em minutos e o tempo adicional total nas paradas.
 7. Para ida e volta, utilize **Gerar volta invertendo a ida**, quando adequado, e revise a sugestão antes de salvar.
 
-As paradas adicionais da Rota não exigem data nem horário individual. Exemplo: 60 minutos de trajeto mais 20 nas paradas resultam em 80 minutos previstos. A duração é informada manualmente; não é consultada pela API Google.
+As paradas adicionais da Rota não exigem data nem horário individual. Exemplo: 60 minutos de trajeto mais 20 nas paradas resultam em 80 minutos previstos. Informe a duração estimada do percurso para planejar os horários.
 
 As ações **Editar Rota**, **Duplicar Rota** e desativar permitem manter o catálogo. Desativar impede novas escolhas, preservando o histórico das viagens que já utilizam o percurso.
 
@@ -136,7 +136,7 @@ As ações **Editar Rota**, **Duplicar Rota** e desativar permitem manter o cat�
 
 ### Abrir a navegação
 
-Na viagem atribuída, o motorista ou guia abre a rota ou um ponto específico no **Google Maps externo**. Confira os pontos e a ordem programada. A navegação e suas condições dependem do aplicativo Maps e da conectividade do aparelho. O Rotafy não faz pesquisa integrada de hotéis ou cálculo automático de duração nesta versão.
+Na viagem atribuída, o motorista ou guia abre a rota ou um ponto específico no **Google Maps externo**. Confira os pontos e a ordem programada. A navegação e suas condições dependem do aplicativo Maps e da conectividade do aparelho.
 
 ### A Rota mudou depois de agendar?
 
@@ -316,7 +316,7 @@ Nas reservas antigas com bilhetes por trecho, use **Emitir bilhetes** para conve
 
 ## 15. Mensagens de WhatsApp e e-mail {#mensagens}
 
-O OpenWA utiliza uma sessão e um número por empresa. O Resend envia os e-mails de acesso. A Nexus configura as integrações; o administrador da empresa consulta seus próprios envios.
+Cada empresa utiliza seu próprio número de WhatsApp. O administrador consulta os envios da sua empresa. Os e-mails de acesso utilizam o remetente configurado para a plataforma.
 
 | Mensagem | Quando é gerada |
 | --- | --- |
@@ -326,7 +326,7 @@ O OpenWA utiliza uma sessão e um número por empresa. O Resend envia os e-mails
 | Resumo da reserva | Pela ação **Enviar resumo pelo WhatsApp**, nos detalhes. |
 | Link do bilhete | Pela ação **Enviar bilhete pelo WhatsApp**, após emissão/reemissão. |
 | Convite do colaborador | Pelo cadastro/reenvio de convite, no canal escolhido. |
-| Recuperação por e-mail | Pela solicitação de acesso e pelo fluxo Resend correspondente. |
+| Recuperação por e-mail | Pela solicitação de recuperação de acesso. |
 
 ### Entenda o histórico
 
@@ -334,11 +334,11 @@ O OpenWA utiliza uma sessão e um número por empresa. O Resend envia os e-mails
 
 Sessões WhatsApp desconectadas mantêm os envios aguardando. Mensagens automáticas de vendas anteriores à ativação não são enviadas retroativamente. Mensagens pendentes podem ser descartadas se os dados ou o link deixarem de ser válidos.
 
-No OpenWA, timeout ou resposta ambígua não provoca reenvio automático. Confira no provedor antes de reenviar, para evitar duplicação. Para falhas do Resend, confira o log do provedor; uma configuração corrigida não reprocessa automaticamente convites que já ficaram como falha definitiva.
+Se o resultado estiver incerto, confira o recebimento com o destinatário antes de reenviar. Para um convite com falha definitiva, solicite um novo envio pelo cadastro do colaborador.
 
 ## 16. App Android: acesso e agenda {#android}
 
-O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação. Não há aplicativo do passageiro nem versão iOS entregue nesta etapa.
+O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação.
 
 1. Instale ou atualize o APK fornecido pela empresa. Prefira atualizar sobre a instalação existente, sem desinstalar, para preservar registros locais.
 2. Confira a empresa apresentada. Se o APK não tiver empresa fixa, informe o identificador correto.
@@ -346,7 +346,7 @@ O app operacional é destinado a **motoristas e guias**, com os mesmos recursos 
 4. Em **Minhas viagens**, consulte os deslocamentos atribuídos a você.
 5. Abra **Agenda** para ver as próximas viagens/etapas dos sete dias seguintes, com data, horário e destino.
 
-O app acessa o backend hospedado na Hostinger. Ele não deve se conectar diretamente ao banco de dados. APKs de teste configurados para ambiente local não substituem o APK de produção fornecido pela empresa.
+Utilize o aplicativo fornecido pela empresa e mantenha-o atualizado.
 
 Viagens concluídas deixam de estar disponíveis para operação. Conclusões feitas por outro usuário aparecem após atualizar ou sincronizar. Registros pendentes continuam acessíveis para revisão, sem reabrir a viagem.
 
@@ -388,11 +388,11 @@ O app Android e a operação web preparada podem manter registros locais durante
 4. Reconecte com o mesmo usuário e sincronize.
 5. Revise as ações rejeitadas ou em conflito e atualize o manifesto.
 
-Outra pessoa pode cancelar uma reserva, editar pontos, realocar passageiros ou reemitir o bilhete enquanto seu aparelho está offline. Essas mudanças não aparecem instantaneamente no dispositivo, mas são verificadas pelo backend ao sincronizar.
+Outra pessoa pode cancelar uma reserva, editar pontos, realocar passageiros ou reemitir o bilhete enquanto seu aparelho está offline. Essas mudanças não aparecem instantaneamente no dispositivo, mas são verificadas pelo sistema ao sincronizar.
 
 <aside class="note"><strong>Preserve a fila.</strong> Não limpe dados, desinstale o app ou troque de operador para tentar resolver pendências. Antes de iniciar a operação, confirme que o dispositivo é do usuário correto. Depois de alteração de Rota, reserva ou bilhete, prepare novamente os manifestos. O sistema não confirma automaticamente uma ação incompatível com o estado atual.</aside>
 
-Iniciar a viagem e registrar chegada exigem conexão. A fila local permite operar presenças preparadas; ela não elimina a validação do servidor nem fornece rastreamento em segundo plano.
+Iniciar a viagem e registrar chegada exigem conexão. A fila local permite operar presenças preparadas; os registros são conferidos pelo sistema ao sincronizar.
 
 ## 19. Iniciar, chegar e consultar a finalização {#chegada}
 
@@ -410,11 +410,11 @@ Com conexão, selecione a etapa correta, toque em **Iniciar viagem** e confirme.
 4. Autorize a localização do celular, quando disponível.
 5. Confira o registro concluído. O trecho deixa de aceitar novos embarques e desembarques.
 
-O backend impede fechar com passageiros a bordo. A viagem comercial é concluída quando todos os veículos encerram todos os deslocamentos previstos, incluindo retorno. Em uma saída com vários ônibus, a chegada de um deles não conclui os outros.
+O sistema impede fechar com passageiros a bordo. A viagem comercial é concluída quando todos os veículos encerram todos os deslocamentos previstos, incluindo retorno. Em uma saída com vários ônibus, a chegada de um deles não conclui os outros.
 
 ### GPS pontual
 
-A captura registra latitude, longitude, precisão e horário do dispositivo. Se não houver permissão, sinal ou posição válida, o fechamento pode continuar com o motivo da ausência. Isso é um registro pontual de chegada, não rastreamento contínuo.
+A captura registra latitude, longitude, precisão e horário do dispositivo. Se não houver permissão, sinal ou posição válida, o fechamento pode continuar com o motivo da ausência.
 
 ### Consultar no painel
 
@@ -502,60 +502,45 @@ Alterar o catálogo não reescreve os valores históricos. Uma mudança agendada
 
 Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.
 
-## 23. Administração Nexus: integrações {#configuracoes}
+## 23. Comunicação da empresa {#configuracoes}
 
-**Acesso:** `/nexus` → **Configurações**. Alterações de chave/remetente são feitas pelo painel; não exigem edição de arquivo de produção ou reinício para cada troca.
+A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bilhetes. A Nexus orienta a ativação dos canais e do remetente dos e-mails de acesso.
 
-### Resend
+### Conferir os canais
 
-1. Configure o domínio de envio na conta Resend e confira sua verificação.
-2. Cadastre a API-key de envio e o e-mail remetente do domínio correspondente.
-3. Salve e homologue um convite em uma caixa autorizada.
-4. Consulte o histórico e o log do provedor quando houver falha.
+1. Confirme com a Nexus o número da empresa e o e-mail remetente.
+2. Envie um convite para um colaborador autorizado.
+3. Confira o recebimento no canal selecionado.
+4. Consulte o histórico de mensagens no painel.
+5. Solicite suporte caso haja falha persistente.
 
-Uma chave preenchida não comprova que o provedor permitirá o remetente. Verifique a conta/domínio utilizados e a resposta real da API. Campos de chave vazios preservam valores salvos; a remoção utiliza a opção específica na tela.
+### Boas práticas
 
-### OpenWA: uma sessão por empresa
+Confira o telefone do responsável antes de enviar o bilhete. Consulte o histórico antes de reenviar uma comunicação. Compartilhe cada link somente com a pessoa correta.
 
-1. No painel OpenWA, crie uma sessão para a empresa.
-2. No WhatsApp do celular dessa empresa, abra **Aparelhos conectados → Conectar aparelho** e leia o QR exibido pelo OpenWA.
-3. Aguarde a sessão ficar conectada.
-4. No Rotafy, cadastre a API-key OpenWA.
-5. Use **Consultar sessões OpenWA**, selecione a sessão correta ou informe seu ID/UUID.
-6. Marque **Habilitar envios** e salve o vínculo daquela empresa.
-7. Homologue uma mensagem para um telefone autorizado.
+## 24. Rotina por perfil {#rotina}
 
-O ID da sessão não é o telefone. Uma sessão não pode ser associada a duas empresas. O pareamento do número é feito no OpenWA, não no Rotafy. Desabilitar os envios pausa a operação daquela empresa.
+### Administrador da empresa
 
-Preserve as chaves e restrinja seu compartilhamento. A proteção das credenciais exige manter a chave de criptografia e seus backups conforme o procedimento da equipe técnica.
+Organize equipe, frota e rotas. Cadastre viagens, acompanhe reservas, confira o plano contratado e analise os relatórios. Oriente os colaboradores sobre os procedimentos da empresa.
 
-## 24. Recursos disponíveis e próximas etapas {#escopo}
+### Atendente
 
-### Disponíveis nesta edição
+Selecione a viagem no menu **Vender bilhete**, cadastre os passageiros, confira disponibilidade, confirme a reserva e marque **PAGO** após verificar o recebimento. Envie os bilhetes e acompanhe as mensagens.
 
-Painel multiempresa, perfis Turismo/Regular, equipe e convites, planos mensais, frota, Rotas, viagens simples, pacotes turísticos, reservas familiares, capacidade por segmento, importação, PAGO manual, bilhete único, WhatsApp, e-mail de acesso, relatórios, auditoria e aplicativo Android operacional com preparação offline, biometria opcional e GPS de chegada.
+### Motorista e guia
 
-### Implementados, com menu temporariamente oculto
+Consulte a agenda, confira veículo e deslocamento, prepare a lista de passageiros e registre os embarques. No destino, registre os desembarques, sincronize as ações e finalize o trecho.
 
-O módulo **Página pública e integrações** possui publicação de ofertas, solicitação pública de reserva, acompanhamento privado e integração externa de reservas. Seu menu administrativo está oculto por decisão operacional. A empresa não deve procurar esse menu nem tratar a publicação de novas ofertas como fluxo liberado nesta edição. Ofertas/link existentes dependem do estado e da configuração; a Nexus deve orientar uma futura liberação.
+### Administração Nexus
 
-### Ainda não disponíveis
-
-- Integração de pagamento, confirmação automática de PIX/cartão e reembolso financeiro.
-- Pesquisa de hotéis, cálculo automático de duração e mapa interno pela API Google.
-- Rastreamento contínuo por celular/OBD2, inclusive com tela desligada.
-- App do passageiro, login por CPF e lembretes automáticos de viagem.
-- Aplicativo iOS distribuído e homologado.
-- Linhas recorrentes automáticas e venda independente de segmentos do transporte regular.
-- Confirmação de entrega/leitura por webhook para as mensagens atuais.
-
-As próximas etapas não possuem promessa de data neste manual. Consulte a Nexus para alterações de escopo ou contratação.
+Gerencie empresas, planos e assinaturas. Acompanhe os registros de atividades e apoie as empresas no uso do sistema e dos canais de comunicação.
 
 ## 25. Dúvidas frequentes e solução de problemas {#duvidas}
 
 ### Não vejo um menu
 
-Confira o perfil do usuário e o tipo da empresa. Atendente não administra equipe/plano; motorista e guia veem somente sua operação. Pacotes aparecem para Turismo. Página pública está oculta nesta edição.
+Confira o perfil do usuário e o tipo da empresa. Atendente não administra equipe/plano; motorista e guia veem somente sua operação. Pacotes aparecem para Turismo.
 
 ### A família não cabe, mas a soma de vagas parece suficiente
 
@@ -575,19 +560,19 @@ Confira reserva confirmada, viagem ativa, passageiro, trecho e veículo selecion
 
 ### O celular mostra “Sem conexão”
 
-Os registros locais podem estar preservados. Confira internet e acesso ao backend, mantenha o mesmo usuário e sincronize quando reconectar. Não limpe os dados para resolver uma pendência. Um APK local de teste pode precisar da configuração de ambiente; utilize o APK de produção da empresa.
+Os registros locais podem estar preservados. Confira a conexão com a internet, mantenha o mesmo usuário e sincronize quando reconectar. Não limpe os dados para resolver uma pendência. Utilize o aplicativo fornecido pela empresa.
 
 ### Não consigo fechar o trecho
 
-Desembarque todos que estão a bordo e sincronize/revise as pendências. O fechamento exige conexão e as etapas anteriores precisam estar concluídas. A falta de GPS pode ser registrada como motivo, sem exigir rastreamento contínuo.
+Desembarque todos que estão a bordo e sincronize/revise as pendências. O fechamento exige conexão e as etapas anteriores precisam estar concluídas. A falta de GPS pode ser registrada como motivo.
 
 ### O convite ou mensagem falhou
 
-Consulte o histórico, a sessão OpenWA ou o log Resend. Confira telefone, domínio remetente e canal habilitado. Falha definitiva exige novo convite; resultado incerto requer conferir o provedor antes de reenviar.
+Consulte o histórico de mensagens. Confira telefone, e-mail do destinatário e canal selecionado. Falha definitiva exige novo convite; em resultado incerto, verifique o recebimento antes de reenviar. Solicite suporte se a falha persistir.
 
 ### Como pedir suporte
 
-Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. Use o identificador da solicitação se a tela o fornecer. Não envie senhas, API-keys ou links privados. O manual não substitui a análise de uma ocorrência real pela equipe responsável.
+Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. Use o identificador da solicitação se a tela o fornecer. Não envie senhas ou links privados de passageiros. O manual não substitui a análise de uma ocorrência real pela equipe responsável.
 
 ## 26. Checklist diário e glossário {#checklist}
 
@@ -620,4 +605,4 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 1. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. A distribuição de atualizações do backend e do APK é administrada pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 2. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.

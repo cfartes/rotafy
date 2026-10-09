@@ -25,7 +25,7 @@ export function Documentation() {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 1 · Atualizado em 09/10/2026</span>
+        <span>Edição 2026.10 · Revisão 2 · Atualizado em 09/10/2026</span>
       </header>
       <div className="documentation-grid">
         <section className="documentation-card" aria-labelledby="manual-title">
@@ -97,17 +97,17 @@ export function Documentation() {
             <li>Do planejamento à finalização</li>
             <li>Painel multiempresa e Android operacional</li>
             <li>Indicadores e administração SaaS</li>
-            <li>Escopo atual e próximas etapas</li>
+            <li>Benefícios para a operação</li>
           </ul>
         </section>
       </div>
       <aside className="documentation-scope">
         <strong>Conteúdo da versão atual</strong>
         <p>
-          Os materiais distinguem recursos disponíveis, o módulo de página
-          pública com menu oculto e as evoluções ainda planejadas. As imagens e
-          números são demonstrativos. A documentação não contém credenciais nem
-          links privados de passageiros.
+          Os materiais apresentam as funcionalidades disponíveis e orientam o
+          uso diário do sistema. As imagens e números são demonstrativos. A
+          apresentação destaca os benefícios para a empresa, e o manual traz
+          instruções para cada perfil de usuário.
         </p>
       </aside>
       <footer className="documentation-footer">
