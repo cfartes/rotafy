@@ -456,6 +456,10 @@ async def payment(reservation_id: UUID, data: Paid, request: Request, actor: Aut
                 "reservation.paid" if data.is_paid else "reservation.unpaid",
                 reservation_id,
             )
+            if data.is_paid:
+                from app.whatsapp import queue_message
+
+                await queue_message(db, actor.company_id, reservation_id, "paid")
         return await reservation_detail(db, reservation_id)
 
 

@@ -142,6 +142,9 @@ async def cancel_trip_reservations(db, company_id, trip_id, actor_id):
         trip=trip_id,
     )
     for reservation in cancelled:
+        from app.whatsapp import queue_message
+
+        await queue_message(db, company_id, reservation["id"], "cancelled")
         await audit(
             db,
             company_id,
@@ -580,6 +583,10 @@ async def create_reservation(db, actor, trip, data, import_id=None, reference=No
     await audit(
         db, actor.company_id, actor.user["id"], "reservation.created", reservation_id
     )
+    if data.status == "confirmed":
+        from app.whatsapp import queue_message
+
+        await queue_message(db, actor.company_id, reservation_id, "confirmed")
     return await reservation_detail(db, reservation_id)
 
 
@@ -686,6 +693,9 @@ async def change_reservation_status(
             f"reservation.{data.status}",
             reservation_id,
         )
+        from app.whatsapp import queue_message
+
+        await queue_message(db, actor.company_id, reservation_id, data.status)
         return await reservation_detail(db, reservation_id)
 
 

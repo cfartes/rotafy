@@ -250,6 +250,8 @@ def deploy(args):
     # Load the complete graph as the image's non-root user before replacing
     # running services. No migration or database connection occurs here.
     run("run", "--rm", "--no-deps", "migrate", "alembic", "heads")
+    # Uma chave persistente protege credenciais no banco; não é regenerada em atualizações.
+    run("run", "--rm", "--no-deps", "integration-secrets")
     if volume_exists:
         print("Banco existente: backup obrigatório antes das migrações.")
         run("up", "-d", "--wait", "--wait-timeout", "120", "db")
@@ -292,8 +294,28 @@ def deploy(args):
         print(
             "Backup local:", backup, "(mantenha também backup externo criptografado)."
         )
+        key_backup = directory / (filename.removesuffix(".dump") + ".integration-key")
+        with open(key_backup, "xb") as stream:
+            run(
+                "run",
+                "--rm",
+                "--no-deps",
+                "--entrypoint",
+                "cat",
+                "integration-secrets",
+                "/run/rotafy/integrations.key",
+                stdout=stream,
+            )
+        os.chmod(key_backup, 0o600)
+        if key_backup.stat().st_size != 44:
+            raise ValueError(
+                "Backup da chave de integrações inválido; implantação interrompida."
+            )
+        print(
+            "Chave de integrações preservada no backup local protegido. Inclua-a no backup externo criptografado."
+        )
     run("up", "-d", "--wait", "--wait-timeout", "300")
-    for service in ("migrate", "bootstrap"):
+    for service in ("migrate", "bootstrap", "integration-secrets"):
         identifier = run(
             "ps", "-aq", service, text=True, capture_output=True
         ).stdout.strip()
@@ -339,7 +361,7 @@ def deploy(args):
         "Credenciais Nexus: BOOTSTRAP_EMAIL/BOOTSTRAP_PASSWORD em .env.production; não compartilhe esse arquivo."
     )
     print(
-        "Configure Resend e storage de backups externos conforme docs/IMPLANTACAO_E_OPERACAO.md."
+        "Configure WhatsApp e Resend no painel Nexus → Configurações; backups externos em docs/IMPLANTACAO_E_OPERACAO.md."
     )
 
 

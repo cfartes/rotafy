@@ -1,3 +1,4 @@
+import { ReservationWhatsApp } from "./ReservationWhatsApp";
 import {
   PassengerExceptions,
   type PassengerDocuments,
@@ -947,7 +948,7 @@ function ReservationDetail({
   }
   const active = ["pending", "confirmed"].includes(detail.data?.status || "");
   return (
-    <Modal title="Detalhes da reserva" onClose={onClose}>
+    <Modal title="Detalhes da reserva" wide onClose={onClose}>
       <div className="modal-form">
         {detail.isPending ? (
           <p>Carregando…</p>
@@ -957,6 +958,7 @@ function ReservationDetail({
           detail.data && (
             <>
               <h3>{detail.data.contact_name}</h3>
+              <ReservationWhatsApp reservationId={reservationId} />
               {active &&
                 ["scheduled", "in_progress"].includes(trip.status) &&
                 !(

@@ -50,8 +50,12 @@ services:
     ports:
       - "127.0.0.1:${API_PORT:-8018}:8000"
     depends_on:
+      integration-secrets:
+        condition: service_completed_successfully
       bootstrap:
         condition: service_completed_successfully
+    volumes:
+      - integration_keys:/run/rotafy:ro
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
       interval: 15s
@@ -89,12 +93,39 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5178}
     depends_on:
+      integration-secrets:
+        condition: service_completed_successfully
       migrate:
         condition: service_completed_successfully
+    volumes:
+      - integration_keys:/run/rotafy:ro
     healthcheck:
       test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-email-health'); assert p.exists() and time.time()-p.stat().st_mtime < 90"]
       interval: 15s
       timeout: 5s
       retries: 3
+  integration-secrets:
+    build: ./backend
+    user: root
+    command: [python, -m, app.integration_secrets]
+    volumes:
+      - integration_keys:/run/rotafy
+  whatsapp:
+    build: ./backend
+    command: [python, -m, app.whatsapp_worker]
+    restart: unless-stopped
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+    volumes:
+      - integration_keys:/run/rotafy:ro
+    depends_on:
+      integration-secrets: {condition: service_completed_successfully}
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-whatsapp-health'); assert p.exists() and time.time()-p.stat().st_mtime < 120"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 volumes:
   rotafy_data:
+  integration_keys:

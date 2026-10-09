@@ -73,7 +73,7 @@ curl --fail https://frotafy.nexusdataanalytics.tech/api/v1/health
 
 Não compartilhe `.env.production`, `docker inspect` completo ou `docker compose config` sem `--quiet`. Se o IP do Traefik mudar, reaplique o instalador. DNS/certificado incorreto exige ajuste no domínio/proxy existente.
 
-Resend depende de `RESEND_API_KEY`/`EMAIL_FROM` configurados no servidor; depois reaplique o instalador. Storage externo e agenda de backup seguem [IMPLANTACAO_E_OPERACAO.md](IMPLANTACAO_E_OPERACAO.md). Nenhuma credencial de storage é presumida.
+WhatsApp e Resend são configurados em **Nexus → Configurações**, sem editar o ambiente nem reiniciar serviços. Consulte [WHATSAPP_E_CONFIGURACOES.md](WHATSAPP_E_CONFIGURACOES.md). Storage externo e agenda de backup seguem [IMPLANTACAO_E_OPERACAO.md](IMPLANTACAO_E_OPERACAO.md). Nenhuma credencial de storage é presumida.
 
 ## Validação
 

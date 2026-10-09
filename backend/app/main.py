@@ -28,6 +28,7 @@ from app.identity import (
     set_session,
     throttle,
 )
+from app.integration_settings import router as integration_settings_router
 from app.logos import router as logos_router
 from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
@@ -52,6 +53,7 @@ from app.schemas import (
     UserView,
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
+from app.whatsapp import router as whatsapp_router
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
 
@@ -693,6 +695,8 @@ def create_app(settings: Settings | None = None):
     application.include_router(reports_router)
     application.include_router(edits_router)
     application.include_router(route_refresh_router)
+    application.include_router(integration_settings_router)
+    application.include_router(whatsapp_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)
     application.include_router(email_auth_router)

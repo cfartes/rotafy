@@ -113,6 +113,8 @@ Na tela de embarque, **Preparar para uso offline** guarda o manifesto por veícu
 
 Em **Relatórios → Visão gerencial**, administradores e atendentes consultam deslocamentos diários, viagens comerciais, ocupação dos veículos, valores confirmados/PAGO, passageiros, ranking de destinos e próximas saídas com baixa ocupação. Os relatórios detalhados de ocupação por segmento, reservas e presença continuam disponíveis com CSV. Administradores consultam consumo da franquia; a Nexus filtra ciclos por empresa. Datas em Brasília. Veja [RELATORIOS.md](docs/RELATORIOS.md) e as [pendências futuras](docs/PENDENCIAS_FUTURAS.md).
 
+Em **Nexus → Configurações**, cadastre as chaves OpenWA/Resend, o e-mail remetente e uma sessão WhatsApp por empresa. Confirmação, cancelamento e marcação PAGO geram mensagens em fila; detalhes da reserva mostram histórico e permitem envio manual. Veja [WHATSAPP_E_CONFIGURACOES.md](docs/WHATSAPP_E_CONFIGURACOES.md), incluindo ativação, proteção das credenciais e backup da chave local.
+
 Logs JSON e métricas autenticadas da Nexus disponíveis. Configuração de produção independente, HTTPS/Traefik existente e serviço de backup externo criptografado preparados em `compose.production.yaml`. Restauração ensaiada em container isolado; carga local medida com duas empresas, 20 veículos e 800 passageiros. Consulte [implantação e operação](docs/IMPLANTACAO_E_OPERACAO.md) e [pendências de homologação](docs/HOMOLOGACAO.md). A VPS e o envio de backups externos ainda não foram configurados.
 
 Não há integração financeira. Em **Detalhes da reserva**, **Marcar PAGO** registra manualmente o pagamento; a confirmação da reserva é uma ação separada. Rastreamento, WhatsApp e aplicativos por empresa são posteriores.

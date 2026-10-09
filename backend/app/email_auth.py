@@ -10,6 +10,7 @@ from pydantic import EmailStr, Field
 from sqlalchemy import text
 
 from app.identity import Auth, admin, audit, check_origin, scope, throttle
+from app.integration_settings import email_settings
 from app.schemas import Input, Role
 from app.security import digest, passwords
 
@@ -106,7 +107,10 @@ async def queue_reset(db, settings, company_id, user, invitation=False):
 @router.post("/auth/forgot-password")
 async def forgot(data: Forgot, request: Request):
     check_origin(request)
-    require_email(request.app.state.settings)
+    settings = await email_settings(
+        request.app.state.platform_engine, request.app.state.settings
+    )
+    require_email(settings)
     await throttle(
         request,
         f"forgot:{data.company}:{str(data.email).lower()}:{data.nexus}",
@@ -148,7 +152,7 @@ async def forgot(data: Forgot, request: Request):
                     .first()
                 )
         if user:
-            await queue_reset(db, request.app.state.settings, company_id, user)
+            await queue_reset(db, settings, company_id, user)
             await audit(
                 db, company_id, user["id"], "auth.reset_email_queued", user["id"]
             )
@@ -160,7 +164,10 @@ async def forgot(data: Forgot, request: Request):
 @router.post("/users/invitations", status_code=201)
 async def invite(data: Invite, request: Request, actor: Auth):
     admin(actor)
-    require_email(request.app.state.settings)
+    settings = await email_settings(
+        request.app.state.platform_engine, request.app.state.settings
+    )
+    require_email(settings)
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
         # Serializa com alterações de usuários feitas pela administração.
@@ -197,9 +204,7 @@ async def invite(data: Invite, request: Request, actor: Auth):
             "full_name": data.full_name,
             "email": str(data.email).lower(),
         }
-        await queue_reset(
-            db, request.app.state.settings, actor.company_id, user, invitation=True
-        )
+        await queue_reset(db, settings, actor.company_id, user, invitation=True)
         await audit(db, actor.company_id, actor.user["id"], "user.invited", user_id)
         return {"id": user_id, "email_status": "pending"}
 
@@ -207,7 +212,10 @@ async def invite(data: Invite, request: Request, actor: Auth):
 @router.post("/users/{user_id}/invitation", status_code=202)
 async def reinvite(user_id: UUID, request: Request, actor: Auth):
     admin(actor)
-    require_email(request.app.state.settings)
+    settings = await email_settings(
+        request.app.state.platform_engine, request.app.state.settings
+    )
+    require_email(settings)
     await throttle(request, f"invite:{actor.company_id}:{user_id}", platform=True)
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
@@ -225,9 +233,7 @@ async def reinvite(user_id: UUID, request: Request, actor: Auth):
         )
         if not user:
             raise HTTPException(404, "Usuário ativo não encontrado nesta empresa.")
-        await queue_reset(
-            db, request.app.state.settings, actor.company_id, user, invitation=True
-        )
+        await queue_reset(db, settings, actor.company_id, user, invitation=True)
         await audit(
             db, actor.company_id, actor.user["id"], "user.invitation_resent", user_id
         )

@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -15,6 +16,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.config import Settings
 from app.email_auth import configured
 from app.identity import scope
+from app.integration_settings import email_settings
 
 logger = logging.getLogger("rotafy.email")
 
@@ -126,7 +128,8 @@ async def main():
     try:
         while True:
             try:
-                if configured(settings):
+                current_settings = await email_settings(engine, settings)
+                if configured(current_settings):
                     async with engine.connect() as db:
                         ids = list(
                             (
@@ -135,9 +138,9 @@ async def main():
                         )
                     for company_id in [None, *ids]:
                         # Um envio por empresa/ciclo limita rajadas; fila persiste no banco.
-                        await process_company(engine, settings, company_id)
+                        await process_company(engine, current_settings, company_id)
                 Path("/tmp/rotafy-email-health").touch()
-            except (SQLAlchemyError, OSError, ValueError):
+            except (SQLAlchemyError, OSError, ValueError, HTTPException):
                 logger.error('{"event":"email.cycle_failed"}')
             await asyncio.sleep(5)
     finally:

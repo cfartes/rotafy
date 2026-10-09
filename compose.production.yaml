@@ -68,7 +68,10 @@ services:
       traefik.http.routers.rotafy-api.priority: "100"
       traefik.http.routers.rotafy-api.service: rotafy-api
       traefik.http.services.rotafy-api.loadbalancer.server.port: "8000"
-    depends_on: {bootstrap: {condition: service_completed_successfully}}
+    volumes: [integration_keys:/run/rotafy:ro]
+    depends_on:
+      bootstrap: {condition: service_completed_successfully}
+      integration-secrets: {condition: service_completed_successfully}
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
       interval: 15s
@@ -92,9 +95,33 @@ services:
     restart: unless-stopped
     command: [python, -m, app.email_worker]
     networks: [database, email_egress]
-    depends_on: {migrate: {condition: service_completed_successfully}}
+    volumes: [integration_keys:/run/rotafy:ro]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      integration-secrets: {condition: service_completed_successfully}
     healthcheck:
       test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-email-health'); assert p.exists() and time.time()-p.stat().st_mtime < 90"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  integration-secrets:
+    <<: *api
+    user: root
+    command: [python, -m, app.integration_secrets]
+    environment: {}
+    networks: []
+    volumes: [integration_keys:/run/rotafy]
+  whatsapp:
+    <<: *api
+    restart: unless-stopped
+    command: [python, -m, app.whatsapp_worker]
+    networks: [database, email_egress]
+    volumes: [integration_keys:/run/rotafy:ro]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      integration-secrets: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-whatsapp-health'); assert p.exists() and time.time()-p.stat().st_mtime < 120"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -140,3 +167,4 @@ networks:
   email_egress: {}
 volumes:
   database: {}
+  integration_keys: {}

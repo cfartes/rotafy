@@ -97,7 +97,7 @@ Na recuperação de produção, recupere o dump do restic para um ambiente isola
 
 ## Logs e métricas
 
-O serviço `email` foi acrescentado para convites/recuperação pelo Resend, com saída HTTPS numa rede própria e sem portas publicadas. Configure `RESEND_API_KEY` e `EMAIL_FROM` no ambiente real, verifique o domínio remetente e homologue recebimento/uso único antes de liberar essa função. Consulte [EDICAO_E_EMAILS.md](EDICAO_E_EMAILS.md). Sem essa configuração, o worker permanece sem enviar e a interface informa que o serviço ainda não foi configurado. A fila contém links privados até seu processamento; o backup criptografado também precisa protegê-los.
+O serviço `email` envia convites e recuperação pelo Resend, com saída HTTPS numa rede própria e sem portas publicadas. Configure a chave Resend e o remetente em **Nexus → Configurações**, verifique o domínio remetente e homologue recebimento e uso único antes de liberar essa função. As variáveis antigas são aceitas até o primeiro salvamento pelo painel; consulte [WHATSAPP_E_CONFIGURACOES.md](WHATSAPP_E_CONFIGURACOES.md). Sem configuração, o worker permanece sem enviar. A fila contém links privados até seu processamento; o backup criptografado também precisa protegê-los.
 
 API emite JSON com identificador da solicitação, método, rota normalizada, status, duração e classe de erro. Não registra query, corpo, credenciais, CPF ou telefone. `X-Request-ID` permite localizar uma falha pelo suporte. Erros inesperados retornam mensagem genérica; logs de acesso bruto do Uvicorn estão desativados. O worker emite eventos JSON de conclusão/falha de ciclo.
 

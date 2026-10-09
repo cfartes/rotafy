@@ -1,6 +1,6 @@
 # Pendências para próximas etapas
 
-Atualizado em 08/10/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
+Atualizado em 09/10/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
 
 ## App Android do passageiro
 
@@ -8,7 +8,7 @@ Atualizado em 08/10/2026. Este arquivo registra trabalho futuro; não representa
 - Configurar empresa, nome, ícone e cores antes de disponibilizar o APK. O passageiro não informa a empresa; o backend valida o vínculo.
 - Criar contas de clientes, login com CPF e senha e cadastro diretamente no app.
 - Definir envio de senha temporária, troca no primeiro acesso, confirmação do telefone e recuperação de acesso.
-- Selecionar o serviço/API de WhatsApp e configurar o número de cada empresa. A integração de envio ainda precisa ser implementada.
+- Utilizar o OpenWA já integrado para os futuros fluxos de acesso do passageiro. Ainda faltam senha temporária, verificação de telefone e recuperação do passageiro.
 - Definir acesso do responsável aos bilhetes de toda a família e vínculo de reservas existentes com verificação de titularidade.
 - Definir acesso de estrangeiros sem CPF; proposta: documento estrangeiro/passaporte e telefone verificado. Menores vinculados ao responsável.
 - Definir escopo inicial: somente consultar viagens contratadas ou também solicitar contratação pelo catálogo, mantendo confirmação/PAGO manual.
@@ -35,7 +35,7 @@ Atualizado em 08/10/2026. Este arquivo registra trabalho futuro; não representa
 
 - Consulta de duração/rota pela API Google; atualmente a duração é manual e a navegação abre o Google Maps externo.
 - Rastreamento contínuo por dispositivo OBD2/GPS ou celular, incluindo captura em segundo plano com tela desligada. O registro pontual de coordenadas de chegada já existe.
-- Mensagens WhatsApp de contratação e comunicações operacionais por empresa, além dos fluxos de acesso do passageiro.
+- Homologar o OpenWA em produção após cadastrar chaves e sessões no painel Nexus. Confirmação, cancelamento, PAGO e resumo manual já estão implementados; faltam lembretes, anexos/QR, comunicações operacionais adicionais e fluxos de acesso do passageiro. Veja [WHATSAPP_E_CONFIGURACOES.md](WHATSAPP_E_CONFIGURACOES.md).
 - Integração com meios de pagamento permanece fora do escopo atual; hoje existe marcação manual PAGO.
 
 ## Decisões preservadas

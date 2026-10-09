@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
 import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
+import { IntegrationSettings } from "./IntegrationSettings";
 import { TicketSales } from "./TicketSales";
 import { Reports } from "./Reports";
 import { DocumentInput } from "./components/DocumentInput";
@@ -838,6 +839,9 @@ const actionNames: Record<string, string> = {
   "reservation.created": "Reserva familiar criada",
   "trip.published": "Viagem publicada na página pública",
   "trip.routes_refreshed": "Rotas da viagem atualizadas com o catálogo atual",
+  "integrations.configured": "Configuração das integrações atualizada",
+  "whatsapp.session_configured": "Sessão WhatsApp da empresa configurada",
+  "whatsapp.queued": "Mensagem WhatsApp adicionada à fila",
   "trip.unpublished": "Viagem retirada da página pública",
   "reservation.paid": "Reserva marcada PAGO",
   "reservation.unpaid": "Marcação PAGO removida",
@@ -958,6 +962,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "routes"
     | "ticket-sales"
     | "reports"
+    | "integrations"
   >("overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1058,34 +1063,36 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "routes"
-      ? "Rotas"
-      : page === "ticket-sales"
-        ? "Vender bilhete"
-        : page === "sales"
-          ? "Página pública e integrações"
-          : page === "reports"
-            ? "Relatórios"
-            : page === "operations"
-              ? {
-                  vehicles: "Veículos",
-                  trips: "Viagens",
-                  allocations: "Alocar veículos em viagens",
-                  passengers: "Passageiros",
-                }[operationModule] || "Operação de viagens"
-              : page === "overview"
-                ? "Visão geral"
-                : page === "billing"
-                  ? isNexus
-                    ? companyPlanOnly
-                      ? "Plano da empresa"
-                      : "Planos e assinaturas"
-                    : "Meu plano"
-                  : page === "audit"
-                    ? "Histórico de atividades"
-                    : isNexus
-                      ? "Empresas"
-                      : "Equipe";
+    page === "integrations"
+      ? "Configurações"
+      : page === "routes"
+        ? "Rotas"
+        : page === "ticket-sales"
+          ? "Vender bilhete"
+          : page === "sales"
+            ? "Página pública e integrações"
+            : page === "reports"
+              ? "Relatórios"
+              : page === "operations"
+                ? {
+                    vehicles: "Veículos",
+                    trips: "Viagens",
+                    allocations: "Alocar veículos em viagens",
+                    passengers: "Passageiros",
+                  }[operationModule] || "Operação de viagens"
+                : page === "overview"
+                  ? "Visão geral"
+                  : page === "billing"
+                    ? isNexus
+                      ? companyPlanOnly
+                        ? "Plano da empresa"
+                        : "Planos e assinaturas"
+                      : "Meu plano"
+                    : page === "audit"
+                      ? "Histórico de atividades"
+                      : isNexus
+                        ? "Empresas"
+                        : "Equipe";
   return (
     <div className="app-layout">
       <a className="skip-link" href="#main-content">
@@ -1158,6 +1165,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   { id: "routes", label: "Rotas", icon: Route },
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
                 ]
+              : []),
+            ...(isNexus
+              ? [{ id: "integrations", label: "Configurações", icon: KeyRound }]
               : []),
             ...(canManage
               ? [
@@ -1308,6 +1318,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {(error || queryError) && (
             <Alert>{error || message(queryError)}</Alert>
           )}
+          {page === "integrations" && isNexus && <IntegrationSettings />}
           {page === "billing" && (
             <Billing
               isNexus={isNexus}
