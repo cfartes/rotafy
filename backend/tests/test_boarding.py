@@ -213,11 +213,13 @@ def test_guide_can_arrive_without_gps_and_reason_is_saved(client, seeded):
     assert "latitude" not in location
 
 
-def test_tickets_individual_per_leg_private_and_hash_only(client, seeded, owner):
+def test_tickets_one_qr_per_passenger_for_all_legs_private_and_hash_only(
+    client, seeded, owner
+):
     _, reservation, _ = prepare(client, seeded)
     issued = issue(client, reservation)
     assert len(issued) == 4
-    assert len({t["token"] for t in issued}) == 4
+    assert len({t["token"] for t in issued}) == 2
     assert issue(client, reservation) == []
     public = client.post("/api/v1/public/ticket", json={"token": issued[0]["token"]})
     assert public.status_code == 200, public.text
@@ -227,11 +229,56 @@ def test_tickets_individual_per_leg_private_and_hash_only(client, seeded, owner)
         "cpf" not in str(data) and "phone" not in str(data) and "passengers" not in data
     )
     assert data["ticket"]["boarding_at"]
+    assert len(data["journeys"]) == 2
     with owner.connect() as db:
         hashes = list(db.scalars(text("SELECT token_hash FROM tickets")))
         assert all(len(value) == 64 and not value.startswith("bt.") for value in hashes)
     listed = client.get(f"/api/v1/reservations/{reservation['id']}/tickets").json()
     assert len(listed) == 4 and "token_hash" not in str(listed)
+
+
+def test_existing_per_leg_tickets_convert_and_reissue_revokes_all_legs(
+    client, seeded, owner
+):
+    from app.security import digest
+
+    _trip, reservation, _prefix = prepare(client, seeded)
+    original = issue(client, reservation)
+    legacy = "bt." + str(seeded["a"]) + "." + "legacy-placeholder-credential" * 2
+    with owner.begin() as db:
+        db.execute(text("UPDATE tickets SET shared_token_hash=NULL"))
+        db.execute(
+            text("UPDATE tickets SET token_hash=:hash WHERE id=:id"),
+            {"hash": digest(legacy), "id": original[0]["id"]},
+        )
+    assert (
+        client.post("/api/v1/public/ticket", json={"token": legacy}).status_code == 200
+    )
+    converted = issue(client, reservation)
+    assert len({entry["token"] for entry in converted}) == 2
+    assert (
+        client.post("/api/v1/public/ticket", json={"token": legacy}).status_code == 404
+    )
+    ticket = converted[0]
+    rotated = client.post(f"/api/v1/tickets/{ticket['id']}/reissue").json()["token"]
+    assert (
+        client.post(
+            "/api/v1/public/ticket", json={"token": ticket["token"]}
+        ).status_code
+        == 404
+    )
+    assert (
+        len(
+            client.post("/api/v1/public/ticket", json={"token": rotated}).json()[
+                "journeys"
+            ]
+        )
+        == 2
+    )
+    client.post(f"/api/v1/tickets/{ticket['id']}/revoke")
+    assert (
+        client.post("/api/v1/public/ticket", json={"token": rotated}).status_code == 404
+    )
 
 
 def test_pending_cancelled_completed_and_revoked_tickets(client, seeded):
@@ -407,7 +454,7 @@ def test_qr_vehicle_trip_leg_passenger_and_revocation_checked_at_command(
     wrong_leg = prefix.replace(trip["legs"][0]["id"], trip["legs"][1]["id"])
     assert (
         client.post(wrong_leg + "/scan", json={"token": ticket["token"]}).status_code
-        == 409
+        == 200
     )
     other = next(
         v["id"] for v in trip["vehicles"] if v["id"] != reservation["allocation_id"]

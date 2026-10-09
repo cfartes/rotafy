@@ -69,6 +69,44 @@ def ready(_key, path, payload=None):
     )
 
 
+def test_ticket_link_queue_is_private_idempotent_and_revocation_discards(
+    client, seeded, owner, protected_key
+):
+    _trip, booking = queued(client, seeded)
+    issued = client.post(f"/api/v1/reservations/{booking['id']}/tickets").json()[
+        "issued"
+    ]
+    ticket = issued[0]
+    endpoint = f"/api/v1/tickets/{ticket['id']}/whatsapp"
+    payload = {"token": ticket["token"], "operation_key": str(uuid4())}
+    first = client.post(endpoint, json=payload)
+    assert first.status_code == 202, first.text
+    assert client.post(endpoint, json=payload).json()["id"] == first.json()["id"]
+    with owner.connect() as db:
+        row = (
+            db.execute(
+                text("SELECT body,ticket_hash FROM whatsapp_outbox WHERE id=:id"),
+                {"id": first.json()["id"]},
+            )
+            .mappings()
+            .one()
+        )
+        body = decrypt(row["body"])
+        assert "/bilhete#token=" in body and ticket["token"] in body
+        assert ticket["token"] not in row["body"]
+    client.post(f"/api/v1/tickets/{ticket['id']}/revoke")
+    for _ in range(3):
+        process(seeded["a"], ready)
+    with owner.connect() as db:
+        assert (
+            db.scalar(
+                text("SELECT status FROM whatsapp_outbox WHERE id=:id"),
+                {"id": first.json()["id"]},
+            )
+            == "discarded"
+        )
+
+
 def test_nexus_settings_encrypt_keys_and_keep_blanks(
     client, seeded, owner, protected_key
 ):

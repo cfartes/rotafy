@@ -20,7 +20,16 @@ class ManualMessage(Input):
     operation_key: UUID
 
 
-async def queue_message(db, company_id, reservation_id, kind, *, operation_key=None):
+async def queue_message(
+    db,
+    company_id,
+    reservation_id,
+    kind,
+    *,
+    operation_key=None,
+    ticket_link=None,
+    ticket_hash=None,
+):
     if not await db.scalar(
         text("SELECT 1 FROM integration_settings WHERE id=true AND openwa_key<>''")
     ):
@@ -94,6 +103,8 @@ async def queue_message(db, company_id, reservation_id, kind, *, operation_key=N
     }.get(item["status"], item["status"])
     body = f"Olá, {item['contact_name']}!\n{item['trade_name']}\n\n{label}\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\nPassageiros: {item['passenger_count']}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\nPara dúvidas, fale com a empresa."
     identifier = uuid4()
+    if ticket_link:
+        body = f"{item['trade_name']}\nBilhete de embarque\nViagem/pacote: {item['trip_name']}\n\n{ticket_link}\n\nEste bilhete é individual e vale para todos os trechos contratados do passageiro. Apresente o QR Code ao motorista ou guia."
     await db.execute(
         text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body)
       VALUES(:id,:company,:reservation,:session,:kind,:key,:phone,:body) ON CONFLICT(company_id,dedupe_key) DO NOTHING"""),
@@ -108,6 +119,11 @@ async def queue_message(db, company_id, reservation_id, kind, *, operation_key=N
             "body": encrypt(body[:4096]),
         },
     )
+    if ticket_hash:
+        await db.execute(
+            text("UPDATE whatsapp_outbox SET ticket_hash=:hash WHERE id=:id"),
+            {"hash": ticket_hash, "id": identifier},
+        )
     return identifier
 
 

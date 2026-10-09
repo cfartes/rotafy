@@ -5,6 +5,7 @@ import json
 import secrets
 from datetime import timedelta
 from typing import Literal
+from urllib.parse import quote
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -19,6 +20,7 @@ from app.operations import detail as trip_detail
 from app.public_sales import Tracking, limited, public_company, token_company
 from app.reservations import reservation_detail
 from app.security import digest
+from app.whatsapp import queue_message
 
 router = APIRouter(prefix="/api/v1", tags=["Bilhetes e embarque"])
 
@@ -349,7 +351,7 @@ async def offline_manifest(
         },
         "tickets": await rows(
             actor.db,
-            """SELECT tk.passenger_id,tk.token_hash FROM tickets tk JOIN reservations r ON r.id=tk.reservation_id
+            """SELECT tk.passenger_id,COALESCE(tk.shared_token_hash,tk.token_hash) AS token_hash FROM tickets tk JOIN reservations r ON r.id=tk.reservation_id
           JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=tk.leg_id
           WHERE tk.trip_id=:trip AND rl.allocation_id=:allocation AND tk.leg_id=:leg AND tk.revoked_at IS NULL AND r.status='confirmed'""",
             trip=trip_id,
@@ -359,7 +361,7 @@ async def offline_manifest(
     }
 
 
-TICKET_SELECT = """SELECT tk.id,tk.trip_id,tk.reservation_id,tk.passenger_id,tk.leg_id,tk.revoked_at,tk.created_at,
+TICKET_SELECT = """SELECT tk.id,tk.trip_id,tk.reservation_id,tk.passenger_id,tk.leg_id,tk.revoked_at,tk.created_at,tk.shared_token_hash IS NOT NULL AS shared,
  p.full_name,rl.allocation_id,r.status AS reservation_status,t.name AS trip_name,t.status AS trip_status,
  v.name AS vehicle_name,rl.boarding_position,rl.dropoff_position,
  COALESCE(bs.status,'waiting') AS boarding_status,COALESCE(bs.version,0) AS version
@@ -385,7 +387,7 @@ async def new_credential(db, actor, ticket_id):
     token = f"bt.{actor.company_id}.{secrets.token_urlsafe(32)}"
     await db.execute(
         text(
-            "UPDATE tickets SET token_hash=:hash,revoked_at=NULL,updated_at=now() WHERE id=:id"
+            "UPDATE tickets SET shared_token_hash=:hash,token_hash=replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-',''),revoked_at=NULL,updated_at=now() WHERE passenger_id=(SELECT passenger_id FROM tickets WHERE id=:id) AND reservation_id=(SELECT reservation_id FROM tickets WHERE id=:id)"
         ),
         {"id": ticket_id, "hash": digest(token)},
     )
@@ -410,20 +412,20 @@ async def issue_tickets(reservation_id: UUID, request: Request, actor: Auth):
             )
         issued = []
         for passenger in reservation["passengers"]:
+            count = await db.scalar(
+                text(
+                    "SELECT count(*) FROM tickets WHERE passenger_id=:passenger AND shared_token_hash IS NOT NULL"
+                ),
+                {"passenger": passenger["id"]},
+            )
+            if count == len(reservation["journeys"]):
+                continue
+            token = f"bt.{actor.company_id}.{secrets.token_urlsafe(32)}"
             for journey in reservation["journeys"]:
-                existing = await db.scalar(
-                    text(
-                        "SELECT id FROM tickets WHERE passenger_id=:passenger AND leg_id=:leg"
-                    ),
-                    {"passenger": passenger["id"], "leg": journey["leg_id"]},
-                )
-                if existing:
-                    continue
                 ticket_id = uuid4()
-                token = f"bt.{actor.company_id}.{secrets.token_urlsafe(32)}"
-                await db.execute(
+                ticket_id = await db.scalar(
                     text(
-                        "INSERT INTO tickets(id,company_id,trip_id,reservation_id,passenger_id,leg_id,token_hash) VALUES(:id,:company,:trip,:reservation,:passenger,:leg,:hash)"
+                        "INSERT INTO tickets(id,company_id,trip_id,reservation_id,passenger_id,leg_id,token_hash,shared_token_hash) VALUES(:id,:company,:trip,:reservation,:passenger,:leg,replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-',''),:hash) ON CONFLICT(company_id,passenger_id,leg_id) DO UPDATE SET shared_token_hash=EXCLUDED.shared_token_hash,token_hash=EXCLUDED.token_hash,revoked_at=NULL,updated_at=now() RETURNING id"
                     ),
                     {
                         "id": ticket_id,
@@ -473,7 +475,7 @@ async def revoke(ticket_id: UUID, request: Request, actor: Auth):
         await lock_company(db, actor.company_id, require_active=True)
         found = await db.scalar(
             text(
-                "UPDATE tickets SET revoked_at=COALESCE(revoked_at,now()),updated_at=now() WHERE id=:id RETURNING id"
+                "UPDATE tickets SET revoked_at=COALESCE(revoked_at,now()),updated_at=now() WHERE passenger_id=(SELECT passenger_id FROM tickets WHERE id=:id) AND reservation_id=(SELECT reservation_id FROM tickets WHERE id=:id) RETURNING id"
             ),
             {"id": ticket_id},
         )
@@ -483,15 +485,78 @@ async def revoke(ticket_id: UUID, request: Request, actor: Auth):
     return Response(status_code=204)
 
 
-async def credential(db, token):
+async def credential(db, token, leg_id=None):
     result = await rows(
         db,
-        TICKET_SELECT + " WHERE tk.token_hash=:hash AND tk.revoked_at IS NULL",
+        TICKET_SELECT
+        + " WHERE (tk.token_hash=:hash OR tk.shared_token_hash=:hash) AND tk.revoked_at IS NULL"
+        + (
+            " AND tk.leg_id=:leg"
+            if leg_id
+            else " ORDER BY (SELECT position FROM trip_legs WHERE id=tk.leg_id)"
+        ),
         hash=digest(token),
+        **({"leg": leg_id} if leg_id else {}),
     )
     if not result:
         raise HTTPException(404, "Bilhete inválido ou revogado.")
     return result[0]
+
+
+class TicketMessage(Tracking):
+    operation_key: UUID
+
+
+@router.post("/tickets/{ticket_id}/whatsapp", status_code=202)
+async def send_ticket(
+    ticket_id: UUID, data: TicketMessage, request: Request, actor: Auth
+):
+    tenant(actor, write=True)
+    if token_company(data.token, "bt") != actor.company_id:
+        raise HTTPException(404, "Bilhete não encontrado.")
+    async with request.app.state.platform_engine.begin() as db:
+        await scope(db, actor.company_id)
+        await lock_company(db, actor.company_id, require_active=True)
+        ticket = await credential(db, data.token)
+        selected = await db.scalar(
+            text(
+                "SELECT passenger_id FROM tickets WHERE id=:id AND reservation_id=:reservation"
+            ),
+            {"id": ticket_id, "reservation": ticket["reservation_id"]},
+        )
+        if selected != ticket["passenger_id"]:
+            raise HTTPException(404, "Bilhete não encontrado.")
+        if ticket["reservation_status"] != "confirmed" or ticket["trip_status"] not in {
+            "scheduled",
+            "in_progress",
+        }:
+            raise HTTPException(409, "Bilhete cancelado ou viagem encerrada.")
+        link = (
+            request.app.state.settings.public_base_url.rstrip("/")
+            + "/bilhete#token="
+            + quote(data.token, safe="")
+        )
+        message_id = await queue_message(
+            db,
+            actor.company_id,
+            ticket["reservation_id"],
+            "manual",
+            operation_key=data.operation_key,
+            ticket_link=link,
+            ticket_hash=digest(data.token),
+        )
+        if not message_id:
+            raise HTTPException(
+                503, "O WhatsApp desta empresa ainda não foi habilitado pela Nexus."
+            )
+        await audit(
+            db,
+            actor.company_id,
+            actor.user["id"],
+            "whatsapp.queued",
+            ticket["reservation_id"],
+        )
+        return {"id": message_id, "status": "pending"}
 
 
 @router.post("/public/ticket")
@@ -508,7 +573,26 @@ async def public_ticket(data: Tracking, request: Request):
             raise HTTPException(404, "Bilhete indisponível.")
         ticket = await credential(db, data.token)
         leg = await leg_for_trip(db, ticket["trip_id"], ticket["leg_id"])
+        journeys = []
+        for entry in await rows(
+            db,
+            TICKET_SELECT
+            + " WHERE (tk.token_hash=:hash OR tk.shared_token_hash=:hash) AND tk.revoked_at IS NULL ORDER BY (SELECT position FROM trip_legs WHERE id=tk.leg_id)",
+            hash=digest(data.token),
+        ):
+            route = await leg_for_trip(db, entry["trip_id"], entry["leg_id"])
+            journeys.append(
+                {
+                    "leg_id": entry["leg_id"],
+                    "vehicle_name": entry["vehicle_name"],
+                    "boarding_status": entry["boarding_status"],
+                }
+                | journey_points(
+                    route, entry["boarding_position"], entry["dropoff_position"]
+                )
+            )
         return {
+            "journeys": journeys,
             "company": await public_company(db, company[0]["slug"]),
             "ticket": {
                 k: ticket[k]
@@ -537,7 +621,7 @@ async def scan(
     await allocation_access(actor.db, actor, trip_id, allocation_id)
     if token_company(data.token, "bt") != actor.company_id:
         raise HTTPException(404, "Bilhete não pertence a esta empresa.")
-    ticket = await credential(actor.db, data.token)
+    ticket = await credential(actor.db, data.token, leg_id)
     if (ticket["trip_id"], ticket["allocation_id"], ticket["leg_id"]) != (
         trip_id,
         allocation_id,
@@ -645,7 +729,7 @@ async def command(
         if data.token:
             if token_company(data.token, "bt") != actor.company_id:
                 raise HTTPException(404, "Bilhete de outra empresa.")
-            ticket = await credential(db, data.token)
+            ticket = await credential(db, data.token, leg_id)
             if (
                 ticket["passenger_id"],
                 ticket["leg_id"],

@@ -246,7 +246,18 @@ def test_whole_family_across_different_vehicles_and_qr_manifest(client, seeded):
     ticket = next(t for t in tickets if t["leg_id"] == third["leg_id"])
     public = client.post("/api/v1/public/ticket", json={"token": ticket["token"]})
     assert public.status_code == 200, public.text
-    assert public.json()["ticket"]["vehicle_name"] == third["vehicle_name"]
+    journey = next(
+        entry
+        for entry in public.json()["journeys"]
+        if entry["leg_id"] == third["leg_id"]
+    )
+    assert journey["vehicle_name"] == third["vehicle_name"]
+    assert len({entry["token"] for entry in tickets}) == 2
+    from app.security import digest
+
+    assert digest(ticket["token"]) in {
+        entry["token_hash"] for entry in manifest.json()["tickets"]
+    }
     assert (
         command(client, prefix, reservation["passengers"][0]["id"]).status_code == 201
     )

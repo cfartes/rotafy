@@ -1,5 +1,43 @@
 import { test, expect } from "@playwright/test";
 
+test("one public QR shows all four contracted journeys", async ({ page }) => {
+  const journeys = ["Maragogi", "Maceió", "Praia do Gunga", "Maceió"].map(
+    (destination, index) => ({
+      leg_id: `leg-${index}`,
+      vehicle_name: "Ônibus",
+      boarding: "Ponto de embarque",
+      dropoff: destination,
+      boarding_at: "2027-02-01T11:00:00Z",
+      dropoff_at: "2027-02-01T13:00:00Z",
+      boarding_status: "waiting",
+    }),
+  );
+  await page.route("**/api/v1/public/ticket", (route) =>
+    route.fulfill({
+      json: {
+        company: { slug: "agency", trade_name: "Agência", has_logo: false },
+        is_valid: true,
+        ticket: {
+          ...journeys[0],
+          full_name: "Claudio",
+          trip_name: "Pacote de passeios",
+          reservation_status: "confirmed",
+          trip_status: "scheduled",
+        },
+        journeys,
+      },
+    }),
+  );
+  await page.goto("/bilhete#token=bt.company.placeholder");
+  await expect(
+    page.getByRole("img", { name: "QR do bilhete individual" }),
+  ).toHaveCount(1);
+  for (let index = 1; index <= 4; index++)
+    await expect(
+      page.getByText(`Trecho ${index} · Ônibus`, { exact: true }),
+    ).toBeVisible();
+});
+
 test("attendant sees uncertain delivery and can queue an explicit reservation summary", async ({
   page,
 }) => {
@@ -54,6 +92,37 @@ test("attendant sees uncertain delivery and can queue an explicit reservation su
     },
   ];
   let submitted: any;
+  let sentTicket: any;
+  const ticketRows = [
+    {
+      id: "ticket-1",
+      passenger_id: "person-1",
+      full_name: "Claudio",
+      leg_id: "leg",
+      revoked_at: null,
+    },
+    {
+      id: "ticket-2",
+      passenger_id: "person-1",
+      full_name: "Claudio",
+      leg_id: "return",
+      revoked_at: null,
+    },
+    {
+      id: "ticket-3",
+      passenger_id: "person-2",
+      full_name: "Maria",
+      leg_id: "leg",
+      revoked_at: null,
+    },
+    {
+      id: "ticket-4",
+      passenger_id: "person-2",
+      full_name: "Maria",
+      leg_id: "return",
+      revoked_at: null,
+    },
+  ];
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request(),
       path = new URL(request.url()).pathname.replace("/api/v1", "");
@@ -84,7 +153,20 @@ test("attendant sees uncertain delivery and can queue an explicit reservation su
         message: "",
         suggested_allocation_id: null,
       };
-    else if (path === "/reservations/booking/whatsapp") {
+    else if (path === "/reservations/booking/tickets") {
+      body =
+        request.method() === "POST"
+          ? {
+              issued: ticketRows.map((entry) => ({
+                ...entry,
+                token: `bt.company.${entry.passenger_id}`,
+              })),
+            }
+          : ticketRows;
+    } else if (path === "/tickets/ticket-1/whatsapp") {
+      sentTicket = request.postDataJSON();
+      body = { id: "ticket-message", status: "pending" };
+    } else if (path === "/reservations/booking/whatsapp") {
       if (request.method() === "POST") {
         submitted = request.postDataJSON();
         history.push({
@@ -121,5 +203,25 @@ test("attendant sees uncertain delivery and can queue an explicit reservation su
   expect(submitted.operation_key).toMatch(/^[0-9a-f-]{36}$/);
   await expect(
     dialog.getByText("Resumo manual", { exact: true }),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Emitir bilhetes", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Reemitir bilhete", exact: true }),
+  ).toHaveCount(2);
+  await expect(
+    dialog.getByRole("link", { name: "Abrir bilhete", exact: true }),
+  ).toHaveCount(2);
+  await dialog
+    .getByRole("button", { name: "Enviar bilhete pelo WhatsApp", exact: true })
+    .first()
+    .click();
+  expect(sentTicket.token).toBe("bt.company.person-1");
+  expect(sentTicket.operation_key).toMatch(/^[0-9a-f-]{36}$/);
+  await expect(
+    dialog.getByText(
+      "Link do bilhete adicionado à fila de WhatsApp para o telefone da reserva.",
+    ),
   ).toBeVisible();
 });

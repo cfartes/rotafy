@@ -190,7 +190,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
     .getByRole("button", { name: "Emitir bilhetes", exact: true })
     .click();
   const link = page.getByRole("textbox", {
-    name: "Link do bilhete de Ana QR (Blumenau)",
+    name: "Link do bilhete de Ana QR",
   });
   await expect(link).toHaveValue(/bilhete#token=bt/);
   const ticketUrl = await link.inputValue();
@@ -318,7 +318,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
     .getByRole("button", { name: "Conferir bilhete", exact: true })
     .click();
   await expect(
-    page.getByText("Bilhete de outro veículo, viagem ou trecho."),
+    page.getByRole("button", { name: "Confirmar embarque do QR", exact: true }),
   ).toBeVisible();
   const driverContext = await page.context().browser()!.newContext();
   const driver = await driverContext.newPage();
