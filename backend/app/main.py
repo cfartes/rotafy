@@ -1,3 +1,4 @@
+import re
 import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -403,6 +404,9 @@ def create_app(settings: Settings | None = None):
         )
         if not previous_profile:
             raise HTTPException(404, "Empresa não encontrada.")
+        previous_slug = await actor.db.scalar(
+            text("SELECT slug FROM companies WHERE id=:id"), {"id": company_id}
+        )
         await change_profile(
             actor.db,
             company_id,
@@ -417,6 +421,13 @@ def create_app(settings: Settings | None = None):
         ):
             raise HTTPException(
                 409, "Identificador de acesso já cadastrado em outra empresa."
+            )
+        if payload.slug != previous_slug and not re.fullmatch(
+            r"[a-z0-9]{2,50}", payload.slug
+        ):
+            raise HTTPException(
+                422,
+                "Identificador de acesso: use somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não use espaços, sublinhado, hífen ou outros caracteres especiais.",
             )
         if payload.cnpj and await actor.db.scalar(
             text("SELECT 1 FROM companies WHERE cnpj=:cnpj AND id<>:id"),

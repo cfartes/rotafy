@@ -26,7 +26,6 @@ class Input(BaseModel):
             "full_name",
             "trade_name",
             "corporate_name",
-            "slug",
             "company",
             "email",
             "cnpj",
@@ -77,8 +76,9 @@ class CompanyContact(Input):
 
 
 class CompanyCreate(CompanyContact):
+    contact_phone: str = Field(min_length=1, max_length=50)
     operational_profile: Literal["tourism", "regular"]
-    slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
+    slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+$")
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)
     cnpj: str
@@ -86,6 +86,13 @@ class CompanyCreate(CompanyContact):
     primary_color: str = Field(default="#0A2540", pattern=r"^#[0-9a-fA-F]{6}$")
     accent_color: str = Field(default="#FF6B4A", pattern=r"^#[0-9a-fA-F]{6}$")
     admin: UserCreate
+
+    @field_validator("contact_phone")
+    @classmethod
+    def require_contact(cls, value):
+        if not value:
+            raise ValueError("Informe o telefone/WhatsApp da empresa.")
+        return value
 
     @field_validator("cnpj")
     @classmethod

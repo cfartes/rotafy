@@ -55,8 +55,9 @@ def test_company_document_and_identifier_duplicates_are_explained(client):
     payload = {
         "operational_profile": "tourism",
         "plan_id": plan_id,
-        "slug": "company-document-test",
+        "slug": "companydocumenttest",
         "trade_name": "Teste Documento",
+        "contact_phone": "+5547999999999",
         "corporate_name": "Teste Documento",
         "cnpj": "529.982.247-25",
         "admin": {
@@ -75,7 +76,7 @@ def test_company_document_and_identifier_duplicates_are_explained(client):
         and "Identificador de acesso já cadastrado" in duplicate.json()["detail"]
     )
     duplicate = client.post(
-        "/api/v1/nexus/companies", json=payload | {"slug": "another-document-test"}
+        "/api/v1/nexus/companies", json=payload | {"slug": "anotherdocumenttest"}
     )
     assert (
         duplicate.status_code == 409
@@ -83,7 +84,7 @@ def test_company_document_and_identifier_duplicates_are_explained(client):
     )
     invalid = client.post(
         "/api/v1/nexus/companies",
-        json=payload | {"slug": "invalid-document-test", "cnpj": "04252011000111"},
+        json=payload | {"slug": "invaliddocumenttest", "cnpj": "04252011000111"},
     )
     assert (
         invalid.status_code == 422
@@ -91,7 +92,7 @@ def test_company_document_and_identifier_duplicates_are_explained(client):
     )
     alpha = client.post(
         "/api/v1/nexus/companies",
-        json=payload | {"slug": "alpha-document-test", "cnpj": "12.ABC.345/01DE-35"},
+        json=payload | {"slug": "alphadocumenttest", "cnpj": "12.ABC.345/01DE-35"},
     )
     assert alpha.status_code == 201, alpha.text
 
@@ -102,7 +103,7 @@ def test_nexus_edits_company_details_without_changing_access_or_branding(client)
     original, other = companies[:2]
     url = f"/api/v1/nexus/companies/{original['id']}/details"
     data = {
-        "slug": "edited-company",
+        "slug": "editedcompany",
         "trade_name": "Empresa revisada",
         "corporate_name": "Empresa revisada LTDA",
         "cnpj": "529.982.247-25",

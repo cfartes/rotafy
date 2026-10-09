@@ -27,7 +27,7 @@ env.BOOTSTRAP_PASSWORD =
 test("login, cadastro de empresa, equipe e logout no navegador", async ({
   page,
 }) => {
-  const slug = `e2e-${Date.now()}`;
+  const slug = `e2e${Date.now()}`;
   const email = `admin-${Date.now()}@example.com`;
   const password = "Senha temporaria E2E 2026!";
   await page.goto("/nexus");
@@ -69,6 +69,7 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
   await page.getByLabel("Nome comercial").fill("Receptivo de Homologação");
   await page.getByLabel("Razão social").fill("Receptivo de Homologação LTDA");
   await page.getByLabel("Identificador de acesso").fill(slug);
+  await page.getByLabel("Telefone / WhatsApp").fill("47999999999");
   await page.getByLabel("Nome completo").fill("Administrador Teste");
   await page.getByLabel("E-mail", { exact: true }).fill(email);
   await page.getByLabel("Senha inicial").fill(password);
@@ -110,6 +111,7 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
   await page.getByLabel("Nome comercial").fill("Outra Empresa");
   await page.getByLabel("Razão social").fill("Outra Empresa LTDA");
   await page.getByLabel("Identificador de acesso").fill(slug);
+  await page.getByLabel("Telefone / WhatsApp").fill("47999999999");
   await page.getByLabel("Nome completo").fill("Outro Administrador");
   await page
     .getByLabel("E-mail", { exact: true })

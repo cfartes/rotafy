@@ -50,7 +50,7 @@ O perfil operacional não é o plano contratado. Basic, Professional e Enterpris
 6. Informe nome, e-mail e senha do primeiro administrador. A senha exige pelo menos 12 caracteres.
 7. Confirme o cadastro e entre no painel da empresa com seu identificador, e-mail e senha.
 
-O identificador da empresa é diferente do e-mail e do CPF/CNPJ. Por exemplo, `agencia-exemplo` é um identificador de acesso, não uma senha. Guarde-o junto das orientações entregues à equipe.
+Todos os campos do cadastro são obrigatórios. O identificador de acesso deve conter somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhado (_), hífen (-) ou outros caracteres especiais. Por exemplo, `agenciaexemplo` é um identificador de acesso, não uma senha. Guarde-o junto das orientações entregues à equipe.
 
 A Nexus também pode cadastrar a empresa por seu painel. Nesse caso, o administrador recebe as orientações de acesso. Planos e disponibilidade de cadastro dependem da configuração da plataforma.
 

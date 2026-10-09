@@ -36,8 +36,8 @@ async function headers(page: Page) {
 test("planos, assinatura, histórico e consulta da agência em desktop e mobile", async ({
   page,
 }) => {
-  const slug = `e2e-plans-${Date.now()}`;
-  const code = `e2e-plan-${Date.now()}`;
+  const slug = `e2eplans${Date.now()}`;
+  const code = `e2eplan${Date.now()}`;
   const planName = "Plano de Homologação";
   const email = `admin-${slug}@example.com`;
   const password = "Senha teste de planos 2026!";
@@ -69,6 +69,7 @@ test("planos, assinatura, histórico e consulta da agência em desktop e mobile"
       cnpj: testDocument(),
       plan_id: plan.id,
       operational_profile: "tourism",
+      contact_phone: "+5547999999999",
       slug,
       trade_name: "Agência Homologação Planos",
       corporate_name: "Agência Homologação Planos LTDA",

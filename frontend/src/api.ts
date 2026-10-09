@@ -101,7 +101,8 @@ function validationMessage(detail: unknown): string {
     else if (field === "email")
       explanation = "Informe um endereço de e-mail válido.";
     else if (field === "slug")
-      explanation = "Use letras minúsculas, números e hífens entre palavras.";
+      explanation =
+        "Use somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não use espaços, sublinhado, hífen ou outros caracteres especiais.";
     else if (
       issue.type === "value_error" &&
       typeof issue.msg === "string" &&

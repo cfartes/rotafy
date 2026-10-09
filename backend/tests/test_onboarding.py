@@ -9,9 +9,10 @@ from sqlalchemy import text
 BASIC = "10000000-0000-4000-8000-000000000001"
 PAYLOAD = {
     "operational_profile": "tourism",
-    "slug": "new-customer",
+    "slug": "newcustomer",
     "trade_name": "Novo cliente",
     "corporate_name": "Novo cliente LTDA",
+    "contact_phone": "+5547999999999",
     "cnpj": "529.982.247-25",
     "plan_id": BASIC,
     "admin": {
@@ -113,7 +114,7 @@ def test_public_registration_creates_company_admin_and_subscription_atomically(
     assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 409
     assert (
         client.post(
-            "/api/v1/public/companies", json=PAYLOAD | {"slug": "other-customer"}
+            "/api/v1/public/companies", json=PAYLOAD | {"slug": "othercustomer"}
         ).status_code
         == 409
     )
@@ -130,6 +131,16 @@ def test_public_registration_creates_company_admin_and_subscription_atomically(
         {"cnpj": "11111111111"},
         {"plan_id": None},
         {"price_cents": 0},
+        {"contact_phone": None},
+        {"contact_phone": ""},
+        {"contact_phone": "   "},
+        {"slug": "empresa teste"},
+        {"slug": "empresa_teste"},
+        {"slug": "empresa-teste"},
+        {"slug": "empresa@teste"},
+        {"slug": "Empresa"},
+        {"slug": "empresá"},
+        {"slug": " empresa "},
     ],
 )
 def test_registration_requires_document_and_plan_and_rejects_client_price(
@@ -138,6 +149,31 @@ def test_registration_requires_document_and_plan_and_rejects_client_price(
     configure(client)
     response = client.post(path, json=PAYLOAD | change)
     assert response.status_code == 422
+    with owner.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM companies")) == 2
+
+
+@pytest.mark.parametrize(
+    "path", ["/api/v1/public/companies", "/api/v1/nexus/companies"]
+)
+@pytest.mark.parametrize(
+    "field",
+    [
+        "slug",
+        "trade_name",
+        "corporate_name",
+        "contact_phone",
+        "cnpj",
+        "plan_id",
+        "operational_profile",
+        "admin",
+    ],
+)
+def test_registration_rejects_missing_required_fields(client, owner, path, field):
+    configure(client)
+    payload = dict(PAYLOAD)
+    payload.pop(field)
+    assert client.post(path, json=payload).status_code == 422
     with owner.connect() as db:
         assert db.scalar(text("SELECT count(*) FROM companies")) == 2
 

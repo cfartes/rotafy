@@ -29,7 +29,7 @@ async function headers(page: Page) {
 test("primeiro acesso: plano e documento obrigatórios, assinatura automática e login da empresa", async ({
   page,
 }) => {
-  const slug = `e2e-onboarding-${Date.now()}`;
+  const slug = `e2eonboarding${Date.now()}`;
   const email = `${slug}@example.com`;
   const password = "Senha onboarding teste 2026!";
   await page.goto("/nexus");

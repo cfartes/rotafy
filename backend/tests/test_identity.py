@@ -164,7 +164,8 @@ def test_platform_can_create_company_and_suspend_existing_access(client, seeded)
     response = client.post(
         "/api/v1/nexus/companies",
         json={
-            "slug": "empresa-c",
+            "slug": "empresac",
+            "contact_phone": "+5547999999999",
             "operational_profile": "tourism",
             "cnpj": "52998224725",
             "plan_id": plan_id,

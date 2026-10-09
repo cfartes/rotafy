@@ -36,7 +36,7 @@ test("Relatorios de ocupacao, PAGO, presenca, consumo e CSV", async ({
   page,
 }) => {
   test.setTimeout(120000);
-  const slug = `e2e-reports-${Date.now()}`,
+  const slug = `e2ereports${Date.now()}`,
     email = `admin-${slug}@example.com`,
     password = "Senha teste reservas 2026!";
   await page.goto("/nexus");
@@ -64,6 +64,7 @@ test("Relatorios de ocupacao, PAGO, presenca, consumo e CSV", async ({
       cnpj: testDocument(),
       plan_id: plan.id,
       operational_profile: "tourism",
+      contact_phone: "+5547999999999",
       slug,
       trade_name: "Agência Homologação Reservas",
       corporate_name: "Agência Homologação Reservas LTDA",

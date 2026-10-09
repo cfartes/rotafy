@@ -428,7 +428,7 @@ function CreateCompany({
         <p className="muted">
           Crie o espaço da empresa e seu primeiro administrador. Escolha o plano
           para iniciar a assinatura mensal hoje. O CPF/CNPJ é obrigatório para
-          cobrança.
+          cobrança. Todos os campos deste cadastro são obrigatórios.
         </p>
         <div className="form-grid">
           <Field label="Nome comercial">
@@ -445,12 +445,19 @@ function CreateCompany({
           <Field label="Identificador de acesso">
             <input
               name="slug"
-              placeholder="receptivo-sul"
+              placeholder="receptivosul"
               required
-              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              pattern="[a-z0-9]+"
+              title="Use somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não use espaços, sublinhado, hífen ou outros caracteres especiais."
+              aria-describedby="company-slug-help"
               minLength={2}
               maxLength={50}
             />
+            <small id="company-slug-help" className="muted">
+              Use somente letras minúsculas sem acentos e números (2 a 50
+              caracteres). Não use espaços, sublinhado (_), hífen (-) ou outros
+              caracteres especiais. Exemplo: receptivosul.
+            </small>
           </Field>
           <Field label="CPF/CNPJ">
             <DocumentInput required />
@@ -461,7 +468,7 @@ function CreateCompany({
           </Field>
           <div className="company-contact">
             <Field label="Telefone / WhatsApp">
-              <PhoneInput />
+              <PhoneInput required />
               <small className="muted">
                 Contato da empresa. Use DDD ou + e código do país.
               </small>
@@ -616,8 +623,15 @@ function EditCompany({
               required
               minLength={2}
               maxLength={50}
-              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              pattern={`[a-z0-9]+|${company.slug}`}
+              title="Para alterar, use somente letras minúsculas sem acentos e números, sem espaços ou caracteres especiais."
+              aria-describedby="company-edit-slug-help"
             />
+            <small id="company-edit-slug-help" className="muted">
+              Para alterar, use somente letras minúsculas sem acentos e números
+              (2 a 50 caracteres), sem espaços, sublinhado (_), hífen (-) ou
+              outros caracteres especiais.
+            </small>
           </Field>
           <Field label="CPF/CNPJ">
             <DocumentInput initialValue={company.cnpj || ""} required />

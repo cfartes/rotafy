@@ -36,7 +36,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
   page,
 }) => {
   test.setTimeout(60000);
-  const slug = `e2e-boarding-${Date.now()}`,
+  const slug = `e2eboarding${Date.now()}`,
     email = `admin-${slug}@example.com`,
     password = "Senha teste reservas 2026!";
   await page.goto("/nexus");
@@ -64,6 +64,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
       cnpj: testDocument(),
       plan_id: plan.id,
       operational_profile: "tourism",
+      contact_phone: "+5547999999999",
       slug,
       trade_name: "Agência Homologação Reservas",
       corporate_name: "Agência Homologação Reservas LTDA",

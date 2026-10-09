@@ -36,7 +36,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
   page,
 }) => {
   test.setTimeout(60000);
-  const slug = `e2e-operations-${Date.now()}`,
+  const slug = `e2eoperations${Date.now()}`,
     email = `admin-${slug}@example.com`,
     password = "Senha teste operações 2026!";
   await page.goto("/nexus");
@@ -64,6 +64,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
       cnpj: testDocument(),
       plan_id: plan.id,
       operational_profile: "tourism",
+      contact_phone: "+5547999999999",
       slug,
       trade_name: "Agência Homologação Operações",
       corporate_name: "Agência Homologação Operações LTDA",

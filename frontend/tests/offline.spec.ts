@@ -37,7 +37,7 @@ test("PWA offline, fila persistente, resposta perdida, conflitos e QR revogado",
   page,
 }) => {
   test.setTimeout(120000);
-  const slug = `e2e-offline-${Date.now()}`,
+  const slug = `e2eoffline${Date.now()}`,
     email = `admin-${slug}@example.com`,
     password = "Senha teste reservas 2026!";
   await page.goto("/nexus");
@@ -65,6 +65,7 @@ test("PWA offline, fila persistente, resposta perdida, conflitos e QR revogado",
       cnpj: testDocument(),
       plan_id: plan.id,
       operational_profile: "tourism",
+      contact_phone: "+5547999999999",
       slug,
       trade_name: "Agência Homologação Reservas",
       corporate_name: "Agência Homologação Reservas LTDA",
