@@ -1,0 +1,168 @@
+{
+  "edition": "2026.10",
+  "date": "09/10/2026",
+  "slides": [
+    {
+      "eyebrow": "NEXUS · GESTÃO DE TRANSPORTE",
+      "title": "Sua operação,\nconectada a cada viagem.",
+      "lead": "Nexus Rotafy",
+      "points": ["Painel web para gestão e atendimento", "Android para motorista e guia", "Bilhete individual para o passageiro"],
+      "footnote": "Apresentação do sistema · Edição 2026.10 · 09/10/2026",
+      "notes": "Apresente a jornada integrada: cadastro, planejamento, venda, operação e análise. Os recursos descritos correspondem à implementação atual; módulos futuros aparecem ao final."
+    },
+    {
+      "eyebrow": "DA VENDA À CHEGADA",
+      "title": "Uma jornada operacional completa",
+      "lead": "Planejar → vender → embarcar → concluir → analisar",
+      "points": ["Rotas e pacotes reutilizáveis reduzem o recadastro.", "Reservas conectam famílias, lugares e deslocamentos.", "QR e manifestos ligam o atendimento à equipe na estrada.", "Chegadas e relatórios dão visibilidade ao gestor."],
+      "footnote": "A operação é validada por empresa, usuário, veículo e trecho.",
+      "notes": "Demonstre o fluxo em vez de apresentar apenas menus. O atendimento prepara a viagem e a equipe registra sua execução."
+    },
+    {
+      "eyebrow": "SAAS MULTIEMPRESA",
+      "title": "Cada empresa tem seu espaço",
+      "lead": "Uma plataforma compartilhada, com operação segregada.",
+      "points": ["Cadastros, viagens, reservas e históricos pertencem à empresa.", "Acesso definido pelo identificador da empresa e pelo perfil do usuário.", "Um profissional de várias empresas possui um cadastro em cada uma.", "Nexus administra empresas, planos e integrações globais."],
+      "footnote": "Guias e motoristas acessam somente os deslocamentos atribuídos.",
+      "notes": "Explique a diferença entre conta Nexus e conta da empresa. O superadmin não representa uma empresa operacional padrão."
+    },
+    {
+      "eyebrow": "DOIS PERFIS OPERACIONAIS",
+      "title": "Turismo e transporte regular",
+      "lead": "O cadastro inicial orienta a experiência da empresa.",
+      "points": ["Turismo: viagens simples, transfers e pacotes com vários destinos.", "Regular: viagens simples, Rotas, frota, reservas e embarque.", "Os menus turísticos ficam ocultos no perfil Regular.", "Perfil operacional e plano comercial são escolhas independentes."],
+      "footnote": "Recorrência automática e venda independente de segmentos ainda são etapas futuras.",
+      "notes": "Evite apresentar o perfil Regular como um sistema completo de linhas recorrentes. A base operacional já existe; essas regras adicionais permanecem pendentes."
+    },
+    {
+      "eyebrow": "EQUIPE E ACESSO",
+      "title": "Cada pessoa, com seu papel",
+      "lead": "Administrador, atendente, motorista e guia.",
+      "points": ["Cadastro, ativação e suspensão de colaboradores.", "Convite por e-mail, WhatsApp ou pelos dois canais.", "Link de 24 horas para definir a própria senha.", "Recuperação de acesso e registro de atividades."],
+      "footnote": "Motorista e guia compartilham os recursos operacionais; o guia é opcional.",
+      "notes": "O telefone é obrigatório para convites por WhatsApp. O e-mail permanece como identificador de login. Nos dois canais é enviado o mesmo link, não uma senha temporária."
+    },
+    {
+      "eyebrow": "FROTA",
+      "title": "Veículos prontos para alocar",
+      "lead": "Capacidade e equipe conectadas ao planejamento.",
+      "points": ["Cadastro de veículo, placa e quantidade de lugares.", "Vários veículos na mesma viagem ou deslocamento.", "Motorista e guias definidos em cada alocação.", "Conflitos de horários e capacidade verificados ao salvar."],
+      "footnote": "A distribuição considera quantidade de lugares; não há escolha de poltrona numerada.",
+      "notes": "A capacidade é copiada para a saída, preservando o histórico. O mesmo veículo pode operar novamente em outros horários compatíveis."
+    },
+    {
+      "eyebrow": "ROTAS REUTILIZÁVEIS",
+      "title": "Cadastre uma vez. Agende novamente.",
+      "lead": "Cidades, endereços, paradas e duração estimada.",
+      "points": ["UF e cidade para origem e destino.", "Paradas ordenadas de embarque, desembarque ou ambos.", "Somente ida ou ida e volta, com sugestão de retorno invertido.", "Navegação abre o Google Maps externo."],
+      "image": "rotas-catalogo-desktop.png",
+      "footnote": "Duração manual. Atualizar uma Rota não altera automaticamente viagens já criadas.",
+      "notes": "Mostre o catálogo. O botão Atualizar com a versão atual da Rota existe nos detalhes de saídas elegíveis e exige validação e atualização dos manifestos."
+    },
+    {
+      "eyebrow": "PACOTES TURÍSTICOS",
+      "title": "Passeios ou destinos em sequência",
+      "lead": "Dois formatos para simplificar o roteiro.",
+      "points": ["Passeios: cada dia retorna à mesma cidade-base.", "Sequência: várias cidades, com permanência e dias livres.", "Modelo com dias relativos; datas reais são definidas na saída.", "Venda do pacote completo, com retorno incluído."],
+      "footnote": "Exemplos: Maceió ↔ Maragogi / Gunga; ou Maceió → Fortaleza → Natal → Maceió.",
+      "notes": "Passeios nos dias 1 e 3 geram ida/volta em cada data. Circuito pode sair no dia 1, seguir no dia 3 e retornar no dia 6. Destinos separados exigem outro pacote."
+    },
+    {
+      "eyebrow": "SAÍDAS E ALOCAÇÕES",
+      "title": "O modelo vira uma viagem real",
+      "lead": "Rota ou pacote + data + horários + veículos + equipe.",
+      "points": ["Viagem simples com trecho único ou ida e volta.", "Saída de pacote com todas as etapas e chegadas previstas.", "Troca de veículo e equipe entre deslocamentos do roteiro.", "Filtros de situação, edição protegida, duplicação e cancelamento."],
+      "footnote": "A saída preserva sua versão de percurso, preço e capacidade.",
+      "notes": "Editar um catálogo não reescreve a viagem. A atualização explícita de Rota é permitida apenas dentro das regras de reservas e embarques."
+    },
+    {
+      "eyebrow": "VENDA E RESERVA FAMILIAR",
+      "title": "A família inteira, com lugar garantido ao salvar",
+      "lead": "Um responsável, um telefone e vários passageiros.",
+      "points": ["Menu Vender bilhete, sem abrir o cadastro da viagem.", "Disponibilidade por segmento e sugestão de veículo para o grupo.", "Bloqueios de 15 minutos, confirmação, cancelamento e realocação.", "Importação CSV/XLSX com prévia e validação do lote."],
+      "footnote": "CPF conforme roteiro e exceções; recebimento registrado manualmente como PAGO.",
+      "notes": "Uma consulta não bloqueia vagas. O backend confere a capacidade novamente no salvamento. A família não é dividida automaticamente entre ônibus."
+    },
+    {
+      "eyebrow": "BILHETE INDIVIDUAL",
+      "title": "Um passageiro. Um link. Um QR.",
+      "lead": "O mesmo bilhete em todos os trechos contratados.",
+      "points": ["Página privada com etapas, pontos, horários e veículos.", "Impressão/PDF, download do QR e compartilhamento do link.", "Envio do link pelo WhatsApp ao telefone da reserva.", "Reemissão e revogação para todos os trechos do passageiro."],
+      "footnote": "A leitura identifica o passageiro; o operador confirma o embarque.",
+      "notes": "O passageiro usa o navegador, sem aplicativo próprio. Reemitir invalida os links anteriores e exige preparar novamente os manifestos offline."
+    },
+    {
+      "eyebrow": "COMUNICAÇÃO",
+      "title": "A informação acompanha o cliente",
+      "lead": "OpenWA para WhatsApp. Resend para e-mails de acesso.",
+      "points": ["Confirmação, cancelamento e PAGO geram mensagens de reserva.", "Resumo e link do bilhete podem ser enviados manualmente.", "Convites de colaboradores por um ou dois canais.", "Fila persistente e histórico de processamento."],
+      "footnote": "Cada empresa usa sua sessão/número. Aceitação pelo provedor não comprova entrega/leitura.",
+      "notes": "As integrações dependem de configuração e sessão conectada. Envios incertos do OpenWA não são repetidos automaticamente; homologação real ocorre com telefone autorizado."
+    },
+    {
+      "eyebrow": "ANDROID OPERACIONAL",
+      "title": "Motorista e guia com os mesmos recursos",
+      "lead": "A viagem na mão de quem executa a operação.",
+      "points": ["Viagens atribuídas e agenda dos próximos sete dias.", "QR pela câmera, lista e filtros de passageiros.", "Iniciar viagem, desembarcar todos e registrar chegada.", "Login biométrico opcional em aparelhos compatíveis."],
+      "footnote": "APK por empresa; no perfil operacional, guia não é obrigatório.",
+      "notes": "Biometria forte protege o acesso salvo em Android compatível. Ela não elimina a validação de permissões pelo backend. Não há versão iOS homologada nesta entrega."
+    },
+    {
+      "eyebrow": "OPERAÇÃO COM CONEXÃO INTERMITENTE",
+      "title": "Prepare online. Registre. Sincronize.",
+      "lead": "Manifesto local e fila de ações por operador.",
+      "points": ["Preparação separada por veículo e deslocamento.", "Embarques e desembarques offline com manifesto válido.", "Revalidação no servidor ao reconectar e revisão de conflitos.", "Saída e chegada exigem conexão."],
+      "footnote": "Dados locais pendentes não equivalem a confirmação no sistema.",
+      "notes": "Validade de até oito horas, limitada também pela sessão. Não apagar dados ou desinstalar para resolver pendências. Mudanças de outros aparelhos podem exigir revisão."
+    },
+    {
+      "eyebrow": "CHEGADA E HISTÓRICO",
+      "title": "Da saída ao destino, com registro",
+      "lead": "Finalização consultável por veículo e trecho.",
+      "points": ["Saída, chegada, responsável e horários registrados.", "GPS pontual: coordenadas, precisão e horário da captura.", "Link para consultar o ponto da chegada no Maps.", "Conclusão geral após todos os veículos e etapas previstos."],
+      "footnote": "Sem posição válida, registra o motivo. Este recurso não faz rastreamento contínuo.",
+      "notes": "O fechamento exige desembarques e sincronização. Encerramento administrativo não é apresentado como chegada física se não houver registro de chegada."
+    },
+    {
+      "eyebrow": "VISÃO GERENCIAL",
+      "title": "Indicadores para conduzir a operação",
+      "lead": "Período, situação, veículo e viagem em uma visão integrada.",
+      "points": ["Deslocamentos diários e viagens comerciais iniciadas.", "Ocupação máxima confirmada por veículo/deslocamento.", "Valores confirmados, PAGO, ticket médio e produtos vendidos.", "Baixa ocupação, presença, franquia e exportação CSV."],
+      "image": "visao-gerencial-desktop.png",
+      "footnote": "Valores nominais e marcação manual; não representam conciliação bancária, fluxo de caixa ou lucro.",
+      "notes": "Não confundir deslocamentos com consumo comercial. Pacotes não duplicam famílias por etapa. O gráfico diário permite consultar os valores do dia."
+    },
+    {
+      "eyebrow": "ADMINISTRAÇÃO DA PLATAFORMA",
+      "title": "Nexus no controle do SaaS",
+      "lead": "Empresas, planos, assinaturas e integrações.",
+      "points": ["Basic, Professional, Enterprise e planos adicionais configuráveis.", "Franquia mensal, mensalidade e valor da unidade extra.", "Uma viagem simples = uma unidade; pacote = destinos comerciais.", "Cancelamento estorna o consumo no ciclo original."],
+      "footnote": "Quatro destinos = quatro unidades, sem acréscimo por retorno, paradas ou quantidade de veículos.",
+      "notes": "O superadmin cadastra API-keys e remetente pelo painel. Planos são versionados; os demonstrativos não emitem cobrança nem integram pagamentos."
+    },
+    {
+      "eyebrow": "PRIMEIRA OPERAÇÃO",
+      "title": "Comece por uma saída completa",
+      "lead": "Um roteiro simples para colocar a equipe em funcionamento.",
+      "points": ["1 · Empresa, plano, equipe e veículo cadastrados.", "2 · Rota criada e viagem agendada com equipe atribuída.", "3 · Reserva confirmada, PAGO conferido e bilhete enviado.", "4 · Manifesto preparado, embarque realizado e chegada registrada."],
+      "footnote": "O manual traz instruções por perfil, exemplos, checklists e solução de problemas.",
+      "notes": "Recomende homologar a primeira jornada com usuários e telefones autorizados antes de ampliar a operação. Acesse a central de documentação sem precisar de login."
+    },
+    {
+      "eyebrow": "DISPONIBILIDADE ATUAL",
+      "title": "Escopo claro para a próxima evolução",
+      "lead": "O que existe hoje e o que permanece no planejamento.",
+      "points": ["Hoje: gestão web, Android operacional, QR, mensagens e relatórios.", "Menu oculto: página pública e integrações externas de reservas.", "Futuro: app do passageiro, iOS, lembretes e rastreamento contínuo.", "Futuro: pagamentos integrados, Google API e linhas recorrentes."],
+      "footnote": "Nenhum prazo futuro é prometido nesta apresentação.",
+      "notes": "A página pública possui código implementado, mas seu menu está desabilitado. Não apresentar como nova oferta disponível sem orientação da Nexus. O passageiro atual consulta o bilhete web."
+    },
+    {
+      "eyebrow": "NEXUS ROTAFY",
+      "title": "Uma operação mais tranquila,\na cada viagem.",
+      "lead": "Planejamento, atendimento e equipe conectados.",
+      "points": ["Conheça o sistema: frotafy.nexusdataanalytics.tech", "Manual e downloads: /ajuda", "Central com HTML, PDF e apresentação editável"],
+      "footnote": "Nexus Data Analytics · Edição 2026.10",
+      "notes": "Encerre abrindo uma demonstração da jornada adequada ao perfil da empresa. A central de documentação pode ser acessada no login ou no menu lateral do painel."
+    }
+  ]
+}

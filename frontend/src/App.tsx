@@ -3,6 +3,7 @@ import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
 import { IntegrationSettings } from "./IntegrationSettings";
+import { Documentation } from "./Documentation";
 import { TicketSales } from "./TicketSales";
 import { Reports } from "./Reports";
 import { DocumentInput } from "./components/DocumentInput";
@@ -48,6 +49,7 @@ import {
   Search,
   ShieldCheck,
   Users,
+  BookOpen,
   Ticket,
 } from "lucide-react";
 import {
@@ -245,6 +247,9 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
           >
             <KeyRound size={15} /> Esqueci minha senha
           </button>
+          <a className="portal-link" href="/ajuda">
+            <BookOpen size={15} /> Manual e apresentação
+          </a>
           <a className="portal-link" href={isNexus ? "/" : "/nexus"}>
             {isNexus ? "Acessar portal da empresa" : "Administração Nexus"}
             <ChevronRight size={15} />
@@ -1266,6 +1271,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 <span>{label}</span>
               </button>
             ))}
+          <a className="documentation-nav-link" href="/ajuda">
+            <BookOpen size={19} /> <span>Ajuda e manuais</span>
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <span className="secure-note">
@@ -1817,7 +1825,7 @@ export function App() {
   }, []);
   const session = useQuery({
     queryKey: ["session"],
-    enabled: window.location.pathname !== "/offline",
+    enabled: !["/offline", "/ajuda"].includes(window.location.pathname),
     queryFn: async () => {
       try {
         return await api<User>("/auth/me");
@@ -1833,6 +1841,7 @@ export function App() {
     });
     client.setQueryData(["session"], null);
   }
+  if (window.location.pathname === "/ajuda") return <Documentation />;
   if (window.location.pathname === "/cadastro")
     return (
       <main className="reset-layout">

@@ -1,0 +1,26 @@
+{
+  "edition": "2026.10",
+  "revised_at": "2026-10-09",
+  "files": [
+    {
+      "name": "manual.html",
+      "bytes": 596348
+    },
+    {
+      "name": "manual.pdf",
+      "bytes": 744100
+    },
+    {
+      "name": "apresentacao.html",
+      "bytes": 375738
+    },
+    {
+      "name": "apresentacao.pdf",
+      "bytes": 383984
+    },
+    {
+      "name": "apresentacao.pptx",
+      "bytes": 333344
+    }
+  ]
+}

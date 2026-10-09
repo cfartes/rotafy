@@ -4,6 +4,8 @@ Plataforma SaaS de viagens e embarque. Entregas atuais: fundação multiempresa,
 
 ## Executar localmente com Docker
 
+Apresentação do sistema e manual de utilização estão na central `/ajuda`, acessível pelo login e pelo menu **Ajuda e manuais**. Inclui apresentação HTML/PDF/PowerPoint e manual HTML/PDF, com instruções por perfil e exemplos. Fontes, geração e publicação: [documentação dos materiais](docs/PUBLICACAO_DOCUMENTACAO.md).
+
 Requisitos: Docker Desktop em execução. Node 24 e Python 3.13/3.14 somente para desenvolvimento/testes fora dos containers.
 
 No PowerShell, na raiz do projeto:
