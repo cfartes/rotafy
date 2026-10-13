@@ -73,13 +73,20 @@ Cadastre planos/empresas e homologue o APK release: motorista, guia, viagem sem 
 
 ## Atualizar
 
+Para atualizar a instalação independente existente, execute na VPS:
+
 ```sh
-bash /opt/rotafy-tech/scripts/install_vps.sh
+curl --fail --show-error --location \
+  https://raw.githubusercontent.com/cfartes/rotafy/main/scripts/update_vps.sh \
+  --output /tmp/update-rotafy-vps.sh
+bash /tmp/update-rotafy-vps.sh
 ```
 
-O wrapper clona em diretório novo ou atualiza `main` do remoto correto com `pull --ff-only`, preservando configurações ignoradas. Bloqueia diretório existente sem Git, outro remoto, outra branch e alterações locais. Outro diretório pode ser definido por `ROTAFY_INSTALL_DIR=/opt/rotafy`.
+O atualizador exige o checkout, o ambiente identificado como `nexus-rotafy-tech` e o volume de banco existente. Não cria uma instalação nova nem reutiliza o projeto antigo. Obtém a versão mais recente de `main`, compila os serviços, faz backup, aplica eventuais migrações e verifica os serviços e o HTTPS. Preserva credenciais, banco e chave de integrações. Se já tiver o script atualizado no checkout, use `bash /opt/rotafy-tech/scripts/update_vps.sh`.
 
-O wrapper pode atualizar/clonar Git mesmo recebendo `--dry-run`; apenas o script Python não modifica arquivos nesse modo. Sincronize aparelhos e programe janela antes de atualizações. Backup local não substitui armazenamento externo criptografado e restauração ensaiada.
+O instalador pode clonar um diretório novo; o atualizador exige uma instalação existente. Ambos atualizam `main` do remoto correto com `pull --ff-only`, preservando configurações ignoradas. Bloqueiam outro remoto, outra branch e alterações locais. Outro diretório pode ser definido por `ROTAFY_INSTALL_DIR=/opt/rotafy`.
+
+Os scripts podem atualizar Git mesmo recebendo `--dry-run`; apenas o script Python não modifica arquivos nesse modo. O instalador também pode clonar nesse modo. Sincronize aparelhos e programe janela antes de atualizações. Backup local não substitui armazenamento externo criptografado e restauração ensaiada.
 
 ## Diagnóstico
 
