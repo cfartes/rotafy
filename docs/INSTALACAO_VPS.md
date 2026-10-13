@@ -73,6 +73,10 @@ Cadastre planos/empresas e homologue o APK release: motorista, guia, viagem sem 
 
 ## Atualizar
 
+O atualizador também reconhece a instalação ativa em `/opt/nexus-rotafy` com projeto `nexus-rotafy-prod`, mesmo sem `DEPLOY_PROJECT`. Nesse caso, mantém o projeto e o volume existentes. Antes de aceitar esse ambiente, confere as labels do banco, a pasta e o volume montado. Não cria um banco `nexus-rotafy-tech` durante essa atualização.
+
+Entre na pasta da instalação antes de executar o script. A pasta atual é utilizada quando contém Git e `.env.production`; caso contrário, o script busca uma única instalação conhecida. Em caso de ambiguidade, informe `ROTAFY_INSTALL_DIR` explicitamente.
+
 Para atualizar a instalação independente existente, execute na VPS:
 
 ```sh
@@ -82,7 +86,7 @@ curl --fail --show-error --location \
 bash /tmp/update-rotafy-vps.sh
 ```
 
-O atualizador exige o checkout, o ambiente identificado como `nexus-rotafy-tech` e o volume de banco existente. Não cria uma instalação nova nem reutiliza o projeto antigo. Obtém a versão mais recente de `main`, compila os serviços, faz backup, aplica eventuais migrações e verifica os serviços e o HTTPS. Preserva credenciais, banco e chave de integrações. Se já tiver o script atualizado no checkout, use `bash /opt/rotafy-tech/scripts/update_vps.sh`.
+O atualizador exige o checkout, um ambiente correspondente ao projeto identificado e o volume de banco existente. Não cria uma instalação nova nem transfere dados entre projetos. Obtém a versão mais recente de `main`, compila os serviços, faz backup, aplica eventuais migrações e verifica os serviços e o HTTPS. Preserva credenciais, banco e chave de integrações. Se já tiver o script atualizado no checkout, use `bash scripts/update_vps.sh` dentro da instalação.
 
 O instalador pode clonar um diretório novo; o atualizador exige uma instalação existente. Ambos atualizam `main` do remoto correto com `pull --ff-only`, preservando configurações ignoradas. Bloqueiam outro remoto, outra branch e alterações locais. Outro diretório pode ser definido por `ROTAFY_INSTALL_DIR=/opt/rotafy`.
 

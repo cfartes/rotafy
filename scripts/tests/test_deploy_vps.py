@@ -10,6 +10,78 @@ from scripts import deploy_vps as deploy
 
 
 class DeploymentTests(unittest.TestCase):
+    def test_legacy_project_requires_matching_directory_and_database_volume(self):
+        container = {
+            "Config": {
+                "Labels": {
+                    "com.docker.compose.project": "nexus-rotafy-prod",
+                    "com.docker.compose.project.working_dir": str(deploy.ROOT),
+                }
+            },
+            "Mounts": [
+                {
+                    "Name": "nexus-rotafy-prod_database",
+                    "Destination": "/var/lib/postgresql/data",
+                }
+            ],
+        }
+        with patch.object(
+            deploy, "output", side_effect=["dbid", json.dumps([container])]
+        ):
+            deploy.verify_legacy_installation()
+        container["Mounts"][0]["Name"] = "another_database"
+        with (
+            patch.object(
+                deploy, "output", side_effect=["dbid", json.dumps([container])]
+            ),
+            self.assertRaisesRegex(ValueError, "volume"),
+        ):
+            deploy.verify_legacy_installation()
+
+    def test_legacy_dry_run_keeps_existing_credentials_without_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            values = {
+                key: "a" * 64
+                for key in (
+                    "POSTGRES_PASSWORD",
+                    "APP_DB_PASSWORD",
+                    "PLATFORM_DB_PASSWORD",
+                    "BOOTSTRAP_PASSWORD",
+                )
+            }
+            values["BOOTSTRAP_EMAIL"] = "nexus@example.com"
+            deploy.write_env(root / ".env.production", values)
+            before = (root / ".env.production").read_bytes()
+            (root / ".env.production.example").write_text(
+                "DEPLOY_PROJECT=nexus-rotafy-tech\n"
+            )
+            args = argparse.Namespace(
+                project="nexus-rotafy-prod", admin_email=None, dry_run=True
+            )
+            with (
+                patch.object(deploy, "ROOT", root),
+                patch.object(deploy.sys, "platform", "linux"),
+                patch.object(
+                    deploy,
+                    "output",
+                    side_effect=lambda command: (
+                        "abc123" if "rev-parse" in command else ""
+                    ),
+                ),
+                patch.object(deploy, "verify_legacy_installation") as verify,
+                patch.object(
+                    deploy.subprocess, "run", return_value=SimpleNamespace(returncode=0)
+                ) as run,
+                patch.object(deploy, "routing", return_value={}),
+                patch.object(deploy, "write_env") as write,
+            ):
+                deploy.deploy(args)
+                verify.assert_called_once()
+                write.assert_not_called()
+                self.assertIn("nexus-rotafy-prod_database", run.call_args.args[0])
+            self.assertEqual((root / ".env.production").read_bytes(), before)
+
     def test_canonical_domain_is_consistent_across_production_configuration(self):
         root = Path(deploy.__file__).resolve().parent.parent
         self.assertEqual(deploy.DOMAIN, "rotafy.nexusdataanalytics.tech")

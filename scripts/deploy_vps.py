@@ -171,6 +171,41 @@ def routing(args, existing):
     }
 
 
+def verify_legacy_installation():
+    identifiers = output(
+        [
+            "docker",
+            "ps",
+            "-q",
+            "--filter",
+            "label=com.docker.compose.project=nexus-rotafy-prod",
+            "--filter",
+            "label=com.docker.compose.service=db",
+        ]
+    ).split()
+    if len(identifiers) != 1:
+        raise ValueError(
+            "Banco ativo da instalação nexus-rotafy-prod não identificado."
+        )
+    container = json.loads(output(["docker", "inspect", identifiers[0]]))[0]
+    labels = container["Config"].get("Labels") or {}
+    directory = labels.get("com.docker.compose.project.working_dir", "")
+    mounted = any(
+        mount.get("Name") == "nexus-rotafy-prod_database"
+        and mount.get("Destination") == "/var/lib/postgresql/data"
+        for mount in container.get("Mounts", [])
+    )
+    if (
+        labels.get("com.docker.compose.project") != "nexus-rotafy-prod"
+        or not directory
+        or Path(directory).resolve() != ROOT.resolve()
+        or not mounted
+    ):
+        raise ValueError(
+            "Pasta/projeto/volume do banco não correspondem à instalação informada."
+        )
+
+
 def deploy(args):
     if sys.platform != "linux":
         raise ValueError(
@@ -183,27 +218,37 @@ def deploy(args):
         raise ValueError("Checkout com alterações. Publique uma revisão Git limpa.")
     path = ROOT / ".env.production"
     existing = read_env(path)
-    if existing and existing.get("DEPLOY_PROJECT") != PROJECT:
+    project = getattr(args, "project", PROJECT)
+    if project not in (PROJECT, "nexus-rotafy-prod"):
+        raise ValueError("Projeto de instalação inválido.")
+    if project == "nexus-rotafy-prod":
+        verify_legacy_installation()
+    allowed_marker = (project, None) if project == "nexus-rotafy-prod" else (project,)
+    if existing and existing.get("DEPLOY_PROJECT") not in allowed_marker:
         raise ValueError(
             "Ambiente pertence a outra instalação ou não possui identificação. "
             "Use /opt/rotafy-tech sem copiar o .env.production da instalação antiga."
         )
     volume_exists = (
         subprocess.run(
-            ["docker", "volume", "inspect", f"{PROJECT}_database"],
+            ["docker", "volume", "inspect", f"{project}_database"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
         ).returncode
         == 0
     )
+    if project == "nexus-rotafy-prod" and not volume_exists:
+        raise ValueError(
+            "Volume do banco existente indisponível; atualização interrompida."
+        )
     if volume_exists and not existing:
         raise ValueError(
             "Banco existente sem .env.production. Recupere as credenciais originais; nenhuma senha nova foi gerada."
         )
     values = read_env(ROOT / ".env.production.example")
     values.update(existing)
-    values["DEPLOY_PROJECT"] = PROJECT
+    values["DEPLOY_PROJECT"] = project
     values.update(routing(args, existing))
     if not existing:
         for key in (
@@ -241,7 +286,7 @@ def deploy(args):
         "docker",
         "compose",
         "--project-name",
-        PROJECT,
+        project,
         "--env-file",
         str(path),
         "-f",
@@ -384,6 +429,9 @@ def main():
         parser.add_argument("--" + name)
     parser.add_argument("--non-interactive", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--project", choices=(PROJECT, "nexus-rotafy-prod"), default=PROJECT
+    )
     args = parser.parse_args()
     try:
         if args.dry_run:
