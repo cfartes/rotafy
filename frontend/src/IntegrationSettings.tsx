@@ -1,3 +1,4 @@
+import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -191,8 +192,7 @@ export function IntegrationSettings() {
         <h3>WhatsApp · OpenWA</h3>
         <p className="muted">Gateway: {config.data.openwa_base_url}</p>
         <Field label="API_KEY do OpenWA">
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             value={openwaKey}
             maxLength={4096}
@@ -222,8 +222,7 @@ export function IntegrationSettings() {
         <h3>E-mails · Resend</h3>
         <div className="form-grid">
           <Field label="API_KEY do Resend">
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={resendKey}
               maxLength={4096}

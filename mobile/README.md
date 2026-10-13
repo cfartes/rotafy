@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão **1.5.2 (9)** inclui o botão **Mostrar senha / Ocultar senha** no login. A senha começa oculta e a visualização pode ser alternada sem apagar o texto digitado.
+
 A versão **1.5.1 (8)** utiliza `https://rotafy.nexusdataanalytics.tech` para acessar o painel e a API. O APK release mantém o pacote `br.com.nexusdataanalytics.rotafy` e a assinatura de distribuição existente, permitindo atualizar a versão anterior. Depois da atualização, entre com o usuário da empresa cadastrada na instalação do domínio correto.
 
 A versão 1.4.0 inclui a opção **Usar biometria nos próximos acessos** no login. Após um login válido, o acesso é salvo em um cofre Android separado, protegido por biometria forte. Ao reiniciar, use **Entrar com biometria** ou senha. O menu permite desativar; Sair também remove o acesso biométrico. Consulte [biometria no Android](../docs/BIOMETRIA_MOBILE.md).

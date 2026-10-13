@@ -55,7 +55,8 @@ test("first registration requires an explicit operational profile", async ({
     .fill("Transportes SC LTDA");
   await dialog
     .getByLabel("Identificador de acesso", { exact: true })
-    .fill("transportes-sc");
+    .fill("transportessc");
+  await dialog.getByLabel("Telefone / WhatsApp").fill("47999999999");
   await dialog.getByLabel("CPF/CNPJ").fill("52998224725");
   await profile.selectOption("regular");
   await dialog

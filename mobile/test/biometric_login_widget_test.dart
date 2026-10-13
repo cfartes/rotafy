@@ -91,6 +91,50 @@ void main() {
     },
   );
 
+  testWidgets('password visibility preserves text without logging in', (
+    tester,
+  ) async {
+    final c = await controller(tester);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(child: LoginForm(controller: c)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final password = find.byType(TextFormField).last;
+    await tester.enterText(password, 'Senha teste 123!');
+    expect(
+      tester.widget<TextFormField>(password).controller!.text,
+      'Senha teste 123!',
+    );
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText).last).obscureText,
+      isTrue,
+    );
+    await tester.tap(find.byTooltip('Mostrar senha'));
+    await tester.pump();
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText).last).obscureText,
+      isFalse,
+    );
+    await tester.tap(find.byTooltip('Ocultar senha'));
+    await tester.pump();
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText).last).obscureText,
+      isTrue,
+    );
+    expect(
+      tester.widget<TextFormField>(password).controller!.text,
+      'Senha teste 123!',
+    );
+    expect(c.selected, isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(() => c.store.db.close());
+    c.dispose();
+  });
+
   testWidgets(
     'saved biometric login is available without filling password fields',
     (tester) async {

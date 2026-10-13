@@ -170,6 +170,32 @@ textarea {
   color: #18324a;
   min-height: 44px;
 }
+.password-input {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+.password-input input {
+  width: 100%;
+  padding-right: 54px;
+}
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: transparent;
+  color: #0c7a76;
+}
+.password-toggle:focus-visible {
+  outline: 2px solid #0c7a76;
+  outline-offset: -2px;
+}
 input::placeholder {
   color: #8b9ba9;
 }

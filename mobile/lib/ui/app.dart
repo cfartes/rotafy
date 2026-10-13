@@ -56,6 +56,7 @@ class _LoginFormState extends State<LoginForm> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool loading = false;
+  bool showPassword = false;
   bool biometricAvailable = false;
   bool enableBiometrics = false;
   String? error;
@@ -160,10 +161,19 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(height: 16),
           TextFormField(
             controller: password,
-            obscureText: true,
+            obscureText: !showPassword,
             autocorrect: false,
             enableSuggestions: false,
-            decoration: const InputDecoration(labelText: 'Senha'),
+            decoration: InputDecoration(
+              labelText: 'Senha',
+              suffixIcon: IconButton(
+                tooltip: showPassword ? 'Ocultar senha' : 'Mostrar senha',
+                onPressed: () => setState(() => showPassword = !showPassword),
+                icon: Icon(
+                  showPassword ? Icons.visibility_off : Icons.visibility,
+                ),
+              ),
+            ),
             validator: requiredValue,
             onFieldSubmitted: (_) {
               if (!loading) unawaited(submit());

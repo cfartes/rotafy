@@ -1,3 +1,4 @@
+import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
 import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
@@ -218,9 +219,8 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
               />
             </Field>
             <Field label="Senha">
-              <input
+              <PasswordInput
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 placeholder="Sua senha"
                 required
@@ -316,9 +316,8 @@ function Reset() {
               Escolha uma senha com pelo menos 12 caracteres.
             </p>
             <Field label="Nova senha">
-              <input
+              <PasswordInput
                 name="password"
-                type="password"
                 minLength={12}
                 maxLength={128}
                 autoComplete="new-password"
@@ -326,9 +325,8 @@ function Reset() {
               />
             </Field>
             <Field label="Confirmar senha">
-              <input
+              <PasswordInput
                 name="confirm"
-                type="password"
                 minLength={12}
                 maxLength={128}
                 autoComplete="new-password"
@@ -450,6 +448,7 @@ function CreateCompany({
               pattern="[a-z0-9]+"
               title="Use somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não use espaços, sublinhado, hífen ou outros caracteres especiais."
               aria-describedby="company-slug-help"
+              aria-label="Identificador de acesso"
               minLength={2}
               maxLength={50}
             />
@@ -514,9 +513,8 @@ function CreateCompany({
             <input name="email" type="email" autoComplete="off" required />
           </Field>
           <Field label="Senha inicial">
-            <input
+            <PasswordInput
               name="password"
-              type="password"
               autoComplete="new-password"
               minLength={12}
               maxLength={128}
@@ -525,9 +523,8 @@ function CreateCompany({
           </Field>
           {publicSignup && (
             <Field label="Confirmar senha">
-              <input
+              <PasswordInput
                 name="confirm"
-                type="password"
                 autoComplete="new-password"
                 required
                 minLength={12}
@@ -626,6 +623,7 @@ function EditCompany({
               pattern={`[a-z0-9]+|${company.slug}`}
               title="Para alterar, use somente letras minúsculas sem acentos e números, sem espaços ou caracteres especiais."
               aria-describedby="company-edit-slug-help"
+              aria-label="Identificador de acesso"
             />
             <small id="company-edit-slug-help" className="muted">
               Para alterar, use somente letras minúsculas sem acentos e números
@@ -734,9 +732,8 @@ function CreateUser({ onClose }: { onClose: () => void }) {
         )}
         {!invitation && (
           <Field label="Senha inicial">
-            <input
+            <PasswordInput
               name="password"
-              type="password"
               autoComplete="new-password"
               minLength={12}
               maxLength={128}
@@ -802,18 +799,16 @@ function PasswordModal({
           encerradas.
         </p>
         <Field label="Senha atual">
-          <input
+          <PasswordInput
             name="current_password"
-            type="password"
             autoComplete="current-password"
             required
             maxLength={128}
           />
         </Field>
         <Field label="Nova senha">
-          <input
+          <PasswordInput
             name="new_password"
-            type="password"
             autoComplete="new-password"
             minLength={12}
             maxLength={128}
@@ -821,9 +816,8 @@ function PasswordModal({
           />
         </Field>
         <Field label="Confirmar nova senha">
-          <input
+          <PasswordInput
             name="confirm"
-            type="password"
             autoComplete="new-password"
             minLength={12}
             maxLength={128}
