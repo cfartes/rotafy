@@ -1,9 +1,9 @@
-name: nexus-rotafy-prod
+name: nexus-rotafy-tech
 x-logging: &logging
   driver: json-file
   options: {max-size: "10m", max-file: "3"}
 x-api: &api
-  image: nexus-rotafy-api:${RELEASE:?Configure RELEASE com a versão da entrega}
+  image: nexus-rotafy-tech-api:${RELEASE:?Configure RELEASE com a versão da entrega}
   build: ./backend
   logging: *logging
   labels: {traefik.enable: "false"}
@@ -61,13 +61,13 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
-      traefik.http.routers.rotafy-api.rule: Host(`rotafy.nexusdataanalytics.tech`) && PathPrefix(`/api/`)
-      traefik.http.routers.rotafy-api.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
-      traefik.http.routers.rotafy-api.tls: "true"
-      traefik.http.routers.rotafy-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
-      traefik.http.routers.rotafy-api.priority: "100"
-      traefik.http.routers.rotafy-api.service: rotafy-api
-      traefik.http.services.rotafy-api.loadbalancer.server.port: "8000"
+      traefik.http.routers.rotafy-tech-api.rule: Host(`rotafy.nexusdataanalytics.tech`) && PathPrefix(`/api/`)
+      traefik.http.routers.rotafy-tech-api.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
+      traefik.http.routers.rotafy-tech-api.tls: "true"
+      traefik.http.routers.rotafy-tech-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
+      traefik.http.routers.rotafy-tech-api.priority: "100"
+      traefik.http.routers.rotafy-tech-api.service: rotafy-tech-api
+      traefik.http.services.rotafy-tech-api.loadbalancer.server.port: "8000"
     volumes: [integration_keys:/run/rotafy:ro]
     depends_on:
       bootstrap: {condition: service_completed_successfully}
@@ -126,7 +126,7 @@ services:
       timeout: 5s
       retries: 3
   web:
-    image: nexus-rotafy-web:${RELEASE:?Configure RELEASE}
+    image: nexus-rotafy-tech-web:${RELEASE:?Configure RELEASE}
     build: ./frontend
     restart: unless-stopped
     logging: *logging
@@ -134,13 +134,13 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
-      traefik.http.routers.rotafy-web.rule: Host(`rotafy.nexusdataanalytics.tech`)
-      traefik.http.routers.rotafy-web.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
-      traefik.http.routers.rotafy-web.tls: "true"
-      traefik.http.routers.rotafy-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
-      traefik.http.routers.rotafy-web.priority: "10"
-      traefik.http.routers.rotafy-web.service: rotafy-web
-      traefik.http.services.rotafy-web.loadbalancer.server.port: "80"
+      traefik.http.routers.rotafy-tech-web.rule: Host(`rotafy.nexusdataanalytics.tech`)
+      traefik.http.routers.rotafy-tech-web.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
+      traefik.http.routers.rotafy-tech-web.tls: "true"
+      traefik.http.routers.rotafy-tech-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
+      traefik.http.routers.rotafy-tech-web.priority: "10"
+      traefik.http.routers.rotafy-tech-web.service: rotafy-tech-web
+      traefik.http.services.rotafy-tech-web.loadbalancer.server.port: "80"
     depends_on: {api: {condition: service_healthy}}
   backup:
     profiles: [backup]

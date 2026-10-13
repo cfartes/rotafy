@@ -24,7 +24,34 @@ class DeploymentTests(unittest.TestCase):
             self.assertIn(deploy.DOMAIN, source, name)
             self.assertNotIn("frotafy.nexusdataanalytics.tech", source, name)
         source = (root / "compose.production.yaml").read_text(encoding="utf-8")
-        self.assertIn("name: nexus-rotafy-prod", source)
+        self.assertIn(f"name: {deploy.PROJECT}", source)
+        self.assertIn("routers.rotafy-tech-api.rule", source)
+        self.assertIn("routers.rotafy-tech-web.rule", source)
+        self.assertNotIn("routers.rotafy-api.", source)
+        self.assertNotIn("routers.rotafy-web.", source)
+        self.assertNotIn("nexus-rotafy-prod", source)
+        wrapper = (root / "scripts/install_vps.sh").read_text(encoding="utf-8")
+        self.assertIn("/opt/rotafy-tech", wrapper)
+        self.assertNotIn("/opt/nexus-rotafy", wrapper)
+
+    def test_other_installation_environment_is_not_reused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / ".env.production"
+            deploy.write_env(target, {"BOOTSTRAP_PASSWORD": "old-secret"})
+            before = target.read_bytes()
+            with (
+                patch.object(deploy, "ROOT", root),
+                patch.object(deploy.sys, "platform", "linux"),
+                patch.object(deploy, "output", return_value=""),
+                patch.object(deploy, "routing") as routing,
+                patch.object(deploy, "execute") as execute,
+            ):
+                with self.assertRaisesRegex(ValueError, "outra instalação"):
+                    deploy.deploy(argparse.Namespace())
+                routing.assert_not_called()
+                execute.assert_not_called()
+                self.assertEqual(target.read_bytes(), before)
 
     def test_env_round_trip_preserves_secrets_and_spaces(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -144,6 +171,7 @@ class DeploymentTests(unittest.TestCase):
                 )
             }
             values["BOOTSTRAP_EMAIL"] = "nexus@example.com"
+            values["DEPLOY_PROJECT"] = deploy.PROJECT
             deploy.write_env(root / ".env.production", values)
             (root / ".env.production.example").write_text("", encoding="utf-8")
             args = argparse.Namespace(admin_email=None, dry_run=False)

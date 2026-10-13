@@ -2,7 +2,7 @@
 
 Domínio: **rotafy.nexusdataanalytics.tech**. Instala API, painel, PostgreSQL/PostGIS, migrações, superadmin e workers. A configuração de novos builds Android utiliza esse domínio. APKs antigos precisam ser atualizados para utilizar o endereço corrigido.
 
-## Instalação completa ou correção do domínio
+## Instalação independente
 
 No DNS, configure o registro **A** de `rotafy.nexusdataanalytics.tech` para **187.77.58.10**. Remova um eventual registro AAAA que aponte para outro servidor. O Traefik existente precisa conseguir emitir o certificado para o endereço correto.
 
@@ -15,7 +15,9 @@ curl --fail --show-error --location \
 bash /tmp/install-rotafy-vps.sh
 ```
 
-O mesmo script faz a instalação completa em um diretório novo ou atualiza uma instalação existente em `/opt/nexus-rotafy`. Na instalação existente, mantém o projeto `nexus-rotafy-prod`, seus volumes, senhas e contas, realiza backup e aplica a configuração do domínio correto. Não remova a pasta, o arquivo `.env.production` ou os volumes para corrigir o domínio. A emissão dos novos bilhetes e links de acesso passa a utilizar o endereço corrigido; links enviados com o domínio anterior devem ser enviados novamente ao destinatário.
+O script instala em `/opt/rotafy-tech`, com o projeto `nexus-rotafy-tech`, banco inicialmente vazio, credenciais próprias e regras exclusivas do Traefik. Não reutiliza os volumes ou o ambiente da instalação antiga. Não copie o `.env.production` antigo: o instalador bloqueia ambientes sem a identificação desta instalação. Atualizações posteriores preservam os dados deste novo projeto e realizam backup antes das migrações.
+
+Se o sistema já foi instalado com um script anterior, confira o nome do projeto antes de executar novamente. Esta versão cria uma instalação independente; não transfere dados de `nexus-rotafy-prod`.
 
 O script pode pedir os parâmetros do Traefik se a detecção não encontrar uma única configuração. Em repositório privado, utilize o checkout autenticado existente e o procedimento de atualização abaixo.
 
@@ -28,8 +30,8 @@ VPS Linux com Python 3.9+, Git, Docker e Compose v2.24 ou superior, acesso ao re
 Execute no terminal SSH/Hostinger como root:
 
 ```sh
-git clone --branch main https://github.com/cfartes/rotafy.git /opt/nexus-rotafy
-cd /opt/nexus-rotafy
+git clone --branch main https://github.com/cfartes/rotafy.git /opt/rotafy-tech
+cd /opt/rotafy-tech
 python3 scripts/deploy_vps.py
 ```
 
@@ -72,7 +74,7 @@ Cadastre planos/empresas e homologue o APK release: motorista, guia, viagem sem 
 ## Atualizar
 
 ```sh
-bash /opt/nexus-rotafy/scripts/install_vps.sh
+bash /opt/rotafy-tech/scripts/install_vps.sh
 ```
 
 O wrapper clona em diretório novo ou atualiza `main` do remoto correto com `pull --ff-only`, preservando configurações ignoradas. Bloqueia diretório existente sem Git, outro remoto, outra branch e alterações locais. Outro diretório pode ser definido por `ROTAFY_INSTALL_DIR=/opt/rotafy`.
@@ -82,8 +84,8 @@ O wrapper pode atualizar/clonar Git mesmo recebendo `--dry-run`; apenas o script
 ## Diagnóstico
 
 ```sh
-cd /opt/nexus-rotafy
-docker compose --project-name nexus-rotafy-prod --env-file .env.production -f compose.production.yaml ps -a
+cd /opt/rotafy-tech
+docker compose --project-name nexus-rotafy-tech --env-file .env.production -f compose.production.yaml ps -a
 python3 scripts/diagnose_traefik.py
 curl --fail https://rotafy.nexusdataanalytics.tech/api/v1/health
 ```
@@ -103,7 +105,7 @@ Antes de substituir serviços, o instalador executa `alembic heads` na imagem de
 Se uma versão anterior falhar com `PermissionError` ao ler uma migração, atualize e reaplique:
 
 ```sh
-cd /opt/nexus-rotafy
+cd /opt/rotafy-tech
 git pull --ff-only origin main
 bash scripts/install_vps.sh
 ```

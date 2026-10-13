@@ -16,6 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DOMAIN = "rotafy.nexusdataanalytics.tech"
+PROJECT = "nexus-rotafy-tech"
 
 
 def execute(args, **kwargs):
@@ -182,9 +183,14 @@ def deploy(args):
         raise ValueError("Checkout com alterações. Publique uma revisão Git limpa.")
     path = ROOT / ".env.production"
     existing = read_env(path)
+    if existing and existing.get("DEPLOY_PROJECT") != PROJECT:
+        raise ValueError(
+            "Ambiente pertence a outra instalação ou não possui identificação. "
+            "Use /opt/rotafy-tech sem copiar o .env.production da instalação antiga."
+        )
     volume_exists = (
         subprocess.run(
-            ["docker", "volume", "inspect", "nexus-rotafy-prod_database"],
+            ["docker", "volume", "inspect", f"{PROJECT}_database"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
@@ -197,6 +203,7 @@ def deploy(args):
         )
     values = read_env(ROOT / ".env.production.example")
     values.update(existing)
+    values["DEPLOY_PROJECT"] = PROJECT
     values.update(routing(args, existing))
     if not existing:
         for key in (
@@ -234,7 +241,7 @@ def deploy(args):
         "docker",
         "compose",
         "--project-name",
-        "nexus-rotafy-prod",
+        PROJECT,
         "--env-file",
         str(path),
         "-f",

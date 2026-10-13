@@ -6,9 +6,9 @@ umask 022
 
 # Run this script on the VPS; existing Docker/Traefik are prerequisites.
 # Canonical production domain: rotafy.nexusdataanalytics.tech.
-# Keep the existing directory and Compose project to preserve database volumes.
+# Separate checkout and Compose project for an independent installation.
 repo_url='https://github.com/cfartes/rotafy.git'
-install_dir="${ROTAFY_INSTALL_DIR:-/opt/nexus-rotafy}"
+install_dir="${ROTAFY_INSTALL_DIR:-/opt/rotafy-tech}"
 for executable in git python3 docker; do
     if ! command -v "$executable" >/dev/null 2>&1; then
         printf 'Dependência ausente: %s. Instale antes de continuar.\n' "$executable" >&2

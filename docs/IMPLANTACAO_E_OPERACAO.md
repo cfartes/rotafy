@@ -10,13 +10,13 @@ Se o resultado mostrar Swarm ativo e provider Swarm, revise a implanta??o antes 
 
 ## Arquitetura
 
-O Compose usa o projeto separado `nexus-rotafy-prod` e a rede externa do Traefik existente. N?o cria proxy novo nem publica portas 80/443 ou banco/API no host. Somente API e web t?m descoberta Traefik habilitada. API atende `/api/` diretamente na porta interna 8000; web atende o restante na porta 80. Banco/worker usam redes internas, e e-mail/backup t?m redes de sa?da pr?prias.
+O Compose usa o projeto separado `nexus-rotafy-tech` e a rede externa do Traefik existente. N?o cria proxy novo nem publica portas 80/443 ou banco/API no host. Somente API e web t?m descoberta Traefik habilitada. API atende `/api/` diretamente na porta interna 8000; web atende o restante na porta 80. Banco/worker usam redes internas, e e-mail/backup t?m redes de sa?da pr?prias.
 
 API exige cookies Secure e aceita origem `https://rotafy.nexusdataanalytics.tech`. Configure `TRAEFIK_TRUSTED_IPS` com o IP do Traefik na rede compartilhada, nunca `*`. Se o IP mudar ao recriar Traefik, atualize a configura??o e recrie a API. A valida??o de IP evita confiar indiscriminadamente em cabe?alhos de encaminhamento. Confirme tamb?m que o Traefik n?o confia em cabe?alhos externos arbitr?rios.
 
 ## Preparar o servidor
 
-Envie o ZIP `artifacts/releases/nexus-rotafy-vps-2026-10-06-v1.zip`, confira SHA256 e extraia em `/opt/nexus-rotafy`. Pacote cont?m fontes, lockfiles e configura??o; imagens ser?o compiladas na VPS. N?o cont?m banco local, credenciais, chave de assinatura Android ou depend?ncias instaladas.
+Envie o ZIP `artifacts/releases/nexus-rotafy-vps-2026-10-06-v1.zip`, confira SHA256 e extraia em `/opt/rotafy-tech`. Pacote cont?m fontes, lockfiles e configura??o; imagens ser?o compiladas na VPS. N?o cont?m banco local, credenciais, chave de assinatura Android ou depend?ncias instaladas.
 
 Aponte DNS A do dom?nio para a VPS. S? publique AAAA se o IPv6 estiver configurado. Rede, entrypoint HTTPS e resolver TLS precisam existir no Traefik; n?o altere os servi?os dos demais apps. Use o redirecionamento HTTP?HTTPS j? configurado no Traefik, ou configure-o ap?s o diagn?stico.
 
