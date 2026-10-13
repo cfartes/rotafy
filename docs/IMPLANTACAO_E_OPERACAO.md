@@ -1,6 +1,6 @@
 # Implanta??o Hostinger com Traefik ? 06/10/2026
 
-Entrega: `2026-10-06-v1`. Dom?nio: `frotafy.nexusdataanalytics.tech`. VPS informada: `187.77.58.10`, SSH `root`. Nenhuma publica??o remota foi realizada nesta entrega. iOS est? fora desta etapa.
+Entrega: `2026-10-06-v1`. Dom?nio: `rotafy.nexusdataanalytics.tech`. VPS informada: `187.77.58.10`, SSH `root`. Nenhuma publica??o remota foi realizada nesta entrega. iOS est? fora desta etapa.
 
 ## Diagn?stico pr?vio
 
@@ -12,7 +12,7 @@ Se o resultado mostrar Swarm ativo e provider Swarm, revise a implanta??o antes 
 
 O Compose usa o projeto separado `nexus-rotafy-prod` e a rede externa do Traefik existente. N?o cria proxy novo nem publica portas 80/443 ou banco/API no host. Somente API e web t?m descoberta Traefik habilitada. API atende `/api/` diretamente na porta interna 8000; web atende o restante na porta 80. Banco/worker usam redes internas, e e-mail/backup t?m redes de sa?da pr?prias.
 
-API exige cookies Secure e aceita origem `https://frotafy.nexusdataanalytics.tech`. Configure `TRAEFIK_TRUSTED_IPS` com o IP do Traefik na rede compartilhada, nunca `*`. Se o IP mudar ao recriar Traefik, atualize a configura??o e recrie a API. A valida??o de IP evita confiar indiscriminadamente em cabe?alhos de encaminhamento. Confirme tamb?m que o Traefik n?o confia em cabe?alhos externos arbitr?rios.
+API exige cookies Secure e aceita origem `https://rotafy.nexusdataanalytics.tech`. Configure `TRAEFIK_TRUSTED_IPS` com o IP do Traefik na rede compartilhada, nunca `*`. Se o IP mudar ao recriar Traefik, atualize a configura??o e recrie a API. A valida??o de IP evita confiar indiscriminadamente em cabe?alhos de encaminhamento. Confirme tamb?m que o Traefik n?o confia em cabe?alhos externos arbitr?rios.
 
 ## Preparar o servidor
 
@@ -39,7 +39,7 @@ docker compose --env-file .env.production -f compose.production.yaml config --qu
 docker compose --env-file .env.production -f compose.production.yaml build api web
 docker compose --env-file .env.production -f compose.production.yaml up -d
 docker compose --env-file .env.production -f compose.production.yaml ps
-curl --fail https://frotafy.nexusdataanalytics.tech/api/v1/health
+curl --fail https://rotafy.nexusdataanalytics.tech/api/v1/health
 ```
 
 N?o execute `docker compose config` sem `--quiet` ao compartilhar sa?da: pode exibir senhas. Migra??o e bootstrap precedem a API. Bootstrap cria o primeiro administrador Nexus e n?o redefine senha de instala??es existentes. Para primeiro acesso, consulte localmente os valores BOOTSTRAP_EMAIL/BOOTSTRAP_PASSWORD gerados e troque a senha no painel.

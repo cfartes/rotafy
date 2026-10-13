@@ -15,7 +15,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DOMAIN = "frotafy.nexusdataanalytics.tech"
+DOMAIN = "rotafy.nexusdataanalytics.tech"
 
 
 def execute(args, **kwargs):

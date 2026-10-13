@@ -11,10 +11,10 @@ x-api: &api
     DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
     PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
     COOKIE_SECURE: "true"
-    ALLOWED_ORIGINS: https://frotafy.nexusdataanalytics.tech
+    ALLOWED_ORIGINS: https://rotafy.nexusdataanalytics.tech
     RESEND_API_KEY: ${RESEND_API_KEY:-}
     EMAIL_FROM: ${EMAIL_FROM:-}
-    PUBLIC_BASE_URL: https://frotafy.nexusdataanalytics.tech
+    PUBLIC_BASE_URL: https://rotafy.nexusdataanalytics.tech
   networks: [database, frontend]
 services:
   db:
@@ -61,7 +61,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
-      traefik.http.routers.rotafy-api.rule: Host(`frotafy.nexusdataanalytics.tech`) && PathPrefix(`/api/`)
+      traefik.http.routers.rotafy-api.rule: Host(`rotafy.nexusdataanalytics.tech`) && PathPrefix(`/api/`)
       traefik.http.routers.rotafy-api.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
       traefik.http.routers.rotafy-api.tls: "true"
       traefik.http.routers.rotafy-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}
@@ -134,7 +134,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK:?Informe rede externa do Traefik}
-      traefik.http.routers.rotafy-web.rule: Host(`frotafy.nexusdataanalytics.tech`)
+      traefik.http.routers.rotafy-web.rule: Host(`rotafy.nexusdataanalytics.tech`)
       traefik.http.routers.rotafy-web.entrypoints: ${TRAEFIK_HTTPS_ENTRYPOINT:?Informe entrypoint HTTPS}
       traefik.http.routers.rotafy-web.tls: "true"
       traefik.http.routers.rotafy-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:?Informe resolver TLS}

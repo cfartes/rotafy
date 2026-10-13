@@ -63,4 +63,4 @@ Testar em aparelhos reais: permissão e foco da câmera, QR impresso/tela, recus
 
 ## Entrega HTTPS / Hostinger
 
-Configura??o `config/production.json` usa `https://frotafy.nexusdataanalytics.tech` e pacote `br.com.nexusdataanalytics.rotafy`. A vers?o release ? assinada com chave Nexus privada e permite selecionar a empresa; vers?es por cliente continuam usando configura??o pr?pria. Guia completo em [IMPLANTACAO_E_OPERACAO.md](../docs/IMPLANTACAO_E_OPERACAO.md). A API precisa estar publicada para o login funcionar. iOS n?o ser? gerado nesta etapa.
+Configura??o `config/production.json` usa `https://rotafy.nexusdataanalytics.tech` e pacote `br.com.nexusdataanalytics.rotafy`. A vers?o release ? assinada com chave Nexus privada e permite selecionar a empresa; vers?es por cliente continuam usando configura??o pr?pria. Guia completo em [IMPLANTACAO_E_OPERACAO.md](../docs/IMPLANTACAO_E_OPERACAO.md). A API precisa estar publicada para o login funcionar. iOS n?o ser? gerado nesta etapa.

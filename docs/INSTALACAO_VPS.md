@@ -1,6 +1,23 @@
 # Instalação automática na Hostinger
 
-Domínio: **frotafy.nexusdataanalytics.tech**. Instala API, painel, PostgreSQL/PostGIS, migrações, superadmin e workers. Android já aponta para esse domínio; iOS está fora desta etapa.
+Domínio: **rotafy.nexusdataanalytics.tech**. Instala API, painel, PostgreSQL/PostGIS, migrações, superadmin e workers. A configuração de novos builds Android utiliza esse domínio. APKs antigos precisam ser atualizados para utilizar o endereço corrigido.
+
+## Instalação completa ou correção do domínio
+
+No DNS, configure o registro **A** de `rotafy.nexusdataanalytics.tech` para **187.77.58.10**. Remova um eventual registro AAAA que aponte para outro servidor. O Traefik existente precisa conseguir emitir o certificado para o endereço correto.
+
+Execute na VPS:
+
+```sh
+curl --fail --show-error --location \
+  https://raw.githubusercontent.com/cfartes/rotafy/main/scripts/install_vps.sh \
+  --output /tmp/install-rotafy-vps.sh
+bash /tmp/install-rotafy-vps.sh
+```
+
+O mesmo script faz a instalação completa em um diretório novo ou atualiza uma instalação existente em `/opt/nexus-rotafy`. Na instalação existente, mantém o projeto `nexus-rotafy-prod`, seus volumes, senhas e contas, realiza backup e aplica a configuração do domínio correto. Não remova a pasta, o arquivo `.env.production` ou os volumes para corrigir o domínio. A emissão dos novos bilhetes e links de acesso passa a utilizar o endereço corrigido; links enviados com o domínio anterior devem ser enviados novamente ao destinatário.
+
+O script pode pedir os parâmetros do Traefik se a detecção não encontrar uma única configuração. Em repositório privado, utilize o checkout autenticado existente e o procedimento de atualização abaixo.
 
 ## Pré-requisitos
 
@@ -48,7 +65,7 @@ Não remove volumes, não copia banco local, não abre portas novas no host nem 
 
 ## Acesso e Android
 
-Abra `https://frotafy.nexusdataanalytics.tech`. Consulte privadamente `BOOTSTRAP_EMAIL`/`BOOTSTRAP_PASSWORD` em `.env.production`; guarde no cofre e não compartilhe o arquivo. O bootstrap não redefine senha de administrador já provisionado.
+Abra `https://rotafy.nexusdataanalytics.tech`. Consulte privadamente `BOOTSTRAP_EMAIL`/`BOOTSTRAP_PASSWORD` em `.env.production`; guarde no cofre e não compartilhe o arquivo. O bootstrap não redefine senha de administrador já provisionado.
 
 Cadastre planos/empresas e homologue o APK release: motorista, guia, viagem sem guia, câmera, offline e presença no painel. Debug/local e release usam pacotes/ambientes diferentes; sincronize pendências antes de mudar de app.
 
@@ -68,7 +85,7 @@ O wrapper pode atualizar/clonar Git mesmo recebendo `--dry-run`; apenas o script
 cd /opt/nexus-rotafy
 docker compose --project-name nexus-rotafy-prod --env-file .env.production -f compose.production.yaml ps -a
 python3 scripts/diagnose_traefik.py
-curl --fail https://frotafy.nexusdataanalytics.tech/api/v1/health
+curl --fail https://rotafy.nexusdataanalytics.tech/api/v1/health
 ```
 
 Não compartilhe `.env.production`, `docker inspect` completo ou `docker compose config` sem `--quiet`. Se o IP do Traefik mudar, reaplique o instalador. DNS/certificado incorreto exige ajuste no domínio/proxy existente.

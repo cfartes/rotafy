@@ -4,7 +4,7 @@ O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: ca
 
 Este manual descreve a implementação disponível em **09/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
-**Endereço do painel:** <https://frotafy.nexusdataanalytics.tech>. A administração da plataforma Nexus utiliza `/nexus`. O cadastro inicial de empresa utiliza `/cadastro`. A central de documentação utiliza `/ajuda`.
+**Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. A administração da plataforma Nexus utiliza `/nexus`. O cadastro inicial de empresa utiliza `/cadastro`. A central de documentação utiliza `/ajuda`.
 
 ### O fluxo de trabalho
 

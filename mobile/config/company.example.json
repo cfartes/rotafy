@@ -2,6 +2,6 @@
   "APP_NAME": "Rotafy · Sua Empresa",
   "APP_ID": "br.com.nexusdataanalytics.rotafy.suaempresa",
   "COMPANY_SLUG": "sua-empresa",
-  "API_URL": "https://frotafy.nexusdataanalytics.tech/api/v1",
-  "WEB_ORIGIN": "https://frotafy.nexusdataanalytics.tech"
+  "API_URL": "https://rotafy.nexusdataanalytics.tech/api/v1",
+  "WEB_ORIGIN": "https://rotafy.nexusdataanalytics.tech"
 }

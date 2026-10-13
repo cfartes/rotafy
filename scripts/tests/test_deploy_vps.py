@@ -10,6 +10,22 @@ from scripts import deploy_vps as deploy
 
 
 class DeploymentTests(unittest.TestCase):
+    def test_canonical_domain_is_consistent_across_production_configuration(self):
+        root = Path(deploy.__file__).resolve().parent.parent
+        self.assertEqual(deploy.DOMAIN, "rotafy.nexusdataanalytics.tech")
+        for name in (
+            "compose.production.yaml",
+            "scripts/install_vps.sh",
+            "mobile/config/production.json",
+            "mobile/config/company.example.json",
+            "mobile/lib/core/config.dart",
+        ):
+            source = (root / name).read_text(encoding="utf-8")
+            self.assertIn(deploy.DOMAIN, source, name)
+            self.assertNotIn("frotafy.nexusdataanalytics.tech", source, name)
+        source = (root / "compose.production.yaml").read_text(encoding="utf-8")
+        self.assertIn("name: nexus-rotafy-prod", source)
+
     def test_env_round_trip_preserves_secrets_and_spaces(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / ".env.production"

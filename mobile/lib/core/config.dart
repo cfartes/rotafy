@@ -8,11 +8,11 @@ class AppConfig {
   static const company = String.fromEnvironment('COMPANY_SLUG');
   static const apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://frotafy.nexusdataanalytics.tech/api/v1',
+    defaultValue: 'https://rotafy.nexusdataanalytics.tech/api/v1',
   );
   static const origin = String.fromEnvironment(
     'WEB_ORIGIN',
-    defaultValue: 'https://frotafy.nexusdataanalytics.tech',
+    defaultValue: 'https://rotafy.nexusdataanalytics.tech',
   );
   static void validate() {
     final url = Uri.parse(apiUrl);

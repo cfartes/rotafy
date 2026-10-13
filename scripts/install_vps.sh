@@ -5,6 +5,8 @@ set -Eeuo pipefail
 umask 022
 
 # Run this script on the VPS; existing Docker/Traefik are prerequisites.
+# Canonical production domain: rotafy.nexusdataanalytics.tech.
+# Keep the existing directory and Compose project to preserve database volumes.
 repo_url='https://github.com/cfartes/rotafy.git'
 install_dir="${ROTAFY_INSTALL_DIR:-/opt/nexus-rotafy}"
 for executable in git python3 docker; do
@@ -44,4 +46,5 @@ else
     fi
     git clone --branch main "$repo_url" "$install_dir"
 fi
+printf 'Instalando Nexus Rotafy em https://rotafy.nexusdataanalytics.tech\n'
 exec python3 "$install_dir/scripts/deploy_vps.py" "$@"
