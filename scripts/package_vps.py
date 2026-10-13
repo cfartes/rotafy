@@ -35,6 +35,7 @@ files += [
         "deploy_vps.py",
         "install_vps.sh",
         "update_vps.sh",
+        "install_clean_vps.sh",
     )
 ]
 for directory in roots:

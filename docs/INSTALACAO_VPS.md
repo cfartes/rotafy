@@ -4,6 +4,17 @@ Domínio: **rotafy.nexusdataanalytics.tech**. Instala API, painel, PostgreSQL/Po
 
 ## Instalação independente
 
+### Instalação limpa, com banco vazio
+
+```sh
+curl -fSL https://raw.githubusercontent.com/cfartes/rotafy/main/scripts/install_clean_vps.sh -o /tmp/install-rotafy-clean.sh
+bash /tmp/install-rotafy-clean.sh
+```
+
+Esse comando clona novamente o código em `/opt/rotafy-tech`, remove containers e volumes de uma eventual instalação do projeto **nexus-rotafy-tech** e gera novas credenciais. Os dados desse projeto são apagados. Um checkout anterior nessa pasta é renomeado. Não copia banco, empresas ou usuários da instalação antiga. Quando a nova aplicação estiver saudável, para os containers do projeto **nexus-rotafy-prod** para liberar a rota do domínio. Os volumes antigos não são apagados; nenhum outro projeto da VPS é interrompido.
+
+O primeiro administrador Nexus é criado conforme `.env.production` da nova pasta. Consulte as credenciais privadamente no servidor e cadastre novamente planos, empresas e colaboradores. Não envie o arquivo de ambiente pelo chat.
+
 No DNS, configure o registro **A** de `rotafy.nexusdataanalytics.tech` para **187.77.58.10**. Remova um eventual registro AAAA que aponte para outro servidor. O Traefik existente precisa conseguir emitir o certificado para o endereço correto.
 
 Execute na VPS:

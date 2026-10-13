@@ -221,6 +221,8 @@ def deploy(args):
     project = getattr(args, "project", PROJECT)
     if project not in (PROJECT, "nexus-rotafy-prod"):
         raise ValueError("Projeto de instalação inválido.")
+    if getattr(args, "replace_legacy", False) and project != PROJECT:
+        raise ValueError("Substituição da instalação antiga exige o projeto novo.")
     if project == "nexus-rotafy-prod":
         verify_legacy_installation()
     allowed_marker = (project, None) if project == "nexus-rotafy-prod" else (project,)
@@ -387,6 +389,21 @@ def deploy(args):
         "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')",
     )
     run("ps")
+    if getattr(args, "replace_legacy", False):
+        identifiers = output(
+            [
+                "docker",
+                "ps",
+                "-q",
+                "--filter",
+                "label=com.docker.compose.project=nexus-rotafy-prod",
+            ]
+        ).split()
+        if identifiers:
+            execute(["docker", "stop", *identifiers])
+            print(
+                "Instalação anterior do Rotafy parada. Os outros projetos da VPS não foram alterados."
+            )
     print("Verificando DNS, certificado e rota pública HTTPS...")
     for attempt in range(12):
         try:
@@ -429,6 +446,7 @@ def main():
         parser.add_argument("--" + name)
     parser.add_argument("--non-interactive", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--replace-legacy", action="store_true")
     parser.add_argument(
         "--project", choices=(PROJECT, "nexus-rotafy-prod"), default=PROJECT
     )
