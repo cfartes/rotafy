@@ -35,7 +35,9 @@ esac
 """,
                 "docker": """#!/bin/bash
 echo "docker $*" >> "$UPDATE_LOG"
-if [[ "$1" == ps ]]; then echo "$ACTIVE_PROJECT"; fi
+if [[ "$1" == ps ]]; then
+  if [[ " $* " == *" -q "* ]]; then echo 'container-id'; else echo "$ACTIVE_PROJECT"; fi
+fi
 if [[ "$1 $2" == "volume inspect" && "$HAS_DATABASE" == 0 ]]; then exit 1; fi
 """,
             }
@@ -80,6 +82,7 @@ if [[ "$1 $2" == "volume inspect" && "$HAS_DATABASE" == 0 ]]; then exit 1; fi
         self.assertIn("volume inspect nexus-rotafy-prod_database", log)
         self.assertNotIn("volume inspect nexus-rotafy-tech_database", log)
         self.assertIn("DEPLOY --project nexus-rotafy-prod --dry-run", result.stdout)
+        self.assertNotIn("docker ps -q", log)
 
     def test_unknown_active_project_is_rejected(self):
         result, log = self.run_update(project=None, active="unrelated-app")

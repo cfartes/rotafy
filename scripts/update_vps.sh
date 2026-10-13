@@ -45,7 +45,7 @@ for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
         else:
             project = value.strip("'")
 active = subprocess.run([
-    "docker", "ps", "-q", "--filter",
+    "docker", "ps", "--filter",
     "label=com.docker.compose.project.working_dir=" + sys.argv[2],
     "--filter", "label=com.docker.compose.service=db",
     "--format", '{{.Label "com.docker.compose.project"}}',
