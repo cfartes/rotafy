@@ -156,6 +156,10 @@ type Delivery = {
 };
 
 const whatsappReasons: Record<string, string> = {
+  recipient_lookup_failed:
+    "Não foi possível confirmar o identificador do destinatário. O envio aguarda nova consulta, sem mensagem enviada nesta tentativa.",
+  recipient_not_registered:
+    "O serviço informou que o telefone não está registrado no WhatsApp. Confira o número antes de gerar outro convite.",
   send_timeout: "O serviço de WhatsApp não respondeu ao envio dentro do prazo.",
   tls_error: "Falha na conexão segura com o serviço de WhatsApp.",
   invalid_response:

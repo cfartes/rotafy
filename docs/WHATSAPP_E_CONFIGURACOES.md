@@ -70,3 +70,12 @@ docker compose --env-file .env.production -f compose.production.yaml exec -T wha
 ```
 
 A consulta utiliza apenas `GET /sessions`. Um resultado positivo verifica essa consulta naquele momento; não comprova aceitação do POST anterior, disponibilidade de uma sessão específica ou entrega do convite. O diagnóstico funciona antes de reconstruir a imagem. Para aplicar os novos códigos aos próximos envios, atualize os serviços pelo script habitual. Nenhuma mensagem incerta é reenviada ou alterada pela atualização.
+
+
+## Resolução do destinatário (15/10/2026)
+
+Antes do POST, o worker consulta `GET /sessions/{id}/contacts/check/{telefone}` e utiliza o `whatsappId` retornado, seja `@c.us` ou `@lid`. O telefone continua sendo a referência da reserva/colaborador; o LID não é calculado pelo Rotafy nem substitui o cadastro. A sessão da própria empresa resolve cada destinatário.
+
+Se a consulta falhar, retornar dados incompletos ou um identificador que não seja individual, nenhum POST é realizado: a mensagem aguarda nova consulta (`recipient_lookup_failed`). Um número informado como não registrado encerra o envio com `recipient_not_registered`. Resultados incertos de POSTs anteriores continuam sem reenvio automático. Essa alteração vale para convites, reservas, pagamentos, cancelamentos e bilhetes; não exige migração de banco nem novo APK.
+
+Teste autorizado em produção: o envio direto ao endereço por telefone excedeu 90 segundos; a consulta do destinatário retornou um LID e um novo teste dirigido ao LID recebeu HTTP 201 com messageId em aproximadamente 5 segundos. Aceitação pela API ainda não comprova entrega ao aparelho.

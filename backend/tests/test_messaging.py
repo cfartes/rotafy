@@ -172,6 +172,8 @@ def process(company, sender):
 
 
 def ready(_key, path, payload=None):
+    if "/contacts/check/" in path:
+        return {"exists": True, "whatsappId": path.rsplit("/", 1)[1] + "@c.us"}
     return (
         {"status": "READY"}
         if payload is None
@@ -660,3 +662,61 @@ def test_communication_error_classification(case, expected):
         "connection": ConnectionResetError(),
     }
     assert communication_error(errors[case]) == expected
+
+
+@pytest.mark.parametrize("resolved", ["190000000000001@lid", "5511999999999@c.us"])
+def test_worker_sends_only_to_resolved_whatsapp_identity(
+    client, seeded, owner, protected_key, resolved
+):
+    _, booking = queued(client, seeded)
+    sent = []
+
+    def sender(key, path, payload=None):
+        if "/contacts/check/" in path:
+            assert path.endswith("/5511999999999")
+            return {"exists": True, "whatsappId": resolved}
+        if payload:
+            sent.append(payload)
+        return ready(key, path, payload)
+
+    assert process(seeded["a"], sender)
+    assert len(sent) == 1 and sent[0]["chatId"] == resolved
+    assert not process(seeded["a"], sender)
+    assert (
+        client.get(f"/api/v1/reservations/{booking['id']}/whatsapp").json()[0]["status"]
+        == "sent"
+    )
+
+
+@pytest.mark.parametrize(
+    "result,expected",
+    [
+        ({"exists": False}, "recipient_not_registered"),
+        (
+            {"exists": True, "whatsappId": "120000000000000@g.us"},
+            "recipient_lookup_failed",
+        ),
+        ({"exists": True}, "recipient_lookup_failed"),
+        (None, "recipient_lookup_failed"),
+    ],
+)
+def test_recipient_lookup_failure_never_sends(
+    client, seeded, owner, protected_key, result, expected
+):
+    _, booking = queued(client, seeded)
+
+    def sender(key, path, payload=None):
+        assert payload is None
+        if "/contacts/check/" in path:
+            if result is None:
+                raise TimeoutError()
+            return result
+        return ready(key, path)
+
+    assert process(seeded["a"], sender)
+    item = client.get(f"/api/v1/reservations/{booking['id']}/whatsapp").json()[0]
+    assert item["error_code"] == expected
+    assert item["attempts"] == 0
+    assert item["status"] == (
+        "failed" if expected == "recipient_not_registered" else "pending"
+    )

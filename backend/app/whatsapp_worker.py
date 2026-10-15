@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import re
 import ssl
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -135,6 +136,46 @@ async def process_company(engine, company_id, transport=openwa_request):
                 {"id": item["id"]},
             )
             return True
+        # Resolve the phone through WhatsApp; migrated contacts require their LID.
+        # Never invent a LID or fall back to the phone after a failed lookup.
+        recipient, lookup_error = None, "recipient_lookup_failed"
+        try:
+            contact = await asyncio.to_thread(
+                transport,
+                key,
+                f"/sessions/{item['session_id']}/contacts/check/{item['phone'].lstrip('+')}",
+            )
+            if isinstance(contact, dict) and isinstance(contact.get("data"), dict):
+                contact = contact["data"]
+            if isinstance(contact, dict):
+                candidate = contact.get("whatsappId")
+                if contact.get("exists") is False:
+                    lookup_error = "recipient_not_registered"
+                elif (
+                    contact.get("exists") is True
+                    and isinstance(candidate, str)
+                    and re.fullmatch(r"[0-9]{5,30}@(c\.us|lid)", candidate)
+                ):
+                    recipient = candidate
+        except (HTTPError, URLError, OSError, ValueError):
+            pass
+        if recipient is None:
+            await db.execute(
+                text("""UPDATE whatsapp_outbox SET error_code=:error,
+                  status=:status,body=:body,
+                  next_attempt_at=now()+interval '1 minute' WHERE id=:id"""),
+                {
+                    "error": lookup_error,
+                    "id": item["id"],
+                    "status": "failed"
+                    if lookup_error == "recipient_not_registered"
+                    else "pending",
+                    "body": ""
+                    if lookup_error == "recipient_not_registered"
+                    else item["body"],
+                },
+            )
+            return True
         await db.execute(
             text(
                 "UPDATE whatsapp_outbox SET status='sending',sending_at=now(),attempts=attempts+1,error_code=NULL WHERE id=:id"
@@ -148,7 +189,7 @@ async def process_company(engine, company_id, transport=openwa_request):
             key,
             f"/sessions/{item['session_id']}/messages/send-text",
             {
-                "chatId": item["phone"].lstrip("+") + "@c.us",
+                "chatId": recipient,
                 "text": body,
                 "linkPreview": False,
             },
