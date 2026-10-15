@@ -259,13 +259,15 @@ def deploy(args):
             "PLATFORM_DB_PASSWORD",
             "BOOTSTRAP_PASSWORD",
         ):
-            values[key] = secrets.token_hex(32)
+            values[key] = (
+                "N!" if key == "BOOTSTRAP_PASSWORD" else ""
+            ) + secrets.token_hex(32)
     for key in ("POSTGRES_PASSWORD", "APP_DB_PASSWORD", "PLATFORM_DB_PASSWORD"):
         if not re.fullmatch(r"[0-9a-fA-F]{64}", values.get(key, "")):
             raise ValueError(
                 f"{key} exige 64 caracteres hexadecimais; credenciais existentes não serão regeneradas."
             )
-    if len(values.get("BOOTSTRAP_PASSWORD", "")) < 12 or values[
+    if len(values.get("BOOTSTRAP_PASSWORD", "")) < 8 or values[
         "BOOTSTRAP_PASSWORD"
     ].startswith("CHANGE_ME"):
         raise ValueError("Configure senha Nexus válida no ambiente existente.")

@@ -15,7 +15,8 @@ for name in (
     "PLATFORM_DB_PASSWORD",
     "BOOTSTRAP_PASSWORD",
 ):
-    content = content.replace(f"{name}=CHANGE_ME", f"{name}={secrets.token_hex(32)}")
+    value = ("N!" if name == "BOOTSTRAP_PASSWORD" else "") + secrets.token_hex(32)
+    content = content.replace(f"{name}=CHANGE_ME", f"{name}={value}")
 descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
 with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
     stream.write(content)

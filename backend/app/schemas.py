@@ -12,6 +12,7 @@ from pydantic import (
 )
 
 from app.documents import company_document
+from app.password_policy import validate_password
 
 Role = Literal["admin", "attendant", "guide", "driver"]
 
@@ -52,7 +53,8 @@ class UserCreate(Input):
 
     full_name: str = Field(min_length=2, max_length=150)
     email: EmailStr
-    password: str = Field(min_length=12, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
+    _password_policy = field_validator("password")(validate_password)
     role: Role = "attendant"
 
 
@@ -139,12 +141,14 @@ class UserUpdate(Input):
 
 class PasswordChange(Input):
     current_password: str = Field(min_length=1, max_length=128)
-    new_password: str = Field(min_length=12, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+    _password_policy = field_validator("new_password")(validate_password)
 
 
 class ResetRedeem(Input):
     token: str = Field(min_length=40, max_length=160)
-    new_password: str = Field(min_length=12, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+    _password_policy = field_validator("new_password")(validate_password)
 
 
 class UserView(BaseModel):

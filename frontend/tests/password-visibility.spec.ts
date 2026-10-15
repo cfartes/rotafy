@@ -1,5 +1,27 @@
 import { test, expect } from "@playwright/test";
 
+test("nova senha exige oito caracteres, maiúscula e caractere especial", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/public/plans", (route) =>
+    route.fulfill({ json: [] }),
+  );
+  await page.goto("/cadastro");
+  const password = page.getByLabel("Senha inicial", { exact: true });
+  for (const value of ["Abcdef!", "abcdefg!", "Abcdefgh", "Abcdefg "]) {
+    await password.fill(value);
+    expect(
+      await password.evaluate((el: HTMLInputElement) => el.checkValidity()),
+    ).toBeFalsy();
+  }
+  for (const value of ["Abcdefg!", "Ábcdefg!", "Abcdefg€"]) {
+    await password.fill(value);
+    expect(
+      await password.evaluate((el: HTMLInputElement) => el.checkValidity()),
+    ).toBeTruthy();
+  }
+});
+
 test("cada campo mantém sua própria opção de visualização", async ({
   page,
 }) => {

@@ -5,6 +5,9 @@ export function PasswordInput(
   props: Omit<InputHTMLAttributes<HTMLInputElement>, "type">,
 ) {
   const [visible, setVisible] = useState(false);
+  const enforcePolicy =
+    props.autoComplete === "new-password" &&
+    ["password", "new_password", "confirm"].includes(props.name || "");
   const action = visible ? "Ocultar senha" : "Mostrar senha";
   return (
     <span className="password-input">
@@ -14,6 +17,17 @@ export function PasswordInput(
         spellCheck={false}
         autoCapitalize="none"
         autoCorrect="off"
+        minLength={enforcePolicy ? 8 : props.minLength}
+        pattern={
+          enforcePolicy
+            ? String.raw`(?=.*\p{Lu})(?=.*[\p{P}\p{S}]).{8,128}`
+            : props.pattern
+        }
+        title={
+          enforcePolicy
+            ? "Use de 8 a 128 caracteres, com pelo menos uma letra maiúscula e um caractere especial."
+            : props.title
+        }
       />
       <button
         type="button"

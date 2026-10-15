@@ -313,12 +313,13 @@ function Reset() {
         ) : (
           <form onSubmit={submit}>
             <p className="muted">
-              Escolha uma senha com pelo menos 12 caracteres.
+              Escolha uma senha com pelo menos 8 caracteres, incluindo uma letra
+              maiúscula e um caractere especial.
             </p>
             <Field label="Nova senha">
               <PasswordInput
                 name="password"
-                minLength={12}
+                minLength={8}
                 maxLength={128}
                 autoComplete="new-password"
                 required
@@ -327,7 +328,7 @@ function Reset() {
             <Field label="Confirmar senha">
               <PasswordInput
                 name="confirm"
-                minLength={12}
+                minLength={8}
                 maxLength={128}
                 autoComplete="new-password"
                 required
@@ -516,7 +517,7 @@ function CreateCompany({
             <PasswordInput
               name="password"
               autoComplete="new-password"
-              minLength={12}
+              minLength={8}
               maxLength={128}
               required
             />
@@ -527,14 +528,15 @@ function CreateCompany({
                 name="confirm"
                 autoComplete="new-password"
                 required
-                minLength={12}
+                minLength={8}
                 maxLength={128}
               />
             </Field>
           )}
         </div>
         <small className="muted">
-          Mínimo de 12 caracteres. Compartilhe o acesso por um canal seguro.
+          Mínimo de 8 caracteres, com uma letra maiúscula e um caractere
+          especial. Compartilhe o acesso por um canal seguro.
         </small>
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
@@ -735,7 +737,7 @@ function CreateUser({ onClose }: { onClose: () => void }) {
             <PasswordInput
               name="password"
               autoComplete="new-password"
-              minLength={12}
+              minLength={8}
               maxLength={128}
               required
             />
@@ -744,7 +746,7 @@ function CreateUser({ onClose }: { onClose: () => void }) {
         <small className="muted">
           {invitation
             ? "Convite válido por 24 horas. A pessoa define sua própria senha."
-            : "Mínimo de 12 caracteres."}
+            : "Mínimo de 8 caracteres, com uma letra maiúscula e um caractere especial."}
         </small>
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
@@ -810,7 +812,7 @@ function PasswordModal({
           <PasswordInput
             name="new_password"
             autoComplete="new-password"
-            minLength={12}
+            minLength={8}
             maxLength={128}
             required
           />
@@ -819,7 +821,7 @@ function PasswordModal({
           <PasswordInput
             name="confirm"
             autoComplete="new-password"
-            minLength={12}
+            minLength={8}
             maxLength={128}
             required
           />

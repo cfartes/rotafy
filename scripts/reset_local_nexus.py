@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
+from app.password_policy import validate_password
 from app.security import digest, passwords
 
 
@@ -17,10 +18,11 @@ def main():
     config = dotenv_values(ROOT / ".env")
     email = (config.get("BOOTSTRAP_EMAIL") or "").strip().lower()
     password = config.get("BOOTSTRAP_PASSWORD") or ""
-    if not email or not 12 <= len(password) <= 128 or password.startswith("CHANGE_ME"):
+    if not email or password.startswith("CHANGE_ME"):
         raise RuntimeError(
-            "Configure BOOTSTRAP_EMAIL e uma senha de 12 a 128 caracteres no .env."
+            "Configure BOOTSTRAP_EMAIL e uma senha válida no .env."
         )
+    validate_password(password)
     engine = create_engine(
         URL.create(
             "postgresql+psycopg",

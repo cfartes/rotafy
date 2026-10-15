@@ -47,7 +47,7 @@ O perfil operacional não é o plano contratado. Basic, Professional e Enterpris
 3. Escolha **Turismo e transfers** ou **Transporte regular**, conforme a operação.
 4. Informe **CPF/CNPJ obrigatório e válido**, utilizado no cadastro comercial e na cobrança da assinatura. Confira os dígitos; a máscara não garante a validade do documento.
 5. Selecione o plano disponível. Leia mensalidade, franquia de viagens e valor por unidade extra.
-6. Informe nome, e-mail e senha do primeiro administrador. A senha exige pelo menos 12 caracteres.
+6. Informe nome, e-mail e senha do primeiro administrador. A senha exige pelo menos 8 caracteres, com uma letra maiúscula e um caractere especial.
 7. Confirme o cadastro e entre no painel da empresa com seu identificador, e-mail e senha.
 
 Todos os campos do cadastro são obrigatórios. O identificador de acesso deve conter somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhado (_), hífen (-) ou outros caracteres especiais. Por exemplo, `agenciaexemplo` é um identificador de acesso, não uma senha. Guarde-o junto das orientações entregues à equipe.

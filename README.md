@@ -28,7 +28,7 @@ Entre no painel Nexus com `BOOTSTRAP_EMAIL` e `BOOTSTRAP_PASSWORD` do `.env`. Ca
 
 Alterar `BOOTSTRAP_PASSWORD` no `.env` não modifica a senha de uma conta já criada. Para aplicar explicitamente essa senha ao administrador Nexus **local**, execute `.venv\Scripts\python.exe scripts/reset_local_nexus.py`. O comando conecta somente ao banco `rotafy` em `127.0.0.1`, atualiza a conta ativa correspondente a `BOOTSTRAP_EMAIL`, revoga suas sessões/links antigos e registra auditoria. Não redefine usuários das empresas nem opera na VPS. Para o uso normal, prefira **Alterar minha senha** no painel.
 
-Senhas de usuários exigem 12 caracteres. O perfil abre a troca de senha. Administradores da empresa podem gerar um link de recuperação válido por 30 minutos; compartilhe por canal seguro. Convites e recuperação por e-mail, inclusive da Nexus, estão implementados via Resend e dependem de chave/remetente configurados. Consulte [configuração dos e-mails](docs/EDICAO_E_EMAILS.md).
+Senhas novas de usuários exigem de 8 a 128 caracteres, incluindo pelo menos uma letra maiúscula e um caractere especial. Espaços não contam como caractere especial. O perfil abre a troca de senha. Administradores da empresa podem gerar um link de recuperação válido por 30 minutos; compartilhe por canal seguro. Convites e recuperação por e-mail, inclusive da Nexus, estão implementados via Resend e dependem de chave/remetente configurados. Consulte [configuração dos e-mails](docs/EDICAO_E_EMAILS.md).
 
 O compose atual é para desenvolvimento local: portas vinculadas a `127.0.0.1`, HTTP e cookie sem Secure para localhost. Não publicar este compose como produção sem HTTPS, cookie Secure, origens corretas, revisão das portas e backup externo.
 
