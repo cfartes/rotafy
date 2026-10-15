@@ -55,3 +55,18 @@ Os logs do worker mostram apenas evento e situação, não chaves, destinatário
 ## Validação
 
 Testes usam provedor simulado, cobrindo criptografia, permissões, sessão exclusiva por empresa, isolamento, eventos automáticos, idempotência, sessão desconectada, rate limit, timeout sem duplicação, cancelamentos, troca de sessão e aplicação dinâmica do Resend. A homologação real depende do preenchimento das chaves e de sessões conectadas pelo administrador; nenhum envio real é realizado pelos testes.
+
+
+## Diagnóstico de envio incerto
+
+O código antigo `acceptance_unknown` não distingue falhas de rede, timeout e JSON inválido. Registros existentes não são reclassificados, pois a causa original não foi armazenada. Novos envios registram `send_timeout`, `tls_error`, `invalid_response` ou `connection_error`; todos mantêm o estado incerto sem repetição automática. Os logs incluem somente situação e código, sem corpo, telefone ou credencial.
+
+Para verificar a comunicação a partir do worker com a chave salva, sem enviar mensagens:
+
+```bash
+cd /opt/rotafy-tech &&
+git pull --ff-only origin main &&
+docker compose --env-file .env.production -f compose.production.yaml exec -T whatsapp python - < scripts/diagnose_whatsapp.py
+```
+
+A consulta utiliza apenas `GET /sessions`. Um resultado positivo verifica essa consulta naquele momento; não comprova aceitação do POST anterior, disponibilidade de uma sessão específica ou entrega do convite. O diagnóstico funciona antes de reconstruir a imagem. Para aplicar os novos códigos aos próximos envios, atualize os serviços pelo script habitual. Nenhuma mensagem incerta é reenviada ou alterada pela atualização.

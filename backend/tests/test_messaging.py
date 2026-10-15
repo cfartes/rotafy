@@ -462,7 +462,7 @@ def test_timeout_is_uncertain_and_is_not_automatically_retried(
     assert len(sends) == 1
     item = client.get(f"/api/v1/reservations/{booking['id']}/whatsapp").json()[0]
     assert item["status"] == "uncertain"
-    assert item["error_code"] == "acceptance_unknown"
+    assert item["error_code"] == "send_timeout"
 
 
 def test_rate_limit_retries_but_disconnected_session_does_not_send(
@@ -618,3 +618,31 @@ def test_gateway_transport_uses_documented_headers_and_payload(monkeypatch):
     assert request.get_header("X-api-key") == "owa_test_key"
     assert request.get_method() == "POST"
     assert json.loads(request.data)["chatId"] == "5511999999999@c.us"
+
+
+@pytest.mark.parametrize(
+    "case,expected",
+    [
+        ("timeout", "send_timeout"),
+        ("wrapped_timeout", "send_timeout"),
+        ("tls", "tls_error"),
+        ("wrapped_tls", "tls_error"),
+        ("json", "invalid_response"),
+        ("connection", "connection_error"),
+    ],
+)
+def test_communication_error_classification(case, expected):
+    import ssl
+    from urllib.error import URLError
+
+    from app.whatsapp_worker import communication_error
+
+    errors = {
+        "timeout": TimeoutError(),
+        "wrapped_timeout": URLError(TimeoutError()),
+        "tls": ssl.SSLCertVerificationError(),
+        "wrapped_tls": URLError(ssl.SSLCertVerificationError()),
+        "json": ValueError(),
+        "connection": ConnectionResetError(),
+    }
+    assert communication_error(errors[case]) == expected

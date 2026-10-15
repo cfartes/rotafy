@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import ssl
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
@@ -17,6 +18,17 @@ from app.integration_secrets import decrypt
 from app.integration_settings import openwa_key, openwa_request
 
 logger = logging.getLogger("rotafy.whatsapp")
+
+
+def communication_error(exc):
+    reason = exc.reason if isinstance(exc, URLError) else exc
+    if isinstance(reason, TimeoutError):
+        return "send_timeout"
+    if isinstance(reason, ssl.SSLError):
+        return "tls_error"
+    if isinstance(reason, ValueError):
+        return "invalid_response"
+    return "connection_error"
 
 
 async def process_company(engine, company_id, transport=openwa_request):
@@ -163,8 +175,8 @@ async def process_company(engine, company_id, transport=openwa_request):
             status, error = "failed", f"http_{exc.code}"
         else:
             status, error = "uncertain", "provider_error"
-    except (URLError, OSError, ValueError, TimeoutError):
-        status, error = "uncertain", "acceptance_unknown"
+    except (URLError, OSError, ValueError, TimeoutError) as exc:
+        status, error = "uncertain", communication_error(exc)
     async with engine.begin() as db:
         await scope(db, company_id)
         await db.execute(
@@ -173,7 +185,11 @@ async def process_company(engine, company_id, transport=openwa_request):
           next_attempt_at=now()+interval '1 minute',body=CASE WHEN CAST(:status AS varchar)='pending' THEN body ELSE '' END WHERE id=:id"""),
             {"id": item["id"], "status": status, "error": error, "provider": provider},
         )
-    logger.info('{"event":"whatsapp.processed","status":"%s"}', status)
+    logger.info(
+        '{"event":"whatsapp.processed","status":"%s","error_code":"%s"}',
+        status,
+        error or "none",
+    )
     return True
 
 
