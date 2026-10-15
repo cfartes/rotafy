@@ -21,6 +21,13 @@ type CompanySession = {
   session_id: string | null;
   enabled: boolean;
   contact_phone?: string | null;
+  discovery?: {
+    phone: string;
+    automatic: boolean;
+    status: string;
+    attempts: number;
+    send_enabled: boolean;
+  } | null;
 };
 
 function CompanyBinding({
@@ -37,9 +44,53 @@ function CompanyBinding({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-  const [phone, setPhone] = useState(company.contact_phone || "");
+  const [phone, setPhone] = useState(
+    company.discovery?.phone || company.contact_phone || "",
+  );
   const [searching, setSearching] = useState(false);
   const [found, setFound] = useState<Session | null>(null);
+  const [automatic, setAutomatic] = useState(
+    company.discovery?.automatic ?? !company.session_id,
+  );
+  const [automaticEnabled, setAutomaticEnabled] = useState(
+    company.discovery?.send_enabled ?? true,
+  );
+  async function saveAutomatic(active = automatic, send = automaticEnabled) {
+    if (!phone.trim()) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(
+        `/nexus/integrations/companies/${company.id}/automatic-session`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ phone, automatic: active, enabled: send }),
+        },
+      );
+      await onSaved();
+      setSaved(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível salvar o telefone.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  const automaticStatus: Record<string, string> = {
+    waiting:
+      "Aguardando uma sessão conectada. Nova consulta a cada minuto, mesmo com esta tela fechada.",
+    connected: "Sessão identificada e salva automaticamente.",
+    conflict:
+      "Conflito: sessão duplicada, vinculada a outra empresa ou com mensagem em envio. A busca continuará.",
+    unidentified:
+      "Não foi possível identificar com segurança o telefone das sessões. A busca continuará.",
+    provider_unavailable:
+      "Serviço indisponível ou chave não configurada. A busca continuará automaticamente.",
+  };
+
   async function findSession() {
     setSearching(true);
     setError("");
@@ -67,6 +118,10 @@ function CompanyBinding({
   }
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (automatic) {
+      await saveAutomatic();
+      return;
+    }
     setBusy(true);
     setError("");
     setSaved(false);
@@ -93,11 +148,27 @@ function CompanyBinding({
         {company.slug}
         {!company.is_active && " · empresa suspensa"}
       </p>
+      <label className="operation-checkbox">
+        <input
+          type="checkbox"
+          checked={automatic}
+          disabled={busy}
+          onChange={(e) => {
+            setAutomatic(e.target.checked);
+            if (phone.trim()) void saveAutomatic(e.target.checked);
+          }}
+        />
+        Identificar e salvar a sessão automaticamente pelo telefone
+      </label>
       <Field label={`WhatsApp de envio de ${company.trade_name}`}>
         <input
           type="tel"
           value={phone}
           maxLength={50}
+          onBlur={() => {
+            if (automatic && phone.trim() && phone !== company.discovery?.phone)
+              void saveAutomatic();
+          }}
           disabled={searching || busy}
           placeholder="+55 47 99999-9999"
           onChange={(e) => {
@@ -112,75 +183,118 @@ function CompanyBinding({
         contato da empresa é sugerido e pode ser diferente do número de envio.
         Use + e DDI para números internacionais.
       </small>
-      <button
-        type="button"
-        className="button secondary"
-        disabled={searching || busy || !phone.trim()}
-        onClick={() => void findSession()}
-      >
-        {searching
-          ? "Buscando sessão…"
-          : `Buscar sessão pelo telefone de ${company.trade_name}`}
-      </button>
-      {found && (
+      {automatic ? (
+        <>
+          <p role="status">
+            {busy
+              ? "Salvando configuração…"
+              : automaticStatus[company.discovery?.status || "waiting"] ||
+                "Aguardando consulta."}
+          </p>
+          {company.discovery?.automatic &&
+            company.session_id &&
+            company.discovery.status === "connected" && (
+              <p className="muted">ID da sessão: {company.session_id}</p>
+            )}
+          <label className="operation-checkbox">
+            <input
+              type="checkbox"
+              checked={automaticEnabled}
+              disabled={busy}
+              onChange={(e) => {
+                setAutomaticEnabled(e.target.checked);
+                void saveAutomatic(true, e.target.checked);
+              }}
+            />
+            Habilitar envios para {company.trade_name}
+          </label>
+          <small className="muted">
+            O telefone é salvo ao sair do campo. O pareamento por QR Code deve
+            ser feito no serviço de mensagens. Empresas suspensas não são
+            consultadas.
+          </small>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={searching || busy || !phone.trim()}
+            onClick={() => void findSession()}
+          >
+            {searching
+              ? "Buscando sessão…"
+              : `Buscar sessão pelo telefone de ${company.trade_name}`}
+          </button>
+          {found && (
+            <p role="status">
+              Sessão encontrada: {found.name} · {found.phone} · {found.status}.
+              Confira o ID e clique em Salvar sessão para confirmar o vínculo.
+            </p>
+          )}
+          {sessions.length > 0 && (
+            <Field label={`Sessão OpenWA de ${company.trade_name}`}>
+              <select
+                disabled={searching || busy}
+                value={session}
+                onChange={(e) => {
+                  setSession(e.target.value);
+                  setFound(null);
+                  setSaved(false);
+                }}
+              >
+                <option value="">Selecione a sessão desta empresa</option>
+                {session && !sessions.some((s) => s.id === session) && (
+                  <option value={session}>Sessão salva · {session}</option>
+                )}
+                {sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} · {s.status} · {s.id}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <Field label={`ID da sessão de ${company.trade_name}`}>
+            <input
+              required
+              disabled={searching || busy}
+              value={session}
+              placeholder="UUID da sessão conectada no OpenWA"
+              pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+              onChange={(e) => {
+                setSession(e.target.value.trim());
+                setFound(null);
+                setSaved(false);
+              }}
+            />
+          </Field>
+          <label className="operation-checkbox">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => {
+                setEnabled(e.target.checked);
+                setSaved(false);
+              }}
+            />
+            Habilitar envios para {company.trade_name}
+          </label>
+        </>
+      )}
+      {error && <Alert>{error}</Alert>}
+      {saved && (
         <p role="status">
-          Sessão encontrada: {found.name} · {found.phone} · {found.status}.
-          Confira o ID e clique em Salvar sessão para confirmar o vínculo.
+          {automatic
+            ? "Telefone e preferências salvos."
+            : "Sessão da empresa salva."}
         </p>
       )}
-      {sessions.length > 0 && (
-        <Field label={`Sessão OpenWA de ${company.trade_name}`}>
-          <select
-            disabled={searching || busy}
-            value={session}
-            onChange={(e) => {
-              setSession(e.target.value);
-              setFound(null);
-              setSaved(false);
-            }}
-          >
-            <option value="">Selecione a sessão desta empresa</option>
-            {session && !sessions.some((s) => s.id === session) && (
-              <option value={session}>Sessão salva · {session}</option>
-            )}
-            {sessions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} · {s.status} · {s.id}
-              </option>
-            ))}
-          </select>
-        </Field>
+      {!automatic && (
+        <button className="button secondary" disabled={busy || searching}>
+          Salvar sessão de {company.trade_name}
+        </button>
       )}
-      <Field label={`ID da sessão de ${company.trade_name}`}>
-        <input
-          required
-          disabled={searching || busy}
-          value={session}
-          placeholder="UUID da sessão conectada no OpenWA"
-          pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-          onChange={(e) => {
-            setSession(e.target.value.trim());
-            setFound(null);
-            setSaved(false);
-          }}
-        />
-      </Field>
-      <label className="operation-checkbox">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => {
-            setEnabled(e.target.checked);
-            setSaved(false);
-          }}
-        />
-        Habilitar envios para {company.trade_name}
-      </label>
-      {error && <Alert>{error}</Alert>}
-      {saved && <p role="status">Sessão da empresa salva.</p>}
-      <button className="button secondary" disabled={busy || searching}>
-        Salvar sessão de {company.trade_name}
-      </button>
     </form>
   );
 }
@@ -195,6 +309,7 @@ export function IntegrationSettings() {
   const companies = useQuery({
     queryKey: ["integration-companies"],
     queryFn: () => api<CompanySession[]>("/nexus/integrations/companies"),
+    refetchInterval: 5000,
   });
   const sessions = useQuery({
     queryKey: ["integration-sessions"],
@@ -343,8 +458,9 @@ export function IntegrationSettings() {
         <h2>WhatsApp de cada empresa</h2>
         <p>
           Cada empresa utiliza seu próprio número e sessão. Crie a sessão e leia
-          o QR no painel OpenWA; depois associe seu ID aqui. Uma sessão não pode
-          ser compartilhada entre empresas.
+          o QR no painel OpenWA. Informe o telefone para identificar e salvar o
+          ID automaticamente. Uma sessão não pode ser compartilhada entre
+          empresas.
         </p>
         <button
           className="button secondary"

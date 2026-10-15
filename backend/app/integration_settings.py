@@ -232,9 +232,13 @@ async def openwa_key(db):
 @router.get("/sessions")
 async def sessions(actor: Auth):
     nexus(actor)
+    return await fetch_sessions(actor.db)
+
+
+async def fetch_sessions(db):
     try:
         result = await asyncio.to_thread(
-            openwa_request, await openwa_key(actor.db), "/sessions"
+            openwa_request, await openwa_key(db), "/sessions"
         )
     except (HTTPError, URLError, OSError, ValueError):
         raise HTTPException(
@@ -274,12 +278,16 @@ async def sessions(actor: Auth):
 @router.post("/companies/{company_id}/find-session")
 async def find_session(company_id: UUID, data: SessionLookupInput, actor: Auth):
     nexus(actor)
-    if not await actor.db.scalar(
+    return await lookup_session(actor.db, company_id, data.phone)
+
+
+async def lookup_session(db, company_id, raw_phone):
+    if not await db.scalar(
         text("SELECT 1 FROM companies WHERE id=:id"), {"id": company_id}
     ):
         raise HTTPException(404, "Empresa não encontrada.")
     try:
-        phone = CompanyContact.validate_contact(data.phone)
+        phone = CompanyContact.validate_contact(raw_phone)
         if not phone:
             raise ValueError()
     except ValueError:
@@ -288,7 +296,7 @@ async def find_session(company_id: UUID, data: SessionLookupInput, actor: Auth):
         ) from None
 
     async def discover():
-        candidates = await sessions(actor)
+        candidates = await fetch_sessions(db)
         candidates = [
             s for s in candidates if s["status"].upper() in ("READY", "CONNECTED")
         ]
@@ -296,7 +304,7 @@ async def find_session(company_id: UUID, data: SessionLookupInput, actor: Auth):
             raise HTTPException(
                 422, "Há muitas sessões. Selecione a sessão manualmente."
             )
-        key = await openwa_key(actor.db)
+        key = await openwa_key(db)
         limit = asyncio.Semaphore(4)
 
         async def detail(session):
@@ -356,17 +364,17 @@ async def find_session(company_id: UUID, data: SessionLookupInput, actor: Auth):
         )
     selected = matches[0]
     for other in (
-        await actor.db.execute(
+        await db.execute(
             text("SELECT id FROM companies WHERE id<>:id"), {"id": company_id}
         )
     ).scalars():
-        await scope(actor.db, other)
-        if await actor.db.scalar(
+        await scope(db, other)
+        if await db.scalar(
             text("SELECT 1 FROM company_whatsapp WHERE session_id=:session"),
             {"session": selected["id"]},
         ):
             raise HTTPException(409, "Esta sessão já está associada a outra empresa.")
-    await scope(actor.db, company_id)
+    await scope(db, company_id)
     return selected
 
 
@@ -399,11 +407,24 @@ async def company_sessions(actor: Auth):
             .mappings()
             .first()
         )
+        discovery = (
+            (
+                await actor.db.execute(
+                    text(
+                        "SELECT phone,automatic,status,attempts,last_checked_at,version,send_enabled FROM company_whatsapp_discovery WHERE company_id=:id"
+                    ),
+                    {"id": company["id"]},
+                )
+            )
+            .mappings()
+            .first()
+        )
         result.append(
             dict(company)
             | {
                 "session_id": session["session_id"] if session else None,
                 "enabled": bool(session and session["enabled"]),
+                "discovery": dict(discovery) if discovery else None,
             }
         )
     return result
@@ -412,25 +433,36 @@ async def company_sessions(actor: Auth):
 @router.put("/companies/{company_id}")
 async def bind_session(company_id: UUID, data: SessionInput, actor: Auth):
     nexus(actor)
-    await actor.db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
-    if not await actor.db.scalar(
+    result = await save_binding(actor.db, company_id, data, actor.user["id"])
+    await actor.db.execute(
+        text(
+            "UPDATE company_whatsapp_discovery SET automatic=false,version=version+1 WHERE company_id=:id"
+        ),
+        {"id": company_id},
+    )
+    return result
+
+
+async def save_binding(db, company_id, data, actor_id):
+    await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
+    if not await db.scalar(
         text("SELECT 1 FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
     ):
         raise HTTPException(404, "Empresa não encontrada.")
     # A unicidade impede que duas empresas compartilhem acidentalmente o número.
     for other in (
-        await actor.db.execute(
+        await db.execute(
             text("SELECT id FROM companies WHERE id<>:id"), {"id": company_id}
         )
     ).scalars():
-        await scope(actor.db, other)
-        if await actor.db.scalar(
+        await scope(db, other)
+        if await db.scalar(
             text("SELECT 1 FROM company_whatsapp WHERE session_id=:session"),
             {"session": data.session_id},
         ):
             raise HTTPException(409, "Esta sessão já está associada a outra empresa.")
-    await scope(actor.db, company_id)
-    previous = await actor.db.scalar(
+    await scope(db, company_id)
+    previous = await db.scalar(
         text(
             "SELECT session_id FROM company_whatsapp WHERE company_id=:company FOR UPDATE"
         ),
@@ -439,7 +471,7 @@ async def bind_session(company_id: UUID, data: SessionInput, actor: Auth):
     if (
         previous is not None
         and previous != data.session_id
-        and await actor.db.scalar(
+        and await db.scalar(
             text(
                 "SELECT 1 FROM whatsapp_outbox WHERE company_id=:company AND status='sending' LIMIT 1"
             ),
@@ -450,16 +482,67 @@ async def bind_session(company_id: UUID, data: SessionInput, actor: Auth):
             409,
             "Há uma mensagem em envio. Aguarde sua conclusão antes de trocar a sessão.",
         )
-    await actor.db.execute(
+    await db.execute(
         text("""INSERT INTO company_whatsapp(company_id,session_id,enabled) VALUES(:company,:session,:enabled)
       ON CONFLICT(company_id) DO UPDATE SET session_id=EXCLUDED.session_id,enabled=EXCLUDED.enabled,updated_at=now()"""),
         {"company": company_id, "session": data.session_id, "enabled": data.enabled},
     )
     await audit(
-        actor.db,
+        db,
         company_id,
-        actor.user["id"],
+        actor_id,
         "whatsapp.session_configured",
         company_id,
     )
     return {"session_id": data.session_id, "enabled": data.enabled}
+
+
+class AutomaticSessionInput(SessionLookupInput):
+    enabled: bool = True
+    automatic: bool = True
+
+
+@router.put("/companies/{company_id}/automatic-session")
+async def automatic_session(company_id: UUID, data: AutomaticSessionInput, actor: Auth):
+    nexus(actor)
+    try:
+        phone = CompanyContact.validate_contact(data.phone)
+        if not phone:
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            422, "Informe um telefone válido com DDD ou código internacional."
+        ) from None
+    await actor.db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
+    if not await actor.db.scalar(
+        text("SELECT 1 FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
+    ):
+        raise HTTPException(404, "Empresa não encontrada.")
+    await scope(actor.db, company_id)
+    # Stop sending with a previous number while a changed number is being resolved.
+    await actor.db.execute(
+        text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
+        {"id": company_id},
+    )
+    await actor.db.execute(
+        text("""INSERT INTO company_whatsapp_discovery(company_id,phone,automatic,send_enabled,requested_by)
+      VALUES(:id,:phone,:automatic,:enabled,:actor)
+      ON CONFLICT(company_id) DO UPDATE SET phone=EXCLUDED.phone,automatic=EXCLUDED.automatic,
+      send_enabled=EXCLUDED.send_enabled,requested_by=EXCLUDED.requested_by,status='waiting',
+      version=company_whatsapp_discovery.version+1,attempts=0,next_attempt_at=now()"""),
+        {
+            "id": company_id,
+            "phone": phone,
+            "automatic": data.automatic,
+            "enabled": data.enabled,
+            "actor": actor.user["id"],
+        },
+    )
+    await audit(
+        actor.db,
+        company_id,
+        actor.user["id"],
+        "whatsapp.automatic_session_configured",
+        company_id,
+    )
+    return {"phone": phone, "automatic": data.automatic, "status": "waiting"}

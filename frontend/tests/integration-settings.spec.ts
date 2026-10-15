@@ -1,5 +1,71 @@
 import { test, expect } from "@playwright/test";
 
+test("automatic phone association saves on blur and displays background discovery", async ({
+  page,
+}) => {
+  let saved = 0;
+  const company: any = {
+    id: "company",
+    trade_name: "Empresa",
+    slug: "empresa",
+    is_active: true,
+    session_id: null,
+    enabled: false,
+    contact_phone: "",
+  };
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [];
+    if (path === "/auth/me")
+      body = {
+        id: "nexus",
+        role: "nexus",
+        company_id: null,
+        full_name: "Nexus",
+        is_active: true,
+      };
+    if (path === "/nexus/integrations")
+      body = {
+        version: 0,
+        openwa_key_configured: true,
+        resend_key_configured: false,
+        email_from: "",
+        openwa_base_url: "https://example.com",
+      };
+    if (path === "/nexus/integrations/companies") body = [company];
+    if (path.endsWith("/automatic-session")) {
+      expect(route.request().postDataJSON()).toEqual({
+        phone: "+5547999999999",
+        automatic: true,
+        enabled: true,
+      });
+      saved++;
+      company.discovery = {
+        phone: "+5547999999999",
+        automatic: true,
+        status: "waiting",
+        send_enabled: true,
+        attempts: 0,
+      };
+      body = {};
+    }
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/nexus");
+  await page
+    .getByRole("button", { name: "Configurações", exact: true })
+    .click();
+  await page
+    .getByLabel("WhatsApp de envio de Empresa", { exact: true })
+    .fill("+5547999999999");
+  await page.getByLabel("WhatsApp de envio de Empresa", { exact: true }).blur();
+  await expect.poll(() => saved).toBe(1);
+  await expect(page.getByText(/Nova consulta a cada minuto/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Salvar sessão de Empresa" }),
+  ).toHaveCount(0);
+});
+
 test("Nexus configures credentials and binds each company without exposing saved keys", async ({
   page,
 }) => {
@@ -13,6 +79,13 @@ test("Nexus configures credentials and binds each company without exposing saved
     is_active: true,
     session_id: null as string | null,
     enabled: false,
+    discovery: {
+      automatic: false,
+      phone: "",
+      status: "waiting",
+      attempts: 0,
+      send_enabled: false,
+    },
   };
   const config = () => ({
     version,
@@ -170,6 +243,13 @@ test("phone discovery fills the ID but requires explicit save", async ({
           is_active: true,
           session_id: null,
           enabled: false,
+          discovery: {
+            automatic: false,
+            phone: "",
+            status: "waiting",
+            attempts: 0,
+            send_enabled: false,
+          },
           contact_phone: "+5547999999999",
         },
       ];

@@ -247,6 +247,9 @@ async def main():
                     )
                 for company in companies:
                     await process_company(engine, company)
+                from app.session_discovery import process_discovery
+
+                await process_discovery(engine)
                 Path("/tmp/rotafy-whatsapp-health").touch()
             except (SQLAlchemyError, OSError, ValueError):
                 logger.error('{"event":"whatsapp.cycle_failed"}')

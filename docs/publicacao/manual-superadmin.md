@@ -53,11 +53,11 @@ Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo
 
 1. Localize a empresa em **WhatsApp de cada empresa**.
 2. Confira o **WhatsApp de envio**. O telefone de contato aparece como sugestão; ajuste para o número conectado. Utilize + e código do país para números internacionais.
-3. Clique em **Buscar sessão pelo telefone**.
-4. Confira a sessão e o ID preenchido. A busca não salva nem habilita os envios.
-5. Marque **Habilitar envios** quando desejar ativar o canal e clique em **Salvar sessão**.
+3. Ative **Identificar e salvar a sessão automaticamente pelo telefone**. O telefone é salvo ao sair do campo.
+4. Defina **Habilitar envios**. O sistema identifica uma única sessão conectada correspondente ao telefone e salva o ID automaticamente.
+5. Acompanhe o estado na tela. Se a sessão ainda não existir, a busca continuará a cada minuto, mesmo com a tela fechada.
 
-Se não houver correspondência, confira o número e a conexão. Se houver sessões duplicadas ou sem telefone identificado, utilize a opção de consultar sessões e selecione manualmente, ou informe o ID conferido no painel do serviço. Uma sessão vinculada a outra empresa não pode ser compartilhada.
+O pareamento por QR Code continua necessário no serviço de mensagens. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
 
 ### Conferir envios
 
