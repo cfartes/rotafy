@@ -1,166 +1,102 @@
-import { test, expect, type Page } from "@playwright/test";
-import fs from "node:fs";
-import path from "node:path";
-import { nexusCredentials } from "./support/nexus";
-import { testDocument } from "./company-document";
+import { test, expect } from "@playwright/test";
+import { openCompanyRegistration } from "./company-registration";
 
-const env = Object.fromEntries(
-  fs
-    .readFileSync(path.resolve("..", ".env"), "utf8")
-    .split(/\r?\n/)
-    .filter((line) => line && !line.startsWith("#"))
-    .map((line) => {
-      const i = line.indexOf("=");
-      return [line.slice(0, i), line.slice(i + 1)];
-    }),
-);
-const account = nexusCredentials("onboarding.spec.ts");
-const nexusEmail = account?.email || env.BOOTSTRAP_EMAIL;
-const nexusPassword = account?.password || env.BOOTSTRAP_PASSWORD;
-async function headers(page: Page) {
-  return {
-    Origin: "http://localhost:5178",
-    "X-CSRF-Token": (await page.context().cookies()).find(
-      (cookie) => cookie.name === "rotafy_csrf",
-    )!.value,
-  };
-}
-
-test("primeiro acesso: plano e documento obrigatórios, assinatura automática e login da empresa", async ({
+test("public registration is unavailable from login and direct link", async ({
   page,
 }) => {
-  const slug = `e2eonboarding${Date.now()}`;
-  const email = `${slug}@example.com`;
-  const password = "Senha onboarding teste 2026!";
-  await page.goto("/nexus");
-  await page.getByLabel("E-mail", { exact: true }).fill(nexusEmail);
-  await page.getByLabel("Senha", { exact: true }).fill(nexusPassword);
-  await page.getByRole("button", { name: "Acessar painel" }).click();
-  await expect(
-    page.getByRole("button", { name: "Nova empresa" }),
-  ).toBeVisible();
-  const planResponse = await page.request.post("/api/v1/nexus/plans", {
-    headers: await headers(page),
-    data: {
-      code: slug,
-      name: "Plano primeiro acesso",
-      included_trips: 15,
-      price_cents: 12000,
-      extra_trip_cents: 1800,
-    },
-  });
-  expect(planResponse.status()).toBe(201);
-  const plan = await planResponse.json();
-  await page.getByRole("button", { name: "Sair da conta" }).click();
-  await expect(
-    page.getByRole("button", { name: "Acessar painel" }),
-  ).toBeVisible();
+  await page.route("**/api/v1/auth/me", (route) =>
+    route.fulfill({ status: 401, json: { detail: "Entre novamente" } }),
+  );
   await page.goto("/");
-  await page.getByRole("link", { name: "Criar minha empresa" }).click();
-  await expect(page).toHaveURL("http://localhost:5178/cadastro");
-  await page.getByLabel("Nome comercial").fill("Empresa Primeiro Acesso");
-  await page.getByLabel("Razão social").fill("Empresa Primeiro Acesso LTDA");
-  await page.getByLabel("Identificador de acesso").fill(slug);
-  await page.getByLabel("Telefone / WhatsApp").fill("47999999999");
-  await expect(page.getByLabel("Telefone / WhatsApp")).toHaveValue(
-    "(47) 99999-9999",
-  );
-  const dialogWidth = await page
-    .getByRole("dialog")
-    .evaluate((dialog) => dialog.getBoundingClientRect().width);
-  expect(dialogWidth).toBeGreaterThan(800);
-  await page.getByLabel("Nome completo").fill("Admin Primeiro Acesso");
-  await page.getByLabel("E-mail", { exact: true }).fill(email);
-  await page.getByLabel("Senha inicial").fill(password);
-  await page.getByLabel("Confirmar senha").fill(password);
-  expect(
-    await page
-      .getByLabel("CPF/CNPJ")
-      .evaluate((input: HTMLInputElement) => input.checkValidity()),
-  ).toBe(false);
-  expect(
-    await page
-      .getByLabel("Plano escolhido")
-      .evaluate((input: HTMLSelectElement) => input.checkValidity()),
-  ).toBe(false);
-  await page
-    .getByRole("combobox", { name: "Perfil operacional", exact: true })
+  await expect(page.locator('a[href="/cadastro"]')).toHaveCount(0);
+  await page.goto("/cadastro");
+  await expect(
+    page.getByRole("heading", { name: "Cadastro pela equipe Nexus" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cadastrar empresa" }),
+  ).toHaveCount(0);
+});
+
+test("sales creates the company once then sends welcome without recreating it on failure", async ({
+  page,
+}) => {
+  let created = 0,
+    attempts = 0;
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [],
+      status = 200;
+    if (path === "/nexus/plans")
+      body = [
+        {
+          id: "basic",
+          name: "Basic",
+          is_active: true,
+          version_id: "v1",
+          included_trips: 30,
+          price_cents: 9990,
+          extra_trip_cents: 1000,
+        },
+      ];
+    if (path === "/nexus/companies" && route.request().method() === "POST") {
+      created++;
+      const data = route.request().postDataJSON();
+      body = { ...data, id: "company" };
+      status = 201;
+    }
+    if (
+      path === "/nexus/companies/company/welcome" &&
+      route.request().method() === "POST"
+    ) {
+      attempts++;
+      expect(route.request().postDataJSON().channel).toBe("email");
+      if (attempts === 1) {
+        status = 503;
+        body = { detail: "Configure o e-mail" };
+      } else body = { status: "queued" };
+    }
+    await route.fulfill({ status, json: body });
+  });
+  await openCompanyRegistration(page);
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByLabel("Nome comercial", { exact: true })
+    .fill("Empresa Teste");
+  await dialog
+    .getByLabel("Raz\u00e3o social", { exact: true })
+    .fill("Empresa Teste LTDA");
+  await dialog
+    .getByLabel("Identificador de acesso", { exact: true })
+    .fill("empresateste");
+  await dialog.getByLabel("CPF/CNPJ").fill("52998224725");
+  await dialog.getByLabel("Telefone / WhatsApp").fill("+5547999999999");
+  await dialog
+    .getByLabel("Perfil operacional", { exact: true })
     .selectOption("tourism");
-  await page.getByLabel("Plano escolhido").selectOption(plan.id);
-  await page.getByLabel("CPF/CNPJ").fill("11111111111");
-  await page
+  await dialog
+    .getByRole("combobox", { name: "Plano escolhido", exact: true })
+    .selectOption("basic");
+  await dialog
+    .getByLabel("Nome completo", { exact: true })
+    .fill("Administrador Teste");
+  await dialog
+    .getByLabel("E-mail", { exact: true })
+    .fill("cliente@example.com");
+  await dialog
+    .getByLabel("Senha inicial", { exact: true })
+    .fill("SenhaSegura!");
+  await dialog
     .getByRole("button", { name: "Cadastrar empresa", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText("CPF");
-  await expect(page.getByLabel("Plano escolhido")).toHaveValue(plan.id);
-  await page.getByLabel("CPF/CNPJ").fill(testDocument());
-  await page.getByRole("dialog").evaluate((dialog) => {
-    dialog.scrollTop = 0;
-  });
-  await page.screenshot({
-    path: "../docs/screenshots/cadastro-empresa-plano.png",
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(
-    await page
-      .getByRole("dialog")
-      .evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth),
-  ).toBe(true);
-  await page.screenshot({
-    path: "../docs/screenshots/cadastro-empresa-mobile.png",
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 1280, height: 720 });
   await page
-    .getByRole("button", { name: "Cadastrar empresa", exact: true })
+    .getByRole("button", { name: "Enviar acesso por e-mail", exact: true })
     .click();
-  await expect(
-    page.getByRole("heading", { name: "Empresa cadastrada" }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "Entrar na minha empresa" }).click();
-  await expect(page.getByLabel("Identificador da empresa")).toHaveValue(slug);
-  await page.getByLabel("E-mail", { exact: true }).fill(email);
-  await page.getByLabel("Senha", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Acessar painel" }).click();
-  await expect(
-    page.getByRole("button", { name: "Gerenciar veículos" }),
-  ).toBeVisible();
-  const company = await (await page.request.get("/api/v1/company")).json();
-  const report = await (
-    await page.request.get("/api/v1/company/subscription")
-  ).json();
-  expect(report.subscription.plan_id).toBe(plan.id);
-  expect(report.current_period.used_trips).toBe(0);
-  expect((await page.request.get("/api/v1/nexus/companies")).status()).toBe(
-    403,
-  );
-  await page.getByRole("button", { name: "Sair da conta" }).click();
-  await expect(
-    page.getByRole("button", { name: "Acessar painel" }),
-  ).toBeVisible();
-  expect(
-    (
-      await page.request.post("/api/v1/auth/nexus/login", {
-        headers: { Origin: "http://localhost:5178" },
-        data: { email: nexusEmail, password: nexusPassword },
-      })
-    ).status(),
-  ).toBe(200);
-  expect(
-    (
-      await page.request.post(
-        `/api/v1/nexus/companies/${company.id}/subscription/cancel`,
-        { headers: await headers(page), data: {} },
-      )
-    ).status(),
-  ).toBe(204);
-  expect(
-    (
-      await page.request.patch(`/api/v1/nexus/plans/${plan.id}`, {
-        headers: await headers(page),
-        data: { is_active: false },
-      })
-    ).status(),
-  ).toBe(200);
+  await expect(page.getByRole("alert")).toContainText("Configure o e-mail");
+  await page
+    .getByRole("button", { name: "Enviar acesso por e-mail", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText("Envio solicitado");
+  expect(created).toBe(1);
+  expect(attempts).toBe(2);
 });

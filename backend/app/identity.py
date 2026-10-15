@@ -116,7 +116,7 @@ async def authenticate(request: Request):
                 "/api/v1/auth/password",
                 "/api/v1/audit",
             } or re.fullmatch(
-                r"/api/v1/nexus/companies(?:/[0-9a-f-]+(?:/details)?)?",
+                r"/api/v1/nexus/companies(?:/[0-9a-f-]+(?:/details|/welcome)?)?",
                 request.url.path,
             )
             if not allowed:

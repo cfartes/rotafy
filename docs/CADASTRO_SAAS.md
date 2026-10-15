@@ -1,27 +1,18 @@
-# Cadastro inicial da empresa SaaS
+# Cadastro comercial de empresas
 
-Em `/`, **Criar minha empresa** abre `/cadastro`. O cliente preenche nome comercial, razão social, identificador, CPF/CNPJ, plano, nome/e-mail do administrador e senha com confirmação. O cadastro pela Nexus usa os mesmos campos de empresa e plano.
+O cadastro de novas empresas pertence exclusivamente ao time Nexus. O login nao oferece autoatendimento, e `/cadastro` apresenta orientacao para procurar o comercial. `POST /api/v1/public/companies` retorna 403, inclusive para pedidos diretos.
 
-O documento da empresa é obrigatório, normalizado e validado por formato, dígitos verificadores e unicidade, incluindo CPF, CNPJ numérico e CNPJ alfanumérico. A validação não consulta a situação cadastral na Receita. O CPF de passageiros continua opcional. Empresas existentes sem documento são preservadas; salvar alterações cadastrais passa a exigir documento válido.
+## API e permissoes
 
-Somente planos ativos com valores e franquia configurados pela Nexus são oferecidos. O cliente vê preço mensal, viagens incluídas e valor de viagem extra. O servidor busca as condições do plano: preços e franquias não são aceitos no payload do cliente.
+- `POST /api/v1/nexus/companies`: administrador Nexus ou Equipe Nexus; dados comerciais, documento validado, telefone, perfil operacional, plano e primeiro administrador.
+- `POST /api/v1/nexus/companies/{id}/welcome`: mesmos perfis; `operation_key` UUID e `channel` (`email`, `whatsapp`, `both`).
+- `GET /api/v1/nexus/companies/{id}/welcome`: historico dos envios de acesso, sem corpo privado ou credenciais.
+- `GET /api/v1/public/plans`: catalogo comercial sem dados de empresas; utilizado pelo cadastro operado pela Equipe Nexus.
 
-Empresa, administrador com perfil `admin`, assinatura e primeiro ciclo são criados na mesma transação. O início é hoje, no calendário de São Paulo; o cadastro não consome viagens. Qualquer falha desfaz todos esses registros. A assinatura usa a versão vigente do plano escolhido. Após concluir, o cliente entra pelo identificador, e-mail e senha cadastrados; não recebe privilégios Nexus.
+Empresa, administrador, assinatura e ciclo inicial continuam atomicos. O envio e uma etapa posterior: falha de configuracao nao remove a empresa nem cria outro cadastro. A chave de operacao evita duplicacao quando a resposta se perde; novo envio com outra chave invalida os links anteriores.
 
-## API
+A mensagem inclui dados cadastrais, endereco de acesso, identificador e e-mail do primeiro administrador ativo. A senha inicial nunca e enviada em texto: o cliente define sua senha usando um link de uso unico valido por 24 horas. O mesmo link atende ambos os canais.
 
-| Endpoint | Acesso | Resultado |
-| --- | --- | --- |
-| `GET /api/v1/public/plans` | Público | Condições atuais dos planos disponíveis, sem empresas/assinaturas |
-| `POST /api/v1/public/companies` | Público, origem permitida e limite de tentativas | Empresa, administrador e assinatura; resposta limitada a ID, identificador e nome |
-| `POST /api/v1/nexus/companies` | Nexus autenticada | Cadastro com documento e plano obrigatórios; assinatura automática |
+O e-mail utiliza a fila existente e o remetente configurado. O WhatsApp utiliza a sessao Nexus em `billing_settings.nexus_session_id`, mesmo com cobranca automatica desativada, e marca `nexus_sender=true` na fila existente. O pareamento da nova empresa nao e necessario. O worker verifica sessao, validade do convite, usuario ativo e telefone atual da empresa; convites obsoletos sao descartados. Resultados ambiguos nao sao reenviados automaticamente.
 
-Payload de cadastro: `slug`, `trade_name`, `corporate_name`, `cnpj`, `plan_id` e `admin` (`full_name`, `email`, `password`). O nome `cnpj` no contrato representa CPF ou CNPJ, por compatibilidade com o campo existente.
-
-Tentativas públicas são limitadas por IP e documento, usando identificadores armazenados como hash. Documento/identificador duplicado, plano inexistente, arquivado ou não configurado bloqueiam o cadastro. O usuário mantém os campos preenchidos para corrigir o erro.
-
-Não há pagamento integrado, emissão/envio automático de fatura ou verificação de titularidade do documento nesta entrega. A assinatura registra as condições mensais e o consumo; os dados cadastrais ficam associados à empresa para a cobrança pela Nexus.
-
-## Validação
-
-Testes cobrem campos obrigatórios, documento inválido/duplicado, planos indisponíveis, rejeição de preço enviado pelo cliente, transação revertida após falha do ciclo, limite de tentativas, origem, perfil do administrador e primeiro login. A jornada do navegador exercita o cadastro público e o cadastro Nexus, escolha do plano, assinatura automática e manutenção da empresa.
+A migracao aditiva `0027_company_welcome` inclui o indicador de remetente e o historico idempotente por empresa, com RLS. Nenhum banco ou dado existente e recriado.

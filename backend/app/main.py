@@ -14,6 +14,7 @@ from app.billing.collection_routes import router as collections_router
 from app.billing.routes import router as billing_router
 from app.billing.service import list_plans
 from app.boarding import router as boarding_router
+from app.company_welcome import router as company_welcome_router
 from app.config import Settings
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
@@ -340,12 +341,10 @@ def create_app(settings: Settings | None = None):
             ]
 
     @application.post("/api/v1/public/companies", status_code=201)
-    async def signup_company(payload: CompanyCreate, request: Request):
-        check_origin(request)
-        await throttle(request, f"signup:{payload.cnpj}", platform=True)
-        async with request.app.state.platform_engine.begin() as db:
-            company = await register_company(db, payload)
-            return {key: company[key] for key in ("id", "slug", "trade_name")}
+    async def signup_company():
+        raise HTTPException(
+            403, "O cadastro de empresas é realizado pela equipe comercial Nexus."
+        )
 
     @application.get("/api/v1/nexus/companies")
     async def companies(actor: Auth):
@@ -696,7 +695,7 @@ def create_app(settings: Settings | None = None):
             for row in (
                 await actor.db.execute(
                     text(
-                        "SELECT id,company_id,actor_id,action,target_id,created_at FROM audit_events WHERE (:full OR action IN ('company.created','company.updated','company.activated','company.suspended','company.profile_changed')) ORDER BY created_at DESC LIMIT 100"
+                        "SELECT id,company_id,actor_id,action,target_id,created_at FROM audit_events WHERE (:full OR action IN ('company.created','company.updated','company.activated','company.suspended','company.profile_changed','company.access_sent')) ORDER BY created_at DESC LIMIT 100"
                     ),
                     {"full": actor.user["role"] != "nexus_staff"},
                 )
@@ -704,6 +703,7 @@ def create_app(settings: Settings | None = None):
         ]
 
     application.include_router(nexus_users_router)
+    application.include_router(company_welcome_router)
     application.include_router(billing_router)
     application.include_router(collections_router)
     application.include_router(operations_router)

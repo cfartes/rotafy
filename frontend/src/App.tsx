@@ -1,3 +1,4 @@
+import { CompanyAccess } from "./CompanyAccess";
 import { Collections } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
@@ -238,11 +239,6 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
               Abrir operação offline preparada
             </a>
           </form>
-          {!isNexus && (
-            <a className="button secondary full" href="/cadastro">
-              Criar minha empresa
-            </a>
-          )}
           <button
             className="text-button login-help"
             onClick={() => setForgot(true)}
@@ -349,26 +345,19 @@ function Reset() {
 
 function CreateCompany({
   onClose,
-  publicSignup = false,
   restricted = false,
 }: {
   onClose: () => void;
-  publicSignup?: boolean;
   restricted?: boolean;
 }) {
   const client = useQueryClient();
   const plans = useQuery({
-    queryKey:
-      publicSignup || restricted ? ["signup", "plans"] : ["billing", "plans"],
-    queryFn: () =>
-      api<Plan[]>(
-        publicSignup || restricted ? "/public/plans" : "/nexus/plans",
-      ),
+    queryKey: restricted ? ["signup", "plans"] : ["billing", "plans"],
+    queryFn: () => api<Plan[]>(restricted ? "/public/plans" : "/nexus/plans"),
   });
-  const [created, setCreated] = useState<{
-    slug: string;
-    trade_name: string;
-  } | null>(null);
+  const [created, setCreated] = useState<
+    (Company & { admin_email?: string }) | null
+  >(null);
   const availablePlans = (plans.data || []).filter(
     (plan) => plan.is_active && plan.version_id,
   );
@@ -380,55 +369,31 @@ function CreateCompany({
     setError("");
     const data = new FormData(event.currentTarget);
     try {
-      if (publicSignup && data.get("password") !== data.get("confirm"))
-        throw new Error("As senhas precisam ser iguais.");
-      const result = await post<Company>(
-        publicSignup ? "/public/companies" : "/nexus/companies",
-        {
-          trade_name: data.get("trade_name"),
-          corporate_name: data.get("corporate_name"),
-          slug: data.get("slug"),
-          cnpj: String(data.get("cnpj") || "").trim() || null,
-          contact_phone: String(data.get("contact_phone") || "").trim() || null,
-          plan_id: data.get("plan_id"),
-          operational_profile: data.get("operational_profile"),
-          admin: {
-            full_name: data.get("full_name"),
-            email: data.get("email"),
-            password: data.get("password"),
-            role: "admin",
-          },
+      const result = await post<Company>("/nexus/companies", {
+        trade_name: data.get("trade_name"),
+        corporate_name: data.get("corporate_name"),
+        slug: data.get("slug"),
+        cnpj: String(data.get("cnpj") || "").trim() || null,
+        contact_phone: String(data.get("contact_phone") || "").trim() || null,
+        plan_id: data.get("plan_id"),
+        operational_profile: data.get("operational_profile"),
+        admin: {
+          full_name: data.get("full_name"),
+          email: data.get("email"),
+          password: data.get("password"),
+          role: "admin",
         },
-      );
+      });
       await client.invalidateQueries({ queryKey: ["companies"] });
       await client.invalidateQueries({ queryKey: ["billing"] });
-      if (publicSignup) setCreated(result);
-      else onClose();
+      setCreated({ ...result, admin_email: String(data.get("email") || "") });
     } catch (err) {
       setError(message(err));
     } finally {
       setPending(false);
     }
   }
-  if (created)
-    return (
-      <Modal title="Empresa cadastrada" onClose={onClose}>
-        <p>
-          A empresa {created.trade_name} foi cadastrada com o plano escolhido.
-          Sua assinatura mensal começa hoje.
-        </p>
-        <p>
-          Identificador de acesso: <strong>{created.slug}</strong>. Entre com
-          seu e-mail e a senha cadastrada.
-        </p>
-        <a
-          className="button primary"
-          href={`/?empresa=${encodeURIComponent(created.slug)}`}
-        >
-          Entrar na minha empresa
-        </a>
-      </Modal>
-    );
+  if (created) return <CompanyAccess company={created} onClose={onClose} />;
   return (
     <Modal title="Cadastrar empresa" onClose={onClose} wide>
       <form onSubmit={submit} className="modal-form">
@@ -508,9 +473,8 @@ function CreateCompany({
         {plans.error && <Alert>{message(plans.error)}</Alert>}
         {!plans.isPending && !plans.error && availablePlans.length === 0 && (
           <Alert>
-            {publicSignup
-              ? "Nenhum plano disponível para contratação. Entre em contato com a Nexus."
-              : "Configure e ative um plano em Planos e assinaturas antes de cadastrar uma empresa."}
+            Configure e ative um plano em Planos e assinaturas antes de
+            cadastrar uma empresa.
           </Alert>
         )}
         <h3 className="form-section">Administrador da empresa</h3>
@@ -530,17 +494,6 @@ function CreateCompany({
               required
             />
           </Field>
-          {publicSignup && (
-            <Field label="Confirmar senha">
-              <PasswordInput
-                name="confirm"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                maxLength={128}
-              />
-            </Field>
-          )}
         </div>
         <small className="muted">
           Mínimo de 8 caracteres, com uma letra maiúscula e um caractere
@@ -853,6 +806,7 @@ const actionNames: Record<string, string> = {
   "auth.logout": "Sessão encerrada",
   "company.branding_updated": "Identidade da empresa atualizada",
   "company.created": "Empresa cadastrada",
+  "company.access_sent": "Envio dos dados de acesso solicitado",
   "company.updated": "Dados da empresa atualizados",
   "company.activated": "Empresa ativada",
   "company.suspended": "Empresa suspensa",
@@ -1016,6 +970,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [accessCompany, setAccessCompany] = useState<Company | null>(null);
   const [billingCompany, setBillingCompany] = useState("");
   const [companyPlanOnly, setCompanyPlanOnly] = useState(false);
   const [password, setPassword] = useState(false);
@@ -1706,6 +1661,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                     >
                                       Editar dados
                                     </button>
+                                    <button
+                                      className="text-button"
+                                      onClick={() => setAccessCompany(row)}
+                                    >
+                                      Enviar acesso
+                                    </button>
                                     {fullNexus && (
                                       <button
                                         className="text-button"
@@ -1823,6 +1784,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           onClose={() => setBrandingOpen(false)}
         />
       )}
+      {accessCompany && (
+        <CompanyAccess
+          company={accessCompany}
+          onClose={() => setAccessCompany(null)}
+        />
+      )}
       {editingCompany && (
         <EditCompany
           company={editingCompany}
@@ -1908,10 +1875,16 @@ export function App() {
   if (window.location.pathname === "/cadastro")
     return (
       <main className="reset-layout">
-        <CreateCompany
-          publicSignup
-          onClose={() => window.location.assign("/")}
-        />
+        <section className="panel modal-form">
+          <h1>Cadastro pela equipe Nexus</h1>
+          <p>
+            Para contratar o Rotafy, fale com nossa equipe comercial. Seu acesso
+            será enviado após o cadastro da empresa.
+          </p>
+          <a className="button primary" href="/">
+            Voltar ao acesso
+          </a>
+        </section>
       </main>
     );
   if (window.location.pathname === "/redefinir") return <Reset />;

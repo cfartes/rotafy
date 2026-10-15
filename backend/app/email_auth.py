@@ -58,7 +58,14 @@ def require_email(settings):
 
 
 async def queue_reset(
-    db, settings, company_id, user, invitation=False, channel="email"
+    db,
+    settings,
+    company_id,
+    user,
+    invitation=False,
+    channel="email",
+    nexus_sender=False,
+    company_details=None,
 ):
     table = "password_resets" if company_id else "platform_password_resets"
     token = (
@@ -97,12 +104,28 @@ async def queue_reset(
             text("SELECT slug FROM companies WHERE id=:id"), {"id": company_id}
         )
     body = f"Olá, {user['full_name']}.\n\n{label}.\nEmpresa: {company_label}\n\nDefina sua senha neste link:\n{link}\n\nValidade: {'24 horas' if invitation else '1 hora'}. O link pode ser usado uma vez. Se não solicitou este acesso, ignore a mensagem."
+    if company_details:
+        portal = (
+            settings.public_base_url.rstrip("/")
+            + "/?empresa="
+            + quote(company_label, safe="")
+        )
+        body = (
+            f"Olá, {user['full_name']}!\n\nBem-vindo ao Nexus Rotafy\nSeu acesso foi preparado pela equipe Nexus.\n\n"
+            f"DADOS DA EMPRESA\nNome: {company_details['trade_name']}\nRazão social: {company_details['corporate_name']}\n"
+            f"CPF/CNPJ: {company_details['cnpj']}\nTelefone: {company_details['contact_phone']}\n\n"
+            f"SEU ACESSO\nPágina de acesso: {portal}\nIdentificador da empresa: {company_label}\nE-mail de login: {user['email']}\n\n"
+            f"DEFINA SUA SENHA\n{link}\n\nO link é válido por 24 horas e pode ser utilizado uma única vez. Não compartilhe este link.\n"
+            "Após definir a senha, entre usando o identificador da empresa e seu e-mail.\nEquipe Nexus Rotafy"
+        )
     if channel in {"whatsapp", "both"}:
         config = (
             (
                 await db.execute(
                     text(
-                        "SELECT session_id FROM company_whatsapp WHERE company_id=:company AND enabled"
+                        "SELECT nexus_session_id AS session_id FROM billing_settings WHERE id=true AND nexus_session_id IS NOT NULL"
+                        if nexus_sender
+                        else "SELECT session_id FROM company_whatsapp WHERE company_id=:company AND enabled"
                     ),
                     {"company": company_id},
                 )
@@ -114,13 +137,16 @@ async def queue_reset(
             text("SELECT 1 FROM integration_settings WHERE id=true AND openwa_key<>''")
         ):
             raise HTTPException(
-                503, "O WhatsApp desta empresa ainda não foi habilitado pela Nexus."
+                503,
+                "Configure o WhatsApp de envio da Nexus."
+                if nexus_sender
+                else "O WhatsApp desta empresa ainda não foi habilitado pela Nexus.",
             )
         if not user.get("contact_phone"):
             raise HTTPException(422, "Informe o telefone/WhatsApp do colaborador.")
         await db.execute(
-            text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body,expires_at,reset_id,user_id)
-          VALUES(:id,:company,NULL,:session,'invitation',:key,:phone,:body,:expires,:reset,:user)"""),
+            text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body,expires_at,reset_id,user_id,nexus_sender)
+          VALUES(:id,:company,NULL,:session,'invitation',:key,:phone,:body,:expires,:reset,:user,:nexus)"""),
             {
                 "id": uuid4(),
                 "company": company_id,
@@ -131,10 +157,11 @@ async def queue_reset(
                 "expires": expires,
                 "reset": reset_id,
                 "user": user["id"],
+                "nexus": nexus_sender,
             },
         )
     if channel == "whatsapp":
-        return
+        return reset_id
     await db.execute(
         text("""INSERT INTO email_outbox(id,company_id,reset_id,recipient,subject,body,expires_at)
       VALUES(:id,:company,:reset,:recipient,:subject,:body,:expires)"""),
@@ -148,6 +175,7 @@ async def queue_reset(
             "expires": expires,
         },
     )
+    return reset_id
 
 
 @router.post("/auth/forgot-password")

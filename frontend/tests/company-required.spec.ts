@@ -1,9 +1,10 @@
+import { openCompanyRegistration } from "./company-registration";
 import { test, expect } from "@playwright/test";
 
 test("cadastro exige todos os campos e explica o identificador sem caracteres especiais", async ({
   page,
 }) => {
-  await page.route("**/api/v1/public/plans", (route) =>
+  await page.route("**/api/v1/nexus/plans", (route) =>
     route.fulfill({
       json: [
         {
@@ -16,7 +17,7 @@ test("cadastro exige todos os campos e explica o identificador sem caracteres es
       ],
     }),
   );
-  await page.goto("/cadastro");
+  await openCompanyRegistration(page);
   await expect(
     page.getByText("Todos os campos deste cadastro são obrigatórios.", {
       exact: false,

@@ -29,7 +29,7 @@ def change(client, company_id, profile, expected="tourism"):
 
 
 @pytest.mark.parametrize(
-    "path", ["/api/v1/public/companies", "/api/v1/nexus/companies"]
+    "path", ["/api/v1/nexus/companies"]
 )
 def test_registration_requires_profile_and_accepts_regular(client, owner, path):
     configure(client)

@@ -64,7 +64,9 @@ async def process_company(engine, company_id, transport=openwa_request):
             (
                 await db.execute(
                     text(
-                        "SELECT * FROM company_whatsapp WHERE company_id=:id FOR UPDATE"
+                        "SELECT nexus_session_id AS session_id,true AS enabled FROM billing_settings WHERE id=true FOR UPDATE"
+                        if item["nexus_sender"]
+                        else "SELECT * FROM company_whatsapp WHERE company_id=:id FOR UPDATE"
                     ),
                     {"id": company_id},
                 )
@@ -89,11 +91,13 @@ async def process_company(engine, company_id, transport=openwa_request):
             valid = await db.scalar(
                 text("""SELECT 1 FROM password_resets r JOIN users u ON u.id=r.user_id
               WHERE r.id=:reset AND u.id=:user AND u.is_active AND r.used_at IS NULL AND r.expires_at>now()
-              AND u.contact_phone=:phone"""),
+              AND ((:nexus AND EXISTS(SELECT 1 FROM companies c WHERE c.id=u.company_id AND c.contact_phone=:phone))
+                OR (NOT :nexus AND u.contact_phone=:phone))"""),
                 {
                     "reset": item["reset_id"],
                     "user": item["user_id"],
                     "phone": item["phone"],
+                    "nexus": item["nexus_sender"],
                 },
             )
         else:

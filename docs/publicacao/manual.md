@@ -4,7 +4,7 @@ O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: ca
 
 Este manual descreve a implementação disponível em **15/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
-**Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro inicial de empresa utiliza `/cadastro`. A central de documentação utiliza `/ajuda`.
+**Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
 ### O fluxo de trabalho
 
@@ -41,17 +41,16 @@ O perfil operacional não é o plano contratado. Basic, Professional e Enterpris
 
 ## 3. Primeiro acesso e cadastro da empresa {#primeiro-acesso}
 
-1. Na tela inicial, abra o cadastro da empresa, ou acesse `/cadastro`.
-2. Informe nome comercial, razão social, identificador de acesso e telefone/WhatsApp de contato.
-3. Escolha **Turismo e transfers** ou **Transporte regular**, conforme a operação.
-4. Informe **CPF/CNPJ obrigatório e válido**, utilizado no cadastro comercial e na cobrança da assinatura. Confira os dígitos; a máscara não garante a validade do documento.
-5. Selecione o plano disponível. Leia mensalidade, franquia de viagens e valor por unidade extra.
-6. Informe nome, e-mail e senha do primeiro administrador. A senha exige pelo menos 8 caracteres, com uma letra maiúscula e um caractere especial.
-7. Confirme o cadastro e entre no painel da empresa com seu identificador, e-mail e senha.
+1. Entre em contato com a equipe comercial Nexus para definir o plano e informar os dados da empresa e do administrador.
+2. A Nexus cadastra a empresa e define o perfil **Turismo e transfers** ou **Transporte regular**, conforme a operação.
+3. Receba por e-mail ou WhatsApp os dados cadastrais, a página de acesso, o identificador da empresa e o e-mail de login.
+4. Abra o link recebido para definir sua senha. Ele é válido por 24 horas e pode ser usado uma única vez.
+5. Defina uma senha com pelo menos 8 caracteres, uma letra maiúscula e um caractere especial.
+6. Entre no painel com o identificador da empresa, seu e-mail e a senha definida.
 
 Todos os campos do cadastro são obrigatórios. O identificador de acesso deve conter somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhado (_), hífen (-) ou outros caracteres especiais. Por exemplo, `agenciaexemplo` é um identificador de acesso, não uma senha. Guarde-o junto das orientações entregues à equipe.
 
-A Nexus também pode cadastrar a empresa por seu painel. Nesse caso, o administrador recebe as orientações de acesso. Planos e disponibilidade de cadastro dependem da configuração da plataforma.
+O cliente não realiza cadastro público. Se o convite expirar, solicite um novo envio à equipe Nexus ou utilize **Esqueci minha senha** no acesso da empresa.
 
 ### Identidade visual
 

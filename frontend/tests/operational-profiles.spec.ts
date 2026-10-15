@@ -1,3 +1,4 @@
+import { openCompanyRegistration } from "./company-registration";
 import { test, expect } from "@playwright/test";
 
 test("first registration requires an explicit operational profile", async ({
@@ -9,7 +10,7 @@ test("first registration requires an explicit operational profile", async ({
       path = new URL(request.url()).pathname.replace("/api/v1", "");
     let status = 200,
       body: any = [];
-    if (path === "/public/plans")
+    if (path === "/nexus/plans")
       body = [
         {
           id: "basic",
@@ -21,7 +22,7 @@ test("first registration requires an explicit operational profile", async ({
           extra_trip_cents: 1000,
         },
       ];
-    else if (path === "/public/companies") {
+    else if (path === "/nexus/companies") {
       submitted = request.postDataJSON();
       body = {
         id: "company",
@@ -35,7 +36,7 @@ test("first registration requires an explicit operational profile", async ({
     }
     await route.fulfill({ status, json: body });
   });
-  await page.goto("/cadastro");
+  await openCompanyRegistration(page);
   const dialog = page.getByRole("dialog", { name: "Cadastrar empresa" });
   const profile = dialog.getByRole("combobox", {
     name: "Perfil operacional",
@@ -68,9 +69,6 @@ test("first registration requires an explicit operational profile", async ({
   await dialog.getByLabel("E-mail", { exact: true }).fill("admin@example.com");
   await dialog
     .getByLabel("Senha inicial", { exact: true })
-    .fill("Senha de teste 2026!");
-  await dialog
-    .getByLabel("Confirmar senha", { exact: true })
     .fill("Senha de teste 2026!");
   await dialog
     .getByRole("button", { name: "Cadastrar empresa", exact: true })

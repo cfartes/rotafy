@@ -137,7 +137,7 @@ Use **Gerenciar plano** na linha da empresa para abrir diretamente **Plano da em
 
 ### Primeiro acesso do cliente SaaS
 
-Na tela de login, **Criar minha empresa** abre `/cadastro`. O cliente informa os dados da empresa, CPF/CNPJ obrigatório, plano e dados de seu administrador. Apenas planos ativos com franquia e valores configurados aparecem. Empresa, administrador, assinatura e primeiro ciclo são gravados na mesma transação; falhas não deixam um cadastro parcial. O cadastro feito pela Nexus exige os mesmos dados e cria a assinatura automaticamente.
+O cadastro de empresas é exclusivo da equipe Nexus. O login não oferece cadastro e `POST /api/v1/public/companies` retorna 403. Vendedores com perfil Equipe Nexus podem cadastrar empresa, CPF/CNPJ obrigatório, plano e administrador. Empresa, administrador, assinatura e primeiro ciclo são gravados na mesma transação. Após salvar, a opção **Enviar acesso** envia dados cadastrais e um link de definição de senha por e-mail e/ou WhatsApp. O WhatsApp usa a sessão Nexus configurada para comunicação/cobrança, sem exigir sessão do novo cliente.
 
 CPF/CNPJ é normalizado e validado por formato, dígitos verificadores e unicidade no sistema, sem consulta à situação cadastral da Receita. Empresas antigas sem documento permanecem preservadas, mas precisam informar um documento válido para salvar alterações cadastrais. O e-mail do administrador é registrado no cadastro. Não há integração de pagamento, emissão de cobrança nem envio automático de fatura nesta entrega.
 

@@ -81,10 +81,11 @@ def test_public_registration_creates_company_admin_and_subscription_atomically(
     client.cookies.clear()
     plans = client.get("/api/v1/public/plans").json()
     assert len(plans) == 1 and plans[0]["id"] == BASIC
-    response = client.post("/api/v1/public/companies", json=PAYLOAD)
+    login(client, nexus=True, email="nexus@example.com")
+    response = client.post("/api/v1/nexus/companies", json=PAYLOAD)
     assert response.status_code == 201, response.text
     company = response.json()
-    assert set(company) == {"id", "slug", "trade_name"}
+    assert {"id", "slug", "trade_name"} <= set(company)
     with owner.connect() as db:
         assert (
             db.scalar(
@@ -111,18 +112,17 @@ def test_public_registration_creates_company_admin_and_subscription_atomically(
     report = client.get("/api/v1/company/subscription").json()
     assert report["current_period"]["used_trips"] == 0
     client.cookies.clear()
-    assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 409
+    login(client, nexus=True, email="nexus@example.com")
+    assert client.post("/api/v1/nexus/companies", json=PAYLOAD).status_code == 409
     assert (
         client.post(
-            "/api/v1/public/companies", json=PAYLOAD | {"slug": "othercustomer"}
+            "/api/v1/nexus/companies", json=PAYLOAD | {"slug": "othercustomer"}
         ).status_code
         == 409
     )
 
 
-@pytest.mark.parametrize(
-    "path", ["/api/v1/public/companies", "/api/v1/nexus/companies"]
-)
+@pytest.mark.parametrize("path", ["/api/v1/nexus/companies"])
 @pytest.mark.parametrize(
     "change",
     [
@@ -153,9 +153,7 @@ def test_registration_requires_document_and_plan_and_rejects_client_price(
         assert db.scalar(text("SELECT count(*) FROM companies")) == 2
 
 
-@pytest.mark.parametrize(
-    "path", ["/api/v1/public/companies", "/api/v1/nexus/companies"]
-)
+@pytest.mark.parametrize("path", ["/api/v1/nexus/companies"])
 @pytest.mark.parametrize(
     "field",
     [
@@ -181,7 +179,8 @@ def test_registration_rejects_missing_required_fields(client, owner, path, field
 def test_signup_rejects_unconfigured_archived_missing_plans_and_wrong_origin(
     client, owner
 ):
-    assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 409
+    login(client, nexus=True, email="nexus@example.com")
+    assert client.post("/api/v1/nexus/companies", json=PAYLOAD).status_code == 409
     configure(client)
     assert (
         client.patch(
@@ -190,16 +189,16 @@ def test_signup_rejects_unconfigured_archived_missing_plans_and_wrong_origin(
         == 200
     )
     assert client.get("/api/v1/public/plans").json() == []
-    assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 409
+    assert client.post("/api/v1/nexus/companies", json=PAYLOAD).status_code == 409
     assert (
         client.post(
-            "/api/v1/public/companies", json=PAYLOAD | {"plan_id": str(uuid4())}
+            "/api/v1/nexus/companies", json=PAYLOAD | {"plan_id": str(uuid4())}
         ).status_code
         == 404
     )
     assert (
         client.post(
-            "/api/v1/public/companies",
+            "/api/v1/nexus/companies",
             json=PAYLOAD,
             headers={"Origin": "https://wrong.example.com"},
         ).status_code
@@ -218,7 +217,7 @@ def test_signup_failure_rolls_back_company_user_and_subscription(
         raise HTTPException(503, "Falha simulada no ciclo inicial.")
 
     monkeypatch.setattr("app.onboarding.insert_period", fail_period)
-    assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 503
+    assert client.post("/api/v1/nexus/companies", json=PAYLOAD).status_code == 503
     with owner.connect() as db:
         assert db.scalar(text("SELECT count(*) FROM companies")) == 2
         assert (
@@ -230,7 +229,8 @@ def test_signup_failure_rolls_back_company_user_and_subscription(
         assert db.scalar(text("SELECT count(*) FROM subscriptions")) == 0
 
 
-def test_signup_rate_limit(client):
-    for _ in range(10):
-        assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 409
-    assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 429
+def test_public_registration_is_disabled(client, owner):
+    for _ in range(3):
+        assert client.post("/api/v1/public/companies", json=PAYLOAD).status_code == 403
+    with owner.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM companies")) == 2
