@@ -26,12 +26,14 @@ from app.identity import (
     check_origin,
     clear_session,
     nexus,
+    nexus_team,
     scope,
     set_session,
     throttle,
 )
 from app.integration_settings import router as integration_settings_router
 from app.logos import router as logos_router
+from app.nexus_users import router as nexus_users_router
 from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
 from app.operational_profiles import capabilities, change_profile
@@ -183,7 +185,7 @@ def create_app(settings: Settings | None = None):
                     (
                         await db.execute(
                             text(
-                                "SELECT *, 'nexus' AS role FROM platform_users WHERE email=:email AND is_active"
+                                "SELECT * FROM platform_users WHERE email=:email AND is_active"
                             ),
                             {"email": email},
                         )
@@ -347,7 +349,7 @@ def create_app(settings: Settings | None = None):
 
     @application.get("/api/v1/nexus/companies")
     async def companies(actor: Auth):
-        nexus(actor)
+        nexus_team(actor)
         return [
             dict(row)
             for row in (
@@ -361,12 +363,12 @@ def create_app(settings: Settings | None = None):
 
     @application.post("/api/v1/nexus/companies", status_code=201)
     async def create_company(payload: CompanyCreate, actor: Auth):
-        nexus(actor)
+        nexus_team(actor)
         return await register_company(actor.db, payload, actor.user["id"])
 
     @application.patch("/api/v1/nexus/companies/{company_id}")
     async def activate_company(company_id: UUID, payload: ActiveUpdate, actor: Auth):
-        nexus(actor)
+        nexus_team(actor)
         row = (
             (
                 await actor.db.execute(
@@ -398,7 +400,7 @@ def create_app(settings: Settings | None = None):
     async def edit_company(
         company_id: UUID, payload: CompanyDetailsUpdate, actor: Auth
     ):
-        nexus(actor)
+        nexus_team(actor)
         previous_profile = await actor.db.scalar(
             text("SELECT operational_profile FROM companies WHERE id=:id FOR UPDATE"),
             {"id": company_id},
@@ -694,12 +696,14 @@ def create_app(settings: Settings | None = None):
             for row in (
                 await actor.db.execute(
                     text(
-                        "SELECT id,company_id,actor_id,action,target_id,created_at FROM audit_events ORDER BY created_at DESC LIMIT 100"
-                    )
+                        "SELECT id,company_id,actor_id,action,target_id,created_at FROM audit_events WHERE (:full OR action IN ('company.created','company.updated','company.activated','company.suspended','company.profile_changed')) ORDER BY created_at DESC LIMIT 100"
+                    ),
+                    {"full": actor.user["role"] != "nexus_staff"},
                 )
             ).mappings()
         ]
 
+    application.include_router(nexus_users_router)
     application.include_router(billing_router)
     application.include_router(collections_router)
     application.include_router(operations_router)

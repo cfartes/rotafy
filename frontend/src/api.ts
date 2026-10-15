@@ -1,4 +1,5 @@
-export type Role = "nexus" | "admin" | "attendant" | "guide" | "driver";
+export type Role =
+  "nexus" | "nexus_staff" | "admin" | "attendant" | "guide" | "driver";
 export type User = {
   financial_blocked?: boolean;
   contact_phone?: string | null;
@@ -162,6 +163,7 @@ export const post = <T>(path: string, data: unknown) =>
 export const patch = <T>(path: string, data: unknown) =>
   api<T>(path, { method: "PATCH", body: JSON.stringify(data) });
 export const roleName: Record<Role, string> = {
+  nexus_staff: "Equipe Nexus",
   nexus: "Administrador Nexus",
   admin: "Administrador",
   attendant: "Atendente",

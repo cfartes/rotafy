@@ -1,6 +1,7 @@
 import { Collections } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
+import { NexusTeam } from "./NexusTeam";
 import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
@@ -349,14 +350,20 @@ function Reset() {
 function CreateCompany({
   onClose,
   publicSignup = false,
+  restricted = false,
 }: {
   onClose: () => void;
   publicSignup?: boolean;
+  restricted?: boolean;
 }) {
   const client = useQueryClient();
   const plans = useQuery({
-    queryKey: publicSignup ? ["signup", "plans"] : ["billing", "plans"],
-    queryFn: () => api<Plan[]>(publicSignup ? "/public/plans" : "/nexus/plans"),
+    queryKey:
+      publicSignup || restricted ? ["signup", "plans"] : ["billing", "plans"],
+    queryFn: () =>
+      api<Plan[]>(
+        publicSignup || restricted ? "/public/plans" : "/nexus/plans",
+      ),
   });
   const [created, setCreated] = useState<{
     slug: string;
@@ -705,7 +712,7 @@ function CreateUser({ onClose }: { onClose: () => void }) {
         <Field label="Perfil">
           <select name="role" defaultValue="attendant">
             {Object.entries(roleName)
-              .filter(([role]) => role !== "nexus")
+              .filter(([role]) => role !== "nexus" && role !== "nexus_staff")
               .map(([role, name]) => (
                 <option key={role} value={role}>
                   {name}
@@ -987,7 +994,8 @@ function BrandingModal({
 
 function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const client = useQueryClient();
-  const isNexus = user.role === "nexus";
+  const isNexus = user.role === "nexus" || user.role === "nexus_staff";
+  const fullNexus = user.role === "nexus";
   const isAdmin = user.role === "admin";
   const [operationModule, setOperationModule] = useState("trips");
   const [reportTripId, setReportTripId] = useState<string | null>(null);
@@ -1003,6 +1011,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "reports"
     | "integrations"
     | "collections"
+    | "nexus-team"
   >("overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1104,38 +1113,40 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "collections"
-      ? "Financeiro e cobranças"
-      : page === "integrations"
-        ? "Configurações"
-        : page === "routes"
-          ? "Rotas"
-          : page === "ticket-sales"
-            ? "Vender bilhete"
-            : page === "sales"
-              ? "Página pública e integrações"
-              : page === "reports"
-                ? "Relatórios"
-                : page === "operations"
-                  ? {
-                      vehicles: "Veículos",
-                      trips: "Viagens",
-                      allocations: "Alocar veículos em viagens",
-                      passengers: "Passageiros",
-                    }[operationModule] || "Operação de viagens"
-                  : page === "overview"
-                    ? "Visão geral"
-                    : page === "billing"
-                      ? isNexus
-                        ? companyPlanOnly
-                          ? "Plano da empresa"
-                          : "Planos e assinaturas"
-                        : "Meu plano"
-                      : page === "audit"
-                        ? "Histórico de atividades"
-                        : isNexus
-                          ? "Empresas"
-                          : "Equipe";
+    page === "nexus-team"
+      ? "Equipe Nexus"
+      : page === "collections"
+        ? "Financeiro e cobranças"
+        : page === "integrations"
+          ? "Configurações"
+          : page === "routes"
+            ? "Rotas"
+            : page === "ticket-sales"
+              ? "Vender bilhete"
+              : page === "sales"
+                ? "Página pública e integrações"
+                : page === "reports"
+                  ? "Relatórios"
+                  : page === "operations"
+                    ? {
+                        vehicles: "Veículos",
+                        trips: "Viagens",
+                        allocations: "Alocar veículos em viagens",
+                        passengers: "Passageiros",
+                      }[operationModule] || "Operação de viagens"
+                    : page === "overview"
+                      ? "Visão geral"
+                      : page === "billing"
+                        ? isNexus
+                          ? companyPlanOnly
+                            ? "Plano da empresa"
+                            : "Planos e assinaturas"
+                          : "Meu plano"
+                        : page === "audit"
+                          ? "Histórico de atividades"
+                          : isNexus
+                            ? "Empresas"
+                            : "Equipe";
   return (
     <div className="app-layout">
       <a className="skip-link" href="#main-content">
@@ -1177,7 +1188,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <nav>
           {[
             { id: "overview", label: "Visão geral", icon: LayoutDashboard },
-            ...(isNexus || isAdmin || user.role === "attendant"
+            ...(fullNexus || isAdmin || user.role === "attendant"
               ? [{ id: "reports", label: "Relatórios", icon: ChartColumn }]
               : []),
             ...(!isNexus
@@ -1209,7 +1220,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
                 ]
               : []),
-            ...(isNexus || isAdmin
+            ...(fullNexus || isAdmin
               ? [
                   {
                     id: "collections",
@@ -1218,8 +1229,11 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   },
                 ]
               : []),
-            ...(isNexus
+            ...(fullNexus
               ? [{ id: "integrations", label: "Configurações", icon: KeyRound }]
+              : []),
+            ...(fullNexus
+              ? [{ id: "nexus-team", label: "Equipe Nexus", icon: Users }]
               : []),
             ...(canManage
               ? [
@@ -1228,11 +1242,15 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     label: isNexus ? "Empresas" : "Equipe",
                     icon: isNexus ? Building2 : Users,
                   },
-                  {
-                    id: "billing",
-                    label: isNexus ? "Planos e assinaturas" : "Meu plano",
-                    icon: CreditCard,
-                  },
+                  ...(fullNexus || isAdmin
+                    ? [
+                        {
+                          id: "billing",
+                          label: isNexus ? "Planos e assinaturas" : "Meu plano",
+                          icon: CreditCard,
+                        },
+                      ]
+                    : []),
                   { id: "audit", label: "Atividades", icon: ShieldCheck },
                 ]
               : []),
@@ -1383,11 +1401,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               disponíveis.
             </Alert>
           )}
-          {page === "collections" && (isNexus || isAdmin) && (
+          {page === "collections" && (fullNexus || isAdmin) && (
             <Collections nexus={isNexus} />
           )}
-          {page === "integrations" && isNexus && <IntegrationSettings />}
-          {page === "billing" && (
+          {page === "nexus-team" && fullNexus && (
+            <NexusTeam currentUserId={user.id} />
+          )}
+          {page === "integrations" && fullNexus && <IntegrationSettings />}
+          {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
               isNexus={isNexus}
               onLogout={onLogout}
@@ -1395,7 +1416,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               companyOnly={companyPlanOnly}
             />
           )}
-          {page === "reports" && (
+          {page === "reports" && (fullNexus || !isNexus) && (
             <Reports
               user={user}
               companies={companies.data || []}
@@ -1685,16 +1706,18 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                     >
                                       Editar dados
                                     </button>
-                                    <button
-                                      className="text-button"
-                                      onClick={() => {
-                                        setBillingCompany(row.id);
-                                        setCompanyPlanOnly(true);
-                                        setPage("billing");
-                                      }}
-                                    >
-                                      Gerenciar plano
-                                    </button>
+                                    {fullNexus && (
+                                      <button
+                                        className="text-button"
+                                        onClick={() => {
+                                          setBillingCompany(row.id);
+                                          setCompanyPlanOnly(true);
+                                          setPage("billing");
+                                        }}
+                                      >
+                                        Gerenciar plano
+                                      </button>
+                                    )}
                                   </>
                                 )}
                                 {!isNexus && row.is_active && (
@@ -1808,7 +1831,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       )}
       {creating &&
         (isNexus ? (
-          <CreateCompany onClose={() => setCreating(false)} />
+          <CreateCompany
+            restricted={!fullNexus}
+            onClose={() => setCreating(false)}
+          />
         ) : (
           <CreateUser onClose={() => setCreating(false)} />
         ))}
@@ -1931,7 +1957,7 @@ export function App() {
       />
     );
   if (window.location.pathname === "/nexus/ajuda")
-    return session.data.role === "nexus" ? (
+    return ["nexus", "nexus_staff"].includes(session.data.role) ? (
       <Documentation nexus />
     ) : (
       <Documentation />

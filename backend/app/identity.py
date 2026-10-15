@@ -96,7 +96,7 @@ async def authenticate(request: Request):
             await scope(db, company_id)
         if platform:
             query = """SELECT s.id AS session_id, s.csrf_hash, u.id, u.full_name, u.email, u.is_active,
-                              'nexus' AS role FROM platform_sessions s
+                              u.role FROM platform_sessions s
                        JOIN platform_users u ON u.id=s.user_id
                        WHERE s.token_hash=:hash AND s.expires_at>now() AND u.is_active"""
         else:
@@ -109,6 +109,20 @@ async def authenticate(request: Request):
         )
         if not row:
             raise HTTPException(401, "Sessão expirada ou acesso suspenso.")
+        if platform and row["role"] == "nexus_staff":
+            allowed = request.url.path in {
+                "/api/v1/auth/me",
+                "/api/v1/auth/logout",
+                "/api/v1/auth/password",
+                "/api/v1/audit",
+            } or re.fullmatch(
+                r"/api/v1/nexus/companies(?:/[0-9a-f-]+(?:/details)?)?",
+                request.url.path,
+            )
+            if not allowed:
+                raise HTTPException(
+                    403, "Seu perfil Nexus não permite acessar esta área."
+                )
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             check_origin(request)
             csrf = request.headers.get("x-csrf-token", "")
@@ -153,6 +167,14 @@ Auth = Annotated[Actor, Depends(authenticate, scope="function")]
 
 
 def nexus(actor: Actor):
+    nexus_team(actor)
+    if actor.user["role"] != "nexus":
+        raise HTTPException(
+            403, "Esta operação exige administrador Nexus com acesso completo."
+        )
+
+
+def nexus_team(actor: Actor):
     if not actor.platform:
         raise HTTPException(403, "Esta operação é exclusiva da Nexus.")
 
