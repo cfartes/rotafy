@@ -1,5 +1,11 @@
 # WhatsApp OpenWA e configuração Resend
 
+## Modelos financeiros com QR Code
+
+Novas notificações financeiras usam um envelope `billing-v1` criptografado na fila, contendo texto, HTML e o BR Code estático. O QR PNG é gerado localmente; dados Pix não são enviados a um gerador externo. O Resend recebe HTML com `cid:pix-rotafy` e attachment base64 com `content_id`, conforme [documentação de imagens incorporadas](https://resend.com/changelog/embed-images-using-cid). O OpenWA recebe uma única chamada `messages/send-image` com base64, mimetype, filename e caption; resultados ambíguos não são reenviados. Legendas longas são resumidas, preservando o total e o prazo. Filas antigas em texto continuam compatíveis. Nenhum envio antigo é reescrito.
+
+Cobranças definitivas e bloqueios incluem QR sem valor; aviso prévio e pagamento confirmado não o incluem. O teste usa o mesmo modelo da cobrança definitiva com dados ilustrativos e NÃO PAGAR. As novas imagens exigem a dependência `qrcode` da imagem backend atualizada. Não há alteração no banco.
+
 Entrega de 09/10/2026. O painel **Nexus → Configurações**, exclusivo do superadmin, permite informar API_KEY do OpenWA, API_KEY do Resend e e-mail remetente, além de associar uma sessão WhatsApp a cada empresa. Não é preciso alterar arquivos de produção ou reiniciar serviços para trocar essas credenciais.
 
 ## Configuração

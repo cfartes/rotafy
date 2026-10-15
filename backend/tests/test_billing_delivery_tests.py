@@ -69,6 +69,8 @@ def test_saved_billing_channel_and_no_invoice_when_disabled(
     def email(settings, item):
         assert settings.email_from == "acesso@example.com"
         assert "TESTE" in item["body"] and "financeiro@example.com" in item["body"]
+        assert "cid:pix-rotafy" in item["html"]
+        assert item["attachments"][0]["content_id"] == "pix-rotafy"
         sent.append(item["recipient"])
         return "accepted"
 
@@ -76,7 +78,11 @@ def test_saved_billing_channel_and_no_invoice_when_disabled(
         if "/contacts/check/" in path:
             return {"exists": True, "whatsappId": "123456789@lid"}
         if payload:
-            assert payload["chatId"] == "123456789@lid" and "TESTE" in payload["text"]
+            assert (
+                payload["chatId"] == "123456789@lid" and "TESTE" in payload["caption"]
+            )
+            assert path.endswith("/messages/send-image")
+            assert payload["mimetype"] == "image/png" and payload["base64"]
             sent.append(payload["chatId"])
             return {"id": "accepted"}
         return {"status": "READY"}

@@ -57,16 +57,33 @@ async def test_delivery(data: TestDelivery, actor: Auth):
             raise HTTPException(
                 422, "Configure a sessão WhatsApp de cobrança da Nexus antes do teste."
             )
-    body = (
-        "Nexus Rotafy — TESTE DE COBRANÇA\n"
-        "Esta mensagem verifica o canal de cobrança mensal. Não é uma cobrança e não deve ser paga.\n"
-        f"Favorecido configurado: {config['receiver_name']}\nChave Pix configurada: {config['pix_key']}"
+    from datetime import timedelta
+
+    from app.billing.collections import payment_deadline
+    from app.billing.message_templates import encode_notice
+
+    due, _ = payment_deadline(utc_now())
+    body = encode_notice(
+        {
+            "id": data.operation_key,
+            "starts_at": utc_now() - timedelta(days=30),
+            "ends_at": utc_now(),
+            "plan_name": "Plano demonstrativo",
+            "price_cents": 9990,
+            "included_trips": 30,
+            "used_trips": 32,
+            "extra_trips": 2,
+            "extra_trip_cents": 3000,
+            "total_cents": 15990,
+            "due_on": due,
+            "receiver_name": config["receiver_name"],
+            "pix_key": config["pix_key"],
+            "pix_copy_paste": config["pix_copy_paste"],
+        },
+        {"trade_name": "Empresa de demonstração"},
+        "invoice",
+        demo=True,
     )
-    if config["pix_copy_paste"]:
-        body += (
-            "\nPix Copia e Cola configurado (somente conferência):\n"
-            + config["pix_copy_paste"]
-        )
     try:
         protected = encrypt(body)
     except (OSError, ValueError):

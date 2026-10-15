@@ -75,6 +75,8 @@ O pareamento por QR Code continua necessário no serviço de mensagens. Duplicid
 
 Em **Configurações → Cobrança mensal**, utilize **Testar envio de cobrança**. Salve primeiro o remetente e a sessão WhatsApp de cobrança. Informe seu e-mail ou telefone de teste e clique no botão do canal desejado. O teste utiliza a configuração salva e funciona mesmo com a cobrança automática desativada. A mensagem é identificada como teste e não cria fatura, altera assinatura ou solicita pagamento.
 
+O teste utiliza o mesmo modelo da cobrança definitiva, com valores ilustrativos e aviso **TESTE DE COBRANÇA — NÃO PAGAR**. O e-mail apresenta um resumo organizado do ciclo e dos valores, com QR Code incorporado. No WhatsApp, o QR Code é enviado como imagem com o resumo na legenda. O Copia e Cola acompanha o e-mail e a legenda quando couber.
+
 Acompanhe o resultado na própria tela: aguardando, enviando, aceito pelo serviço, falha ou envio incerto. Aceito não confirma entrega ou leitura. Em envio incerto, confira o recebimento antes de solicitar outro teste. Testes que não forem processados em 15 minutos são descartados. Esses envios também aparecem no histórico financeiro como **Teste de cobrança**.
 
 Envie um convite a um colaborador autorizado e confira o recebimento. Consulte o histórico antes de reenviar. A aceitação pelo serviço de e-mail não garante entrega na caixa de entrada: confira também o spam e o destinatário.
@@ -118,7 +120,7 @@ Acesse `/ajuda` para o manual da equipe e a apresentação comercial. A ajuda do
 4. Confira o e-mail remetente e os canais de comunicação.
 5. Marque **Ativar avisos e cobranças mensais automáticas** e salve.
 
-A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix ou o Pix Copia e Cola não reescreve cobranças já fechadas. O Copia e Cola é validado para conferir o formato, a integridade, a correspondência da chave e a ausência de valor fixo. Nas novas cobranças definitivas, o código aparece no demonstrativo e no texto das mensagens de e-mail e WhatsApp. O cliente precisa informar o valor total no banco; não é enviada uma imagem de QR Code por esse campo.
+A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix ou o Pix Copia e Cola não reescreve cobranças já fechadas. O Copia e Cola é validado para conferir o formato, a integridade, a correspondência da chave e a ausência de valor fixo. Novas cobranças definitivas e avisos de bloqueio incluem QR Code no e-mail e uma imagem com legenda no WhatsApp. Sem Copia e Cola, o QR é gerado a partir da chave e do favorecido. O cliente precisa informar o valor total no banco. Avisos prévios e confirmações de pagamento não incluem QR Code para pagamento.
 
 ### Calendário e mensagens automáticas
 

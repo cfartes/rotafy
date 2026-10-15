@@ -126,7 +126,8 @@ function BillingDeliveryTests() {
       <p>
         Utiliza a configuração salva de e-mail e o WhatsApp de cobrança da
         Nexus, mesmo com a cobrança automática desativada. Salve as alterações
-        antes de testar. Não cria cobrança nem altera assinaturas.
+        antes de testar. Usa o modelo real com valores ilustrativos, QR Code e
+        aviso de NÃO PAGAR. Não cria cobrança nem altera assinaturas.
       </p>
       <div className="pix-preview-field">
         <Field label="E-mail para teste de cobrança">
@@ -399,8 +400,9 @@ export function CollectionSettings() {
         <p className="muted">
           Utilize um código estático, sem valor, da mesma chave Pix acima. O
           código será incluído no e-mail, no WhatsApp e no demonstrativo das
-          novas cobranças. Este campo não envia imagem de QR Code; o cliente
-          pode copiar o código e informar o valor no banco.
+          novas cobranças. A cobrança definitiva também envia o QR Code no
+          e-mail e como imagem no WhatsApp. Sem Copia e Cola, o QR é gerado a
+          partir da chave e do favorecido. O cliente informa o total no banco.
         </p>
         <Field label="Nome do favorecido do Pix">
           <input

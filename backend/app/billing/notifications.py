@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy import text
 
 from app.billing.calendar import utc_now
+from app.billing.message_templates import decode_notice, qr_image
 from app.config import Settings
 from app.email_worker import send_email
 from app.integration_secrets import decrypt
@@ -144,6 +145,8 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
             attempts=attempts+1,error_code=NULL WHERE id=:id"""),
             {"id": item["id"]},
         )
+    message = decode_notice(body)
+    image = qr_image(message["pix"]) if message["pix"] else None
     status, error = "sent", None
     try:
         if item["channel"] == "email":
@@ -152,7 +155,22 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
                 settings,
                 {
                     **item,
-                    "body": body,
+                    "body": message["text"],
+                    **({"html": message["html"]} if message.get("html") else {}),
+                    **(
+                        {
+                            "attachments": [
+                                {
+                                    "filename": "pix-rotafy.png",
+                                    "content": image,
+                                    "content_type": "image/png",
+                                    "content_id": "pix-rotafy",
+                                }
+                            ]
+                        }
+                        if image
+                        else {}
+                    ),
                     "subject": {
                         "preview": "Nexus Rotafy — aviso de fechamento do ciclo",
                         "invoice": "Nexus Rotafy — cobrança mensal por Pix",
@@ -166,8 +184,21 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
             result = await asyncio.to_thread(
                 whatsapp,
                 key,
-                f"/sessions/{session}/messages/send-text",
-                {"chatId": recipient, "text": body, "linkPreview": False},
+                f"/sessions/{session}/messages/"
+                + ("send-image" if image else "send-text"),
+                {
+                    "chatId": recipient,
+                    "base64": image,
+                    "mimetype": "image/png",
+                    "filename": "pix-rotafy.png",
+                    "caption": message["whatsapp"],
+                }
+                if image
+                else {
+                    "chatId": recipient,
+                    "text": message["whatsapp"],
+                    "linkPreview": False,
+                },
             )
             data = result.get("data", result) if isinstance(result, dict) else {}
             if (

@@ -77,30 +77,9 @@ async def notify(db, invoice, kind):
         .mappings()
         .one()
     )
-    labels = {
-        "preview": "Aviso de fechamento — valor parcial, sujeito a alteração",
-        "invoice": "Cobrança mensal",
-        "blocked": "Novas operações bloqueadas por falta de confirmação do Pix",
-        "paid": "Pagamento confirmado — restrição financeira desta cobrança removida",
-    }
-    body = (
-        f"Nexus Rotafy — {labels[kind]}\nEmpresa: {company['trade_name']}\n"
-        f"Plano: {invoice['plan_name']}\nCiclo: {invoice['starts_at'].astimezone(SAO_PAULO):%d/%m/%Y} "
-        f"até {invoice['ends_at'].astimezone(SAO_PAULO):%d/%m/%Y} (fim exclusivo)\n"
-        f"Mensalidade: {money(invoice['price_cents'])}\nFranquia: {invoice['included_trips']}\n"
-        f"Utilizadas: {invoice['used_trips']}\nExcedentes: {invoice['extra_trips']} x {money(invoice['extra_trip_cents'])}\n"
-        f"Total: {money(invoice['total_cents'])}\nConfirmação até: {invoice['due_on']:%d/%m/%Y}\n"
-        f"Pix: {invoice['pix_key']}\nFavorecido: {invoice['receiver_name']}\n"
-        "A baixa do pagamento é realizada pela equipe Nexus. Consulte Financeiro no painel da empresa.\n"
-        f"Referência: {invoice['id']}"
-    )
-    if kind == "preview":
-        body += "\nEste é apenas um aviso: aguarde a cobrança definitiva no fechamento antes de pagar."
-    if invoice.get("pix_copy_paste") and kind in {"invoice", "blocked"}:
-        body += (
-            "\n\nPix Copia e Cola (informe o valor total acima no banco):\n"
-            + invoice["pix_copy_paste"]
-        )
+    from app.billing.message_templates import encode_notice
+
+    body = encode_notice(invoice, company, kind)
     recipients = [
         ("email", value)
         for value in (

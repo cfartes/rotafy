@@ -28,6 +28,10 @@ def send_email(settings, item):
         "subject": item["subject"],
         "text": item["body"],
     }
+    if item.get("html"):
+        payload["html"] = item["html"]
+    if item.get("attachments"):
+        payload["attachments"] = item["attachments"]
     request = Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode(),
