@@ -88,16 +88,17 @@ O atualizador também reconhece a instalação ativa em `/opt/nexus-rotafy` com 
 
 Entre na pasta da instalação antes de executar o script. A pasta atual é utilizada quando contém Git e `.env.production`; caso contrário, o script busca uma única instalação conhecida. Em caso de ambiguidade, informe `ROTAFY_INSTALL_DIR` explicitamente.
 
-Para atualizar a instalação independente existente, execute na VPS:
+Para atualizar a instalação independente existente, utilize o checkout Git da VPS. Isso também funciona com repositório privado, desde que o Git do servidor esteja autenticado. Execute os comandos encadeados para interromper em caso de falha:
 
 ```sh
-curl --fail --show-error --location \
-  https://raw.githubusercontent.com/cfartes/rotafy/main/scripts/update_vps.sh \
-  --output /tmp/update-rotafy-vps.sh
-bash /tmp/update-rotafy-vps.sh
+cd /opt/rotafy-tech &&
+git pull --ff-only origin main &&
+bash scripts/update_vps.sh
 ```
 
 O atualizador exige o checkout, um ambiente correspondente ao projeto identificado e o volume de banco existente. Não cria uma instalação nova nem transfere dados entre projetos. Obtém a versão mais recente de `main`, compila os serviços, faz backup, aplica eventuais migrações e verifica os serviços e o HTTPS. Preserva credenciais, banco e chave de integrações. Se já tiver o script atualizado no checkout, use `bash scripts/update_vps.sh` dentro da instalação.
+
+Se `raw.githubusercontent.com` retornar 404, não execute uma cópia antiga em `/tmp`. Use o procedimento Git acima. Em instalações que continuam em `/opt/nexus-rotafy`, substitua somente a pasta no comando `cd`; o atualizador confere o projeto e o volume antes de prosseguir.
 
 O instalador pode clonar um diretório novo; o atualizador exige uma instalação existente. Ambos atualizam `main` do remoto correto com `pull --ff-only`, preservando configurações ignoradas. Bloqueiam outro remoto, outra branch e alterações locais. Outro diretório pode ser definido por `ROTAFY_INSTALL_DIR=/opt/rotafy`.
 
