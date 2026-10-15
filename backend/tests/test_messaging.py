@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 from app.integration_secrets import decrypt
-from app.integration_settings import email_settings
+from app.integration_settings import email_settings, session_phone
 from app.whatsapp_worker import process_company
 from conftest import PLATFORM_URL, login
 from cryptography.fernet import Fernet
@@ -12,6 +12,27 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from test_operations import create, prepare
 from test_reservations import family, reserve
+
+
+@pytest.mark.parametrize(
+    "data,expected",
+    [
+        ({"me": {"id": "5547999999999:4@s.whatsapp.net"}}, "+5547999999999"),
+        ({"phoneNumber": "12025550123"}, "+12025550123"),
+        ({"phone": "(47) 99999-9999"}, "+5547999999999"),
+        ({"me": {"id": "123456789012345@lid"}}, None),
+        (
+            {
+                "id": "11111111-1111-4111-8111-111111111111",
+                "name": "5547999999999",
+                "contacts": [{"phone": "5547999999999"}],
+            },
+            None,
+        ),
+    ],
+)
+def test_session_phone_reads_only_account_phone_fields(data, expected):
+    assert session_phone(data) == expected
 
 
 @pytest.fixture
@@ -41,6 +62,95 @@ def configure(client, seeded):
     assert response.status_code == 200, response.text
     login(client)
     return session
+
+
+@pytest.mark.parametrize("details", [False, True])
+def test_find_session_by_phone_proposes_without_saving(
+    client, seeded, protected_key, monkeypatch, details
+):
+    previous = configure(client, seeded)
+    login(client, email="nexus@example.com", nexus=True)
+    proposed = str(uuid4())
+
+    def provider(key, path):
+        assert key == "owa_placeholder_secret"
+        if path == "/sessions":
+            item = {
+                "id": proposed,
+                "name": "Número de envio",
+                "status": "CONNECTED",
+                "qr": "private",
+            }
+            if not details:
+                item["phoneNumber"] = "5547999999999"
+            return {"data": [item]}
+        assert path == f"/sessions/{proposed}"
+        return {
+            "data": {
+                "me": {"id": "5547999999999:12@s.whatsapp.net"},
+                "status": "READY",
+                "apiKey": "private",
+            }
+        }
+
+    monkeypatch.setattr("app.integration_settings.openwa_request", provider)
+    response = client.post(
+        f"/api/v1/nexus/integrations/companies/{seeded['a']}/find-session",
+        json={"phone": "(47) 99999-9999"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["id"] == proposed
+    assert response.json()["phone"] == "+5547999999999"
+    assert set(response.json()) == {"id", "name", "status", "phone"}
+    companies = client.get("/api/v1/nexus/integrations/companies").json()
+    assert (
+        next(c for c in companies if c["id"] == str(seeded["a"]))["session_id"]
+        == previous
+    )
+    login(client)
+    assert (
+        client.post(
+            f"/api/v1/nexus/integrations/companies/{seeded['a']}/find-session",
+            json={"phone": "47999999999"},
+        ).status_code
+        == 403
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario,expected",
+    [
+        ("shared", 409),
+        ("duplicate", 409),
+        ("missing", 404),
+        ("unknown", 422),
+        ("disconnected", 404),
+    ],
+)
+def test_phone_lookup_blocks_unavailable_ambiguous_or_shared_sessions(
+    client, seeded, protected_key, monkeypatch, scenario, expected
+):
+    session = configure(client, seeded)
+    login(client, email="nexus@example.com", nexus=True)
+    items = [{"id": session, "status": "READY", "phone": "+5547999999999"}]
+    if scenario == "duplicate":
+        items.append({"id": str(uuid4()), "status": "READY", "phone": "+5547999999999"})
+    elif scenario == "missing":
+        items = []
+    elif scenario == "unknown":
+        items = [{"id": session, "status": "READY"}]
+    elif scenario == "disconnected":
+        items[0]["status"] = "DISCONNECTED"
+    monkeypatch.setattr(
+        "app.integration_settings.openwa_request",
+        lambda key, path: items if path == "/sessions" else {},
+    )
+    company = seeded["b"] if scenario == "shared" else seeded["a"]
+    response = client.post(
+        f"/api/v1/nexus/integrations/companies/{company}/find-session",
+        json={"phone": "+5547999999999"},
+    )
+    assert response.status_code == expected, response.text
 
 
 def queued(client, seeded):

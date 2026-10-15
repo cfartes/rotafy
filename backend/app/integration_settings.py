@@ -14,7 +14,7 @@ from sqlalchemy import text
 
 from app.identity import Auth, audit, nexus, scope
 from app.integration_secrets import decrypt, encrypt
-from app.schemas import Input
+from app.schemas import CompanyContact, Input
 
 OPENWA_BASE = "https://openwa.187-77-58-10.sslip.io/api"
 router = APIRouter(
@@ -34,6 +34,49 @@ class ConfigInput(Input):
 class SessionInput(Input):
     session_id: UUID
     enabled: bool = True
+
+
+class SessionLookupInput(Input):
+    phone: str = Field(min_length=8, max_length=50)
+
+
+def session_phone(item, depth=0):
+    """Read only account identity fields; never infer numbers from session names/IDs."""
+    if not isinstance(item, dict) or depth > 2:
+        return None
+    for key in (
+        "phone",
+        "phoneNumber",
+        "phone_number",
+        "number",
+        "user",
+        "_serialized",
+        "id",
+    ):
+        value = item.get(key)
+        if not isinstance(value, str):
+            continue
+        if "@" in value:
+            value, suffix = value.split("@", 1)
+            if suffix not in ("c.us", "s.whatsapp.net"):
+                continue
+            value = value.split(":", 1)[0]
+        elif key in ("id", "_serialized"):
+            continue
+        value = value.strip()
+        options = ["+" + value, value] if value.isdigit() else [value]
+        for option in options:
+            try:
+                normalized = CompanyContact.validate_contact(option)
+                if normalized:
+                    return normalized
+            except ValueError:
+                pass
+    for key in ("me", "wid", "account", "data", "session"):
+        result = session_phone(item.get(key), depth + 1)
+        if result:
+            return result
+    return None
 
 
 async def runtime_settings(db, settings):
@@ -222,7 +265,109 @@ async def sessions(actor: Auth):
                 "status": str(item.get("status", "UNKNOWN"))[:30],
             }
         )
+        phone = session_phone(item)
+        if phone:
+            sanitized[-1]["phone"] = phone
     return sanitized
+
+
+@router.post("/companies/{company_id}/find-session")
+async def find_session(company_id: UUID, data: SessionLookupInput, actor: Auth):
+    nexus(actor)
+    if not await actor.db.scalar(
+        text("SELECT 1 FROM companies WHERE id=:id"), {"id": company_id}
+    ):
+        raise HTTPException(404, "Empresa não encontrada.")
+    try:
+        phone = CompanyContact.validate_contact(data.phone)
+        if not phone:
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            422, "Informe o WhatsApp de envio da empresa com DDD ou + e código do país."
+        ) from None
+
+    async def discover():
+        candidates = await sessions(actor)
+        candidates = [
+            s for s in candidates if s["status"].upper() in ("READY", "CONNECTED")
+        ]
+        if len(candidates) > 50:
+            raise HTTPException(
+                422, "Há muitas sessões. Selecione a sessão manualmente."
+            )
+        key = await openwa_key(actor.db)
+        limit = asyncio.Semaphore(4)
+
+        async def detail(session):
+            if session.get("phone"):
+                return session
+            async with limit:
+                try:
+                    result = await asyncio.to_thread(
+                        openwa_request, key, f"/sessions/{session['id']}"
+                    )
+                    body = (
+                        result.get("data", result) if isinstance(result, dict) else {}
+                    )
+                    if isinstance(body, dict) and isinstance(body.get("status"), str):
+                        session["status"] = body["status"][:30]
+                    detected = session_phone(result)
+                    if detected:
+                        session["phone"] = detected
+                    return session
+                except (HTTPError, URLError, OSError, ValueError):
+                    raise HTTPException(
+                        502,
+                        "Não foi possível conferir todas as sessões. Tente novamente.",
+                    ) from None
+
+        return await asyncio.gather(*(detail(s) for s in candidates))
+
+    try:
+        candidates = await asyncio.wait_for(discover(), timeout=15)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            504, "A consulta ao WhatsApp demorou demais. Tente novamente."
+        ) from None
+    candidates = [
+        s for s in candidates if s["status"].upper() in ("READY", "CONNECTED")
+    ]
+    matches = [s for s in candidates if s.get("phone") == phone]
+    if len(matches) > 1:
+        raise HTTPException(
+            409,
+            "Mais de uma sessão conectada usa esse telefone. Selecione a sessão manualmente.",
+        )
+    if not matches:
+        if any(not s.get("phone") for s in candidates):
+            raise HTTPException(
+                422,
+                "O OpenWA não informou o telefone de todas as sessões. Confira o pareamento ou selecione o ID manualmente.",
+            )
+        raise HTTPException(
+            404,
+            "Nenhuma sessão conectada encontrada para esse telefone. Confira o número e o pareamento por QR Code.",
+        )
+    if any(not s.get("phone") for s in candidates):
+        raise HTTPException(
+            422,
+            "Há sessões sem telefone identificado. Confira-as antes de escolher automaticamente.",
+        )
+    selected = matches[0]
+    for other in (
+        await actor.db.execute(
+            text("SELECT id FROM companies WHERE id<>:id"), {"id": company_id}
+        )
+    ).scalars():
+        await scope(actor.db, other)
+        if await actor.db.scalar(
+            text("SELECT 1 FROM company_whatsapp WHERE session_id=:session"),
+            {"session": selected["id"]},
+        ):
+            raise HTTPException(409, "Esta sessão já está associada a outra empresa.")
+    await scope(actor.db, company_id)
+    return selected
 
 
 @router.get("/companies")
@@ -232,7 +377,7 @@ async def company_sessions(actor: Auth):
         (
             await actor.db.execute(
                 text(
-                    "SELECT id,trade_name,slug,is_active FROM companies ORDER BY trade_name"
+                    "SELECT id,trade_name,slug,is_active,contact_phone FROM companies ORDER BY trade_name"
                 )
             )
         )

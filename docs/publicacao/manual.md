@@ -508,6 +508,8 @@ A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bil
 
 ### Conferir os canais
 
+Na configuração do WhatsApp de cada empresa, confira o **WhatsApp de envio** e utilize **Buscar sessão pelo telefone**. O número de contato da empresa é sugerido e pode ser ajustado para o número que realmente enviará as mensagens. Confira a sessão encontrada e clique em **Salvar sessão** para confirmar; a busca não salva nem habilita os envios. Se não houver correspondência, confira a conexão do número ou selecione a sessão manualmente.
+
 1. Confirme com a Nexus o número da empresa e o e-mail remetente.
 2. Envie um convite para um colaborador autorizado.
 3. Confira o recebimento no canal selecionado.

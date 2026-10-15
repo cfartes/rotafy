@@ -7,7 +7,7 @@ Entrega de 09/10/2026. O painel **Nexus → Configurações**, exclusivo do supe
 1. Publique a atualização com `bash scripts/install_vps.sh`. A migração `0019_messaging` cria as configurações e a fila, preservando os dados existentes.
 2. Entre em `/nexus` e abra **Configurações**. Salve a chave OpenWA e, para e-mails, a chave Resend e o endereço remetente de um domínio verificado no Resend.
 3. No painel OpenWA, crie uma sessão por empresa e conecte seu número lendo o QR. O pareamento permanece no OpenWA.
-4. Consulte as sessões pelo botão do Rotafy ou informe o UUID. Associe a sessão à empresa correta e marque **Habilitar envios**. Uma sessão não pode ser compartilhada entre empresas.
+4. Em cada empresa, confira **WhatsApp de envio** e clique em **Buscar sessão pelo telefone**. O contato cadastrado é sugerido, mas o número de envio pode ser outro. A busca normaliza DDI/DDD e exige uma única sessão `READY`/`CONNECTED`, com telefone identificado e sem vínculo com outra empresa. Confira nome, número, estado e ID, marque **Habilitar envios** e clique em **Salvar sessão**. A busca não salva nem ativa o vínculo. A consulta manual e o preenchimento do UUID continuam disponíveis.
 5. Homologue uma reserva com um telefone de teste autorizado e confira a mensagem e o histórico no Rotafy. A documentação fornecida descreve os endpoints, mas não detalha todos os formatos de resposta; resultados não reconhecidos são exibidos como incertos para revisão.
 
 O gateway é fixo em `https://openwa.187-77-58-10.sslip.io/api`. A autenticação utiliza `X-API-Key`; não utiliza os usuários e senhas do painel. Credenciais do documento não são copiadas para o projeto. As chaves nunca são devolvidas pelo GET de configuração. Campos de chave vazios mantêm os valores salvos; as opções de remoção desabilitam a respectiva integração. O controle de versão impede sobrescrever uma configuração alterada em outra sessão.
@@ -36,6 +36,8 @@ Eventos repetidos não geram a mesma notificação novamente. Confirmações obs
 O OpenWA não documenta uma chave de idempotência para envio. Por isso, timeout, interrupção durante POST, erro 5xx ou resposta não reconhecida não são repetidos automaticamente: ficam **incertos**. Confira no OpenWA antes de reenviar manualmente. HTTP 429 é reagendado com intervalo de um minuto, até oito tentativas; outros 4xx são falhas. Falhas na consulta de estado não enviam mensagem. Conteúdos pendentes são cifrados e descartados após dois dias; após conclusão, falha ou incerteza o corpo é removido, preservando o histórico operacional.
 
 ## Proteção e operação
+
+A busca utiliza os telefones retornados pela listagem de sessões e, se necessário, seus detalhes. Não interpreta nomes de sessões, UUIDs ou identificadores `@lid` como números. Se o provedor omitir o telefone, houver ambiguidade, falha de consulta ou mais de 50 sessões conectadas, a busca automática é bloqueada com orientação para conferência manual. O QR de pareamento continua sendo lido no painel do provedor. Não há migração de banco para essa funcionalidade.
 
 As chaves e corpos pendentes utilizam Fernet com criptografia autenticada. A chave local fica fora do banco, em `/run/rotafy/integrations.key`, no volume Docker persistente `integration_keys`, criado pelo serviço `integration-secrets`. API e workers recebem esse volume somente para leitura. A inicialização preserva a chave em atualizações. Não remova o volume nem gere uma chave substituta para uma base já cifrada.
 

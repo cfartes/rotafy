@@ -11,7 +11,7 @@ type Configuration = {
   resend_key_configured: boolean;
   email_from: string;
 };
-type Session = { id: string; name: string; status: string };
+type Session = { id: string; name: string; status: string; phone?: string };
 type CompanySession = {
   id: string;
   trade_name: string;
@@ -19,6 +19,7 @@ type CompanySession = {
   is_active: boolean;
   session_id: string | null;
   enabled: boolean;
+  contact_phone?: string | null;
 };
 
 function CompanyBinding({
@@ -35,6 +36,34 @@ function CompanyBinding({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [phone, setPhone] = useState(company.contact_phone || "");
+  const [searching, setSearching] = useState(false);
+  const [found, setFound] = useState<Session | null>(null);
+  async function findSession() {
+    setSearching(true);
+    setError("");
+    setSaved(false);
+    setFound(null);
+    try {
+      const result = await api<Session>(
+        `/nexus/integrations/companies/${company.id}/find-session`,
+        {
+          method: "POST",
+          body: JSON.stringify({ phone }),
+        },
+      );
+      setSession(result.id);
+      setFound(result);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível localizar a sessão.",
+      );
+    } finally {
+      setSearching(false);
+    }
+  }
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -63,12 +92,49 @@ function CompanyBinding({
         {company.slug}
         {!company.is_active && " · empresa suspensa"}
       </p>
+      <Field label={`WhatsApp de envio de ${company.trade_name}`}>
+        <input
+          type="tel"
+          value={phone}
+          maxLength={50}
+          disabled={searching || busy}
+          placeholder="+55 47 99999-9999"
+          onChange={(e) => {
+            setPhone(e.target.value);
+            if (found) setSession(company.session_id || "");
+            setFound(null);
+          }}
+        />
+      </Field>
+      <small className="muted">
+        Confira o número conectado que enviará as mensagens. O telefone de
+        contato da empresa é sugerido e pode ser diferente do número de envio.
+        Use + e DDI para números internacionais.
+      </small>
+      <button
+        type="button"
+        className="button secondary"
+        disabled={searching || busy || !phone.trim()}
+        onClick={() => void findSession()}
+      >
+        {searching
+          ? "Buscando sessão…"
+          : `Buscar sessão pelo telefone de ${company.trade_name}`}
+      </button>
+      {found && (
+        <p role="status">
+          Sessão encontrada: {found.name} · {found.phone} · {found.status}.
+          Confira o ID e clique em Salvar sessão para confirmar o vínculo.
+        </p>
+      )}
       {sessions.length > 0 && (
         <Field label={`Sessão OpenWA de ${company.trade_name}`}>
           <select
+            disabled={searching || busy}
             value={session}
             onChange={(e) => {
               setSession(e.target.value);
+              setFound(null);
               setSaved(false);
             }}
           >
@@ -87,11 +153,13 @@ function CompanyBinding({
       <Field label={`ID da sessão de ${company.trade_name}`}>
         <input
           required
+          disabled={searching || busy}
           value={session}
           placeholder="UUID da sessão conectada no OpenWA"
           pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
           onChange={(e) => {
             setSession(e.target.value.trim());
+            setFound(null);
             setSaved(false);
           }}
         />
@@ -109,7 +177,7 @@ function CompanyBinding({
       </label>
       {error && <Alert>{error}</Alert>}
       {saved && <p role="status">Sessão da empresa salva.</p>}
-      <button className="button secondary" disabled={busy}>
+      <button className="button secondary" disabled={busy || searching}>
         Salvar sessão de {company.trade_name}
       </button>
     </form>

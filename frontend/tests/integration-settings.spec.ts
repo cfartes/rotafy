@@ -134,3 +134,97 @@ test("company users do not see Nexus integration settings", async ({
     page.getByRole("button", { name: "Configurações", exact: true }),
   ).toHaveCount(0);
 });
+
+test("phone discovery fills the ID but requires explicit save", async ({
+  page,
+}) => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  let saved = 0;
+  let failed = false;
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [],
+      status = 200;
+    if (path === "/auth/me")
+      body = {
+        id: "nexus",
+        role: "nexus",
+        company_id: null,
+        full_name: "Nexus",
+        is_active: true,
+      };
+    else if (path === "/nexus/integrations")
+      body = {
+        version: 0,
+        openwa_key_configured: true,
+        resend_key_configured: false,
+        email_from: "",
+        openwa_base_url: "https://example.com",
+      };
+    else if (path === "/nexus/integrations/companies")
+      body = [
+        {
+          id: "company",
+          trade_name: "Agência A",
+          slug: "agencia",
+          is_active: true,
+          session_id: null,
+          enabled: false,
+          contact_phone: "+5547999999999",
+        },
+      ];
+    else if (path.endsWith("/find-session")) {
+      expect(route.request().postDataJSON()).toEqual({
+        phone: "+5547999999999",
+      });
+      if (failed) {
+        status = 409;
+        body = { detail: "Esta sessão já está associada a outra empresa." };
+      } else
+        body = {
+          id,
+          name: "Número da agência",
+          phone: "+5547999999999",
+          status: "CONNECTED",
+        };
+    } else if (path === "/nexus/integrations/companies/company") {
+      saved++;
+      body = {};
+    }
+    await route.fulfill({ status, json: body });
+  });
+  await page.goto("/nexus");
+  await page
+    .getByRole("button", { name: "Configurações", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("WhatsApp de envio de Agência A", { exact: true }),
+  ).toHaveValue("+5547999999999");
+  await page
+    .getByRole("button", {
+      name: "Buscar sessão pelo telefone de Agência A",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByLabel("ID da sessão de Agência A", { exact: true }),
+  ).toHaveValue(id);
+  await expect(page.getByRole("status")).toContainText("Sessão encontrada");
+  expect(saved).toBe(0);
+  await expect(
+    page.getByLabel("Habilitar envios para Agência A", { exact: true }),
+  ).not.toBeChecked();
+  await page
+    .getByRole("button", { name: "Salvar sessão de Agência A", exact: true })
+    .click();
+  await expect.poll(() => saved).toBe(1);
+  failed = true;
+  await page
+    .getByRole("button", {
+      name: "Buscar sessão pelo telefone de Agência A",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("outra empresa");
+  expect(saved).toBe(1);
+});
