@@ -7,12 +7,38 @@ from sqlalchemy import text
 
 from app.billing.calendar import utc_now
 from app.billing.collections import financially_blocked, notify
-from app.billing.pix import normalize_key, static_pix_key
+from app.billing.pix import key_payload, normalize_key, static_pix_key
 from app.identity import Auth, admin, audit
 from app.identity import nexus as require_nexus
 from app.schemas import Input
 
 router = APIRouter(prefix="/api/v1", tags=["Cobranças mensais"])
+
+
+class PixPreview(Input):
+    pix_key: str = Field(max_length=140)
+    receiver_name: str = Field(max_length=150)
+    pix_copy_paste: str = Field(default="", max_length=1024)
+    from_copy_paste: bool = False
+
+
+@router.post("/nexus/billing/pix-preview")
+async def pix_preview(data: PixPreview, actor: Auth):
+    require_nexus(actor)
+    try:
+        if data.from_copy_paste:
+            payload = data.pix_copy_paste.strip()
+            key = static_pix_key(payload)
+            if normalize_key(key) != normalize_key(data.pix_key):
+                raise ValueError(
+                    "O código Copia e Cola pertence a uma chave Pix diferente."
+                )
+        else:
+            payload = key_payload(data.pix_key, data.receiver_name)
+            key = static_pix_key(payload)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    return {"payload": payload, "key": key}
 
 
 class CollectionSettings(Input):

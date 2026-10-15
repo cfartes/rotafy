@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
+import QRCode from "qrcode";
 
 type Settings = {
   version: number;
@@ -62,6 +63,49 @@ const noticeErrors: Record<string, string> = {
 };
 
 export function CollectionSettings() {
+  const [preview, setPreview] = useState<{
+    image: string;
+    payload: string;
+    key: string;
+    source: string;
+  } | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  async function showPix(fromCopy: boolean) {
+    setPreviewBusy(true);
+    setError("");
+    try {
+      const result = await api<{ payload: string; key: string }>(
+        "/nexus/billing/pix-preview",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            pix_key: values.pix_key,
+            receiver_name: values.receiver_name,
+            pix_copy_paste: values.pix_copy_paste,
+            from_copy_paste: fromCopy,
+          }),
+        },
+      );
+      const image = await QRCode.toDataURL(result.payload, {
+        width: 360,
+        margin: 4,
+        errorCorrectionLevel: "M",
+      });
+      setPreview({
+        ...result,
+        image,
+        source: fromCopy ? "Pix Copia e Cola" : "Chave Pix",
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível gerar o QR Code.",
+      );
+    } finally {
+      setPreviewBusy(false);
+    }
+  }
   const cache = useQueryClient();
   const query = useQuery({
     queryKey: ["collection-settings"],
@@ -127,29 +171,86 @@ export function CollectionSettings() {
         Configure os dados que serão enviados às empresas. O recebimento do Pix
         precisa ser confirmado pelo superadmin em Financeiro e cobranças.
       </p>
-      <Field label="Chave Pix da Nexus">
-        <input
-          required={values.enabled}
-          maxLength={140}
-          value={values.pix_key}
-          onChange={(e) => {
-            setSaved(false);
-            setValues({ ...values, pix_key: e.target.value });
-          }}
-        />
-      </Field>
-      <Field label="Pix Copia e Cola sem valor definido (opcional)">
-        <textarea
-          rows={4}
-          maxLength={1024}
-          value={values.pix_copy_paste}
-          onChange={(e) => {
-            setSaved(false);
-            setValues({ ...values, pix_copy_paste: e.target.value });
-          }}
-          placeholder="Cole o código completo gerado pelo seu banco"
-        />
-      </Field>
+      <div className="pix-preview-field">
+        <Field label="Chave Pix da Nexus">
+          <input
+            required={values.enabled}
+            maxLength={140}
+            value={values.pix_key}
+            onChange={(e) => {
+              setSaved(false);
+              setValues({ ...values, pix_key: e.target.value });
+            }}
+          />
+        </Field>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={previewBusy || !values.pix_key.trim()}
+          onClick={() => void showPix(false)}
+        >
+          Ver QR Code da chave Pix
+        </button>
+      </div>
+      <div className="pix-preview-field">
+        <Field label="Pix Copia e Cola sem valor definido (opcional)">
+          <textarea
+            rows={4}
+            maxLength={1024}
+            value={values.pix_copy_paste}
+            onChange={(e) => {
+              setSaved(false);
+              setValues({ ...values, pix_copy_paste: e.target.value });
+            }}
+            placeholder="Cole o código completo gerado pelo seu banco"
+          />
+        </Field>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={previewBusy || !values.pix_copy_paste.trim()}
+          onClick={() => void showPix(true)}
+        >
+          Ver QR Code do Copia e Cola
+        </button>
+      </div>
+      {preview && (
+        <Modal
+          title={`QR Code · ${preview.source}`}
+          onClose={() => setPreview(null)}
+        >
+          <div className="modal-form">
+            <p>
+              Leia com o aplicativo do banco e confira a chave e o favorecido.
+              QR Code sem valor definido.
+            </p>
+            <img
+              src={preview.image}
+              alt="QR Code Pix para conferência"
+              width={360}
+              height={360}
+              style={{ maxWidth: "100%", height: "auto", alignSelf: "center" }}
+            />
+            <p>
+              Chave Pix: <strong>{preview.key}</strong>
+            </p>
+            <Field label="Pix Copia e Cola do QR Code">
+              <textarea rows={4} value={preview.payload} readOnly />
+            </Field>
+            <p className="muted">
+              A visualização usa os campos preenchidos, sem salvar alterações
+              nem consultar sua conta bancária.
+            </p>
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => setPreview(null)}
+            >
+              Fechar QR Code
+            </button>
+          </div>
+        </Modal>
+      )}
       <p className="muted">
         Utilize um código estático, sem valor, da mesma chave Pix acima. O
         código será incluído no e-mail, no WhatsApp e no demonstrativo das novas

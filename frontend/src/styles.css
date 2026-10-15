@@ -1195,3 +1195,20 @@ dialog.modal-wide {
     animation: none !important;
   }
 }
+.pix-preview-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+.pix-preview-field > button {
+  margin-top: 1.8rem;
+}
+@media (max-width: 640px) {
+  .pix-preview-field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pix-preview-field > button {
+    margin-top: 0;
+  }
+}

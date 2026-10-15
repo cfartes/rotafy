@@ -1,7 +1,7 @@
 import binascii
 
 import pytest
-from app.billing.pix import static_pix_key
+from app.billing.pix import key_payload, static_pix_key
 from conftest import login
 
 
@@ -34,6 +34,35 @@ def test_static_pix_format_amount_and_checksum():
     ]:
         with pytest.raises(ValueError):
             static_pix_key(invalid)
+
+
+def test_generated_key_payload_has_valid_checksum_and_no_amount():
+    code = key_payload("financeiro@example.com", "Nexus Viagens")
+    assert static_pix_key(code) == "financeiro@example.com"
+    assert "NEXUS VIAGENS" in code
+
+
+def test_pix_preview_uses_unsaved_fields_and_does_not_change_settings(client, seeded):
+    login(client, email="nexus@example.com", nexus=True)
+    before = client.get("/api/v1/nexus/billing/settings").json()
+    data = {"pix_key": "financeiro@example.com", "receiver_name": "Nexus"}
+    response = client.post("/api/v1/nexus/billing/pix-preview", json=data)
+    assert response.status_code == 200, response.text
+    assert static_pix_key(response.json()["payload"]) == data["pix_key"]
+    data.update(from_copy_paste=True, pix_copy_paste=payload())
+    assert (
+        client.post("/api/v1/nexus/billing/pix-preview", json=data).json()["payload"]
+        == payload()
+    )
+    data["pix_key"] = "outra@example.com"
+    assert (
+        client.post("/api/v1/nexus/billing/pix-preview", json=data).status_code == 422
+    )
+    assert client.get("/api/v1/nexus/billing/settings").json() == before
+    login(client)
+    assert (
+        client.post("/api/v1/nexus/billing/pix-preview", json=data).status_code == 403
+    )
 
 
 def test_pix_configuration_validated_and_legacy_save_preserves_code(client, seeded):

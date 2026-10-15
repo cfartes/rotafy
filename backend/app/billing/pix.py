@@ -2,6 +2,38 @@
 
 import binascii
 import re
+import unicodedata
+
+
+def key_payload(key, receiver):
+    """Create a static, amount-free BR Code for local preview."""
+    key = key.strip()
+    if not key or len(key.encode()) > 77 or any(ord(c) < 32 for c in key):
+        raise ValueError("Informe uma chave Pix válida para gerar o QR Code.")
+    name = (
+        unicodedata.normalize("NFKD", receiver)
+        .encode("ascii", "ignore")
+        .decode()
+        .upper()
+    )
+    name = re.sub(r"[^A-Z0-9 /.-]", "", name).strip()[:25]
+    if not name:
+        raise ValueError("Informe o nome do favorecido para gerar o QR Code.")
+
+    def tlv(tag, value):
+        return tag + f"{len(value.encode()):02d}" + value
+
+    account = tlv("00", "br.gov.bcb.pix") + tlv("01", key)
+    raw = (
+        "000201"
+        + tlv("26", account)
+        + "5204000053039865802BR"
+        + tlv("59", name)
+        + tlv("60", "BRASIL")
+        + tlv("62", "0503***")
+        + "6304"
+    )
+    return raw + f"{binascii.crc_hqx(raw.encode(), 0xFFFF):04X}"
 
 
 def fields(raw):

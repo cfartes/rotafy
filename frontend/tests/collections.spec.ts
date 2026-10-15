@@ -60,6 +60,12 @@ test("superadmin configura Pix e confirma manualmente a cobrança", async ({
       body = settings;
     }
     if (path === "/nexus/billing/invoices") body = [current];
+    if (path === "/nexus/billing/pix-preview")
+      body = {
+        key: "financeiro@example.com",
+        payload:
+          "00020126440014br.gov.bcb.pix0122financeiro@example.com5204000053039865802BR5905NEXUS6008BLUMENAU62070503***63041384",
+      };
     if (path.endsWith("/paid")) {
       payment = route.request().postDataJSON();
       current = {
@@ -86,6 +92,23 @@ test("superadmin configura Pix e confirma manualmente a cobrança", async ({
   await page
     .getByLabel("Pix Copia e Cola sem valor definido (opcional)")
     .fill(copy);
+  for (const name of [
+    "Ver QR Code da chave Pix",
+    "Ver QR Code do Copia e Cola",
+  ]) {
+    await page.getByRole("button", { name, exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(
+      dialog.getByRole("img", { name: "QR Code Pix para conferência" }),
+    ).toBeVisible();
+    await expect(dialog.getByLabel("Pix Copia e Cola do QR Code")).toHaveValue(
+      copy,
+    );
+    await dialog
+      .getByRole("button", { name: "Fechar QR Code", exact: true })
+      .click();
+    expect(saved).toBeUndefined();
+  }
   await page
     .getByLabel("ID da sessão WhatsApp de cobrança da Nexus")
     .fill("11111111-1111-4111-8111-111111111111");

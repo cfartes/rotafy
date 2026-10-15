@@ -36,7 +36,7 @@ export function Modal({
     >
       <header className="modal-header">
         <h2 id={titleId}>{title}</h2>
-        <button className="icon-button" aria-label="Fechar" onClick={onClose}>
+        <button type="button" className="icon-button" aria-label="Fechar" onClick={onClose}>
           <X size={20} />
         </button>
       </header>
