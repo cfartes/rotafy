@@ -7,10 +7,12 @@ import {
 } from "lucide-react";
 import "./documentation.css";
 
-export function Documentation() {
+export function Documentation({ nexus = false }: { nexus?: boolean }) {
+  const manual = nexus ? "manual-superadmin" : "manual";
+  const title = nexus ? "Manual do superadmin Nexus" : "Manual da empresa";
   return (
     <main className="documentation-page">
-      <a className="documentation-back" href="/">
+      <a className="documentation-back" href={nexus ? "/nexus" : "/"}>
         <ArrowLeft size={18} aria-hidden="true" />
         Voltar ao app
       </a>
@@ -25,36 +27,48 @@ export function Documentation() {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 2 · Atualizado em 09/10/2026</span>
+        <span>Edição 2026.10 · Revisão 3 · Atualizado em 15/10/2026</span>
       </header>
       <div className="documentation-grid">
         <section className="documentation-card" aria-labelledby="manual-title">
           <BookOpen size={32} aria-hidden="true" />
           <p className="eyebrow">CONSULTA E TREINAMENTO</p>
-          <h2 id="manual-title">Manual de utilização</h2>
+          <h2 id="manual-title">{title}</h2>
           <p>
-            26 capítulos com instruções por perfil, exemplos de pacotes,
-            operação Android, checklists e solução de problemas.
+            {nexus
+              ? "Empresas, planos, assinaturas, consumo, atividades e configurações de comunicação."
+              : "Instruções para a equipe: cadastros, vendas, operação Android, relatórios e solução de problemas."}
           </p>
-          <a className="button primary" href="/documentacao/manual.html">
+          <a className="button primary" href={`/documentacao/${manual}.html`}>
             Ler manual online
           </a>
           <div className="documentation-downloads">
-            <a href="/documentacao/manual.pdf" download="manual.pdf">
+            <a href={`/documentacao/${manual}.pdf`} download={`${manual}.pdf`}>
               <Download size={16} aria-hidden="true" />
               Baixar manual PDF
             </a>
-            <a href="/documentacao/manual.html" download="manual.html">
+            <a
+              href={`/documentacao/${manual}.html`}
+              download={`${manual}.html`}
+            >
               <FileText size={16} aria-hidden="true" />
               Baixar manual HTML
             </a>
           </div>
-          <ul>
-            <li>Empresa, equipe, frota, Rotas e viagens</li>
-            <li>Reservas, bilhete único, PAGO e mensagens</li>
-            <li>Embarque, offline, chegada e relatórios</li>
-            <li>Administração Nexus e configurações</li>
-          </ul>
+          {nexus ? (
+            <ul>
+              <li>Cadastro e gestão de empresas</li>
+              <li>Planos, assinaturas e consumo</li>
+              <li>Configurações de comunicação e atividades</li>
+            </ul>
+          ) : (
+            <ul>
+              <li>Empresa, equipe, frota, Rotas e viagens</li>
+              <li>Reservas, bilhete único, PAGO e mensagens</li>
+              <li>Embarque, offline, chegada e relatórios</li>
+              <li>Plano contratado e rotina da empresa</li>
+            </ul>
+          )}
         </section>
         <section
           className="documentation-card"

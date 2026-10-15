@@ -2,9 +2,9 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **09/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **15/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
-**Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. A administração da plataforma Nexus utiliza `/nexus`. O cadastro inicial de empresa utiliza `/cadastro`. A central de documentação utiliza `/ajuda`.
+**Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro inicial de empresa utiliza `/cadastro`. A central de documentação utiliza `/ajuda`.
 
 ### O fluxo de trabalho
 
@@ -25,7 +25,6 @@ Cada empresa tem seu espaço e seus usuários. Um profissional que atende duas e
 
 | Perfil | O que utiliza |
 | --- | --- |
-| Superadmin Nexus | Empresas, planos, assinaturas, consumo, configurações globais e associação de sessões WhatsApp. |
 | Administrador da empresa | Cadastros operacionais, vendas, relatórios, equipe, convites, identidade da empresa e consulta do próprio plano. |
 | Atendente | Cadastros operacionais, reservas, bilhetes e relatórios gerenciais da empresa. Não administra usuários nem os planos da plataforma. |
 | Motorista | Viagens e deslocamentos atribuídos; manifesto, leitura de QR, embarque, desembarque, saída e chegada. |
@@ -66,15 +65,13 @@ O administrador utiliza **Identidade da empresa** para ajustar os dados e a marc
 2. Informe o identificador da empresa, o e-mail cadastrado e a senha.
 3. Clique em **Acessar painel**. Os menus apresentados correspondem ao perfil do usuário.
 
-A Nexus entra em `/nexus` com sua própria conta. O superadmin não possui uma empresa operacional padrão: ele administra a plataforma. Para operar uma empresa, utilize um usuário cadastrado nela.
-
 ### Definir a senha pelo convite
 
 Abra o link recebido por e-mail ou WhatsApp, escolha a nova senha e confirme. O convite vale **24 horas** e só pode ser usado uma vez. Depois, entre com o e-mail cadastrado; o número de WhatsApp não substitui o e-mail de login.
 
 ### Esqueci minha senha
 
-Use **Esqueci minha senha** no login. Informe e-mail e identificador da empresa; no acesso Nexus, solicite pelo formulário correspondente. O link por e-mail vale **uma hora**. Por privacidade, a resposta pública não confirma se a conta existe.
+Use **Esqueci minha senha** no login. Informe e-mail e identificador da empresa. O link por e-mail vale **uma hora**. Por privacidade, a resposta pública não confirma se a conta existe.
 
 O administrador também pode gerar um link manual de recuperação para um colaborador, válido por **30 minutos**. A troca de senha encerra as sessões anteriores daquele usuário. Não compartilhe sua própria conta com outras pessoas.
 
@@ -477,38 +474,11 @@ Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, 
 
 Não há emissão automática de fatura, cobrança bancária, pró-rata ou reembolso financeiro. A Nexus administra a cobrança comercial com base no demonstrativo e nas condições contratadas.
 
-## 22. Administração Nexus: empresas e planos {#nexus}
-
-**Exclusivo do superadmin.** Entre em `/nexus`. Esta seção descreve os menus, sem divulgar credenciais da plataforma.
-
-### Empresas
-
-Cadastre ou edite dados comerciais, contato e perfil operacional. O CPF/CNPJ é obrigatório e validado. Crie o primeiro administrador e selecione o plano. Utilize suspender/ativar conforme o contrato, preservando os dados históricos.
-
-Na ação de gerenciamento do plano da empresa, confira a empresa selecionada e sua assinatura; não confunda o catálogo global de planos com o vínculo daquela empresa.
-
-### Planos e assinaturas
-
-1. Abra **Planos e assinaturas**.
-2. Configure Basic, Professional, Enterprise ou um plano adicional.
-3. Defina nome, franquia mensal, mensalidade e valor por unidade extra.
-4. Publique as condições e selecione a empresa em **Assinatura e consumo**.
-5. Vincule o plano e a data inicial ou programe a mudança para o próximo ciclo.
-6. Confira ciclos, consumo e demonstrativos por empresa.
-
-Alterar o catálogo não reescreve os valores históricos. Uma mudança agendada fixa a versão escolhida para o próximo ciclo. Arquivar um plano impede novas escolhas; contratos existentes preservam sua continuidade conforme as regras da assinatura.
-
-### Atividades
-
-Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.
-
-## 23. Comunicação da empresa {#configuracoes}
+## 22. Comunicação da empresa {#configuracoes}
 
 A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bilhetes. A Nexus orienta a ativação dos canais e do remetente dos e-mails de acesso.
 
 ### Conferir os canais
-
-Na configuração do WhatsApp de cada empresa, confira o **WhatsApp de envio** e utilize **Buscar sessão pelo telefone**. O número de contato da empresa é sugerido e pode ser ajustado para o número que realmente enviará as mensagens. Confira a sessão encontrada e clique em **Salvar sessão** para confirmar; a busca não salva nem habilita os envios. Se não houver correspondência, confira a conexão do número ou selecione a sessão manualmente.
 
 1. Confirme com a Nexus o número da empresa e o e-mail remetente.
 2. Envie um convite para um colaborador autorizado.
@@ -520,7 +490,7 @@ Na configuração do WhatsApp de cada empresa, confira o **WhatsApp de envio** e
 
 Confira o telefone do responsável antes de enviar o bilhete. Consulte o histórico antes de reenviar uma comunicação. Compartilhe cada link somente com a pessoa correta.
 
-## 24. Rotina por perfil {#rotina}
+## 23. Rotina por perfil {#rotina}
 
 ### Administrador da empresa
 
@@ -534,11 +504,7 @@ Selecione a viagem no menu **Vender bilhete**, cadastre os passageiros, confira 
 
 Consulte a agenda, confira veículo e deslocamento, prepare a lista de passageiros e registre os embarques. No destino, registre os desembarques, sincronize as ações e finalize o trecho.
 
-### Administração Nexus
-
-Gerencie empresas, planos e assinaturas. Acompanhe os registros de atividades e apoie as empresas no uso do sistema e dos canais de comunicação.
-
-## 25. Dúvidas frequentes e solução de problemas {#duvidas}
+## 24. Dúvidas frequentes e solução de problemas {#duvidas}
 
 ### Não vejo um menu
 
@@ -576,7 +542,7 @@ Consulte o histórico de mensagens. Confira telefone, e-mail do destinatário e 
 
 Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. Use o identificador da solicitação se a tela o fornecer. Não envie senhas ou links privados de passageiros. O manual não substitui a análise de uma ocorrência real pela equipe responsável.
 
-## 26. Checklist diário e glossário {#checklist}
+## 25. Checklist diário e glossário {#checklist}
 
 ### Antes da saída
 
@@ -607,4 +573,4 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 2. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 3. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.

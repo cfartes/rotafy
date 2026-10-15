@@ -27,13 +27,19 @@ def image_url(name):
     return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode()
 
 
-def manual():
-    source = (SOURCE / "manual.md").read_text(encoding="utf-8")
+def manual(
+    name="manual",
+    title="Manual da empresa",
+    audience="Administradores, atendentes, motoristas e guias",
+):
+    source = (SOURCE / f"{name}.md").read_text(encoding="utf-8")
     source = re.sub(
         r"\[CAPTURA:([\w.-]+)\]",
-        lambda match: '<figure><img src="'
-        + image_url(match[1])
-        + '" alt="Tela demonstrativa do Nexus Rotafy"/><figcaption>Tela demonstrativa; os menus dependem do perfil e da empresa.</figcaption></figure>',
+        lambda match: (
+            '<figure><img src="'
+            + image_url(match[1])
+            + '" alt="Tela demonstrativa do Nexus Rotafy"/><figcaption>Tela demonstrativa; os menus dependem do perfil e da empresa.</figcaption></figure>'
+        ),
         source,
     )
     engine = markdown.Markdown(
@@ -49,7 +55,16 @@ def manual():
     )
     template = (SOURCE / "manual-template.html").read_text(encoding="utf-8")
     template = template.replace("{{CONTENT}}", content).replace("{{TOC}}", engine.toc)
-    (OUTPUT / "manual.html").write_text(template, encoding="utf-8")
+    template = (
+        template.replace("{{NAME}}", name)
+        .replace("{{TITLE}}", title)
+        .replace("{{AUDIENCE}}", audience)
+        .replace(
+            "{{HELP}}", "/nexus/ajuda" if name == "manual-superadmin" else "/ajuda"
+        )
+        .replace("{{COUNT}}", str(len(re.findall(r"^## ", source, re.M))))
+    )
+    (OUTPUT / f"{name}.html").write_text(template, encoding="utf-8")
 
 
 def presentation(data):
@@ -66,15 +81,17 @@ def presentation(data):
         cards.append(
             f'<section class="slide {"with-image" if screenshot else ""} {"hero" if index in {1, count} else ""}" id="slide-{index}" aria-label="Slide {index} de {count}">'
             + '<div class="slide-top"><span>rotafy<span class="brand-dot">.</span> <small>NEXUS</small></span>'
-            + f'<span>{index:02d} / {count:02d}</span></div>'
+            + f"<span>{index:02d} / {count:02d}</span></div>"
             + '<div class="slide-grid"><div><p class="eyebrow">'
             + html.escape(slide["eyebrow"])
             + "</p><h1>"
             + html.escape(slide["title"]).replace("\n", "<br>")
-            + "</h1><p class=\"lead\">"
+            + '</h1><p class="lead">'
             + html.escape(slide["lead"])
             + "</p><ul>"
-            + "".join("<li>" + html.escape(point) + "</li>" for point in slide["points"])
+            + "".join(
+                "<li>" + html.escape(point) + "</li>" for point in slide["points"]
+            )
             + "</ul></div>"
             + screenshot
             + "</div><footer>"
@@ -125,19 +142,74 @@ def powerpoint(data):
         stripe.line.fill.background()
         width = 8 if item.get("image") else 11.8
         text_box(slide, 0.65, 0.35, 3, 0.4, "rotafy.  /  NEXUS", 18, color, True)
-        text_box(slide, 11.4, 0.4, 1.3, 0.35, f"{index:02d} / {len(data['slides']):02d}", 12, color)
-        text_box(slide, 0.65, 1.0, width, 0.4, item["eyebrow"], 11, "54D6CB" if hero else TEAL, True)
-        text_box(slide, 0.65, 1.52, width, 1.28, item["title"], 31 if item.get("image") else 36, color, True)
-        text_box(slide, 0.65, 2.9, width, 0.72, item["lead"], 20, "C3E4EA" if hero else MUTED)
-        text_box(slide, 0.7, 3.85, width, 2.4, "\n".join("• " + point for point in item["points"]), 18, color)
-        text_box(slide, 0.65, 6.8, 12, 0.45, item["footnote"], 11, "C3E4EA" if hero else MUTED)
+        text_box(
+            slide,
+            11.4,
+            0.4,
+            1.3,
+            0.35,
+            f"{index:02d} / {len(data['slides']):02d}",
+            12,
+            color,
+        )
+        text_box(
+            slide,
+            0.65,
+            1.0,
+            width,
+            0.4,
+            item["eyebrow"],
+            11,
+            "54D6CB" if hero else TEAL,
+            True,
+        )
+        text_box(
+            slide,
+            0.65,
+            1.52,
+            width,
+            1.28,
+            item["title"],
+            31 if item.get("image") else 36,
+            color,
+            True,
+        )
+        text_box(
+            slide, 0.65, 2.9, width, 0.72, item["lead"], 20, "C3E4EA" if hero else MUTED
+        )
+        text_box(
+            slide,
+            0.7,
+            3.85,
+            width,
+            2.4,
+            "\n".join("• " + point for point in item["points"]),
+            18,
+            color,
+        )
+        text_box(
+            slide,
+            0.65,
+            6.8,
+            12,
+            0.45,
+            item["footnote"],
+            11,
+            "C3E4EA" if hero else MUTED,
+        )
         if item.get("image"):
             path = ROOT / "docs" / "screenshots" / item["image"]
             with Image.open(path) as picture:
                 ratio = picture.width / picture.height
             width_image = min(3.5, 5.2 * ratio)
             height_image = width_image / ratio
-            slide.shapes.add_picture(str(path), Inches(9.1 + (3.5 - width_image) / 2), Inches(1.1), width=Inches(width_image), height=Inches(height_image))
+            slide.shapes.add_picture(
+                str(path),
+                Inches(9.1 + (3.5 - width_image) / 2),
+                Inches(1.1),
+                width=Inches(width_image),
+                height=Inches(height_image),
+            )
         slide.notes_slide.notes_text_frame.text = item["notes"]
     deck.save(OUTPUT / "apresentacao.pptx")
 
@@ -146,9 +218,16 @@ def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     data = json.loads((SOURCE / "apresentacao.json").read_text(encoding="utf-8"))
     manual()
+    manual(
+        "manual-superadmin",
+        "Manual do superadmin Nexus",
+        "Administração da plataforma: empresas, planos, assinaturas e comunicação",
+    )
     presentation(data)
     powerpoint(data)
-    print(f"HTML do manual e da apresentação gerados; {len(data['slides'])} slides editáveis.")
+    print(
+        f"HTML do manual e da apresentação gerados; {len(data['slides'])} slides editáveis."
+    )
 
 
 if __name__ == "__main__":

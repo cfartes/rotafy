@@ -1281,7 +1281,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 <span>{label}</span>
               </button>
             ))}
-          <a className="documentation-nav-link" href="/ajuda">
+          <a className="documentation-nav-link" href={isNexus ? "/nexus/ajuda" : "/ajuda"}>
             <BookOpen size={19} /> <span>Ajuda e manuais</span>
           </a>
         </nav>
@@ -1903,5 +1903,7 @@ export function App() {
         }}
       />
     );
+  if (window.location.pathname === "/nexus/ajuda")
+    return session.data.role === "nexus" ? <Documentation nexus /> : <Documentation />;
   return <Dashboard user={session.data} onLogout={loggedOut} />;
 }

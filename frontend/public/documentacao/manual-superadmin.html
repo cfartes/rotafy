@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Manual do Nexus Rotafy: gestão de viagens, reservas, bilhetes e operação Android."><title>Manual do superadmin Nexus · Nexus Rotafy</title>
+<style>
+:root{--navy:#0b253f;--teal:#0c7a76;--muted:#526d80;--line:#d8e4ec}*{box-sizing:border-box}body{margin:0;background:#f4f7fa;color:var(--navy);font:16px/1.7 Arial,sans-serif}a{color:var(--teal);text-underline-offset:3px}a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #f0b56a;outline-offset:3px}.toolbar{position:sticky;top:0;z-index:2;background:var(--navy);color:white;display:flex;align-items:center;gap:16px;padding:15px 5vw;flex-wrap:wrap}.toolbar strong{font-size:21px;margin-right:auto}.toolbar a,.toolbar button{background:white;border:0;border-radius:8px;color:var(--navy);font:inherit;font-size:14px;padding:8px 12px;text-decoration:none;cursor:pointer}.skip{position:absolute;left:-10000px}.skip:focus{position:fixed;top:8px;left:8px;z-index:5;background:white;padding:12px}.layout{display:grid;grid-template-columns:255px minmax(0,850px);max-width:1200px;margin:30px auto;gap:24px;padding:0 18px}.sidebar{position:sticky;top:100px;align-self:start;max-height:calc(100vh - 115px);overflow:auto;border:1px solid var(--line);border-radius:14px;background:white;padding:18px;font-size:14px}.sidebar input{max-width:100%;width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;margin:6px 0 15px}.sidebar ul{padding-left:16px}.sidebar li{margin-bottom:8px}.sidebar summary{font-weight:bold;cursor:pointer}.document{min-width:0;background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden}.cover{padding:55px 45px;color:white;background:var(--navy);position:relative}.cover:after{content:"";display:block;height:5px;width:90px;margin-top:30px;background:#54d6cb}.cover h1{font-size:44px;line-height:1.12;max-width:570px}.cover p{color:#c3e4ea;max-width:580px}.eyebrow{letter-spacing:2px;text-transform:uppercase;font-size:12px;font-weight:bold}.chapter{padding:25px 40px;border-bottom:1px solid var(--line)}h2{font-size:27px;line-height:1.25;scroll-margin-top:100px;margin:20px 0}h3{font-size:19px;margin-top:26px}li{margin:8px 0}p{margin:12px 0}table{width:100%;border-collapse:collapse;font-size:14px;margin:18px 0;overflow-wrap:anywhere}th{text-align:left;background:#edf6f5}th,td{padding:11px;border:1px solid var(--line);vertical-align:top}.note{border-left:4px solid var(--teal);background:#edf6f5;padding:15px 18px;margin:20px 0}.note strong{display:block}code{font-size:13px;overflow-wrap:anywhere;background:#eef3f6}figure{margin:22px 0;break-inside:avoid}figure img{display:block;width:100%;border:1px solid var(--line);border-radius:8px;max-height:650px;object-fit:contain;object-position:top}figcaption{font-size:12px;color:var(--muted);margin-top:6px}.print-toc{display:none}.end{padding:25px 40px;color:var(--muted);font-size:13px}.no-results{display:none;padding:30px} @media(max-width:800px){.layout{grid-template-columns:1fr;margin-top:18px}.sidebar{position:static;max-height:280px}.cover{padding:30px 22px}.cover h1{font-size:34px}.chapter{padding:18px 22px}h2{font-size:24px}.toolbar{padding:12px 18px;gap:8px}.toolbar strong{width:100%}table{font-size:12px}th,td{padding:8px}}
+@page{size:A4;margin:18mm 16mm 19mm}@media print{body{background:white;font-size:10.5pt;line-height:1.5;color:#142e42}.toolbar,.sidebar,.no-results{display:none!important}.layout{display:block;padding:0;margin:0}.document{border:0;border-radius:0;overflow:visible}.cover{min-height:245mm;padding:35mm 15mm;background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:page}.cover h1{font-size:43pt;margin:25mm 0 12mm}.cover p{font-size:13pt}.print-toc{display:block;break-after:page;padding:5mm 0}.print-toc ul{columns:1;padding-left:18px}.print-toc li{margin:5px 0;font-size:10pt}.chapter{display:block!important;padding:0;border:0;break-before:page}h2{font-size:23pt;margin-top:5mm;break-after:avoid}h3{font-size:13pt;break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9pt;break-inside:auto}tr{break-inside:avoid}th{background:#edf6f5!important;-webkit-print-color-adjust:exact}.note{break-inside:avoid}figure img{max-height:165mm;border-radius:0}a{color:inherit}.end{padding:8mm 0}}
+.chapter a{overflow-wrap:anywhere}</style></head><body><a class="skip" href="#documento">Ir ao manual</a>
+<header class="toolbar"><strong>rotafy. <small>NEXUS</small></strong><a href="/nexus/ajuda">Central de documentação</a><a href="manual-superadmin.pdf" download="manual-superadmin.pdf">Baixar PDF</a><a href="manual-superadmin.html" download="manual-superadmin.html">Baixar HTML</a><button type="button" onclick="window.print()">Imprimir</button></header>
+<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 6 capítulos</summary><div class="toc">
+<ul>
+<li><a href="#acesso">1. Acesso à plataforma</a></li>
+<li><a href="#nexus">2. Empresas, planos e assinaturas</a></li>
+<li><a href="#empresas">3. Cadastro de empresas</a></li>
+<li><a href="#comunicacao">4. Configurações de comunicação</a></li>
+<li><a href="#rotina">5. Rotina do superadmin</a></li>
+<li><a href="#duvidas">6. Dúvidas frequentes</a></li>
+</ul>
+</div>
+</details><p id="resultado" role="status" aria-live="polite"></p></nav>
+<main class="document" id="documento"><div class="cover"><p class="eyebrow">NEXUS DATA ANALYTICS · EDIÇÃO 2026.10</p><h1>Manual do superadmin Nexus<br>Nexus Rotafy</h1><p>Administração da plataforma: empresas, planos, assinaturas e comunicação.</p><p>Revisão 3 · 15 de outubro de 2026<br>rotafy.nexusdataanalytics.tech</p></div><section class="print-toc"><h2>Sumário</h2><div class="toc">
+<ul>
+<li><a href="#acesso">1. Acesso à plataforma</a></li>
+<li><a href="#nexus">2. Empresas, planos e assinaturas</a></li>
+<li><a href="#empresas">3. Cadastro de empresas</a></li>
+<li><a href="#comunicacao">4. Configurações de comunicação</a></li>
+<li><a href="#rotina">5. Rotina do superadmin</a></li>
+<li><a href="#duvidas">6. Dúvidas frequentes</a></li>
+</ul>
+</div>
+</section><section class="chapter"><h2 id="acesso">1. Acesso à plataforma</h2>
+<p>Manual exclusivo da equipe Nexus. Acesse <a href="https://rotafy.nexusdataanalytics.tech/nexus">https://rotafy.nexusdataanalytics.tech/nexus</a> com seu e-mail e senha de superadmin. Esse perfil não possui empresa operacional padrão. Para operar viagens, utilize uma conta cadastrada na empresa.</p>
+<p>A senha exige pelo menos 8 caracteres, uma letra maiúscula e um caractere especial. Utilize <strong>Esqueci minha senha</strong> no acesso Nexus quando necessário. Não compartilhe credenciais.</p>
+</section><section class="chapter"><h2 id="nexus">2. Empresas, planos e assinaturas</h2>
+<p><strong>Exclusivo do superadmin.</strong> Entre em <code>/nexus</code>. Esta seção descreve os menus, sem divulgar credenciais da plataforma.</p>
+<h3 id="empresas_1">Empresas</h3>
+<p>Cadastre ou edite dados comerciais, contato e perfil operacional. O CPF/CNPJ é obrigatório e validado. Crie o primeiro administrador e selecione o plano. Utilize suspender/ativar conforme o contrato, preservando os dados históricos.</p>
+<p>Na ação de gerenciamento do plano da empresa, confira a empresa selecionada e sua assinatura; não confunda o catálogo global de planos com o vínculo daquela empresa.</p>
+<h3 id="planos-e-assinaturas">Planos e assinaturas</h3>
+<ol>
+<li>Abra <strong>Planos e assinaturas</strong>.</li>
+<li>Configure Basic, Professional, Enterprise ou um plano adicional.</li>
+<li>Defina nome, franquia mensal, mensalidade e valor por unidade extra.</li>
+<li>Publique as condições e selecione a empresa em <strong>Assinatura e consumo</strong>.</li>
+<li>Vincule o plano e a data inicial ou programe a mudança para o próximo ciclo.</li>
+<li>Confira ciclos, consumo e demonstrativos por empresa.</li>
+</ol>
+<p>Alterar o catálogo não reescreve os valores históricos. Uma mudança agendada fixa a versão escolhida para o próximo ciclo. Arquivar um plano impede novas escolhas; contratos existentes preservam sua continuidade conforme as regras da assinatura.</p>
+<h3 id="atividades">Atividades</h3>
+<p>Consulte <strong>Atividades</strong> para acompanhar alterações registradas pelo sistema. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.</p>
+</section><section class="chapter"><h2 id="empresas">3. Cadastro de empresas</h2>
+<ol>
+<li>Abra <strong>Empresas</strong> e <strong>Cadastrar empresa</strong>.</li>
+<li>Preencha nome comercial, razão social, telefone/WhatsApp, CPF/CNPJ válido e identificador de acesso.</li>
+<li>O identificador aceita somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhados, hífens ou outros caracteres especiais.</li>
+<li>Escolha <strong>Turismo e transfers</strong> ou <strong>Transporte regular</strong>.</li>
+<li>Escolha o plano e informe nome, e-mail e senha do primeiro administrador. Todos os campos são obrigatórios.</li>
+<li>Confira e salve. Oriente o administrador sobre o identificador de acesso.</li>
+</ol>
+<p>O perfil operacional determina os módulos; o plano determina as condições comerciais. Viagens turísticas abertas podem impedir a troca do perfil. Suspender uma empresa preserva seus registros.</p>
+</section><section class="chapter"><h2 id="comunicacao">4. Configurações de comunicação</h2>
+<p>Abra <strong>Configurações</strong> no painel Nexus. Informe as credenciais dos serviços de mensagens e e-mail, configure o e-mail remetente autorizado e salve. Um campo de chave vazio preserva a chave existente. Utilize a opção de remover somente quando desejar desativar a credencial correspondente.</p>
+<p>Mantenha as chaves restritas à equipe autorizada. Não inclua credenciais em capturas ou chamados. Confira a autorização do remetente junto ao serviço de e-mail.</p>
+<h3 id="whatsapp-de-cada-empresa">WhatsApp de cada empresa</h3>
+<p>Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo QR Code no painel do serviço de mensagens antes de associá-lo à empresa.</p>
+<ol>
+<li>Localize a empresa em <strong>WhatsApp de cada empresa</strong>.</li>
+<li>Confira o <strong>WhatsApp de envio</strong>. O telefone de contato aparece como sugestão; ajuste para o número conectado. Utilize + e código do país para números internacionais.</li>
+<li>Clique em <strong>Buscar sessão pelo telefone</strong>.</li>
+<li>Confira a sessão e o ID preenchido. A busca não salva nem habilita os envios.</li>
+<li>Marque <strong>Habilitar envios</strong> quando desejar ativar o canal e clique em <strong>Salvar sessão</strong>.</li>
+</ol>
+<p>Se não houver correspondência, confira o número e a conexão. Se houver sessões duplicadas ou sem telefone identificado, utilize a opção de consultar sessões e selecione manualmente, ou informe o ID conferido no painel do serviço. Uma sessão vinculada a outra empresa não pode ser compartilhada.</p>
+<h3 id="conferir-envios">Conferir envios</h3>
+<p>Envie um convite a um colaborador autorizado e confira o recebimento. Consulte o histórico antes de reenviar. A aceitação pelo serviço de e-mail não garante entrega na caixa de entrada: confira também o spam e o destinatário.</p>
+<p>Confirmações, cancelamentos, marcação PAGO, bilhetes e convites utilizam os canais configurados conforme a ação executada. Confira os destinatários antes de enviar.</p>
+</section><section class="chapter"><h2 id="rotina">5. Rotina do superadmin</h2>
+<ul>
+<li>Confira novas empresas, perfil operacional e plano.</li>
+<li>Acompanhe ciclos mensais, franquias, excedentes e demonstrativos.</li>
+<li>Consulte <strong>Atividades</strong> para conferir alterações registradas.</li>
+<li>Revise a associação da sessão quando uma empresa trocar de número.</li>
+<li>Apoie os administradores sem compartilhar sua conta Nexus.</li>
+</ul>
+</section><section class="chapter"><h2 id="duvidas">6. Dúvidas frequentes</h2>
+<h3 id="como-definir-o-plano-de-uma-empresa">Como definir o plano de uma empresa?</h3>
+<p>Utilize o gerenciamento da assinatura da empresa. O catálogo cadastra as condições comerciais; a assinatura vincula o plano à empresa.</p>
+<h3 id="a-sessao-nao-foi-encontrada">A sessão não foi encontrada?</h3>
+<p>Confira o telefone e o pareamento. A busca depende do telefone informado pelo serviço. Se necessário, confira e selecione o ID manualmente. A busca não cria nem conecta sessões.</p>
+<h3 id="o-e-mail-falhou">O e-mail falhou?</h3>
+<p>Confira remetente autorizado, credenciais e destinatário. Consulte o histórico antes de reenviar o convite. Não exponha chaves ao solicitar suporte.</p>
+<h3 id="onde-fica-o-manual-da-empresa">Onde fica o manual da empresa?</h3>
+<p>Acesse <code>/ajuda</code> para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em <code>/nexus/ajuda</code>.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual do superadmin Nexus · Edição 2026.10 · Revisão 3</footer></main></div>
+<script>
+const search=document.getElementById('busca'),chapters=[...document.querySelectorAll('.chapter')];const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();search.addEventListener('input',()=>{const term=normalize(search.value.trim());let count=0;for(const chapter of chapters){const matches=!term||normalize(chapter.textContent).includes(term);chapter.hidden=!matches;if(matches)count++;}document.getElementById('resultado').textContent=term?`${count} capítulos encontrados.`:'';document.getElementById('sem-resultados').style.display=count?'none':'block';});document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{search.value='';search.dispatchEvent(new Event('input'));}));
+</script></body></html>
