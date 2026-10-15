@@ -207,7 +207,21 @@ def test_whatsapp_invitation_without_resend_and_shared_link_for_both(
         assert "/redefinir#token=" in body
         assert row["phone"] == "+5547999999999" and row["reservation_id"] is None
         assert "token=" not in row["body"]
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE whatsapp_outbox SET error_code='send_timeout',status='uncertain' WHERE kind='invitation'"
+            )
+        )
     history = client.get("/api/v1/users/invitations/whatsapp/status")
+    assert history.json()[0]["error_code"] == "send_timeout"
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE whatsapp_outbox SET error_code=NULL,status='pending' WHERE kind='invitation'"
+            )
+        )
+
     assert (
         history.status_code == 200
         and "body" not in history.text

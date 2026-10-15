@@ -44,8 +44,10 @@ test("admin creates and resends invitations by WhatsApp or both channels", async
         {
           id: "message",
           recipient: collaborator.contact_phone,
-          status: "pending",
-          attempts: 0,
+          status: "uncertain",
+          attempts: 1,
+          error_code: "send_timeout",
+          created_at: "2026-10-15T14:40:26Z",
         },
       ];
     await route.fulfill({ json: body });
@@ -101,4 +103,10 @@ test("admin creates and resends invitations by WhatsApp or both channels", async
   await expect(
     page.getByText(collaborator.contact_phone, { exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      "O serviço de WhatsApp não respondeu ao envio dentro do prazo.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/Solicitado em/)).toBeVisible();
 });

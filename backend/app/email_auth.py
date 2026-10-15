@@ -344,7 +344,7 @@ async def invitation_whatsapp_status(request: Request, actor: Auth):
         await scope(db, actor.company_id)
         result = await db.execute(
             text(
-                "SELECT id,phone AS recipient,status,attempts,created_at,sent_at FROM whatsapp_outbox WHERE kind='invitation' ORDER BY created_at DESC LIMIT 100"
+                "SELECT id,phone AS recipient,status,attempts,error_code,created_at,sent_at FROM whatsapp_outbox WHERE kind='invitation' ORDER BY created_at DESC LIMIT 100"
             )
         )
         return [dict(row) for row in result.mappings()]

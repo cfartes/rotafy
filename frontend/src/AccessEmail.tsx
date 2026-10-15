@@ -152,6 +152,31 @@ type Delivery = {
   attempts: number;
   created_at: string;
   sent_at: string | null;
+  error_code?: string | null;
+};
+
+const whatsappReasons: Record<string, string> = {
+  send_timeout: "O serviço de WhatsApp não respondeu ao envio dentro do prazo.",
+  tls_error: "Falha na conexão segura com o serviço de WhatsApp.",
+  invalid_response:
+    "O serviço respondeu ao envio em um formato que não pôde ser lido.",
+  connection_error:
+    "A conexão com o serviço de WhatsApp falhou durante o envio.",
+  acceptance_unknown:
+    "Registro antigo: a falha de comunicação não teve sua causa detalhada. A atualização não modifica este histórico.",
+  unrecognized_response:
+    "A resposta do serviço não confirmou a aceitação da mensagem.",
+  provider_error:
+    "O serviço de WhatsApp retornou um erro interno durante o envio.",
+  worker_interrupted:
+    "O processamento foi interrompido antes de registrar o resultado do envio.",
+  session_not_ready:
+    "A sessão da empresa não está conectada. O envio aguarda conexão.",
+  rate_limited:
+    "O serviço limitou os envios. Aguarde a próxima tentativa programada.",
+  http_401: "O serviço recusou a chave de acesso configurada.",
+  http_403: "A chave configurada não possui permissão para este envio.",
+  http_404: "O serviço não encontrou a sessão ou o destino solicitado.",
 };
 export function EmailDeliveries({ onClose }: { onClose: () => void }) {
   const whatsapp = useQuery({
@@ -188,6 +213,12 @@ export function EmailDeliveries({ onClose }: { onClose: () => void }) {
             {whatsapp.data.map((row) => (
               <div className="operation-card" key={row.id}>
                 <strong>{row.recipient}</strong>
+                {row.created_at && (
+                  <p className="muted">
+                    Solicitado em{" "}
+                    {new Date(row.created_at).toLocaleString("pt-BR")}
+                  </p>
+                )}
                 <p>
                   {
                     (
@@ -203,6 +234,20 @@ export function EmailDeliveries({ onClose }: { onClose: () => void }) {
                   }{" "}
                   · {row.attempts} tentativa(s)
                 </p>
+                {row.error_code && (
+                  <p>
+                    <strong>Motivo:</strong>{" "}
+                    {whatsappReasons[row.error_code] ||
+                      "O serviço não confirmou o envio. Solicite suporte para conferir este registro."}
+                  </p>
+                )}
+                {row.status === "uncertain" && (
+                  <p className="muted">
+                    Confira o recebimento e o histórico do serviço antes de
+                    gerar outro convite. Um novo convite substitui o link
+                    anterior.
+                  </p>
+                )}
               </div>
             ))}
           </section>
