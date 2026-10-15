@@ -1,3 +1,4 @@
+import re
 import secrets
 from dataclasses import dataclass
 from typing import Annotated
@@ -115,11 +116,35 @@ async def authenticate(request: Request):
                 raise HTTPException(
                     403, "Validação de segurança falhou. Atualize a página."
                 )
+        blocked = False
+        if not platform:
+            from app.billing.collections import financially_blocked
+
+            blocked = await financially_blocked(db, company_id)
+            boarding = re.fullmatch(
+                r"/api/v1/trips/[0-9a-f-]+/vehicles/[0-9a-f-]+/legs/[0-9a-f-]+/(journey|boarding|scan)",
+                request.url.path,
+            )
+            allowed = request.url.path in {
+                "/api/v1/auth/logout",
+                "/api/v1/auth/password",
+            }
+            if (
+                blocked
+                and request.method not in {"GET", "HEAD", "OPTIONS"}
+                and not boarding
+                and not allowed
+            ):
+                raise HTTPException(
+                    402,
+                    "Há cobrança vencida aguardando confirmação do Pix pela Nexus. Novas operações estão bloqueadas; consultas e embarques de viagens já vendidas permanecem disponíveis.",
+                )
         user = {
             key: value
             for key, value in dict(row).items()
             if key not in ("session_id", "csrf_hash")
         }
+        user["financial_blocked"] = blocked
         yield Actor(db, user, row["session_id"], platform)
 
 

@@ -27,7 +27,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 3 · Atualizado em 15/10/2026</span>
+        <span>Edição 2026.10 · Revisão 4 · Atualizado em 15/10/2026</span>
       </header>
       <div className="documentation-grid">
         <section className="documentation-card" aria-labelledby="manual-title">

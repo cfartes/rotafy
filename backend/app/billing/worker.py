@@ -10,6 +10,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from app.billing.collections import collect_company
+from app.billing.notifications import process_notification
 from app.billing.service import lock_company, refresh_company
 from app.identity import scope
 from app.reservations import expire_holds
@@ -36,6 +38,9 @@ async def main():
                         await lock_company(db, company_id)
                         await expire_holds(db, company_id)
                         await refresh_company(db, company_id)
+                        await collect_company(db, company_id)
+                # Canais financeiros independentes das sessões das empresas.
+                await process_notification(engine)
                 Path("/tmp/rotafy-billing-health").touch()
                 logger.info('{"event":"billing.cycle_completed"}')
             except (SQLAlchemyError, HTTPException, ValueError):

@@ -462,6 +462,12 @@ async def reservation_detail(db, reservation_id):
 
 
 async def create_reservation(db, actor, trip, data, import_id=None, reference=None):
+    from app.billing.collections import financially_blocked
+
+    if await financially_blocked(db, trip["company_id"]):
+        raise HTTPException(
+            402, "Novas reservas temporariamente indisponíveis. Contate a empresa."
+        )
     payload_hash = fingerprint(
         data.model_dump(mode="json", exclude={"operation_key", "phone_country"})
     )

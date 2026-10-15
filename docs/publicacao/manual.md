@@ -573,4 +573,19 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 3. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 4. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+
+
+## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
+
+O administrador encontra as cobranças da assinatura no menu **Financeiro e cobranças**. Cada demonstrativo apresenta o ciclo, plano contratado, franquia, viagens utilizadas, excedentes, total e prazo para a confirmação do pagamento.
+
+Um dia antes do fechamento, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva antes de efetuar o pagamento. No fechamento, o demonstrativo informa a chave Pix e o favorecido da Nexus.
+
+O prazo é de dois dias úteis a partir do dia seguinte ao fechamento, no horário de Brasília, excluindo fins de semana e feriados do calendário nacional, incluindo a Sexta-feira da Paixão. Pontos facultativos e feriados estaduais ou municipais não entram nesse calendário.
+
+Depois de pagar, a equipe Nexus precisa conferir o recebimento e registrar a baixa. O Pix não é reconhecido automaticamente pelo sistema. Em caso de divergência, informe à Nexus a referência da cobrança e os dados do pagamento.
+
+Sem confirmação no prazo, novas operações ficam bloqueadas. A empresa mantém acesso às consultas, ao financeiro e aos embarques de viagens já vendidas. A confirmação remove a restrição da cobrança paga; outros débitos vencidos podem manter o bloqueio. Uma suspensão administrativa segue tratamento separado.
+
+Os avisos são enviados por e-mail aos administradores ativos e por WhatsApp ao telefone de contato da empresa. Mantenha seus dados atualizados.

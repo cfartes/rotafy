@@ -152,6 +152,7 @@ class ResetRedeem(Input):
 
 
 class UserView(BaseModel):
+    financial_blocked: bool = False
     contact_phone: str | None = None
     id: UUID
     company_id: UUID | None = None

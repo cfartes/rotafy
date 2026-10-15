@@ -90,3 +90,44 @@ Confira remetente autorizado, credenciais e destinatário. Consulte o histórico
 ### Onde fica o manual da empresa?
 
 Acesse `/ajuda` para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em `/nexus/ajuda`.
+
+
+## 7. Cobranças mensais e confirmação do Pix {#cobrancas}
+
+### Configurar e ativar
+
+1. Entre em **Configurações**, na seção **Cobrança mensal da Nexus · Pix manual**.
+2. Informe **Chave Pix da Nexus** e **Nome do favorecido do Pix**.
+3. Selecione ou informe o **ID da sessão WhatsApp de cobrança da Nexus**. As cobranças saem pelo número da Nexus, utilizando as credenciais de comunicação configuradas no painel.
+4. Confira o e-mail remetente e os canais de comunicação.
+5. Marque **Ativar avisos e cobranças mensais automáticas** e salve.
+
+A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix não reescreve cobranças já fechadas.
+
+### Calendário e mensagens automáticas
+
+O ciclo segue a data inicial da assinatura de cada empresa. Um dia antes do fechamento, a empresa recebe um aviso com valor parcial, sujeito a alteração; deve aguardar a cobrança definitiva para pagar. No fechamento, o sistema consolida mensalidade e excedentes, preserva os valores da cobrança e envia o demonstrativo com Pix e favorecido.
+
+O prazo termina ao fim do segundo dia útil contado a partir do dia seguinte ao fechamento, no horário de Brasília. Sábados, domingos e feriados do calendário nacional, incluindo a Sexta-feira da Paixão, não entram na contagem. Pontos facultativos e feriados estaduais ou municipais não são considerados.
+
+Os e-mails são enviados aos administradores ativos da empresa. O WhatsApp utiliza o telefone de contato cadastrado na empresa. Mantenha esses contatos atualizados.
+
+### Acompanhar e dar baixa
+
+Abra **Financeiro e cobranças**. Utilize o filtro de situação para consultar avisos parciais, cobranças abertas, vencidas, pagas e canceladas. Cada cobrança apresenta ciclo, plano, franquia, utilização, excedentes, valor total, prazo e referência.
+
+Depois de conferir o recebimento integral no banco, clique em **Confirmar recebimento do Pix**, informe a data e hora do recebimento e, se necessário, a referência ou observação. Confirme o pagamento integral. O sistema registra o usuário e o momento da confirmação e agenda a comunicação à empresa.
+
+A confirmação é manual: realizar o Pix não atualiza o sistema sozinho. O registro de recebimento e o registro da confirmação são distintos. Não é possível dar baixa em um aviso parcial nem confirmar uma data de recebimento futura. Uma cobrança já paga não gera outra baixa ao repetir a mesma solicitação.
+
+### Bloqueio e liberação
+
+Se não houver confirmação até o prazo, novas operações ficam bloqueadas e a empresa recebe aviso por e-mail e WhatsApp. Consultas, acesso ao financeiro, leitura de bilhetes e operação dos embarques e deslocamentos já vendidos permanecem disponíveis.
+
+A baixa retira a restrição daquela cobrança. Se houver outras cobranças vencidas, a empresa continua restrita. Uma suspensão administrativa permanece independente e não é removida pelo pagamento.
+
+A ação **Cancelar cobrança** preserva o histórico e retira aquela cobrança da apuração de bloqueio. Não representa devolução de dinheiro. Não cancele uma cobrança apenas para registrar um Pix recebido; utilize a confirmação de recebimento.
+
+### Histórico dos envios financeiros
+
+O painel mostra o evento, canal, empresa, situação e motivo de falha de cada comunicação. Aceitação pelo serviço não significa entrega ou leitura. Um WhatsApp com resultado incerto não é repetido automaticamente. Confira o recebimento antes de qualquer nova comunicação. Falhas de comunicação não desfazem uma baixa registrada.

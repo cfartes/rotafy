@@ -1,3 +1,4 @@
+import { CollectionSettings } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -250,6 +251,7 @@ export function IntegrationSettings() {
   if (config.error) return <Alert>{config.error.message}</Alert>;
   return (
     <div className="reservation-workspace">
+      <CollectionSettings />
       <form className="operation-card modal-form" onSubmit={submit}>
         <h2>Mensagens e e-mails</h2>
         <p>

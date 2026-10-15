@@ -82,9 +82,13 @@ services:
     restart: unless-stopped
     command: [python, -m, app.billing.worker]
     environment:
+      <<: *api-env
       PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
-    networks: [database]
-    depends_on: {migrate: {condition: service_completed_successfully}}
+    networks: [database, email_egress]
+    volumes: [integration_keys:/run/rotafy:ro]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      integration-secrets: {condition: service_completed_successfully}
     healthcheck:
       test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-billing-health'); assert p.exists() and time.time()-p.stat().st_mtime < 180"]
       interval: 30s

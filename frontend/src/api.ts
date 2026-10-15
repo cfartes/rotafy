@@ -1,5 +1,6 @@
 export type Role = "nexus" | "admin" | "attendant" | "guide" | "driver";
 export type User = {
+  financial_blocked?: boolean;
   contact_phone?: string | null;
   id: string;
   company_id: string | null;

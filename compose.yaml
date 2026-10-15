@@ -73,8 +73,12 @@ services:
     command: [python, -m, app.billing.worker]
     restart: unless-stopped
     environment:
+      DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD}@db:5432/rotafy
       PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+    volumes:
+      - integration_keys:/run/rotafy:ro
     depends_on:
+      integration-secrets: {condition: service_completed_successfully}
       migrate:
         condition: service_completed_successfully
     healthcheck:

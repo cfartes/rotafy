@@ -1,3 +1,4 @@
+import { Collections } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
 import { Billing } from "./billing/Billing";
@@ -1001,6 +1002,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "ticket-sales"
     | "reports"
     | "integrations"
+    | "collections"
   >("overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1102,36 +1104,38 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "integrations"
-      ? "Configurações"
-      : page === "routes"
-        ? "Rotas"
-        : page === "ticket-sales"
-          ? "Vender bilhete"
-          : page === "sales"
-            ? "Página pública e integrações"
-            : page === "reports"
-              ? "Relatórios"
-              : page === "operations"
-                ? {
-                    vehicles: "Veículos",
-                    trips: "Viagens",
-                    allocations: "Alocar veículos em viagens",
-                    passengers: "Passageiros",
-                  }[operationModule] || "Operação de viagens"
-                : page === "overview"
-                  ? "Visão geral"
-                  : page === "billing"
-                    ? isNexus
-                      ? companyPlanOnly
-                        ? "Plano da empresa"
-                        : "Planos e assinaturas"
-                      : "Meu plano"
-                    : page === "audit"
-                      ? "Histórico de atividades"
-                      : isNexus
-                        ? "Empresas"
-                        : "Equipe";
+    page === "collections"
+      ? "Financeiro e cobranças"
+      : page === "integrations"
+        ? "Configurações"
+        : page === "routes"
+          ? "Rotas"
+          : page === "ticket-sales"
+            ? "Vender bilhete"
+            : page === "sales"
+              ? "Página pública e integrações"
+              : page === "reports"
+                ? "Relatórios"
+                : page === "operations"
+                  ? {
+                      vehicles: "Veículos",
+                      trips: "Viagens",
+                      allocations: "Alocar veículos em viagens",
+                      passengers: "Passageiros",
+                    }[operationModule] || "Operação de viagens"
+                  : page === "overview"
+                    ? "Visão geral"
+                    : page === "billing"
+                      ? isNexus
+                        ? companyPlanOnly
+                          ? "Plano da empresa"
+                          : "Planos e assinaturas"
+                        : "Meu plano"
+                      : page === "audit"
+                        ? "Histórico de atividades"
+                        : isNexus
+                          ? "Empresas"
+                          : "Equipe";
   return (
     <div className="app-layout">
       <a className="skip-link" href="#main-content">
@@ -1203,6 +1207,15 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
+                ]
+              : []),
+            ...(isNexus || isAdmin
+              ? [
+                  {
+                    id: "collections",
+                    label: "Financeiro e cobranças",
+                    icon: BookOpen,
+                  },
                 ]
               : []),
             ...(isNexus
@@ -1281,7 +1294,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 <span>{label}</span>
               </button>
             ))}
-          <a className="documentation-nav-link" href={isNexus ? "/nexus/ajuda" : "/ajuda"}>
+          <a
+            className="documentation-nav-link"
+            href={isNexus ? "/nexus/ajuda" : "/ajuda"}
+          >
             <BookOpen size={19} /> <span>Ajuda e manuais</span>
           </a>
         </nav>
@@ -1359,6 +1375,16 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           </div>
           {(error || queryError) && (
             <Alert>{error || message(queryError)}</Alert>
+          )}
+          {user.financial_blocked && (
+            <Alert>
+              Há cobrança vencida aguardando confirmação do Pix pela Nexus.
+              Novas operações estão bloqueadas; consultas e embarques permanecem
+              disponíveis.
+            </Alert>
+          )}
+          {page === "collections" && (isNexus || isAdmin) && (
+            <Collections nexus={isNexus} />
           )}
           {page === "integrations" && isNexus && <IntegrationSettings />}
           {page === "billing" && (
@@ -1835,6 +1861,7 @@ export function App() {
   }, []);
   const session = useQuery({
     queryKey: ["session"],
+    refetchInterval: 30000,
     enabled: !["/offline", "/ajuda"].includes(window.location.pathname),
     queryFn: async () => {
       try {
@@ -1904,6 +1931,10 @@ export function App() {
       />
     );
   if (window.location.pathname === "/nexus/ajuda")
-    return session.data.role === "nexus" ? <Documentation nexus /> : <Documentation />;
+    return session.data.role === "nexus" ? (
+      <Documentation nexus />
+    ) : (
+      <Documentation />
+    );
   return <Dashboard user={session.data} onLogout={loggedOut} />;
 }

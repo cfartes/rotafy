@@ -5,7 +5,7 @@
 @page{size:A4;margin:18mm 16mm 19mm}@media print{body{background:white;font-size:10.5pt;line-height:1.5;color:#142e42}.toolbar,.sidebar,.no-results{display:none!important}.layout{display:block;padding:0;margin:0}.document{border:0;border-radius:0;overflow:visible}.cover{min-height:245mm;padding:35mm 15mm;background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:page}.cover h1{font-size:43pt;margin:25mm 0 12mm}.cover p{font-size:13pt}.print-toc{display:block;break-after:page;padding:5mm 0}.print-toc ul{columns:1;padding-left:18px}.print-toc li{margin:5px 0;font-size:10pt}.chapter{display:block!important;padding:0;border:0;break-before:page}h2{font-size:23pt;margin-top:5mm;break-after:avoid}h3{font-size:13pt;break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9pt;break-inside:auto}tr{break-inside:avoid}th{background:#edf6f5!important;-webkit-print-color-adjust:exact}.note{break-inside:avoid}figure img{max-height:165mm;border-radius:0}a{color:inherit}.end{padding:8mm 0}}
 .chapter a{overflow-wrap:anywhere}</style></head><body><a class="skip" href="#documento">Ir ao manual</a>
 <header class="toolbar"><strong>rotafy. <small>NEXUS</small></strong><a href="/nexus/ajuda">Central de documentação</a><a href="manual-superadmin.pdf" download="manual-superadmin.pdf">Baixar PDF</a><a href="manual-superadmin.html" download="manual-superadmin.html">Baixar HTML</a><button type="button" onclick="window.print()">Imprimir</button></header>
-<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 6 capítulos</summary><div class="toc">
+<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 7 capítulos</summary><div class="toc">
 <ul>
 <li><a href="#acesso">1. Acesso à plataforma</a></li>
 <li><a href="#nexus">2. Empresas, planos e assinaturas</a></li>
@@ -13,10 +13,11 @@
 <li><a href="#comunicacao">4. Configurações de comunicação</a></li>
 <li><a href="#rotina">5. Rotina do superadmin</a></li>
 <li><a href="#duvidas">6. Dúvidas frequentes</a></li>
+<li><a href="#cobrancas">7. Cobranças mensais e confirmação do Pix</a></li>
 </ul>
 </div>
 </details><p id="resultado" role="status" aria-live="polite"></p></nav>
-<main class="document" id="documento"><div class="cover"><p class="eyebrow">NEXUS DATA ANALYTICS · EDIÇÃO 2026.10</p><h1>Manual do superadmin Nexus<br>Nexus Rotafy</h1><p>Administração da plataforma: empresas, planos, assinaturas e comunicação.</p><p>Revisão 3 · 15 de outubro de 2026<br>rotafy.nexusdataanalytics.tech</p></div><section class="print-toc"><h2>Sumário</h2><div class="toc">
+<main class="document" id="documento"><div class="cover"><p class="eyebrow">NEXUS DATA ANALYTICS · EDIÇÃO 2026.10</p><h1>Manual do superadmin Nexus<br>Nexus Rotafy</h1><p>Administração da plataforma: empresas, planos, assinaturas e comunicação.</p><p>Revisão 4 · 15 de outubro de 2026<br>rotafy.nexusdataanalytics.tech</p></div><section class="print-toc"><h2>Sumário</h2><div class="toc">
 <ul>
 <li><a href="#acesso">1. Acesso à plataforma</a></li>
 <li><a href="#nexus">2. Empresas, planos e assinaturas</a></li>
@@ -24,6 +25,7 @@
 <li><a href="#comunicacao">4. Configurações de comunicação</a></li>
 <li><a href="#rotina">5. Rotina do superadmin</a></li>
 <li><a href="#duvidas">6. Dúvidas frequentes</a></li>
+<li><a href="#cobrancas">7. Cobranças mensais e confirmação do Pix</a></li>
 </ul>
 </div>
 </section><section class="chapter"><h2 id="acesso">1. Acesso à plataforma</h2>
@@ -88,7 +90,31 @@
 <h3 id="o-e-mail-falhou">O e-mail falhou?</h3>
 <p>Confira remetente autorizado, credenciais e destinatário. Consulte o histórico antes de reenviar o convite. Não exponha chaves ao solicitar suporte.</p>
 <h3 id="onde-fica-o-manual-da-empresa">Onde fica o manual da empresa?</h3>
-<p>Acesse <code>/ajuda</code> para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em <code>/nexus/ajuda</code>.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual do superadmin Nexus · Edição 2026.10 · Revisão 3</footer></main></div>
+<p>Acesse <code>/ajuda</code> para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em <code>/nexus/ajuda</code>.</p>
+</section><section class="chapter"><h2 id="cobrancas">7. Cobranças mensais e confirmação do Pix</h2>
+<h3 id="configurar-e-ativar">Configurar e ativar</h3>
+<ol>
+<li>Entre em <strong>Configurações</strong>, na seção <strong>Cobrança mensal da Nexus · Pix manual</strong>.</li>
+<li>Informe <strong>Chave Pix da Nexus</strong> e <strong>Nome do favorecido do Pix</strong>.</li>
+<li>Selecione ou informe o <strong>ID da sessão WhatsApp de cobrança da Nexus</strong>. As cobranças saem pelo número da Nexus, utilizando as credenciais de comunicação configuradas no painel.</li>
+<li>Confira o e-mail remetente e os canais de comunicação.</li>
+<li>Marque <strong>Ativar avisos e cobranças mensais automáticas</strong> e salve.</li>
+</ol>
+<p>A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix não reescreve cobranças já fechadas.</p>
+<h3 id="calendario-e-mensagens-automaticas">Calendário e mensagens automáticas</h3>
+<p>O ciclo segue a data inicial da assinatura de cada empresa. Um dia antes do fechamento, a empresa recebe um aviso com valor parcial, sujeito a alteração; deve aguardar a cobrança definitiva para pagar. No fechamento, o sistema consolida mensalidade e excedentes, preserva os valores da cobrança e envia o demonstrativo com Pix e favorecido.</p>
+<p>O prazo termina ao fim do segundo dia útil contado a partir do dia seguinte ao fechamento, no horário de Brasília. Sábados, domingos e feriados do calendário nacional, incluindo a Sexta-feira da Paixão, não entram na contagem. Pontos facultativos e feriados estaduais ou municipais não são considerados.</p>
+<p>Os e-mails são enviados aos administradores ativos da empresa. O WhatsApp utiliza o telefone de contato cadastrado na empresa. Mantenha esses contatos atualizados.</p>
+<h3 id="acompanhar-e-dar-baixa">Acompanhar e dar baixa</h3>
+<p>Abra <strong>Financeiro e cobranças</strong>. Utilize o filtro de situação para consultar avisos parciais, cobranças abertas, vencidas, pagas e canceladas. Cada cobrança apresenta ciclo, plano, franquia, utilização, excedentes, valor total, prazo e referência.</p>
+<p>Depois de conferir o recebimento integral no banco, clique em <strong>Confirmar recebimento do Pix</strong>, informe a data e hora do recebimento e, se necessário, a referência ou observação. Confirme o pagamento integral. O sistema registra o usuário e o momento da confirmação e agenda a comunicação à empresa.</p>
+<p>A confirmação é manual: realizar o Pix não atualiza o sistema sozinho. O registro de recebimento e o registro da confirmação são distintos. Não é possível dar baixa em um aviso parcial nem confirmar uma data de recebimento futura. Uma cobrança já paga não gera outra baixa ao repetir a mesma solicitação.</p>
+<h3 id="bloqueio-e-liberacao">Bloqueio e liberação</h3>
+<p>Se não houver confirmação até o prazo, novas operações ficam bloqueadas e a empresa recebe aviso por e-mail e WhatsApp. Consultas, acesso ao financeiro, leitura de bilhetes e operação dos embarques e deslocamentos já vendidos permanecem disponíveis.</p>
+<p>A baixa retira a restrição daquela cobrança. Se houver outras cobranças vencidas, a empresa continua restrita. Uma suspensão administrativa permanece independente e não é removida pelo pagamento.</p>
+<p>A ação <strong>Cancelar cobrança</strong> preserva o histórico e retira aquela cobrança da apuração de bloqueio. Não representa devolução de dinheiro. Não cancele uma cobrança apenas para registrar um Pix recebido; utilize a confirmação de recebimento.</p>
+<h3 id="historico-dos-envios-financeiros">Histórico dos envios financeiros</h3>
+<p>O painel mostra o evento, canal, empresa, situação e motivo de falha de cada comunicação. Aceitação pelo serviço não significa entrega ou leitura. Um WhatsApp com resultado incerto não é repetido automaticamente. Confira o recebimento antes de qualquer nova comunicação. Falhas de comunicação não desfazem uma baixa registrada.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual do superadmin Nexus · Edição 2026.10 · Revisão 4</footer></main></div>
 <script>
 const search=document.getElementById('busca'),chapters=[...document.querySelectorAll('.chapter')];const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();search.addEventListener('input',()=>{const term=normalize(search.value.trim());let count=0;for(const chapter of chapters){const matches=!term||normalize(chapter.textContent).includes(term);chapter.hidden=!matches;if(matches)count++;}document.getElementById('resultado').textContent=term?`${count} capítulos encontrados.`:'';document.getElementById('sem-resultados').style.display=count?'none':'block';});document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{search.value='';search.dispatchEvent(new Event('input'));}));
 </script></body></html>
