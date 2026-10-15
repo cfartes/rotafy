@@ -44,7 +44,12 @@ async function setup(page: Page, role = "admin", profile = "tourism") {
         },
       ];
     else if (path === "/operations/crew")
-      body = [{ id: "driver", full_name: "Motorista Teste", role: "driver" }];
+      body = [
+        { id: "driver", full_name: "Motorista Teste", role: "driver" },
+        { id: "driver2", full_name: "Segundo Motorista", role: "driver" },
+        { id: "guide1", full_name: "Guia Um", role: "guide" },
+        { id: "guide2", full_name: "Guia Dois", role: "guide" },
+      ];
     else if (path === "/routes" && request.method() === "POST") {
       const data = request.postDataJSON();
       submissions.push({ path, data });
@@ -188,10 +193,19 @@ test("reuse route for round-trip scheduling, with no individual stop times", asy
     .getByRole("combobox", { name: "Motorista 1", exact: true })
     .selectOption("driver");
   await dialog
+    .getByLabel("Segundo Motorista · motorista adicional · veículo 1", {
+      exact: true,
+    })
+    .check();
+  await dialog.getByLabel("Guia Um", { exact: true }).check();
+  await dialog.getByLabel("Guia Dois", { exact: true }).check();
+  await dialog
     .getByRole("button", { name: "Criar viagem", exact: true })
     .click();
   await expect(dialog).not.toBeVisible();
   const sent = submissions.find((s) => s.path === "/trips")!.data;
+  expect(sent.vehicles[0].driver_ids).toEqual(["driver", "driver2"]);
+  expect(sent.vehicles[0].guide_ids).toEqual(["guide1", "guide2"]);
   expect(sent.route_id).toBe("route-0");
   expect(sent.route_version).toBe(1);
   expect(sent.legs[0].ends_at).toBe("2027-01-10T12:20:00.000Z");

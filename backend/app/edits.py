@@ -205,7 +205,7 @@ async def apply_trip_edit(db, trip_id, data, old, actor, *, route_state=None):
         ):
             raise HTTPException(409, "Selecione um veículo ativo desta empresa.")
         for user_id, role in [
-            (allocation.driver_id, "driver"),
+            *[(uid, "driver") for uid in allocation.driver_ids],
             *[(g, "guide") for g in allocation.guide_ids],
         ]:
             if not await db.scalar(
@@ -229,7 +229,7 @@ async def apply_trip_edit(db, trip_id, data, old, actor, *, route_state=None):
                   LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id WHERE t.id<>:id
                   AND t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
                   AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
-                  AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
+                  AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user OR EXISTS(SELECT 1 FROM trip_drivers td WHERE td.allocation_id=tv.id AND td.user_id=:user)) LIMIT 1"""),
                     {
                         "id": trip_id,
                         "start": reserved_leg.starts_at,
@@ -355,6 +355,22 @@ async def apply_trip_edit(db, trip_id, data, old, actor, *, route_state=None):
             text("DELETE FROM trip_guides WHERE allocation_id=:id"),
             {"id": previous["id"]},
         )
+        await db.execute(
+            text("DELETE FROM trip_drivers WHERE allocation_id=:id"),
+            {"id": previous["id"]},
+        )
+        for position, driver in enumerate(allocation.driver_ids, 1):
+            await db.execute(
+                text(
+                    "INSERT INTO trip_drivers(company_id,allocation_id,user_id,position) VALUES(:company,:allocation,:user,:position)"
+                ),
+                {
+                    "company": actor.company_id,
+                    "allocation": previous["id"],
+                    "user": driver,
+                    "position": position,
+                },
+            )
         for guide in allocation.guide_ids:
             await db.execute(
                 text(

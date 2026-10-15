@@ -81,6 +81,11 @@ test("superadmin configura Pix e confirma manualmente a cobrança", async ({
     .getByLabel("Chave Pix da Nexus", { exact: true })
     .fill("financeiro@example.com");
   await page.getByLabel("Nome do favorecido do Pix").fill("Nexus");
+  const copy =
+    "00020126440014br.gov.bcb.pix0122financeiro@example.com5204000053039865802BR5905NEXUS6008BLUMENAU62070503***63041384";
+  await page
+    .getByLabel("Pix Copia e Cola sem valor definido (opcional)")
+    .fill(copy);
   await page
     .getByLabel("ID da sessão WhatsApp de cobrança da Nexus")
     .fill("11111111-1111-4111-8111-111111111111");
@@ -93,6 +98,7 @@ test("superadmin configura Pix e confirma manualmente a cobrança", async ({
   await expect(page.getByText("Configuração financeira salva.")).toBeVisible();
   expect(saved.pix_key).toBe("financeiro@example.com");
   expect(saved.enabled).toBe(true);
+  expect(saved.pix_copy_paste).toBe(copy);
   await page
     .getByRole("button", { name: "Financeiro e cobranças", exact: true })
     .click();

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/api.dart';
+import '../core/crew.dart';
 import '../core/config.dart';
 import '../core/controller.dart';
 import 'manifest.dart';
@@ -487,13 +488,7 @@ class _TripCardState extends State<TripCard> {
           ),
         if (detail != null)
           ...(detail!['vehicles'] as List)
-              .where(
-                (v) =>
-                    v['driver_id'] == widget.controller.user!['id'] ||
-                    (v['guides'] as List).any(
-                      (g) => g['id'] == widget.controller.user!['id'],
-                    ),
-              )
+              .where((v) => assignedToVehicle(v, widget.controller.user!['id']))
               .expand(
                 (v) => (detail!['legs'] as List)
                     .where(

@@ -97,12 +97,12 @@ Acesse `/ajuda` para o manual da equipe e a apresentação comercial. A ajuda do
 ### Configurar e ativar
 
 1. Entre em **Configurações**, na seção **Cobrança mensal da Nexus · Pix manual**.
-2. Informe **Chave Pix da Nexus** e **Nome do favorecido do Pix**.
+2. Informe **Chave Pix da Nexus** e **Nome do favorecido do Pix**. Opcionalmente, preencha **Pix Copia e Cola sem valor definido**, com o código completo gerado pelo banco para a mesma chave Pix.
 3. Selecione ou informe o **ID da sessão WhatsApp de cobrança da Nexus**. As cobranças saem pelo número da Nexus, utilizando as credenciais de comunicação configuradas no painel.
 4. Confira o e-mail remetente e os canais de comunicação.
 5. Marque **Ativar avisos e cobranças mensais automáticas** e salve.
 
-A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix não reescreve cobranças já fechadas.
+A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix ou o Pix Copia e Cola não reescreve cobranças já fechadas. O Copia e Cola é validado para conferir o formato, a integridade, a correspondência da chave e a ausência de valor fixo. Nas novas cobranças definitivas, o código aparece no demonstrativo e no texto das mensagens de e-mail e WhatsApp. O cliente precisa informar o valor total no banco; não é enviada uma imagem de QR Code por esse campo.
 
 ### Calendário e mensagens automáticas
 

@@ -96,6 +96,11 @@ async def notify(db, invoice, kind):
     )
     if kind == "preview":
         body += "\nEste é apenas um aviso: aguarde a cobrança definitiva no fechamento antes de pagar."
+    if invoice.get("pix_copy_paste") and kind in {"invoice", "blocked"}:
+        body += (
+            "\n\nPix Copia e Cola (informe o valor total acima no banco):\n"
+            + invoice["pix_copy_paste"]
+        )
     recipients = [
         ("email", value)
         for value in (
@@ -193,6 +198,7 @@ async def collect_company(db, company_id, now=None):
             "total": p["price_cents"] + extras * p["extra_trip_cents"],
             "pix": settings["pix_key"],
             "receiver": settings["receiver_name"],
+            "copy": settings["pix_copy_paste"],
             "status": "open" if closing else "preview",
             "due": due,
             "block": block,
@@ -202,10 +208,10 @@ async def collect_company(db, company_id, now=None):
                 await db.execute(
                     text("""INSERT INTO billing_invoices
             (id,company_id,period_id,starts_at,ends_at,plan_name,included_trips,used_trips,price_cents,extra_trip_cents,
-             extra_trips,total_cents,pix_key,receiver_name,status,due_on,block_at)
-            VALUES(:id,:company,:period,:start,:end,:name,:included,:used,:price,:extra,:extras,:total,:pix,:receiver,:status,:due,:block)
+             extra_trips,total_cents,pix_key,receiver_name,pix_copy_paste,status,due_on,block_at)
+            VALUES(:id,:company,:period,:start,:end,:name,:included,:used,:price,:extra,:extras,:total,:pix,:receiver,:copy,:status,:due,:block)
             ON CONFLICT(period_id) DO UPDATE SET used_trips=EXCLUDED.used_trips,extra_trips=EXCLUDED.extra_trips,
-            total_cents=EXCLUDED.total_cents,status=EXCLUDED.status,pix_key=EXCLUDED.pix_key,receiver_name=EXCLUDED.receiver_name
+            total_cents=EXCLUDED.total_cents,status=EXCLUDED.status,pix_key=EXCLUDED.pix_key,receiver_name=EXCLUDED.receiver_name,pix_copy_paste=EXCLUDED.pix_copy_paste
             WHERE billing_invoices.status='preview' RETURNING *"""),
                     data,
                 )

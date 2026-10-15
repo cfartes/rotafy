@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from app.billing.calendar import utc_now
 from app.billing.collections import financially_blocked, notify
+from app.billing.pix import normalize_key, static_pix_key
 from app.identity import Auth, admin, audit
 from app.identity import nexus as require_nexus
 from app.schemas import Input
@@ -20,6 +21,7 @@ class CollectionSettings(Input):
     pix_key: str = Field(max_length=140)
     receiver_name: str = Field(max_length=150)
     nexus_session_id: UUID | None = None
+    pix_copy_paste: str | None = Field(default=None, max_length=1024)
 
     @field_validator("pix_key", "receiver_name")
     @classmethod
@@ -42,6 +44,19 @@ async def settings(actor: Auth):
 @router.put("/nexus/billing/settings")
 async def save_settings(data: CollectionSettings, actor: Auth):
     require_nexus(actor)
+    existing = await actor.db.scalar(
+        text("SELECT pix_copy_paste FROM billing_settings WHERE id=true")
+    )
+    copy = existing if data.pix_copy_paste is None else data.pix_copy_paste.strip()
+    if copy:
+        try:
+            key = static_pix_key(copy)
+            if normalize_key(key) != normalize_key(data.pix_key):
+                raise ValueError(
+                    "A chave no Pix Copia e Cola é diferente da chave Pix cadastrada."
+                )
+        except (ValueError, UnicodeError) as exc:
+            raise HTTPException(422, str(exc)) from None
     if data.enabled:
         if not data.pix_key or not data.receiver_name or not data.nexus_session_id:
             raise HTTPException(
@@ -61,7 +76,7 @@ async def save_settings(data: CollectionSettings, actor: Auth):
         (
             await actor.db.execute(
                 text("""UPDATE billing_settings SET pix_key=:pix,receiver_name=:receiver,
-        nexus_session_id=:session,enabled=:enabled,
+        nexus_session_id=:session,enabled=:enabled,pix_copy_paste=:copy,
         enabled_at=CASE WHEN :enabled AND NOT enabled THEN clock_timestamp() ELSE enabled_at END,
         version=version+1,updated_at=clock_timestamp() WHERE id=true AND version=:version RETURNING *"""),
                 {
@@ -70,6 +85,7 @@ async def save_settings(data: CollectionSettings, actor: Auth):
                     "session": data.nexus_session_id,
                     "enabled": data.enabled,
                     "version": data.expected_version,
+                    "copy": copy,
                 },
             )
         )

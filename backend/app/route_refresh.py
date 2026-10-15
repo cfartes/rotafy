@@ -171,6 +171,7 @@ async def refresh_routes(
                     "allocation_id": v["id"],
                     "vehicle_id": v["vehicle_id"],
                     "driver_id": v["driver_id"],
+                    "driver_ids": v["driver_ids"],
                     "guide_ids": [g["id"] for g in v["guides"]],
                     "leg_positions": v.get("leg_positions", []),
                     "routes": v.get("routes", []),

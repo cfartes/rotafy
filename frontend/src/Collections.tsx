@@ -7,6 +7,7 @@ type Settings = {
   version: number;
   enabled: boolean;
   pix_key: string;
+  pix_copy_paste?: string;
   receiver_name: string;
   nexus_session_id: string | null;
 };
@@ -26,6 +27,7 @@ type Invoice = {
   total_cents: number;
   due_on: string;
   pix_key: string;
+  pix_copy_paste?: string;
   receiver_name: string;
   paid_at: string | null;
   confirmed_at: string | null;
@@ -77,6 +79,7 @@ export function CollectionSettings() {
   const [values, setValues] = useState({
     enabled: false,
     pix_key: "",
+    pix_copy_paste: "",
     receiver_name: "",
     nexus_session_id: "",
   });
@@ -88,6 +91,7 @@ export function CollectionSettings() {
       setValues({
         enabled: query.data.enabled ?? false,
         pix_key: query.data.pix_key ?? "",
+        pix_copy_paste: query.data.pix_copy_paste ?? "",
         receiver_name: query.data.receiver_name ?? "",
         nexus_session_id: query.data.nexus_session_id ?? "",
       });
@@ -134,6 +138,24 @@ export function CollectionSettings() {
           }}
         />
       </Field>
+      <Field label="Pix Copia e Cola sem valor definido (opcional)">
+        <textarea
+          rows={4}
+          maxLength={1024}
+          value={values.pix_copy_paste}
+          onChange={(e) => {
+            setSaved(false);
+            setValues({ ...values, pix_copy_paste: e.target.value });
+          }}
+          placeholder="Cole o código completo gerado pelo seu banco"
+        />
+      </Field>
+      <p className="muted">
+        Utilize um código estático, sem valor, da mesma chave Pix acima. O
+        código será incluído no e-mail, no WhatsApp e no demonstrativo das novas
+        cobranças. Este campo não envia imagem de QR Code; o cliente pode copiar
+        o código e informar o valor no banco.
+      </p>
       <Field label="Nome do favorecido do Pix">
         <input
           required={values.enabled}
@@ -381,6 +403,15 @@ export function Collections({ nexus }: { nexus: boolean }) {
                   <br />
                   Favorecido: {i.receiver_name}
                 </p>
+                {i.pix_copy_paste && (
+                  <Field label="Pix Copia e Cola desta cobrança">
+                    <textarea rows={4} value={i.pix_copy_paste} readOnly />
+                    <small>
+                      Copie o código e informe no banco o valor total da
+                      cobrança.
+                    </small>
+                  </Field>
+                )}
                 <p>
                   A baixa depende da conferência da Nexus. O envio do Pix não
                   libera automaticamente a conta.

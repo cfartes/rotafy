@@ -59,6 +59,7 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
     if not vehicle or not (
         manage
         or vehicle["driver_id"] == actor.user["id"]
+        or any(d["id"] == actor.user["id"] for d in vehicle.get("drivers", []))
         or any(g["id"] == actor.user["id"] for g in vehicle["guides"])
     ):
         raise HTTPException(404, "Rota não encontrada para este acesso.")

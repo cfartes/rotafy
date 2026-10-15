@@ -31,7 +31,7 @@ def clean_settings(owner):
     with owner.begin() as db:
         db.execute(
             text(
-                "UPDATE billing_settings SET enabled=false,enabled_at=NULL,version=1,pix_key='',receiver_name='',nexus_session_id=NULL"
+                "UPDATE billing_settings SET enabled=false,enabled_at=NULL,version=1,pix_key='',receiver_name='',nexus_session_id=NULL,pix_copy_paste=''"
             )
         )
     yield
@@ -441,3 +441,33 @@ def test_reactivation_starts_new_window_and_archives_expired_previews(
     )
     with owner.connect() as db:
         assert db.scalar(text("SELECT status FROM billing_invoices")) == "cancelled"
+
+
+def test_copy_paste_snapshot_and_financial_message(
+    client, seeded, owner, protected_key
+):
+    from datetime import datetime
+
+    from app.integration_secrets import decrypt
+    from test_pix import payload
+
+    period = setup(client, seeded)
+    activate(owner, period)
+    code = payload()
+    with owner.begin() as db:
+        db.execute(
+            text("UPDATE billing_settings SET pix_copy_paste=:code"), {"code": code}
+        )
+    collect(seeded["a"], datetime.fromisoformat(period["ends_at"]))
+    result = client.get("/api/v1/nexus/billing/invoices").json()[0]
+    assert result["pix_copy_paste"] == code
+    with owner.begin() as db:
+        body = db.scalar(
+            text("SELECT body FROM billing_notifications WHERE kind='invoice'")
+        )
+        assert code in decrypt(body)
+        db.execute(text("UPDATE billing_settings SET pix_copy_paste=''"))
+    collect(seeded["a"], datetime.fromisoformat(period["ends_at"]) + timedelta(hours=1))
+    assert (
+        client.get("/api/v1/nexus/billing/invoices").json()[0]["pix_copy_paste"] == code
+    )

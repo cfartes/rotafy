@@ -229,7 +229,12 @@ async def allocation_access(db, actor, trip_id, allocation_id, write=False):
     allocation = allocation[0]
     if actor.user["role"] not in {"admin", "attendant"}:
         if actor.user["role"] == "driver":
-            allowed = allocation["driver_id"] == actor.user["id"]
+            allowed = allocation["driver_id"] == actor.user["id"] or await db.scalar(
+                text(
+                    "SELECT user_id FROM trip_drivers WHERE allocation_id=:allocation AND user_id=:user"
+                ),
+                {"allocation": allocation_id, "user": actor.user["id"]},
+            )
         else:
             allowed = await db.scalar(
                 text(

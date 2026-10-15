@@ -109,7 +109,7 @@ Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convit
 3. Confira a placa brasileira tradicional ou Mercosul e salve.
 4. Mantenha o cadastro ativo para novas alocações. Edite os dados quando necessário ou arquive o veículo quando deixar de utilizá-lo.
 
-A capacidade é de **1 a 200 lugares**. O sistema distribui quantidade de passageiros; não utiliza escolha de poltrona numerada. O motorista e os guias são definidos na alocação da viagem, não como uma equipe permanente do veículo.
+A capacidade é de **1 a 200 lugares**. O sistema distribui quantidade de passageiros; não utiliza escolha de poltrona numerada. Os motoristas e guias são definidos na alocação da viagem, não como uma equipe permanente do veículo.
 
 A capacidade atribuída é preservada na viagem. Alterar a frota depois não recalcula a capacidade histórica de saídas já criadas. O mesmo veículo pode operar em diferentes horários, desde que não haja conflito de agenda.
 
@@ -189,12 +189,14 @@ O modelo admite até 20 destinos, 60 deslocamentos, 60 dias relativos e 120 ativ
 3. Informe nome comercial, destino apresentado ao comprador e preço por passageiro.
 4. Informe data e hora de saída e, para ida e volta, data e hora de retorno.
 5. Confira as chegadas previstas a partir da duração da Rota.
-6. Inclua os veículos e atribua um motorista ativo a cada alocação. Selecione guias quando houver.
+6. Inclua os veículos e escolha o motorista principal de cada alocação. Marque os motoristas adicionais que acompanharão o mesmo veículo. Selecione nenhum, um ou vários guias, conforme a operação.
 7. Revise as paradas atendidas por cada veículo, a capacidade e os conflitos de agenda; salve.
 
 ### Saída de pacote com roteiro
 
 Selecione o pacote e informe a **Data inicial do pacote**. Os dias relativos se transformam em datas reais. Confira cada deslocamento e seus horários, sem sobreposição. Atribua equipe e veículo aos deslocamentos correspondentes.
+
+Cada veículo pode ter até 20 motoristas e 20 guias. Todos os motoristas e guias atribuídos podem consultar agenda, rota e manifesto e operar os embarques no app atualizado. O cadastro impede sobreposição de horários e repetição de pessoas em veículos que atendem o mesmo trecho.
 
 Vários veículos podem atender o mesmo deslocamento. Um pacote também pode trocar de veículo, motorista ou guia entre etapas. Cada família permanece inteira no veículo escolhido para cada deslocamento. O cadastro verifica conflitos e impede duplicar o mesmo recurso na mesma etapa.
 
@@ -580,7 +582,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 
 O administrador encontra as cobranças da assinatura no menu **Financeiro e cobranças**. Cada demonstrativo apresenta o ciclo, plano contratado, franquia, viagens utilizadas, excedentes, total e prazo para a confirmação do pagamento.
 
-Um dia antes do fechamento, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva antes de efetuar o pagamento. No fechamento, o demonstrativo informa a chave Pix e o favorecido da Nexus.
+Um dia antes do fechamento, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva antes de efetuar o pagamento. No fechamento, o demonstrativo informa a chave Pix e o favorecido da Nexus. Quando disponibilizado pela Nexus, também apresenta o Pix Copia e Cola. Copie o código completo e informe no banco o valor total da cobrança; o código não possui valor predefinido.
 
 O prazo é de dois dias úteis a partir do dia seguinte ao fechamento, no horário de Brasília, excluindo fins de semana e feriados do calendário nacional, incluindo a Sexta-feira da Paixão. Pontos facultativos e feriados estaduais ou municipais não entram nesse calendário.
 

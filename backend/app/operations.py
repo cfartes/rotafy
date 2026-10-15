@@ -116,10 +116,22 @@ class VehicleRoute(OperationalInput):
 class Allocation(OperationalInput):
     allocation_id: UUID | None = None
     vehicle_id: UUID
-    driver_id: UUID
+    driver_id: UUID | None = None
+    driver_ids: list[UUID] = Field(default_factory=list, max_length=20)
     guide_ids: list[UUID] = Field(default_factory=list, max_length=20)
     routes: list[VehicleRoute] = Field(default_factory=list, max_length=60)
     leg_positions: list[int] = Field(default_factory=list, max_length=60)
+
+    @model_validator(mode="after")
+    def drivers(self):
+        if not self.driver_ids and self.driver_id:
+            self.driver_ids = [self.driver_id]
+        if not self.driver_ids or len(set(self.driver_ids)) != len(self.driver_ids):
+            raise ValueError("Selecione ao menos um motorista, sem repetir pessoas.")
+        if self.driver_id and self.driver_id != self.driver_ids[0]:
+            raise ValueError("O motorista principal deve ser o primeiro da lista.")
+        self.driver_id = self.driver_ids[0]
+        return self
 
 
 class Trip(OperationalInput):
@@ -200,7 +212,7 @@ class Trip(OperationalInput):
                     "Cada deslocamento precisa ter ao menos um veículo e motorista."
                 )
             vehicle_ids = [v.vehicle_id for v in assigned]
-            crew = [p for v in assigned for p in [v.driver_id, *v.guide_ids]]
+            crew = [p for v in assigned for p in [*v.driver_ids, *v.guide_ids]]
             if len(set(vehicle_ids)) != len(vehicle_ids) or len(set(crew)) != len(crew):
                 raise ValueError(
                     "Veículos e pessoas não podem repetir no mesmo trecho."
@@ -336,7 +348,8 @@ async def update_package(item_id: UUID, data: Package, request: Request, actor: 
 
 VISIBILITY = """( :manage OR EXISTS (SELECT 1 FROM trip_vehicles tv
  LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id
- WHERE tv.trip_id=t.id AND (tv.driver_id=:user_id OR tg.user_id=:user_id)))"""
+ WHERE tv.trip_id=t.id AND (tv.driver_id=:user_id OR tg.user_id=:user_id
+ OR EXISTS(SELECT 1 FROM trip_drivers td WHERE td.allocation_id=tv.id AND td.user_id=:user_id))))"""
 
 
 @router.get("/trips")
@@ -358,7 +371,7 @@ async def trips(actor: Auth):
           bool_and((v.journey_states -> l.id::text ->> 'status')='completed') IS TRUE AS completed
           FROM trip_legs l JOIN trip_vehicles v ON v.trip_id=l.trip_id
             AND (v.leg_positions='[]'::jsonb OR v.leg_positions @> to_jsonb(l.position))
-          WHERE l.trip_id=ANY(:ids) AND (:manage OR v.driver_id=:user OR EXISTS(SELECT 1 FROM trip_guides g WHERE g.allocation_id=v.id AND g.user_id=:user))
+          WHERE l.trip_id=ANY(:ids) AND (:manage OR v.driver_id=:user OR EXISTS(SELECT 1 FROM trip_drivers d WHERE d.allocation_id=v.id AND d.user_id=:user) OR EXISTS(SELECT 1 FROM trip_guides g WHERE g.allocation_id=v.id AND g.user_id=:user))
           GROUP BY l.id ORDER BY l.starts_at,l.position""",
             ids=[t["id"] for t in result],
             manage=actor.user["role"] in {"admin", "attendant"},
@@ -393,6 +406,12 @@ async def detail(db, trip_id):
         id=trip_id,
     )
     for allocation in result["vehicles"]:
+        allocation["drivers"] = await rows(
+            db,
+            "SELECT u.id,u.full_name FROM trip_drivers td JOIN users u ON u.id=td.user_id WHERE td.allocation_id=:id ORDER BY td.position",
+            id=allocation["id"],
+        ) or [{"id": allocation["driver_id"], "full_name": allocation["driver_name"]}]
+        allocation["driver_ids"] = [d["id"] for d in allocation["drivers"]]
         allocation["guides"] = await rows(
             db,
             "SELECT u.id,u.full_name FROM trip_guides tg JOIN users u ON u.id=tg.user_id WHERE tg.allocation_id=:id ORDER BY u.full_name",
@@ -435,7 +454,16 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
             422, "Selecione cidade e UF de origem e destino em todos os trechos."
         )
     fingerprint = hashlib.sha256(
-        data.model_dump_json(exclude={"operation_key"}).encode()
+        data.model_dump_json(
+            exclude={
+                "operation_key": True,
+                "vehicles": {
+                    index: {"driver_ids"}
+                    for index, v in enumerate(data.vehicles)
+                    if len(v.driver_ids) == 1
+                },
+            }
+        ).encode()
     ).hexdigest()
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
@@ -474,7 +502,7 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
             if not vehicle:
                 raise HTTPException(409, "Selecione um veículo ativo da sua empresa.")
             for user_id, role in [
-                (allocation.driver_id, "driver"),
+                *[(uid, "driver") for uid in allocation.driver_ids],
                 *[(uid, "guide") for uid in allocation.guide_ids],
             ]:
                 if not await db.scalar(
@@ -498,7 +526,7 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
                        LEFT JOIN trip_guides tg ON tg.allocation_id=tv.id
                        WHERE t.status IN ('scheduled','in_progress') AND scheduled_leg.starts_at<:end AND scheduled_leg.ends_at>:start
                        AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(scheduled_leg.position))
-                       AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user) LIMIT 1"""),
+                       AND (tv.vehicle_id=:vehicle OR tv.driver_id=:user OR tg.user_id=:user OR EXISTS(SELECT 1 FROM trip_drivers td WHERE td.allocation_id=tv.id AND td.user_id=:user)) LIMIT 1"""),
                         {
                             "start": reserved_leg.starts_at,
                             "end": reserved_leg.ends_at,
@@ -601,6 +629,18 @@ async def create_trip(data: Trip, request: Request, actor: Auth):
                     ),
                 },
             )
+            for position, driver in enumerate(allocation.driver_ids, 1):
+                await db.execute(
+                    text(
+                        "INSERT INTO trip_drivers(company_id,allocation_id,user_id,position) VALUES(:company,:allocation,:user,:position)"
+                    ),
+                    {
+                        "company": actor.company_id,
+                        "allocation": allocation_id,
+                        "user": driver,
+                        "position": position,
+                    },
+                )
             for guide in allocation.guide_ids:
                 await db.execute(
                     text(

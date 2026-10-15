@@ -79,6 +79,7 @@ type Allocation = {
   routes?: { leg_position: number; stop_positions: number[] }[];
   vehicle_id: string;
   driver_id: string;
+  driver_ids: string[];
   guide_ids: string[];
 };
 type Detail = Trip & {
@@ -93,6 +94,8 @@ type Detail = Trip & {
     id: string;
     vehicle_id: string;
     driver_id: string;
+    drivers?: { id: string; full_name: string }[];
+    driver_ids?: string[];
     leg_positions?: number[];
     name: string;
     plate: string;
@@ -606,6 +609,7 @@ export function Operations({
                     (v) =>
                       manage ||
                       v.driver_id === user.id ||
+                      !!v.drivers?.some((d) => d.id === user.id) ||
                       v.guides.some((g) => g.id === user.id),
                   )}
                 />
@@ -639,6 +643,7 @@ export function Operations({
                       (v) =>
                         manage ||
                         v.driver_id === user.id ||
+                        !!v.drivers?.some((d) => d.id === user.id) ||
                         v.guides.some((g) => g.id === user.id),
                     )
                     .map((v) => (
@@ -647,7 +652,9 @@ export function Operations({
                           {v.name} · {v.plate}
                         </h3>
                         <p>
-                          {v.capacity} lugares · Motorista: {v.driver_name}
+                          {v.capacity} lugares · Motoristas:{" "}
+                          {v.drivers?.map((d) => d.full_name).join(", ") ||
+                            v.driver_name}
                         </p>
                         <VehicleRoute
                           tripId={detail.data!.id}
@@ -666,7 +673,8 @@ export function Operations({
                         </p>
                         {(manage ||
                           (user.role === "driver"
-                            ? v.driver_id === user.id
+                            ? v.driver_id === user.id ||
+                              !!v.drivers?.some((d) => d.id === user.id)
                             : v.guides.some((g) => g.id === user.id))) &&
                           detail.data.legs.map(
                             (leg, index) =>
@@ -1100,10 +1108,12 @@ function TripModal({
           allocation_id: edit ? v.id : undefined,
           leg_positions: v.leg_positions || [],
           driver_id: v.driver_id,
+          driver_ids: v.driver_ids ||
+            v.drivers?.map((d) => d.id) || [v.driver_id],
           guide_ids: v.guides.map((g) => g.id),
           routes: v.routes || [],
         }))
-      : [{ vehicle_id: "", driver_id: "", guide_ids: [] }]),
+      : [{ vehicle_id: "", driver_id: "", driver_ids: [], guide_ids: [] }]),
   ]);
   const [packageId, setPackageId] = useState(initial?.package_id || "");
   const [name, setName] = useState(initial?.name || "");
@@ -1816,7 +1826,15 @@ function TripModal({
                 required
                 value={a.driver_id}
                 onChange={(e) =>
-                  updateAllocation(index, { driver_id: e.target.value })
+                  updateAllocation(index, {
+                    driver_id: e.target.value,
+                    driver_ids: [
+                      e.target.value,
+                      ...a.driver_ids.filter(
+                        (id) => id !== a.driver_id && id !== e.target.value,
+                      ),
+                    ].filter(Boolean),
+                  })
                 }
               >
                 <option value="">Selecione</option>
@@ -1829,6 +1847,31 @@ function TripModal({
                   ))}
               </select>
             </Field>
+            <p className="muted">
+              O campo acima define o motorista principal. Selecione abaixo os
+              demais motoristas que acompanharão este veículo na viagem.
+            </p>
+            <fieldset className="package-route-card">
+              <legend>Motoristas adicionais · veículo {index + 1}</legend>
+              {crew
+                .filter((c) => c.role === "driver" && c.id !== a.driver_id)
+                .map((c) => (
+                  <label className="operation-checkbox" key={c.id}>
+                    <input
+                      type="checkbox"
+                      checked={a.driver_ids.includes(c.id)}
+                      onChange={(e) =>
+                        updateAllocation(index, {
+                          driver_ids: e.target.checked
+                            ? [...a.driver_ids, c.id]
+                            : a.driver_ids.filter((id) => id !== c.id),
+                        })
+                      }
+                    />
+                    {c.full_name} · motorista adicional · veículo {index + 1}
+                  </label>
+                ))}
+            </fieldset>
             {legs.slice(0, legCount).map((leg, legIndex) => (
               <div
                 key={legIndex}
@@ -1876,7 +1919,7 @@ function TripModal({
                 })}
               </div>
             ))}
-            <p>Guias deste veículo</p>
+            <p>Guias deste veículo · selecione nenhum, um ou vários</p>
             {crew
               .filter((c) => c.role === "guide")
               .map((c) => (
@@ -1919,7 +1962,7 @@ function TripModal({
           onClick={() =>
             setAllocations([
               ...allocations,
-              { vehicle_id: "", driver_id: "", guide_ids: [] },
+              { vehicle_id: "", driver_id: "", driver_ids: [], guide_ids: [] },
             ])
           }
         >
