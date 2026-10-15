@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, roleName, type User } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import { PasswordInput } from "./components/PasswordInput";
+import { NexusAccessLogs } from "./NexusAccessLogs";
 
 export function NexusTeam({ currentUserId }: { currentUserId: string }) {
   const cache = useQueryClient();
@@ -151,6 +152,7 @@ export function NexusTeam({ currentUserId }: { currentUserId: string }) {
           </table>
         </div>
       )}
+      <NexusAccessLogs users={users.data || []} />
       {creating && (
         <Modal
           title="Adicionar usuário Nexus"

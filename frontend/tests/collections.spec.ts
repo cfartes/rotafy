@@ -1,5 +1,76 @@
 import { test, expect } from "@playwright/test";
 
+test("Nexus requests billing tests with explicit recipients and shows delivery status", async ({
+  page,
+}) => {
+  const sent: any[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [];
+    if (path === "/auth/me")
+      body = {
+        id: "nexus",
+        role: "nexus",
+        full_name: "Nexus",
+        company_id: null,
+        is_active: true,
+      };
+    if (path === "/nexus/integrations")
+      body = {
+        version: 1,
+        openwa_key_configured: true,
+        resend_key_configured: true,
+        email_from: "acesso@example.com",
+      };
+    if (path === "/nexus/billing/settings")
+      body = {
+        version: 1,
+        enabled: false,
+        pix_key: "financeiro@example.com",
+        receiver_name: "Nexus",
+        nexus_session_id: "11111111-1111-4111-8111-111111111111",
+      };
+    if (path === "/nexus/billing/test-delivery") {
+      sent.push(route.request().postDataJSON());
+      body = { status: "queued" };
+    }
+    if (path === "/nexus/billing/notifications")
+      body = sent.map((s, i) => ({
+        ...s,
+        id: String(i),
+        kind: "test",
+        status: "sent",
+        created_at: "2026-10-15T16:00:00Z",
+        error_code: null,
+      }));
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/nexus");
+  await page
+    .getByRole("button", { name: "Configurações", exact: true })
+    .click();
+  await page
+    .getByLabel("E-mail para teste de cobrança")
+    .fill("teste@example.com");
+  await page
+    .getByRole("button", { name: "Testar e-mail de cobrança", exact: true })
+    .click();
+  await expect(
+    page.getByText(/E-mail · teste@example.com · Aceito/),
+  ).toBeVisible();
+  await page
+    .getByLabel("WhatsApp para teste de cobrança")
+    .fill("+5547999999999");
+  await page
+    .getByRole("button", { name: "Testar WhatsApp de cobrança", exact: true })
+    .click();
+  await expect(
+    page.getByText(/WhatsApp · \+5547999999999 · Aceito/),
+  ).toBeVisible();
+  expect(sent.map((s) => s.channel)).toEqual(["email", "whatsapp"]);
+  expect(sent.every((s) => s.operation_key)).toBeTruthy();
+});
+
 const invoice = {
   id: "11111111-1111-4111-8111-111111111111",
   company_name: "Agência A",

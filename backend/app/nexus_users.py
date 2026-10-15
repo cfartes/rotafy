@@ -1,5 +1,6 @@
 """Full administrators manage internal Nexus accounts."""
 
+from datetime import datetime
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -27,6 +28,37 @@ class Create(Input):
 class Update(Input):
     role: Literal["nexus", "nexus_staff"]
     is_active: bool
+
+
+@router.get("/access-logs")
+async def access_logs(
+    actor: Auth,
+    user_id: UUID | None = None,
+    event: Literal["auth.login", "auth.logout"] | None = None,
+    starts_at: datetime | None = None,
+    ends_at: datetime | None = None,
+):
+    nexus(actor)
+    if any(value and value.tzinfo is None for value in (starts_at, ends_at)):
+        raise HTTPException(422, "Informe datas com fuso horário.")
+    if starts_at and ends_at and starts_at >= ends_at:
+        raise HTTPException(422, "O fim do período deve ser posterior ao início.")
+    return [
+        dict(row)
+        for row in (
+            await actor.db.execute(
+                text("""SELECT a.id,a.created_at,a.action,
+      u.id AS user_id,u.full_name,u.email,u.role FROM audit_events a JOIN platform_users u ON u.id=a.actor_id
+      WHERE a.company_id IS NULL AND a.action IN ('auth.login','auth.logout')
+      AND (CAST(:user AS uuid) IS NULL OR u.id=:user)
+      AND (CAST(:event AS text) IS NULL OR a.action=:event)
+      AND (CAST(:start AS timestamptz) IS NULL OR a.created_at>=:start)
+      AND (CAST(:end AS timestamptz) IS NULL OR a.created_at<:end)
+      ORDER BY a.created_at DESC,a.id DESC LIMIT 200"""),
+                {"user": user_id, "event": event, "start": starts_at, "end": ends_at},
+            )
+        ).mappings()
+    ]
 
 
 @router.get("")

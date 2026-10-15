@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+from datetime import timedelta
 from urllib.error import HTTPError, URLError
 
 from cryptography.fernet import InvalidToken
@@ -27,15 +28,14 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
             .mappings()
             .one()
         )
-        if not config["enabled"]:
-            return False
         item = (
             (
                 await db.execute(
                     text("""SELECT n.*,i.status AS invoice_status,i.ends_at,i.block_at
-            FROM billing_notifications n JOIN billing_invoices i ON i.id=n.invoice_id
-            WHERE n.status='pending' AND n.next_attempt_at<=now() ORDER BY n.next_attempt_at,n.created_at LIMIT 1
-            FOR UPDATE OF n SKIP LOCKED""")
+            FROM billing_notifications n LEFT JOIN billing_invoices i ON i.id=n.invoice_id
+            WHERE n.status='pending' AND n.next_attempt_at<=now() AND (:enabled OR n.kind='test') ORDER BY n.next_attempt_at,n.created_at LIMIT 1
+            FOR UPDATE OF n SKIP LOCKED"""),
+                    {"enabled": config["enabled"]},
                 )
             )
             .mappings()
@@ -57,7 +57,9 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
                 and item["invoice_status"] == "open"
             )
         )
-        if item["channel"] == "email":
+        if item["kind"] == "test":
+            valid = now - item["created_at"] < timedelta(minutes=15)
+        elif item["channel"] == "email":
             valid = valid and bool(
                 await db.scalar(
                     text("""SELECT 1 FROM users WHERE company_id=:company
@@ -156,6 +158,7 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
                         "invoice": "Nexus Rotafy — cobrança mensal por Pix",
                         "blocked": "Nexus Rotafy — confirmação de pagamento pendente",
                         "paid": "Nexus Rotafy — pagamento confirmado",
+                        "test": "Nexus Rotafy — teste do envio de cobrança (não pagar)",
                     }[item["kind"]],
                 },
             )

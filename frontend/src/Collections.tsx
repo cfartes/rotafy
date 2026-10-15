@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
@@ -61,6 +61,146 @@ const noticeErrors: Record<string, string> = {
   http_403: "A chave de acesso não permite este envio.",
   http_429: "O serviço limitou os envios. Aguarde a próxima tentativa.",
 };
+
+function BillingDeliveryTests() {
+  const cache = useQueryClient();
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [queued, setQueued] = useState(false);
+  const keys = useRef<Record<string, string>>({});
+  const results = useQuery({
+    queryKey: ["billing-delivery-tests"],
+    queryFn: () =>
+      api<
+        {
+          id: string;
+          kind: string;
+          channel: string;
+          recipient: string;
+          status: string;
+          error_code: string | null;
+          created_at: string;
+        }[]
+      >("/nexus/billing/notifications"),
+    refetchInterval: 5000,
+  });
+  async function send(channel: "email" | "whatsapp") {
+    setBusy(true);
+    setError("");
+    setQueued(false);
+    keys.current[channel] ||= crypto.randomUUID();
+    try {
+      await api("/nexus/billing/test-delivery", {
+        method: "POST",
+        body: JSON.stringify({
+          channel,
+          recipient: channel === "email" ? email : phone,
+          operation_key: keys.current[channel],
+        }),
+      });
+      delete keys.current[channel];
+      setQueued(true);
+      await cache.invalidateQueries({ queryKey: ["billing-delivery-tests"] });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Falha ao solicitar teste.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  const labels: Record<string, string> = {
+    pending: "Aguardando envio",
+    sending: "Enviando",
+    sent: "Aceito pelo serviço",
+    failed: "Falha",
+    uncertain:
+      "Envio incerto — confira o recebimento antes de testar novamente",
+    discarded: "Descartado",
+  };
+  return (
+    <section className="operation-card modal-form">
+      <h3>Testar envio de cobrança</h3>
+      <p>
+        Utiliza a configuração salva de e-mail e o WhatsApp de cobrança da
+        Nexus, mesmo com a cobrança automática desativada. Salve as alterações
+        antes de testar. Não cria cobrança nem altera assinaturas.
+      </p>
+      <div className="pix-preview-field">
+        <Field label="E-mail para teste de cobrança">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              delete keys.current.email;
+            }}
+          />
+        </Field>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={busy || !email.trim()}
+          onClick={() => void send("email")}
+        >
+          Testar e-mail de cobrança
+        </button>
+      </div>
+      <div className="pix-preview-field">
+        <Field label="WhatsApp para teste de cobrança">
+          <input
+            type="tel"
+            placeholder="+55 47 99999-9999"
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              delete keys.current.whatsapp;
+            }}
+          />
+        </Field>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={busy || !phone.trim()}
+          onClick={() => void send("whatsapp")}
+        >
+          Testar WhatsApp de cobrança
+        </button>
+      </div>
+      {queued && (
+        <p role="status">
+          Teste solicitado. O resultado será atualizado automaticamente abaixo.
+        </p>
+      )}
+      {(error || results.error) && (
+        <Alert>{error || results.error?.message}</Alert>
+      )}
+      <small className="muted">
+        Aceito pelo serviço não confirma entrega ou leitura. Confira o
+        destinatário informado.
+      </small>
+      {results.data
+        ?.filter((n) => n.kind === "test")
+        .slice(0, 10)
+        .map((n) => (
+          <p key={n.id}>
+            {n.channel === "email" ? "E-mail" : "WhatsApp"} · {n.recipient} ·{" "}
+            {labels[n.status] || n.status}
+            <br />
+            <small>
+              {new Date(n.created_at).toLocaleString("pt-BR", {
+                timeZone: "America/Sao_Paulo",
+              })}
+              {n.error_code &&
+                ` · ${noticeErrors[n.error_code] || "Falha no serviço. Confira a configuração."}`}
+            </small>
+          </p>
+        ))}
+    </section>
+  );
+}
 
 export function CollectionSettings() {
   const [preview, setPreview] = useState<{
@@ -165,177 +305,184 @@ export function CollectionSettings() {
   if (query.isPending) return <p>Carregando configuração financeira…</p>;
   if (query.error) return <Alert>{query.error.message}</Alert>;
   return (
-    <form className="operation-card modal-form" onSubmit={save}>
-      <h2>Cobrança mensal da Nexus · Pix manual</h2>
-      <p>
-        Configure os dados que serão enviados às empresas. O recebimento do Pix
-        precisa ser confirmado pelo superadmin em Financeiro e cobranças.
-      </p>
-      <div className="pix-preview-field">
-        <Field label="Chave Pix da Nexus">
+    <>
+      <form className="operation-card modal-form" onSubmit={save}>
+        <h2>Cobrança mensal da Nexus · Pix manual</h2>
+        <p>
+          Configure os dados que serão enviados às empresas. O recebimento do
+          Pix precisa ser confirmado pelo superadmin em Financeiro e cobranças.
+        </p>
+        <div className="pix-preview-field">
+          <Field label="Chave Pix da Nexus">
+            <input
+              required={values.enabled}
+              maxLength={140}
+              value={values.pix_key}
+              onChange={(e) => {
+                setSaved(false);
+                setValues({ ...values, pix_key: e.target.value });
+              }}
+            />
+          </Field>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={previewBusy || !values.pix_key.trim()}
+            onClick={() => void showPix(false)}
+          >
+            Ver QR Code da chave Pix
+          </button>
+        </div>
+        <div className="pix-preview-field">
+          <Field label="Pix Copia e Cola sem valor definido (opcional)">
+            <textarea
+              rows={4}
+              maxLength={1024}
+              value={values.pix_copy_paste}
+              onChange={(e) => {
+                setSaved(false);
+                setValues({ ...values, pix_copy_paste: e.target.value });
+              }}
+              placeholder="Cole o código completo gerado pelo seu banco"
+            />
+          </Field>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={previewBusy || !values.pix_copy_paste.trim()}
+            onClick={() => void showPix(true)}
+          >
+            Ver QR Code do Copia e Cola
+          </button>
+        </div>
+        {preview && (
+          <Modal
+            title={`QR Code · ${preview.source}`}
+            onClose={() => setPreview(null)}
+          >
+            <div className="modal-form">
+              <p>
+                Leia com o aplicativo do banco e confira a chave e o favorecido.
+                QR Code sem valor definido.
+              </p>
+              <img
+                src={preview.image}
+                alt="QR Code Pix para conferência"
+                width={360}
+                height={360}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                  alignSelf: "center",
+                }}
+              />
+              <p>
+                Chave Pix: <strong>{preview.key}</strong>
+              </p>
+              <Field label="Pix Copia e Cola do QR Code">
+                <textarea rows={4} value={preview.payload} readOnly />
+              </Field>
+              <p className="muted">
+                A visualização usa os campos preenchidos, sem salvar alterações
+                nem consultar sua conta bancária.
+              </p>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setPreview(null)}
+              >
+                Fechar QR Code
+              </button>
+            </div>
+          </Modal>
+        )}
+        <p className="muted">
+          Utilize um código estático, sem valor, da mesma chave Pix acima. O
+          código será incluído no e-mail, no WhatsApp e no demonstrativo das
+          novas cobranças. Este campo não envia imagem de QR Code; o cliente
+          pode copiar o código e informar o valor no banco.
+        </p>
+        <Field label="Nome do favorecido do Pix">
           <input
             required={values.enabled}
-            maxLength={140}
-            value={values.pix_key}
+            maxLength={150}
+            value={values.receiver_name}
             onChange={(e) => {
               setSaved(false);
-              setValues({ ...values, pix_key: e.target.value });
+              setValues({ ...values, receiver_name: e.target.value });
             }}
           />
         </Field>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={previewBusy || !values.pix_key.trim()}
-          onClick={() => void showPix(false)}
-        >
-          Ver QR Code da chave Pix
-        </button>
-      </div>
-      <div className="pix-preview-field">
-        <Field label="Pix Copia e Cola sem valor definido (opcional)">
-          <textarea
-            rows={4}
-            maxLength={1024}
-            value={values.pix_copy_paste}
-            onChange={(e) => {
-              setSaved(false);
-              setValues({ ...values, pix_copy_paste: e.target.value });
-            }}
-            placeholder="Cole o código completo gerado pelo seu banco"
-          />
-        </Field>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={previewBusy || !values.pix_copy_paste.trim()}
-          onClick={() => void showPix(true)}
-        >
-          Ver QR Code do Copia e Cola
-        </button>
-      </div>
-      {preview && (
-        <Modal
-          title={`QR Code · ${preview.source}`}
-          onClose={() => setPreview(null)}
-        >
-          <div className="modal-form">
-            <p>
-              Leia com o aplicativo do banco e confira a chave e o favorecido.
-              QR Code sem valor definido.
-            </p>
-            <img
-              src={preview.image}
-              alt="QR Code Pix para conferência"
-              width={360}
-              height={360}
-              style={{ maxWidth: "100%", height: "auto", alignSelf: "center" }}
-            />
-            <p>
-              Chave Pix: <strong>{preview.key}</strong>
-            </p>
-            <Field label="Pix Copia e Cola do QR Code">
-              <textarea rows={4} value={preview.payload} readOnly />
-            </Field>
-            <p className="muted">
-              A visualização usa os campos preenchidos, sem salvar alterações
-              nem consultar sua conta bancária.
-            </p>
-            <button
-              type="button"
-              className="button secondary"
-              onClick={() => setPreview(null)}
-            >
-              Fechar QR Code
-            </button>
-          </div>
-        </Modal>
-      )}
-      <p className="muted">
-        Utilize um código estático, sem valor, da mesma chave Pix acima. O
-        código será incluído no e-mail, no WhatsApp e no demonstrativo das novas
-        cobranças. Este campo não envia imagem de QR Code; o cliente pode copiar
-        o código e informar o valor no banco.
-      </p>
-      <Field label="Nome do favorecido do Pix">
-        <input
-          required={values.enabled}
-          maxLength={150}
-          value={values.receiver_name}
-          onChange={(e) => {
-            setSaved(false);
-            setValues({ ...values, receiver_name: e.target.value });
-          }}
-        />
-      </Field>
-      <Field label="ID da sessão WhatsApp de cobrança da Nexus">
-        <input
-          required={values.enabled}
-          value={values.nexus_session_id}
-          pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-          onChange={(e) => {
-            setSaved(false);
-            setValues({ ...values, nexus_session_id: e.target.value });
-          }}
-        />
-      </Field>
-      <button
-        type="button"
-        className="button secondary"
-        disabled={sessions.isFetching}
-        onClick={() => void sessions.refetch()}
-      >
-        Listar sessões de envio da Nexus
-      </button>
-      {sessions.error && <Alert>{sessions.error.message}</Alert>}
-      {!!sessions.data?.length && (
-        <Field label="Selecionar sessão da Nexus">
-          <select
+        <Field label="ID da sessão WhatsApp de cobrança da Nexus">
+          <input
+            required={values.enabled}
             value={values.nexus_session_id}
+            pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
             onChange={(e) => {
               setSaved(false);
               setValues({ ...values, nexus_session_id: e.target.value });
             }}
-          >
-            <option value="">Escolha o número de envio</option>
-            {sessions.data.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} · {s.status} · {s.id}
-              </option>
-            ))}
-          </select>
+          />
         </Field>
-      )}
-      <label className="operation-checkbox">
-        <input
-          type="checkbox"
-          checked={values.enabled}
-          onChange={(e) => {
-            setSaved(false);
-            setValues({ ...values, enabled: e.target.checked });
-          }}
-        />
-        Ativar avisos e cobranças mensais automáticas
-      </label>
-      <p className="muted">
-        Aviso parcial um dia antes do fechamento; cobrança definitiva no
-        fechamento. Prazo de dois dias úteis a partir do dia seguinte, no
-        horário de Brasília, excluindo fins de semana e feriados do calendário
-        nacional, incluindo Sexta-feira da Paixão. Não inclui pontos
-        facultativos nem feriados estaduais e municipais.
-      </p>
-      <p className="muted">
-        A ativação considera os ciclos que fecharem depois dela, sem cobrar
-        ciclos antigos retroativamente. Desativar pausa os envios e novos
-        fechamentos; não cancela cobranças já abertas. Alterar o Pix não
-        reescreve cobranças fechadas.
-      </p>
-      {error && <Alert>{error}</Alert>}
-      {saved && <p role="status">Configuração financeira salva.</p>}
-      <button className="button primary" disabled={busy}>
-        Salvar configuração de cobrança
-      </button>
-    </form>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={sessions.isFetching}
+          onClick={() => void sessions.refetch()}
+        >
+          Listar sessões de envio da Nexus
+        </button>
+        {sessions.error && <Alert>{sessions.error.message}</Alert>}
+        {!!sessions.data?.length && (
+          <Field label="Selecionar sessão da Nexus">
+            <select
+              value={values.nexus_session_id}
+              onChange={(e) => {
+                setSaved(false);
+                setValues({ ...values, nexus_session_id: e.target.value });
+              }}
+            >
+              <option value="">Escolha o número de envio</option>
+              {sessions.data.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} · {s.status} · {s.id}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        <label className="operation-checkbox">
+          <input
+            type="checkbox"
+            checked={values.enabled}
+            onChange={(e) => {
+              setSaved(false);
+              setValues({ ...values, enabled: e.target.checked });
+            }}
+          />
+          Ativar avisos e cobranças mensais automáticas
+        </label>
+        <p className="muted">
+          Aviso parcial um dia antes do fechamento; cobrança definitiva no
+          fechamento. Prazo de dois dias úteis a partir do dia seguinte, no
+          horário de Brasília, excluindo fins de semana e feriados do calendário
+          nacional, incluindo Sexta-feira da Paixão. Não inclui pontos
+          facultativos nem feriados estaduais e municipais.
+        </p>
+        <p className="muted">
+          A ativação considera os ciclos que fecharem depois dela, sem cobrar
+          ciclos antigos retroativamente. Desativar pausa os envios e novos
+          fechamentos; não cancela cobranças já abertas. Alterar o Pix não
+          reescreve cobranças fechadas.
+        </p>
+        {error && <Alert>{error}</Alert>}
+        {saved && <p role="status">Configuração financeira salva.</p>}
+        <button className="button primary" disabled={busy}>
+          Salvar configuração de cobrança
+        </button>
+      </form>
+      <BillingDeliveryTests />
+    </>
   );
 }
 
@@ -357,7 +504,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
       api<
         {
           id: string;
-          invoice_id: string;
+          invoice_id: string | null;
           company_name: string;
           kind: string;
           channel: string;
@@ -571,6 +718,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
                     invoice: "Cobrança",
                     blocked: "Bloqueio",
                     paid: "Pagamento confirmado",
+                    test: "Teste de cobrança",
                   } as Record<string, string>
                 )[n.kind]
               }{" "}
@@ -590,7 +738,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
               {n.error_code &&
                 ` · ${noticeErrors[n.error_code] || "O serviço retornou uma falha. Solicite suporte."}`}
               <br />
-              <small>Cobrança: {n.invoice_id}</small>
+              {n.invoice_id && <small>Cobrança: {n.invoice_id}</small>}
             </p>
           ))}
         </section>

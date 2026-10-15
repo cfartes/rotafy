@@ -1,5 +1,56 @@
 import { test, expect } from "@playwright/test";
 
+test("full Nexus administrator filters access history", async ({ page }) => {
+  const queries: string[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname.replace("/api/v1", "");
+    let body: any = [];
+    const user = {
+      id: "nexus",
+      full_name: "Pessoa Nexus",
+      email: "pessoa@example.com",
+      role: "nexus",
+      is_active: true,
+    };
+    if (path === "/auth/me") body = { ...user, company_id: null };
+    if (path === "/nexus/users") body = [user];
+    if (path === "/nexus/users/access-logs") {
+      queries.push(url.search);
+      body = [
+        {
+          id: "log",
+          user_id: "nexus",
+          full_name: user.full_name,
+          email: user.email,
+          role: "nexus",
+          action: url.searchParams.get("event") || "auth.login",
+          created_at: "2026-10-15T16:00:00Z",
+        },
+      ];
+    }
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/nexus");
+  await page.getByRole("button", { name: "Equipe Nexus", exact: true }).click();
+  await expect(
+    page.getByRole("cell", { name: "Entrada", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Evento de acesso").selectOption("auth.logout");
+  await expect(
+    page.getByRole("cell", { name: "Saída", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Colaborador no log de acesso").selectOption("nexus");
+  await page.getByLabel("Acessos a partir de").fill("2026-10-15");
+  await expect
+    .poll(() =>
+      queries.some(
+        (q) => q.includes("user_id=nexus") && q.includes("starts_at="),
+      ),
+    )
+    .toBeTruthy();
+});
+
 test("restricted Nexus staff sees companies without financial or configuration requests", async ({
   page,
 }) => {
@@ -92,7 +143,7 @@ test("full Nexus administrator creates restricted internal user", async ({
     .getByRole("button", { name: "Cadastrar usuário Nexus", exact: true })
     .click();
   await expect(
-    page.getByText("pessoa@example.com", { exact: false }),
+    page.getByRole("cell", { name: /Pessoa Nexus pessoa@example.com/ }),
   ).toBeVisible();
   expect(created.role).toBe("nexus_staff");
 });

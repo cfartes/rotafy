@@ -1,18 +1,116 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import Field, field_validator
+from pydantic import EmailStr, Field, TypeAdapter, ValidationError, field_validator
 from sqlalchemy import text
 
 from app.billing.calendar import utc_now
 from app.billing.collections import financially_blocked, notify
 from app.billing.pix import key_payload, normalize_key, static_pix_key
+from app.config import Settings
 from app.identity import Auth, admin, audit
 from app.identity import nexus as require_nexus
-from app.schemas import Input
+from app.integration_secrets import encrypt
+from app.integration_settings import openwa_key, runtime_settings
+from app.schemas import CompanyContact, Input
 
 router = APIRouter(prefix="/api/v1", tags=["Cobranças mensais"])
+
+
+class TestDelivery(Input):
+    operation_key: UUID
+    channel: Literal["email", "whatsapp"]
+    recipient: str = Field(min_length=5, max_length=254)
+
+
+@router.post("/nexus/billing/test-delivery", status_code=202)
+async def test_delivery(data: TestDelivery, actor: Auth):
+    require_nexus(actor)
+    try:
+        recipient = (
+            str(TypeAdapter(EmailStr).validate_python(data.recipient)).lower()
+            if data.channel == "email"
+            else CompanyContact.validate_contact(data.recipient)
+        )
+        if not recipient:
+            raise ValueError()
+    except (ValueError, ValidationError):
+        raise HTTPException(
+            422, "Informe um destinatário válido para o canal selecionado."
+        ) from None
+    config = (
+        (await actor.db.execute(text("SELECT * FROM billing_settings WHERE id=true")))
+        .mappings()
+        .one()
+    )
+    if data.channel == "email":
+        settings = await runtime_settings(actor.db, Settings())
+        if not settings.resend_api_key or not settings.email_from:
+            raise HTTPException(
+                422, "Configure a chave e o remetente de e-mail antes do teste."
+            )
+    else:
+        await openwa_key(actor.db)
+        if not config["nexus_session_id"]:
+            raise HTTPException(
+                422, "Configure a sessão WhatsApp de cobrança da Nexus antes do teste."
+            )
+    body = (
+        "Nexus Rotafy — TESTE DE COBRANÇA\n"
+        "Esta mensagem verifica o canal de cobrança mensal. Não é uma cobrança e não deve ser paga.\n"
+        f"Favorecido configurado: {config['receiver_name']}\nChave Pix configurada: {config['pix_key']}"
+    )
+    if config["pix_copy_paste"]:
+        body += (
+            "\nPix Copia e Cola configurado (somente conferência):\n"
+            + config["pix_copy_paste"]
+        )
+    try:
+        protected = encrypt(body)
+    except (OSError, ValueError):
+        raise HTTPException(503, "Proteção das mensagens indisponível.") from None
+    row = (
+        await actor.db.execute(
+            text("""INSERT INTO billing_notifications(id,kind,channel,recipient,body)
+      VALUES(:id,'test',:channel,:recipient,:body) ON CONFLICT(id) DO NOTHING RETURNING id"""),
+            {
+                "id": data.operation_key,
+                "channel": data.channel,
+                "recipient": recipient,
+                "body": protected,
+            },
+        )
+    ).first()
+    if not row:
+        previous = (
+            (
+                await actor.db.execute(
+                    text(
+                        "SELECT kind,channel,recipient FROM billing_notifications WHERE id=:id"
+                    ),
+                    {"id": data.operation_key},
+                )
+            )
+            .mappings()
+            .one()
+        )
+        if (
+            previous["kind"] != "test"
+            or previous["channel"] != data.channel
+            or previous["recipient"] != recipient
+        ):
+            raise HTTPException(409, "Identificador já utilizado em outro envio.")
+    else:
+        await audit(
+            actor.db,
+            None,
+            actor.user["id"],
+            "billing.test_requested",
+            data.operation_key,
+        )
+    return {"id": data.operation_key, "status": "queued"}
 
 
 class PixPreview(Input):
@@ -260,8 +358,8 @@ async def notifications(actor: Auth):
         for row in (
             await actor.db.execute(
                 text("""SELECT n.id,n.invoice_id,n.kind,n.channel,n.status,
-        n.attempts,n.error_code,n.created_at,n.sent_at,c.trade_name AS company_name
-        FROM billing_notifications n JOIN companies c ON c.id=n.company_id ORDER BY n.created_at DESC LIMIT 200""")
+        n.attempts,n.error_code,n.created_at,n.sent_at,n.recipient,COALESCE(c.trade_name,'Teste Nexus') AS company_name
+        FROM billing_notifications n LEFT JOIN companies c ON c.id=n.company_id ORDER BY n.created_at DESC LIMIT 200""")
             )
         ).mappings()
     ]

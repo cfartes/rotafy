@@ -117,3 +117,29 @@ def test_company_admin_cannot_manage_nexus_and_password_policy(client, seeded):
             ).status_code
             == 422
         )
+
+
+def test_access_logs_include_nexus_only_and_filter_by_user(client, seeded):
+    staff = create_staff(client)
+    login(client, email="equipe@example.com", nexus=True)
+    assert client.get("/api/v1/nexus/users/access-logs").status_code == 403
+    assert client.post("/api/v1/auth/logout").status_code == 204
+    login(client)
+    login(client, email="nexus@example.com", nexus=True)
+    rows = client.get(
+        "/api/v1/nexus/users/access-logs", params={"user_id": staff["id"]}
+    ).json()
+    assert {row["action"] for row in rows} == {"auth.login", "auth.logout"}
+    assert all(row["email"] == "equipe@example.com" for row in rows)
+    rows = client.get(
+        "/api/v1/nexus/users/access-logs", params={"event": "auth.logout"}
+    ).json()
+    assert all(row["action"] == "auth.logout" for row in rows)
+    assert not any(row["email"] == "admin@example.com" for row in rows)
+    assert (
+        client.get(
+            "/api/v1/nexus/users/access-logs",
+            params={"starts_at": "2026-10-15T00:00:00"},
+        ).status_code
+        == 422
+    )
