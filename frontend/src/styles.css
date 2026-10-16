@@ -416,6 +416,7 @@ textarea:focus {
   margin: 0 10px;
 }
 .workspace {
+  position: relative;
   margin: 35px 0 32px;
   border: 1px solid #ffffff1a;
   background: #ffffff05;
@@ -424,6 +425,31 @@ textarea:focus {
   gap: 10px;
   padding: 14px 10px;
   border-radius: 9px;
+}
+.workspace:has(.workspace-edit) {
+  padding-right: 30px;
+}
+.workspace-edit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: #91aabd;
+  cursor: pointer;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px;
+}
+.workspace-edit:hover {
+  background: #ffffff0a;
+  color: #fff;
+}
+.workspace-edit:focus-visible {
+  outline: 2px solid #63d8cf;
+  outline-offset: 3px;
 }
 .workspace-icon {
   width: 32px;

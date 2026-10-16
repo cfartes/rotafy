@@ -199,7 +199,7 @@ export function CompanyWhatsApp() {
             <Field label="WhatsApp de envio da empresa">
               <input type="tel" value={state.data.phone || ""} readOnly />
             </Field>
-            <p className="muted">Telefone obtido do cadastro da empresa. Para alterar, solicite à Nexus a atualização cadastral.</p>
+            <p className="muted">Telefone obtido do cadastro da empresa. Para alterar, clique no logo ou nome da empresa no menu lateral.</p>
             {!state.data.phone && <Alert>Informe o telefone no cadastro da empresa antes de conectar o WhatsApp.</Alert>}
             {state.data.status === "phone_changed" && <Alert>O telefone cadastrado foi alterado. Conecte o WhatsApp correspondente ao número exibido.</Alert>}
             <label className="operation-checkbox">

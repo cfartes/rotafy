@@ -1,5 +1,34 @@
 import { test, expect } from "@playwright/test";
 
+test("admin opens company registration from workspace logo and saves contact", async ({ page }) => {
+  let company = { id: "a", slug: "empresa", trade_name: "Empresa A", corporate_name: "Empresa A LTDA", cnpj: "52998224725", contact_phone: "+5547999999999", primary_color: "#123456", accent_color: "#abcdef", operational_profile: "tourism" };
+  let saved: any;
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [];
+    if (path === "/auth/me") body = { id: "admin", role: "admin", company_id: "a", full_name: "Admin", is_active: true };
+    if (path === "/company") {
+      if (route.request().method() === "PATCH") {
+        saved = route.request().postDataJSON();
+        company = { ...company, ...saved };
+      }
+      body = company;
+    }
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Editar cadastro da empresa" }).click();
+  await expect(page.getByRole("heading", { name: "Cadastro da empresa", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Identificador de acesso", { exact: true })).toHaveAttribute("readonly", "");
+  await page.getByLabel("Nome comercial", { exact: true }).fill("Empresa atualizada");
+  await page.getByLabel("Telefone/WhatsApp", { exact: true }).fill("+5511999999999");
+  await page.getByRole("button", { name: "Salvar cadastro", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Cadastro da empresa", exact: true })).toHaveCount(0);
+  expect(saved.contact_phone).toBe("+5511999999999");
+  expect(saved.slug).toBeUndefined();
+  await expect(page.locator(".workspace strong")).toHaveText("Empresa atualizada");
+});
+
 test("separate registrations and edit collaborator role", async ({ page }) => {
   const people: any[] = [
     {

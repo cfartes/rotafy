@@ -172,6 +172,8 @@ Todos os campos do cadastro são obrigatórios. O identificador de acesso deve c
 
 O cliente não realiza cadastro público. Se o convite expirar, solicite um novo envio à equipe Nexus ou utilize **Esqueci minha senha** no acesso da empresa.
 
+O administrador pode editar o cadastro clicando no bloco com o logo e o nome da empresa no menu lateral. O formulário permite atualizar nome comercial, razão social, CPF/CNPJ, telefone/WhatsApp e cores. O identificador de acesso aparece somente para consulta. A alteração do telefone suspende os envios pelo número anterior; confira a conexão no menu **WhatsApp**.
+
 ### 4. Login, senhas e recuperação
 
 #### Entrar no painel web
@@ -607,7 +609,7 @@ A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bil
 
 O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é preparada automaticamente em segundo plano; não é necessário conhecer um ID ou acessar as configurações da Nexus. Empresas já cadastradas podem iniciar a conexão pelo mesmo menu.
 
-1. Confira o **WhatsApp de envio da empresa**, obtido diretamente do cadastro da empresa. O campo não permite edição; solicite à Nexus a atualização cadastral quando necessário.
+1. Confira o **WhatsApp de envio da empresa**, obtido diretamente do cadastro da empresa. Para alterar, clique no bloco com o logo e o nome da empresa no menu lateral e salve o cadastro.
 
 2. Mantenha **Habilitar envios após conectar e conferir o número** marcado quando desejar ativar as mensagens.
 3. Clique em **Conectar WhatsApp** e aguarde a preparação do QR Code.
