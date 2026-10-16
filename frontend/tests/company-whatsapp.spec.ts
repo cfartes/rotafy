@@ -4,6 +4,8 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
   page,
 }) => {
   let status = "created";
+  let connectionReads = 0;
+  let disconnectRequests = 0;
   let submitted: any;
   await page.route("**/api/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
@@ -23,8 +25,15 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
         trade_name: "Empresa A",
         operational_profile: "tourism",
       };
-    if (path === "/company/whatsapp")
+    if (path === "/company/whatsapp") {
+      connectionReads++;
       body = { phone: "+5547999999999", status, send_enabled: true };
+    }
+    if (path === "/company/whatsapp/disconnect") {
+      disconnectRequests++;
+      status = "disconnected";
+      body = { status: "disconnecting" };
+    }
     if (path === "/company/whatsapp/connect") {
       submitted = route.request().postDataJSON();
       status = "qr_ready";
@@ -74,6 +83,18 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
   await expect(
     page.getByText("Envios habilitados.", { exact: false }),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Conectar WhatsApp", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Desconectar WhatsApp", exact: true })).toBeVisible();
+  await expect(page.getByText(/Atualização desta tela em/)).toHaveCount(0);
+  await expect(page.getByText(/Solicitação registrada/)).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toBeDisabled();
+  const readsWhenConnected = connectionReads;
+  await page.waitForTimeout(5500);
+  expect(connectionReads).toBe(readsWhenConnected);
+  await page.getByRole("button", { name: "Desconectar WhatsApp", exact: true }).click();
+  await expect(page.getByText("Desconectado", { exact: true })).toBeVisible();
+  expect(disconnectRequests).toBe(1);
+  await expect(page.getByRole("button", { name: "Conectar WhatsApp", exact: true })).toBeVisible();
 });
 
 test("attendant cannot see company WhatsApp connection menu", async ({
