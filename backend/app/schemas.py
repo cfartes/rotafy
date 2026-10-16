@@ -126,11 +126,19 @@ class CompanyDetailsUpdate(CompanyContact):
         return result
 
 
-class BrandingUpdate(Input):
+class BrandingUpdate(CompanyContact):
+    cnpj: str | None = None
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)
     primary_color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
     accent_color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
+
+    @field_validator("contact_phone", "cnpj")
+    @classmethod
+    def require_supplied_contact(cls, value, info):
+        if not value:
+            raise ValueError("Informe o telefone/WhatsApp ou CPF/CNPJ da empresa.")
+        return company_document(value) if info.field_name == "cnpj" else value
 
 
 class UserUpdate(CompanyContact):

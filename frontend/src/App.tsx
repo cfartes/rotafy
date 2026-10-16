@@ -895,6 +895,7 @@ function BrandingModal({
         Object.fromEntries(new FormData(event.currentTarget)),
       );
       await client.invalidateQueries({ queryKey: ["company"] });
+      await client.invalidateQueries({ queryKey: ["company-whatsapp"] });
       await client.invalidateQueries({ queryKey: ["audit"] });
       onClose();
     } catch (err) {
@@ -904,8 +905,11 @@ function BrandingModal({
     }
   }
   return (
-    <Modal title="Identidade da empresa" onClose={onClose}>
+    <Modal title="Cadastro da empresa" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <Field label="Identificador de acesso">
+          <input value={company.slug} readOnly />
+        </Field>
         <Field label="Nome comercial">
           <input
             name="trade_name"
@@ -924,6 +928,15 @@ function BrandingModal({
             maxLength={150}
           />
         </Field>
+        <div className="form-grid">
+          <Field label="CPF/CNPJ">
+            <DocumentInput initialValue={company.cnpj || ""} required />
+          </Field>
+          <Field label="Telefone/WhatsApp">
+            <PhoneInput initialValue={company.contact_phone || ""} required />
+          </Field>
+        </div>
+        <p className="muted">Ao alterar o telefone, confira a conexão no menu WhatsApp. Os envios pelo número anterior serão suspensos.</p>
         <div className="form-grid">
           <Field label="Cor principal">
             <input
@@ -946,7 +959,7 @@ function BrandingModal({
             Cancelar
           </button>
           <button className="button primary" disabled={pending}>
-            {pending ? "Salvando…" : "Salvar identidade"}
+            {pending ? "Salvando…" : "Salvar cadastro"}
           </button>
         </footer>
       </form>
@@ -1157,6 +1170,17 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       <aside className={`sidebar ${menu ? "open" : ""}`}>
         <Logo light />
         <div className="workspace">
+          {isAdmin && company.data && (
+            <button
+              type="button"
+              className="workspace-edit"
+              aria-label="Editar cadastro da empresa"
+              title="Editar cadastro da empresa"
+              onClick={() => { setBrandingOpen(true); setMenu(false); }}
+            >
+              <span aria-hidden="true">✎</span>
+            </button>
+          )}
           <span
             className="workspace-icon"
             style={

@@ -63,6 +63,7 @@ from app.schemas import (
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
 from app.whatsapp import router as whatsapp_router
+from app.whatsapp_connection import invalidate_phone_connection
 from app.whatsapp_connection import router as whatsapp_connection_router
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
@@ -508,23 +509,8 @@ def create_app(settings: Settings | None = None):
             "contact_phone" in payload.model_fields_set
             and previous_phone != payload.contact_phone
         ):
-            await scope(actor.db, company_id)
-            await actor.db.execute(
-                text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
-                {"id": company_id},
-            )
-            await actor.db.execute(
-                text(
-                    "UPDATE company_whatsapp_discovery SET automatic=false,version=version+1 WHERE company_id=:id"
-                ),
-                {"id": company_id},
-            )
-            await actor.db.execute(
-                text("""UPDATE company_whatsapp_connection
-                SET phone=COALESCE(:phone,phone),version=version+1,error_code=NULL,next_attempt_at=now(),
-                status=CASE WHEN status IN ('paused','managed') THEN status ELSE 'pending' END
-                WHERE company_id=:id"""),
-                {"id": company_id, "phone": payload.contact_phone},
+            await invalidate_phone_connection(
+                actor.db, company_id, payload.contact_phone
             )
         await audit(
             actor.db, company_id, actor.user["id"], "company.updated", company_id
@@ -548,27 +534,53 @@ def create_app(settings: Settings | None = None):
         return result | {"capabilities": capabilities(result["operational_profile"])}
 
     @application.patch("/api/v1/company")
-    async def update_branding(payload: BrandingUpdate, actor: Auth):
+    async def update_branding(payload: BrandingUpdate, actor: Auth, request: Request):
         admin(actor)
-        row = (
-            (
-                await actor.db.execute(
-                    text(f"""UPDATE companies
-            SET trade_name=:trade_name,corporate_name=:corporate_name,primary_color=:primary_color,accent_color=:accent_color
-            WHERE id=:id RETURNING {COMPANY_FIELDS}"""),
-                    payload.model_dump() | {"id": actor.company_id},
-                )
+        async with request.app.state.platform_engine.begin() as db:
+            await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
+            await scope(db, actor.company_id)
+            if payload.cnpj and await db.scalar(
+                text("SELECT 1 FROM companies WHERE cnpj=:cnpj AND id<>:id"),
+                {"cnpj": payload.cnpj, "id": actor.company_id},
+            ):
+                raise HTTPException(409, "CPF/CNPJ já cadastrado em outra empresa.")
+            previous_phone = await db.scalar(
+                text("SELECT contact_phone FROM companies WHERE id=:id FOR UPDATE"),
+                {"id": actor.company_id},
             )
-            .mappings()
-            .one()
-        )
-        await audit(
-            actor.db,
-            actor.company_id,
-            actor.user["id"],
-            "company.branding_updated",
-            actor.company_id,
-        )
+            row = (
+                (
+                    await db.execute(
+                        text(f"""UPDATE companies
+                SET trade_name=:trade_name,corporate_name=:corporate_name,primary_color=:primary_color,accent_color=:accent_color,
+                contact_phone=CASE WHEN :update_phone THEN :contact_phone ELSE contact_phone END,
+                cnpj=CASE WHEN :update_document THEN :cnpj ELSE cnpj END
+                WHERE id=:id RETURNING {COMPANY_FIELDS}"""),
+                        payload.model_dump()
+                        | {
+                            "id": actor.company_id,
+                            "update_phone": "contact_phone" in payload.model_fields_set,
+                            "update_document": "cnpj" in payload.model_fields_set,
+                        },
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            if (
+                "contact_phone" in payload.model_fields_set
+                and previous_phone != payload.contact_phone
+            ):
+                await invalidate_phone_connection(
+                    db, actor.company_id, payload.contact_phone
+                )
+            await audit(
+                db,
+                actor.company_id,
+                actor.user["id"],
+                "company.branding_updated",
+                actor.company_id,
+            )
         return dict(row)
 
     @application.get("/api/v1/users", response_model=list[UserView])

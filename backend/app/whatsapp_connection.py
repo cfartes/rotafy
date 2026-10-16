@@ -37,6 +37,28 @@ async def queue_connection(db, company_id, phone, actor_id=None):
     )
 
 
+async def invalidate_phone_connection(db, company_id, phone):
+    """Caller holds the shared advisory lock and company row lock."""
+    await scope(db, company_id)
+    await db.execute(
+        text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
+        {"id": company_id},
+    )
+    await db.execute(
+        text(
+            "UPDATE company_whatsapp_discovery SET automatic=false,version=version+1 WHERE company_id=:id"
+        ),
+        {"id": company_id},
+    )
+    await db.execute(
+        text("""UPDATE company_whatsapp_connection
+        SET phone=COALESCE(:phone,phone),version=version+1,error_code=NULL,next_attempt_at=now(),
+        status=CASE WHEN status IN ('paused','managed') THEN status ELSE 'pending' END
+        WHERE company_id=:id"""),
+        {"id": company_id, "phone": phone},
+    )
+
+
 @router.get("")
 async def connection(actor: Auth):
     admin(actor)

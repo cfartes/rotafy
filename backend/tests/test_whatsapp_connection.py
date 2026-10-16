@@ -180,6 +180,74 @@ def test_company_phone_edit_invalidates_connection(client, seeded, owner, config
         )
 
 
+def test_admin_edits_own_company_and_refreshes_whatsapp(
+    client, seeded, owner, configured
+):
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"enabled": True}
+        ).status_code
+        == 202
+    )
+    company = client.get("/api/v1/company").json()
+    payload = {
+        key: company[key]
+        for key in ("trade_name", "corporate_name", "primary_color", "accent_color")
+    }
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO company_whatsapp(company_id,session_id,enabled) VALUES(:id,:session,true)"
+            ),
+            {"id": seeded["a"], "session": uuid4()},
+        )
+    result = client.patch(
+        "/api/v1/company",
+        json=payload | {"contact_phone": "(11) 99999-9999", "cnpj": "529.982.247-25"},
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()["contact_phone"] == "+5511999999999"
+    assert result.json()["cnpj"] == "52998224725"
+    assert state(client)["phone"] == "+5511999999999"
+    with owner.begin() as db:
+        assert (
+            db.scalar(
+                text("SELECT enabled FROM company_whatsapp WHERE company_id=:id"),
+                {"id": seeded["a"]},
+            )
+            is False
+        )
+        assert (
+            db.scalar(
+                text("SELECT trade_name FROM companies WHERE id=:id"),
+                {"id": seeded["b"]},
+            )
+            == "Empresa B"
+        )
+    for invalid in (
+        {"contact_phone": ""},
+        {"cnpj": "123"},
+        {"slug": "other"},
+        {"is_active": False},
+    ):
+        assert (
+            client.patch("/api/v1/company", json=payload | invalid).status_code == 422
+        )
+    with owner.begin() as db:
+        db.execute(
+            text("UPDATE companies SET cnpj='11144477735' WHERE id=:id"),
+            {"id": seeded["b"]},
+        )
+    assert (
+        client.patch(
+            "/api/v1/company", json=payload | {"cnpj": "11144477735"}
+        ).status_code
+        == 409
+    )
+    login(client, email="guide@example.com")
+    assert client.patch("/api/v1/company", json=payload).status_code == 403
+
+
 def test_company_admin_connects_without_id_or_key(
     client, seeded, owner, configured, monkeypatch
 ):
