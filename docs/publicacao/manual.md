@@ -470,7 +470,7 @@ Se a consulta atingir o limite, reduza o período ou escolha uma viagem. O siste
 
 **Acesso:** administrador da empresa → **Meu plano**.
 
-Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, extras e valor estimado. Os ciclos mensais seguem o aniversário da assinatura; a franquia não acumula para o mês seguinte.
+Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, extras e valor estimado. Nos novos contratos automáticos, os ciclos têm 30 dias e a cobrança ocorre após o uso; a franquia não acumula para o período seguinte. Contratos legados preservam o calendário contratado.
 
 | Operação | Consumo |
 | --- | --- |
@@ -483,7 +483,7 @@ Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, 
 
 **Estimativa do ciclo:** mensalidade + máximo(uso líquido − franquia, 0) × valor da viagem extra. Cancelar uma viagem de um ciclo anterior não transfere crédito para o ciclo atual.
 
-Não há emissão automática de fatura, cobrança bancária, pró-rata ou reembolso financeiro. A Nexus administra a cobrança comercial com base no demonstrativo e nas condições contratadas.
+A cobrança automática registra o demonstrativo e disponibiliza o link de pagamento quando a integração está ativa. A confirmação ocorre após a verificação do pagamento. Contratos manuais preservam a baixa pela Nexus. Não há pró-rata ou reembolso automático neste fluxo.
 
 ## 22. Comunicação da empresa {#configuracoes}
 
@@ -591,7 +591,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 
 O administrador encontra as cobranças da assinatura em **Meu plano** e no menu **Financeiro e cobranças**. Cada demonstrativo apresenta período, plano, utilização, excedentes, setup quando aplicável, total e prazo para pagamento.
 
-Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada a cobrança de setup e primeira mensalidade. Nas renovações, o demonstrativo reúne o próximo mês e os excedentes do período pago anterior. Contratos anteriores preservam suas condições.
+Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada somente a cobrança de setup, quando houver. A primeira mensalidade e os excedentes são cobrados após 30 dias de uso. Os ciclos seguintes também duram 30 dias e são cobrados no fechamento. Contratos anteriores preservam suas condições.
 
 Um dia antes da cobrança, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva. Use **Pagar agora** para acessar o pagamento seguro, também enviado por e-mail e WhatsApp. A confirmação é automática após aprovação; o retorno do checkout pode aguardar alguns instantes pela conferência.
 

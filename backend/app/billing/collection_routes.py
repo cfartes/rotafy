@@ -223,7 +223,7 @@ async def save_settings(data: CollectionSettings, actor: Auth):
         gateway
         or await actor.db.scalar(
             text(
-                "SELECT 1 FROM subscriptions WHERE billing_mode='prepaid' AND status='active' LIMIT 1"
+                "SELECT 1 FROM subscriptions WHERE billing_mode IN ('prepaid','postpaid30') AND status='active' LIMIT 1"
             )
         )
     ):

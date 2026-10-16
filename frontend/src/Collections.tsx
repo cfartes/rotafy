@@ -18,6 +18,7 @@ type Settings = {
   trial_days?: number;
 };
 type Invoice = {
+  invoice_kind?: "subscription" | "setup";
   id: string;
   company_name?: string;
   plan_name: string;
@@ -53,6 +54,8 @@ const date = (s: string) =>
   new Date(s).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 const due = (s: string) => s.split("-").reverse().join("/");
 const noticeErrors: Record<string, string> = {
+  billing_terms_changed:
+    "Aviso substituído pela regra de setup separado e mensalidade após 30 dias.",
   whatsapp_precheck_failed:
     "Confira a conexão do WhatsApp da Nexus e o telefone da empresa.",
   email_configuration_unavailable:
@@ -389,15 +392,17 @@ export function CollectionSettings() {
             </Field>
           </div>
           <p className="muted">
-            Teste iniciado dia 10 com 7 dias: cobrança de setup e primeira
-            mensalidade no dia 17, por e-mail e WhatsApp. Uma nova franquia
-            começa nessa data. Durante o teste não há cobrança de excedentes; a
-            utilização respeita a franquia do plano.
+            Contratação em 10/10 com 7 dias de teste: somente setup em 17/10. A
+            primeira mensalidade e seus excedentes são cobrados em 16/11, após
+            30 dias de uso, por e-mail e WhatsApp. A franquia começa em 17/10 e
+            se renova a cada 30 dias. Durante o teste não há cobrança de
+            excedentes; a utilização respeita a franquia do plano.
           </p>
           <p className="muted">
-            Nas renovações: próximo mês mais excedentes do período anterior. A
-            confirmação dos pagamentos é automática. Contratos anteriores mantêm
-            seus ciclos; cobranças já emitidas não são alteradas.
+            Nos novos contratos: ciclos de 30 dias, com mensalidade e excedentes
+            do próprio período cobrados no fechamento. A confirmação dos
+            pagamentos é automática. Contratos anteriores mantêm seus ciclos;
+            cobranças já emitidas não são alteradas.
           </p>
           <p className="muted">
             Contratos antecipados existentes continuam nesse modelo. Para pausar
@@ -767,9 +772,13 @@ export function Collections({ nexus }: { nexus: boolean }) {
           >
             <h3>
               {i.company_name || "Sua empresa"} · {i.plan_name}
+              {i.invoice_kind === "setup" && " · Setup"}
             </h3>
             <p>
-              {date(i.starts_at)} até {date(i.ends_at)} (fim exclusivo) ·{" "}
+              {i.invoice_kind === "setup"
+                ? `Setup em ${date(i.starts_at)}`
+                : `${date(i.starts_at)} até ${date(i.ends_at)} (fim exclusivo)`}{" "}
+              ·{" "}
               {
                 (
                   {
@@ -782,13 +791,17 @@ export function Collections({ nexus }: { nexus: boolean }) {
               }
               {i.overdue && " · Vencida"}
             </p>
-            <p>
-              Mensalidade: <strong>{money(i.price_cents)}</strong> · Franquia:{" "}
-              {i.included_trips} · Utilizadas: {i.used_trips}
-            </p>
-            <p>
-              Excedentes: {i.extra_trips} × {money(i.extra_trip_cents)}
-            </p>
+            {i.invoice_kind !== "setup" && (
+              <p>
+                Mensalidade: <strong>{money(i.price_cents)}</strong> · Franquia:{" "}
+                {i.included_trips} · Utilizadas: {i.used_trips}
+              </p>
+            )}
+            {i.invoice_kind !== "setup" && (
+              <p>
+                Excedentes: {i.extra_trips} × {money(i.extra_trip_cents)}
+              </p>
+            )}
             {!!i.setup_cents && (
               <p>
                 Setup (cobrança única): <strong>{money(i.setup_cents)}</strong>

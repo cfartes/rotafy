@@ -11,7 +11,7 @@ from app.schemas import CompanyCreate
 from app.security import passwords
 
 COMPANY_FIELDS = """id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile,
- (SELECT s.starts_on FROM subscriptions s WHERE s.company_id=companies.id AND s.status='active' AND s.billing_mode='prepaid' AND s.trial_days>0) AS trial_ends_on"""
+ (SELECT s.starts_on FROM subscriptions s WHERE s.company_id=companies.id AND s.status='active' AND s.billing_mode IN ('prepaid','postpaid30') AND s.trial_days>0) AS trial_ends_on"""
 
 
 async def register_company(db, payload: CompanyCreate, actor_id=None):
@@ -72,7 +72,7 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
                     "plan": plan["id"],
                     "version": plan["version_id"],
                     "starts": starts_on,
-                    "mode": "prepaid" if prepaid else "arrears",
+                    "mode": "postpaid30" if prepaid else "arrears",
                     "trial": trial_days,
                     "setup": terms["setup_cents"] if prepaid else 0,
                 },
