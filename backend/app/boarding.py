@@ -297,7 +297,13 @@ def journey_points(
             result[kind] = " · ".join(
                 filter(
                     None,
-                    [location["name"], location["address"], location.get("complement")],
+                    [
+                        location["name"],
+                        location["address"]
+                        if location["address"] != location["name"]
+                        else "",
+                        location.get("complement"),
+                    ],
                 )
             )
             result[f"{kind}_at"] = None
