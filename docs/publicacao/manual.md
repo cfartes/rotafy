@@ -101,7 +101,7 @@ Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convit
 
 ## 6. Veículos e capacidade {#veiculos}
 
-**Acesso:** administrador ou atendente → **Veículos** ou **Frota, pacotes e viagens → Frota**.
+**Acesso:** administrador ou atendente → **Veículos** ou **Viagens e pacotes → Frota**.
 
 1. Abra o cadastro de novo veículo.
 2. Informe nome de identificação, placa e quantidade de lugares.
@@ -142,7 +142,7 @@ A atualização é permitida para viagens agendadas sem eventos de embarque. Com
 
 ## 8. Pacotes turísticos: modelos e formatos {#pacotes}
 
-**Acesso:** empresa de Turismo → **Frota, pacotes e viagens → Pacotes**. Um pacote é um modelo reutilizável, sem data fixa. A data real é definida ao criar a viagem.
+**Acesso:** empresa de Turismo → **Viagens e pacotes → Pacotes**. Um pacote é um modelo reutilizável, sem data fixa. A data real é definida ao criar a viagem.
 
 ### Pacote simples
 

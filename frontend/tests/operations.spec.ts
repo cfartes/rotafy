@@ -109,7 +109,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
     },
   });
   expect(guide.status()).toBe(201);
-  await page.getByRole("button", { name: "Frota, pacotes e viagens" }).click();
+  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
   await page.getByRole("button", { name: "Frota", exact: true }).click();
   for (let i = 0; i < 2; i++) {
     await page.getByRole("button", { name: "Novo veículo" }).click();
@@ -363,7 +363,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
   ).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Abrir navegação" }).click();
-  await page.getByRole("button", { name: "Frota, pacotes e viagens" }).click();
+  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
   await expect(page.getByRole("complementary")).not.toBeInViewport();
   await page.screenshot({
     path: "../docs/screenshots/viagens-mobile.png",

@@ -114,7 +114,7 @@ for (const daily of [false, true]) {
     });
     await page.goto("/");
     await page
-      .getByRole("button", { name: "Frota, pacotes e viagens", exact: true })
+      .getByRole("button", { name: "Viagens e pacotes", exact: true })
       .click();
     await page.getByRole("button", { name: "Pacotes", exact: true }).click();
     await page

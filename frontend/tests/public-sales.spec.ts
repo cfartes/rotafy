@@ -229,7 +229,7 @@ test("página pública, acompanhamento privado, PAGO e alertas", async ({
   await expect(buyer).toHaveURL(/acompanhar#token=/);
   await expect(buyer.getByText("Ana Pública", { exact: true })).toBeVisible();
   const trackingUrl = buyer.url();
-  await page.getByRole("button", { name: "Frota, pacotes e viagens" }).click();
+  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   await page.getByRole("button", { name: "Reservas e lugares" }).click();
   await page.getByRole("button", { name: "Ver reserva" }).click();

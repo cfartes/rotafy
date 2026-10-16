@@ -166,7 +166,7 @@ test("reuse route for round-trip scheduling, with no individual stop times", asy
     path: "../docs/screenshots/rotas-catalogo-desktop.png",
   });
   await page
-    .getByRole("button", { name: "Frota, pacotes e viagens", exact: true })
+    .getByRole("button", { name: "Viagens e pacotes", exact: true })
     .click();
   await page.getByRole("button", { name: "Nova viagem", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Nova viagem comercial" });
@@ -250,7 +250,7 @@ test("regular company schedules a simple trip without package controls", async (
     page.getByText("Transporte regular", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Frota e viagens", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Pacotes", exact: true }),

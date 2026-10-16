@@ -183,7 +183,7 @@ test("attendant sees uncertain delivery and can queue an explicit reservation su
   });
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Frota, pacotes e viagens", exact: true })
+    .getByRole("button", { name: "Viagens e pacotes", exact: true })
     .click();
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   await page

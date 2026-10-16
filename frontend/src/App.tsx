@@ -1102,6 +1102,28 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                           : isNexus
                             ? "Empresas"
                             : "Equipe";
+  function menuActive(id: string) {
+    if (page === "operations")
+      return id === "operations"
+        ? operationModule === "trips"
+        : id === operationModule;
+    return page === id;
+  }
+  const companyMenuOrder = [
+    "overview",
+    "directory",
+    "vehicles",
+    "routes",
+    "operations",
+    "allocations",
+    "passengers",
+    "ticket-sales",
+    "sales",
+    "reports",
+    "collections",
+    "billing",
+    "audit",
+  ];
   return (
     <div className="app-layout">
       <a className="skip-link" href="#main-content">
@@ -1154,8 +1176,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                       user.role === "guide" || user.role === "driver"
                         ? "Minhas viagens"
                         : companyCapabilities(company.data).packages
-                          ? "Frota, pacotes e viagens"
-                          : "Frota e viagens",
+                          ? "Viagens e pacotes"
+                          : "Viagens",
                     icon: Route,
                   },
                 ]
@@ -1172,6 +1194,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                       ]
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
+                  { id: "vehicles", label: "Veículos", icon: Route },
+                  { id: "allocations", label: "Alocar veículos", icon: Route },
+                  { id: "passengers", label: "Passageiros", icon: Users },
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
                 ]
               : []),
@@ -1209,26 +1234,39 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   { id: "audit", label: "Atividades", icon: ShieldCheck },
                 ]
               : []),
-          ].map((item) => (
-            <button
-              key={item.id}
-              className={page === item.id ? "active" : ""}
-              onClick={() => {
-                setPage(item.id as typeof page);
-                if (item.id === "billing") setCompanyPlanOnly(false);
-                if (item.id === "operations") {
-                  setOperationModule("trips");
-                  setReportTripId(null);
-                }
-                setSearch("");
-                setMenu(false);
-              }}
-            >
-              <item.icon size={19} />
-              {item.label}
-              {page === item.id && <span className="nav-active-dot" />}
-            </button>
-          ))}
+          ]
+            .sort((a, b) =>
+              isNexus
+                ? 0
+                : companyMenuOrder.indexOf(a.id) -
+                  companyMenuOrder.indexOf(b.id),
+            )
+            .map((item) => (
+              <button
+                key={item.id}
+                className={menuActive(item.id) ? "active" : ""}
+                onClick={() => {
+                  if (
+                    ["vehicles", "allocations", "passengers"].includes(item.id)
+                  ) {
+                    setPage("operations");
+                    setOperationModule(item.id);
+                    setReportTripId(null);
+                  } else setPage(item.id as typeof page);
+                  if (item.id === "billing") setCompanyPlanOnly(false);
+                  if (item.id === "operations") {
+                    setOperationModule("trips");
+                    setReportTripId(null);
+                  }
+                  setSearch("");
+                  setMenu(false);
+                }}
+              >
+                <item.icon size={19} />
+                {item.label}
+                {menuActive(item.id) && <span className="nav-active-dot" />}
+              </button>
+            ))}
           {isAdmin && (
             <button
               onClick={() => {
@@ -1241,32 +1279,6 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               Identidade da empresa
             </button>
           )}
-          {!isNexus &&
-            (isAdmin || user.role === "attendant") &&
-            [
-              ["vehicles", "Veículos"],
-              ["trips", "Viagens"],
-              ["allocations", "Alocar veículos"],
-              ["passengers", "Passageiros"],
-            ].map(([module, label]) => (
-              <button
-                key={module}
-                className={
-                  page === "operations" && operationModule === module
-                    ? "active"
-                    : ""
-                }
-                onClick={() => {
-                  setOperationModule(module);
-                  setReportTripId(null);
-                  setPage("operations");
-                  setMenu(false);
-                }}
-              >
-                <Route size={19} />
-                <span>{label}</span>
-              </button>
-            ))}
           <a
             className="documentation-nav-link"
             href={isNexus ? "/nexus/ajuda" : "/ajuda"}
