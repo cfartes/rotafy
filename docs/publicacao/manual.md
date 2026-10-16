@@ -52,10 +52,6 @@ Todos os campos do cadastro são obrigatórios. O identificador de acesso deve c
 
 O cliente não realiza cadastro público. Se o convite expirar, solicite um novo envio à equipe Nexus ou utilize **Esqueci minha senha** no acesso da empresa.
 
-### Identidade visual
-
-O administrador utiliza **Identidade da empresa** para ajustar os dados e a marca disponíveis na interface, incluindo cores e logotipo. A identidade pertence à empresa; não troca os dados de outras empresas.
-
 ## 4. Login, senhas e recuperação {#acesso}
 
 ### Entrar no painel web
@@ -84,7 +80,7 @@ Se receber erro de credenciais, confira a empresa, o e-mail, o perfil ativo e a 
 
 1. Clique em **Adicionar pessoa**.
 2. Preencha nome, e-mail, perfil e telefone/WhatsApp do colaborador.
-3. Para compartilhar uma senha inicial, mantenha o convite desmarcado e informe uma senha com 12 ou mais caracteres.
+3. Para compartilhar uma senha inicial, mantenha o convite desmarcado e informe pelo menos 8 caracteres, uma letra maiúscula e um caractere especial.
 4. Para a pessoa definir a própria senha, marque **Enviar convite para a pessoa definir sua senha**.
 5. Escolha **E-mail**, **WhatsApp** ou **E-mail e WhatsApp**. O telefone é obrigatório para os dois últimos.
 6. Salve. O envio entra na fila e depende da integração do canal escolhido estar habilitada.
@@ -92,6 +88,8 @@ Se receber erro de credenciais, confira a empresa, o e-mail, o perfil ativo e a 
 O número pode ser nacional com DDD ou internacional com `+` e código do país. O sistema valida e normaliza o telefone.
 
 ### Reenviar, suspender e consultar
+
+Utilize **Editar colaborador** para alterar nome, e-mail de acesso, telefone/WhatsApp e função (Administrador, Atendente, Motorista ou Guia). Alterar o e-mail ou a função encerra as sessões anteriores. A troca de e-mail invalida os links antigos de recuperação. O sistema impede remover seu próprio acesso administrativo ou o último administrador ativo.
 
 Na linha do colaborador, clique em **Enviar convite**, escolha o canal e confira ou atualize o telefone. Um novo convite substitui os links anteriores. Ao escolher os dois canais, ambos recebem o mesmo link.
 
@@ -101,7 +99,7 @@ Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convit
 
 ## 6. Veículos e capacidade {#veiculos}
 
-**Acesso:** administrador ou atendente → **Veículos** ou **Viagens e pacotes → Frota**.
+**Acesso:** administrador ou atendente → menu **Veículos**.
 
 1. Abra o cadastro de novo veículo.
 2. Informe nome de identificação, placa e quantidade de lugares.
@@ -142,7 +140,7 @@ A atualização é permitida para viagens agendadas sem eventos de embarque. Com
 
 ## 8. Pacotes turísticos: modelos e formatos {#pacotes}
 
-**Acesso:** empresa de Turismo → **Viagens e pacotes → Pacotes**. Um pacote é um modelo reutilizável, sem data fixa. A data real é definida ao criar a viagem.
+**Acesso:** empresa de Turismo → menu **Pacotes**. Um pacote é um modelo reutilizável, sem data fixa. A data real é definida ao criar a viagem no menu **Viagens**. Os cadastros de veículos e rotas possuem seus próprios menus.
 
 ### Pacote simples
 

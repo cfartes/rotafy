@@ -166,7 +166,7 @@ test("reuse route for round-trip scheduling, with no individual stop times", asy
     path: "../docs/screenshots/rotas-catalogo-desktop.png",
   });
   await page
-    .getByRole("button", { name: "Viagens e pacotes", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await page.getByRole("button", { name: "Nova viagem", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Nova viagem comercial" });

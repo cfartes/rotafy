@@ -207,13 +207,13 @@ export function Operations({
   manage: boolean;
   user: User;
   onLogout: () => void;
-  initialTab?: "vehicles" | "trips";
+  initialTab?: "vehicles" | "trips" | "packages";
   action?: "passengers" | "allocations";
   allowPackages?: boolean;
   initialTripId?: string | null;
 }) {
   const client = useQueryClient();
-  const [tab, setTab] = useState<string>(initialTab);
+  const tab = initialTab;
   const [editing, setEditing] = useState<Vehicle | Package | "new" | null>(
     null,
   );
@@ -319,28 +319,6 @@ export function Operations({
     );
   return (
     <>
-      {manage && (
-        <div className="operations-tabs" aria-label="Módulos de operação">
-          {[
-            ["trips", "Viagens"],
-            ["vehicles", "Frota"],
-            ...(allowPackages ? [["packages", "Pacotes"]] : []),
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              className={`button ${tab === id ? "primary" : "secondary"}`}
-              onClick={() => {
-                setTab(id);
-                setEditing(null);
-                setSelected(null);
-                setError("");
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
       {(error || queryError) && <Alert>{error || message(queryError)}</Alert>}
       <section className="panel">
         <header className="panel-header">

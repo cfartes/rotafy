@@ -1,3 +1,4 @@
+import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { Collections } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
@@ -47,7 +48,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Palette,
   Plus,
   Route,
   Search,
@@ -969,6 +969,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   >("overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingCollaborator, setEditingCollaborator] = useState<User | null>(
+    null,
+  );
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [accessCompany, setAccessCompany] = useState<Company | null>(null);
   const [billingCompany, setBillingCompany] = useState("");
@@ -1086,6 +1089,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     ? {
                         vehicles: "Veículos",
                         trips: "Viagens",
+                        packages: "Pacotes",
                         allocations: "Alocar veículos em viagens",
                         passengers: "Passageiros",
                       }[operationModule] || "Operação de viagens"
@@ -1115,9 +1119,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "vehicles",
     "routes",
     "operations",
+    "ticket-sales",
+    "packages",
     "allocations",
     "passengers",
-    "ticket-sales",
     "sales",
     "reports",
     "collections",
@@ -1175,9 +1180,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     label:
                       user.role === "guide" || user.role === "driver"
                         ? "Minhas viagens"
-                        : companyCapabilities(company.data).packages
-                          ? "Viagens e pacotes"
-                          : "Viagens",
+                        : "Viagens",
                     icon: Route,
                   },
                 ]
@@ -1195,6 +1198,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
                   { id: "vehicles", label: "Veículos", icon: Route },
+                  ...(companyCapabilities(company.data).packages
+                    ? [{ id: "packages", label: "Pacotes", icon: Route }]
+                    : []),
                   { id: "allocations", label: "Alocar veículos", icon: Route },
                   { id: "passengers", label: "Passageiros", icon: Users },
                   { id: "ticket-sales", label: "Vender bilhete", icon: Ticket },
@@ -1247,7 +1253,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 className={menuActive(item.id) ? "active" : ""}
                 onClick={() => {
                   if (
-                    ["vehicles", "allocations", "passengers"].includes(item.id)
+                    [
+                      "vehicles",
+                      "packages",
+                      "allocations",
+                      "passengers",
+                    ].includes(item.id)
                   ) {
                     setPage("operations");
                     setOperationModule(item.id);
@@ -1267,18 +1278,6 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {menuActive(item.id) && <span className="nav-active-dot" />}
               </button>
             ))}
-          {isAdmin && (
-            <button
-              onClick={() => {
-                setBrandingOpen(true);
-                setMenu(false);
-              }}
-              disabled={!company.data}
-            >
-              <Palette size={19} />
-              Identidade da empresa
-            </button>
-          )}
           <a
             className="documentation-nav-link"
             href={isNexus ? "/nexus/ajuda" : "/ajuda"}
@@ -1409,7 +1408,13 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <Operations
               key={`${operationModule}:${reportTripId || ""}`}
               initialTripId={reportTripId}
-              initialTab={operationModule === "vehicles" ? "vehicles" : "trips"}
+              initialTab={
+                operationModule === "vehicles"
+                  ? "vehicles"
+                  : operationModule === "packages"
+                    ? "packages"
+                    : "trips"
+              }
               action={
                 operationModule === "passengers" ||
                 operationModule === "allocations"
@@ -1693,6 +1698,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                     )}
                                   </>
                                 )}
+                                {!isNexus && "full_name" in row && (
+                                  <button
+                                    className="text-button"
+                                    onClick={() => setEditingCollaborator(row)}
+                                  >
+                                    Editar colaborador
+                                  </button>
+                                )}
                                 {!isNexus && row.is_active && (
                                   <button
                                     className="icon-button"
@@ -1800,6 +1813,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <CompanyAccess
           company={accessCompany}
           onClose={() => setAccessCompany(null)}
+        />
+      )}
+      {editingCollaborator && (
+        <EditCollaborator
+          user={editingCollaborator}
+          currentUserId={user.id}
+          onClose={() => setEditingCollaborator(null)}
+          onLogout={onLogout}
         />
       )}
       {editingCompany && (

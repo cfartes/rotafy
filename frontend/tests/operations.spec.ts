@@ -109,8 +109,8 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
     },
   });
   expect(guide.status()).toBe(201);
-  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
-  await page.getByRole("button", { name: "Frota", exact: true }).click();
+  await page.getByRole("button", { name: "Viagens" }).click();
+  await page.getByRole("button", { name: "Ve\u00edculos", exact: true }).click();
   for (let i = 0; i < 2; i++) {
     await page.getByRole("button", { name: "Novo veículo" }).click();
     await page.getByLabel("Nome", { exact: true }).fill(`Ônibus ${i + 1}`);
@@ -131,7 +131,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
   await page.getByRole("button", { name: "Salvar", exact: true }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page
-    .locator(".operations-tabs")
+    .getByRole("navigation")
     .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await page.getByRole("button", { name: "Nova viagem" }).click();
@@ -363,7 +363,7 @@ test("frota, pacote, ida/volta com dois veículos, duplicação e estorno", asyn
   ).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Abrir navegação" }).click();
-  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
+  await page.getByRole("button", { name: "Viagens" }).click();
   await expect(page.getByRole("complementary")).not.toBeInViewport();
   await page.screenshot({
     path: "../docs/screenshots/viagens-mobile.png",

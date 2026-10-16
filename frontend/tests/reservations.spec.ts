@@ -152,7 +152,7 @@ test("reserva familiar, bloqueio, confirmação, realocação, falta de lugares 
   });
   expect(tripResponse.status()).toBe(201);
   const trip = await tripResponse.json();
-  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
+  await page.getByRole("button", { name: "Viagens" }).click();
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   await page.getByRole("button", { name: "Reservas e lugares" }).click();
   await expect(

@@ -158,7 +158,7 @@ test("route refresh requires confirmation and is disabled for closed trips", asy
   });
   const saved = await setup(page);
   await page
-    .getByRole("button", { name: "Viagens e pacotes", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await page
     .locator("tbody tr")
@@ -195,7 +195,7 @@ test("trip list filters open, ongoing, completed and cancelled states", async ({
 }) => {
   await setup(page);
   await page
-    .getByRole("button", { name: "Viagens e pacotes", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   const filter = page.getByLabel("Situação da viagem");
   await filter.selectOption("open");
@@ -216,7 +216,7 @@ test("completed detail is wide, read only and shows arrival coordinates", async 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await setup(page);
   await page
-    .getByRole("button", { name: "Viagens e pacotes", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await page.getByLabel("Situação da viagem").selectOption("completed");
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
@@ -254,7 +254,7 @@ test("cancelled detail disables navigation and fits a phone screen", async ({
   await setup(page);
   await page.getByRole("button", { name: "Abrir navegação" }).click();
   await page
-    .getByRole("button", { name: "Viagens e pacotes", exact: true })
+    .getByRole("button", { name: "Viagens", exact: true })
     .click();
   await page.getByLabel("Situação da viagem").selectOption("cancelled");
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();

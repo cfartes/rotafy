@@ -546,7 +546,9 @@ def create_app(settings: Settings | None = None):
     async def update_user(user_id: UUID, payload: UserUpdate, actor: Auth):
         admin(actor)
         updates = payload.model_dump(exclude_unset=True)
-        if not updates or any(value is None for value in updates.values()):
+        if not updates or any(
+            value is None for key, value in updates.items() if key != "contact_phone"
+        ):
             raise HTTPException(400, "Informe ao menos uma alteração válida.")
         await actor.db.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:key,0))"),
@@ -564,6 +566,16 @@ def create_app(settings: Settings | None = None):
         )
         if not row:
             raise HTTPException(404, "Usuário não encontrado.")
+        email_changed = (
+            "email" in updates and str(updates["email"]).lower() != row["email"]
+        )
+        if "email" in updates:
+            updates["email"] = str(updates["email"]).lower()
+            if await actor.db.scalar(
+                text("SELECT 1 FROM users WHERE email=:email AND id<>:id"),
+                {"email": updates["email"], "id": user_id},
+            ):
+                raise HTTPException(409, "Este e-mail já está cadastrado na equipe.")
         removes_admin = (
             row["role"] == "admin"
             and row["is_active"]
@@ -590,7 +602,7 @@ def create_app(settings: Settings | None = None):
             (
                 await actor.db.execute(
                     text(
-                        f"UPDATE users SET {assignments} WHERE id=:id RETURNING {USER_FIELDS}"
+                        f"UPDATE users SET {assignments} WHERE id=:id RETURNING {USER_FIELDS},contact_phone"
                     ),
                     updates | {"id": user_id},
                 )
@@ -598,9 +610,17 @@ def create_app(settings: Settings | None = None):
             .mappings()
             .one()
         )
-        if "role" in updates or updates.get("is_active") is False:
+        if (
+            updates.get("role", row["role"]) != row["role"]
+            or updates.get("is_active") is False
+            or email_changed
+        ):
             await actor.db.execute(
                 text("DELETE FROM sessions WHERE user_id=:id"), {"id": user_id}
+            )
+        if email_changed:
+            await actor.db.execute(
+                text("DELETE FROM password_resets WHERE user_id=:id"), {"id": user_id}
             )
         await audit(
             actor.db, actor.company_id, actor.user["id"], "user.updated", user_id

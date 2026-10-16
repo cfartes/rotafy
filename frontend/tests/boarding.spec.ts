@@ -183,7 +183,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
     },
   );
   expect(reserveResponse.status()).toBe(201);
-  await page.getByRole("button", { name: "Viagens e pacotes" }).click();
+  await page.getByRole("button", { name: "Viagens" }).click();
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   await page.getByRole("button", { name: "Reservas e lugares" }).click();
   await page.getByRole("button", { name: "Ver reserva" }).click();

@@ -133,8 +133,9 @@ class BrandingUpdate(Input):
     accent_color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
 
 
-class UserUpdate(Input):
+class UserUpdate(CompanyContact):
     full_name: str | None = Field(default=None, min_length=2, max_length=150)
+    email: EmailStr | None = Field(default=None, max_length=254)
     role: Role | None = None
     is_active: bool | None = None
 

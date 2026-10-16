@@ -113,9 +113,7 @@ for (const daily of [false, true]) {
       await route.fulfill({ status, json: body });
     });
     await page.goto("/");
-    await page
-      .getByRole("button", { name: "Viagens e pacotes", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Viagens", exact: true }).click();
     await page.getByRole("button", { name: "Pacotes", exact: true }).click();
     await page
       .getByRole("button", { name: "Novo pacote", exact: true })
@@ -206,7 +204,7 @@ for (const daily of [false, true]) {
       submissions[0].data.itinerary.steps[1].destination_position,
     ).toBeNull();
     await page
-      .getByLabel("Módulos de operação")
+      .getByRole("navigation")
       .getByRole("button", { name: "Viagens", exact: true })
       .click();
     await page
