@@ -5,7 +5,9 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -42,6 +44,7 @@ from app.operational_profiles import capabilities, change_profile
 from app.operations import router as operations_router
 from app.public_sales import router as public_sales_router
 from app.reports import router as reports_router
+from app.request_security import RequestBodyLimit
 from app.reservation_imports import router as reservation_imports_router
 from app.reservations import router as reservations_router
 from app.route_refresh import router as route_refresh_router
@@ -83,8 +86,41 @@ def create_app(settings: Settings | None = None):
 
     application = FastAPI(title="Nexus Rotafy", version="0.1.0", lifespan=lifespan)
     application.state.metrics = Metrics()
+    application.add_middleware(RequestBodyLimit)
     application.add_middleware(Telemetry, metrics=application.state.metrics)
     config = settings or Settings()
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError):
+        # Pydantic's default response echoes passwords, tokens and submitted PII.
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {
+                        "loc": error["loc"],
+                        "type": error["type"],
+                        "msg": "Valor inválido."
+                        if error["type"] == "json_invalid"
+                        else error["msg"],
+                        **(
+                            {
+                                "ctx": {
+                                    key: value
+                                    for key, value in error.get("ctx", {}).items()
+                                    if key in {"min_length", "max_length"}
+                                    and type(value) is int
+                                }
+                            }
+                            if error["type"] in {"string_too_short", "string_too_long"}
+                            else {}
+                        ),
+                    }
+                    for error in exc.errors()
+                ]
+            },
+        )
+
     application.add_middleware(
         CORSMiddleware,
         allow_origins=config.origins,
@@ -120,6 +156,13 @@ def create_app(settings: Settings | None = None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Frame-Options"] = "DENY"
+        if request.url.path.startswith("/api/"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; frame-ancestors 'none'"
+            )
+        if config.cookie_secure:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000"
         return response
 
     @application.exception_handler(IntegrityError)
