@@ -155,7 +155,7 @@
         "Convites da equipe por WhatsApp, e-mail ou ambos.",
         "Histórico de mensagens para acompanhar o atendimento."
       ],
-      "footnote": "Cada empresa se comunica com seus clientes pelo próprio número.",
+      "footnote": "O administrador conecta o número da empresa por QR Code no próprio painel; cada empresa mantém sua sessão exclusiva.",
       "notes": "WhatsApp e e-mail aproximam sua equipe dos clientes. Confirmação, cancelamento e registro de pagamento por WhatsApp. Resumo da reserva e link do bilhete enviados pelo atendimento. Convites da equipe por WhatsApp, e-mail ou ambos. Histórico de mensagens para acompanhar o atendimento."
     },
     {

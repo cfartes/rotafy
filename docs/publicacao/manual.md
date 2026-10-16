@@ -489,6 +489,20 @@ A cobrança automática registra o demonstrativo e disponibiliza o link de pagam
 
 A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bilhetes. A Nexus orienta a ativação dos canais e do remetente dos e-mails de acesso.
 
+### Conectar o WhatsApp no painel da empresa
+
+O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é preparada automaticamente em segundo plano; não é necessário conhecer um ID ou acessar as configurações da Nexus. Empresas já cadastradas podem iniciar a conexão pelo mesmo menu.
+
+1. Informe o **WhatsApp de envio da empresa**, com DDD. Ele pode ser diferente do telefone de contato cadastrado para cobrança.
+2. Mantenha **Habilitar envios após conectar e conferir o número** marcado quando desejar ativar as mensagens.
+3. Clique em **Conectar WhatsApp** e aguarde a preparação do QR Code.
+4. No celular do número informado, abra **WhatsApp → Aparelhos conectados → Conectar aparelho** e escaneie o código mostrado no painel.
+5. Aguarde o estado **Conectado**. O número é conferido antes de liberar os envios. O QR é atualizado automaticamente e deixa de aparecer após a conexão.
+
+Se aparecer **Número conectado diferente do informado**, os envios ficam suspensos. Confira o telefone; se utilizou outro WhatsApp, desconecte o dispositivo no celular e conecte o número correto. Se aparecer **Desconectado**, clique em Conectar WhatsApp para tentar novamente. Indisponibilidade do serviço ou falta de autorização deve ser conferida pela Nexus.
+
+Apenas o administrador da empresa acessa essa tela. Não compartilhe o QR: ele autoriza uma conexão ao WhatsApp. Abra o painel em outro aparelho ou computador para escanear com o celular. A autorização no aparelho é indispensável; informar o telefone não conecta a conta sozinho.
+
 ### Conferir os canais
 
 1. Confirme com a Nexus o número da empresa e o e-mail remetente.

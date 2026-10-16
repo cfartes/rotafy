@@ -63,6 +63,7 @@ from app.schemas import (
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
 from app.whatsapp import router as whatsapp_router
+from app.whatsapp_connection import router as whatsapp_connection_router
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
 
@@ -782,6 +783,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(route_refresh_router)
     application.include_router(integration_settings_router)
     application.include_router(whatsapp_router)
+    application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)
     application.include_router(email_auth_router)

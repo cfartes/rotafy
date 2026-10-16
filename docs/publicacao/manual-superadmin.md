@@ -65,7 +65,7 @@ Mantenha as chaves restritas à equipe autorizada. Não inclua credenciais em ca
 
 ### WhatsApp de cada empresa
 
-Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo QR Code no painel do serviço de mensagens antes de associá-lo à empresa.
+Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agendam a criação da sessão automaticamente. O administrador da empresa encontra o menu **WhatsApp**, informa o número de envio e escaneia o QR Code no próprio Rotafy. O sistema confere o número antes de liberar os envios. A criação da empresa não aguarda a disponibilidade do serviço de mensagens.
 
 1. Localize a empresa em **WhatsApp de cada empresa**.
 2. Confira o **WhatsApp de envio**. O telefone de contato aparece como sugestão; ajuste para o número conectado. Utilize + e código do país para números internacionais.
@@ -73,7 +73,7 @@ Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo
 4. Defina **Habilitar envios**. O sistema identifica uma única sessão conectada correspondente ao telefone e salva o ID automaticamente.
 5. Acompanhe o estado na tela. Se a sessão ainda não existir, a busca continuará a cada minuto, mesmo com a tela fechada.
 
-O pareamento por QR Code continua necessário no serviço de mensagens. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
+O pareamento no celular continua necessário. A identificação automática por telefone descrita acima é uma alternativa de suporte Nexus; a empresa também pode usar o QR no próprio Rotafy. Alterações manuais da Nexus prevalecem sobre a conexão automática até nova solicitação explícita do administrador da empresa. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
 
 ### Conferir envios
 

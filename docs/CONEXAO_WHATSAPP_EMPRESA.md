@@ -1,0 +1,48 @@
+# Conexão WhatsApp pelo administrador da empresa
+
+Entrega de 16/10/2026. Compatibilidade conferida pelo código e contrato OpenAPI da versão **0.24.0** do serviço utilizado: [SessionController](https://github.com/rmyndharis/OpenWA/blob/v0.24.0/src/modules/session/session.controller.ts) e [OpenAPI](https://github.com/rmyndharis/OpenWA/blob/v0.24.0/openapi.json).
+
+## Funcionamento
+
+- O cadastro de uma empresa grava um pedido durável de criação de sessão na mesma transação. Não faz chamadas externas nem impede o cadastro por indisponibilidade do serviço.
+- O worker WhatsApp prepara uma sessão exclusiva com nome estável `rotafy-{company_uuid}`. O ID retornado fica salvo no backend e o vínculo começa com envios desabilitados.
+- A sessão não é iniciada automaticamente na criação: o administrador abre **WhatsApp**, informa o número e solicita a conexão. Isso evita abrir navegadores para clientes que ainda não autorizaram o pareamento.
+- Empresas existentes usam o mesmo botão. Se já existe vínculo manual, ele é reutilizado; a empresa não fornece IDs ou credenciais.
+- O worker inicia a sessão e acompanha seu estado. O painel consulta o QR Code temporário pelo backend, sem receber a chave global ou o ID.
+- O administrador escaneia em WhatsApp → Aparelhos conectados → Conectar aparelho. O worker compara o telefone efetivamente conectado com o informado. Só libera envios após correspondência exata e se a opção de envio estiver marcada.
+- Número diferente mantém os envios suspensos. Uma desconexão detectada desabilita o vínculo e requer nova solicitação no botão de conexão. O painel atualiza o estado a cada cinco segundos e o QR a cada quinze segundos enquanto necessário. O worker verifica conexões confirmadas aproximadamente a cada minuto, sujeito à fila.
+- Não há envio de mensagens de teste, desconexão remota, exclusão de sessão, leitura de chats ou troca de número da conta por esses endpoints.
+
+## Credencial e requisitos
+
+A chave cadastrada nas configurações Nexus precisa permitir listar sessões, criar e iniciar sessões e consultar QR. Na versão 0.24.0, a criação exige papel **OPERATOR** ou superior e uma chave não restrita a sessões específicas. O serviço deve estar acessível ao worker e à API e ter capacidade para iniciar a sessão. Permissões negadas ou indisponibilidade são exibidas sem revelar a resposta bruta do provedor.
+
+O pareamento pelo celular continua obrigatório. O telefone de envio pode ser diferente do contato comercial da empresa; essa escolha não altera o destinatário das cobranças SaaS. Os convites iniciais da nova empresa e as cobranças continuam utilizando a sessão da Nexus configurada para essa finalidade.
+
+## Persistência e segurança
+
+A migração incremental `0031_whatsapp_connection` cria `company_whatsapp_connection`, com fila, estado, telefone, sessão, versão e datas. Aplica RLS por empresa. A aplicação operacional recebe somente leitura dessa tabela; alterações passam por endpoints de administrador e transações de plataforma com contexto da empresa. Nenhuma tabela anterior é apagada ou recriada e nenhum vínculo existente é migrado automaticamente.
+
+Endpoints:
+
+- `GET /api/v1/company/whatsapp`: estado sanitizado da própria empresa.
+- `POST /api/v1/company/whatsapp/connect`: solicitação autenticada com CSRF, origem permitida e limitação de tentativas. Aceita apenas telefone e opção de envio.
+- `GET /api/v1/company/whatsapp/qr`: QR PNG em base64 da sessão vinculada à própria empresa, somente durante pareamento. Não persiste o QR em banco ou arquivo. Recusa SVG, URLs externas e dados maiores que o limite. Confere novamente o vínculo após a consulta ao provedor.
+
+Motorista, guia, atendente e usuários Nexus não podem usar esses endpoints de empresa. O suporte Nexus mantém suas configurações existentes. Uma alteração manual ou identificação automática pelo suporte interrompe o gerenciamento desse vínculo pelo novo worker até uma nova solicitação explícita do administrador da empresa.
+
+Nome determinístico e consulta antes de criar permitem recuperar uma criação aceita cujo retorno tenha falhado, sem emitir POSTs cegos repetidos. O vínculo é conferido novamente antes de salvar, com trava global compartilhada com as configurações existentes e versão da solicitação. Troca concorrente, suspensão da empresa ou solicitação mais recente impedem uma resposta antiga de substituir a configuração atual.
+
+## Atualização
+
+```bash
+cd /opt/rotafy-tech
+git pull --ff-only origin main
+bash scripts/update_vps.sh
+```
+
+A atualização aplica a migração, reconstrói API/painel e atualiza o worker. Não requer reinstalação ou recriação do banco, nem novo APK. No primeiro uso real, conferir as permissões da chave e completar o pareamento no celular. Os testes automatizados usam transporte simulado e não criam sessões nem enviam mensagens no serviço de produção.
+
+## Validação
+
+Foram aprovados 371 testes na suíte backend e, após os ajustes finais de fila e precedência de configuração Nexus, 60 testes direcionados de conexão, identificação de sessão e mensagens. Os testes cobrem criação em segundo plano, recuperação após timeout sem duplicar a sessão, leitura de QR, confirmação do número, desconexão, isolamento e permissões, rejeição de QR externo/inválido e respeito às alterações de suporte. Doze testes de navegador passaram, incluindo conexão do administrador, ausência do menu para atendente, número divergente, navegação, configurações Nexus e documentação. Build web e Ruff aprovados. O pareamento real depende da chave e do aparelho autorizado na instalação.

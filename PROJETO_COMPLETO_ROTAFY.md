@@ -603,6 +603,20 @@ A cobrança da assinatura e os links de pagamento estão detalhados na seção F
 
 A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bilhetes. A Nexus orienta a ativação dos canais e do remetente dos e-mails de acesso.
 
+#### Conectar o WhatsApp no painel da empresa
+
+O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é preparada automaticamente em segundo plano; não é necessário conhecer um ID ou acessar as configurações da Nexus. Empresas já cadastradas podem iniciar a conexão pelo mesmo menu.
+
+1. Informe o **WhatsApp de envio da empresa**, com DDD. Ele pode ser diferente do telefone de contato cadastrado para cobrança.
+2. Mantenha **Habilitar envios após conectar e conferir o número** marcado quando desejar ativar as mensagens.
+3. Clique em **Conectar WhatsApp** e aguarde a preparação do QR Code.
+4. No celular do número informado, abra **WhatsApp → Aparelhos conectados → Conectar aparelho** e escaneie o código mostrado no painel.
+5. Aguarde o estado **Conectado**. O número é conferido antes de liberar os envios. O QR é atualizado automaticamente e deixa de aparecer após a conexão.
+
+Se aparecer **Número conectado diferente do informado**, os envios ficam suspensos. Confira o telefone; se utilizou outro WhatsApp, desconecte o dispositivo no celular e conecte o número correto. Se aparecer **Desconectado**, clique em Conectar WhatsApp para tentar novamente. Indisponibilidade do serviço ou falta de autorização deve ser conferida pela Nexus.
+
+Apenas o administrador da empresa acessa essa tela. Não compartilhe o QR: ele autoriza uma conexão ao WhatsApp. Abra o painel em outro aparelho ou computador para escanear com o celular. A autorização no aparelho é indispensável; informar o telefone não conecta a conta sozinho.
+
 #### Conferir os canais
 
 1. Confirme com a Nexus o número da empresa e o e-mail remetente.
@@ -784,7 +798,7 @@ Mantenha as chaves restritas à equipe autorizada. Não inclua credenciais em ca
 
 #### WhatsApp de cada empresa
 
-Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo QR Code no painel do serviço de mensagens antes de associá-lo à empresa.
+Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agendam a criação da sessão automaticamente. O administrador da empresa encontra o menu **WhatsApp**, informa o número de envio e escaneia o QR Code no próprio Rotafy. O sistema confere o número antes de liberar os envios. A criação da empresa não aguarda a disponibilidade do serviço de mensagens.
 
 1. Localize a empresa em **WhatsApp de cada empresa**.
 2. Confira o **WhatsApp de envio**. O telefone de contato aparece como sugestão; ajuste para o número conectado. Utilize + e código do país para números internacionais.
@@ -792,7 +806,7 @@ Cada empresa utiliza seu número e uma sessão exclusiva. Conecte o número pelo
 4. Defina **Habilitar envios**. O sistema identifica uma única sessão conectada correspondente ao telefone e salva o ID automaticamente.
 5. Acompanhe o estado na tela. Se a sessão ainda não existir, a busca continuará a cada minuto, mesmo com a tela fechada.
 
-O pareamento por QR Code continua necessário no serviço de mensagens. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
+O pareamento no celular continua necessário. A identificação automática por telefone descrita acima é uma alternativa de suporte Nexus; a empresa também pode usar o QR no próprio Rotafy. Alterações manuais da Nexus prevalecem sobre a conexão automática até nova solicitação explícita do administrador da empresa. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
 
 #### Conferir envios
 

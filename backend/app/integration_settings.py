@@ -443,7 +443,7 @@ async def bind_session(company_id: UUID, data: SessionInput, actor: Auth):
     return result
 
 
-async def save_binding(db, company_id, data, actor_id):
+async def save_binding(db, company_id, data, actor_id, *, connection_managed=False):
     await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
     if not await db.scalar(
         text("SELECT 1 FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
@@ -494,6 +494,12 @@ async def save_binding(db, company_id, data, actor_id):
         "whatsapp.session_configured",
         company_id,
     )
+    if not connection_managed:
+        await db.execute(
+            text("""UPDATE company_whatsapp_connection SET session_id=NULL,connect_requested=false,
+            status='managed',version=version+1 WHERE company_id=:id"""),
+            {"id": company_id},
+        )
     return {"session_id": data.session_id, "enabled": data.enabled}
 
 
@@ -520,6 +526,11 @@ async def automatic_session(company_id: UUID, data: AutomaticSessionInput, actor
         raise HTTPException(404, "Empresa não encontrada.")
     await scope(actor.db, company_id)
     # Stop sending with a previous number while a changed number is being resolved.
+    await actor.db.execute(
+        text("""UPDATE company_whatsapp_connection SET session_id=NULL,connect_requested=false,
+        status='managed',version=version+1 WHERE company_id=:id"""),
+        {"id": company_id},
+    )
     await actor.db.execute(
         text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
         {"id": company_id},
