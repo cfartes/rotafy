@@ -10,26 +10,19 @@ import { Alert, Field, Modal } from "./components/ui";
 import { money } from "./billing/types";
 import "./reservations.css";
 import { TicketManager } from "./Tickets";
-import { JourneyLocation, type Location } from "./JourneyLocation";
+import {
+  ReservationJourneyEditor,
+  locationText,
+  type Journey,
+  type JourneyLeg,
+} from "./JourneyLocation";
 
-type Journey = {
-  leg_id: string;
-  boarding_position: number;
-  dropoff_position: number;
-  boarding_location?: Location | null;
-  dropoff_location?: Location | null;
-};
 type Passenger = PassengerDocuments & {
   id?: string;
   full_name: string;
   cpf?: string | null;
 };
-type Leg = {
-  id: string;
-  origin: string;
-  destination: string;
-  stops: { name: string; kind: string }[];
-};
+type Leg = JourneyLeg;
 type Trip = {
   mode?: string;
   requires_cpf?: boolean;
@@ -428,11 +421,24 @@ function ReservationModal({
   }
   return (
     <Modal title="Nova reserva familiar" wide onClose={onClose}>
-      <form className="modal-form" onSubmit={submit}>
-        <Field label="Nome do responsável">
-          <input name="contact_name" required minLength={2} maxLength={150} />
-        </Field>
+      <form className="modal-form reservation-form" onSubmit={submit}>
+        <div className="reservation-trip-summary">
+          <strong>{trip.name}</strong>
+          <span>
+            {date(trip.starts_at)} · {money(trip.price_cents)} por passageiro
+          </span>
+        </div>
+        <header className="reservation-section-heading">
+          <span className="reservation-step">1</span>
+          <div>
+            <h3>Responsável pela reserva</h3>
+            <p>Um telefone para toda a família.</p>
+          </div>
+        </header>
         <div className="form-grid">
+          <Field label="Nome do responsável">
+            <input name="contact_name" required minLength={2} maxLength={150} />
+          </Field>
           <Field label="Telefone da família">
             <input
               name="phone"
@@ -442,6 +448,9 @@ function ReservationModal({
               placeholder="+55 47 99999-9999"
             />
           </Field>
+        </div>
+        <details className="reservation-options">
+          <summary>Telefone de outro país</summary>
           <Field label="País do telefone (sigla ISO)">
             <input
               name="phone_country"
@@ -450,12 +459,16 @@ function ReservationModal({
               placeholder="BR, GB, US…"
             />
           </Field>
-        </div>
-        <p className="muted">
-          Um único telefone para todos. Para números nacionais, informe o país;
-          números com + e código internacional também são aceitos.
-        </p>
-        <h3>Passageiros</h3>
+        </details>
+        <header className="reservation-section-heading">
+          <span className="reservation-step">2</span>
+          <div>
+            <h3>Quem vai viajar?</h3>
+            <p>
+              Inclua cada passageiro, inclusive o responsável se ele viajar.
+            </p>
+          </div>
+        </header>
         {trip.requires_cpf && (
           <p className="muted">
             Viagem interestadual: CPF de todos os passageiros, exceto
@@ -538,181 +551,50 @@ function ReservationModal({
         >
           Adicionar passageiro
         </button>
-        <h3>Embarque e desembarque</h3>
-        {trip.legs.map((leg, i) => (
-          <fieldset className="operation-card" key={leg.id}>
-            <legend>
-              {trip.mode === "multi_destination"
-                ? `Deslocamento ${i + 1}`
-                : i === 0
-                  ? "Ida"
-                  : "Volta"}
-              : {leg.origin} → {leg.destination}
-            </legend>
-            <div className="form-grid">
-              <Field label={`Embarque da ${i === 0 ? "ida" : "volta"}`}>
-                <select
-                  aria-label={`Embarque da ${i === 0 ? "ida" : "volta"}`}
-                  value={journeys[i].boarding_position}
-                  onChange={(e) =>
-                    setJourneys(
-                      journeys.map((j, index) =>
-                        index === i
-                          ? { ...j, boarding_position: Number(e.target.value) }
-                          : j,
-                      ),
-                    )
-                  }
-                >
-                  <option value={0}>{leg.origin} (origem)</option>
-                  {leg.stops.map(
-                    (s, index) =>
-                      ["boarding", "both"].includes(s.kind) && (
-                        <option key={index} value={index + 1}>
-                          {s.name}
-                        </option>
-                      ),
-                  )}
-                </select>
-              </Field>
-              <Field label={`Desembarque da ${i === 0 ? "ida" : "volta"}`}>
-                <select
-                  aria-label={`Desembarque da ${i === 0 ? "ida" : "volta"}`}
-                  value={journeys[i].dropoff_position}
-                  onChange={(e) =>
-                    setJourneys(
-                      journeys.map((j, index) =>
-                        index === i
-                          ? { ...j, dropoff_position: Number(e.target.value) }
-                          : j,
-                      ),
-                    )
-                  }
-                >
-                  {leg.stops.map(
-                    (s, index) =>
-                      ["dropoff", "both"].includes(s.kind) && (
-                        <option key={index} value={index + 1}>
-                          {s.name}
-                        </option>
-                      ),
-                  )}
-                  <option value={leg.stops.length + 1}>
-                    {leg.destination} (destino)
-                  </option>
-                </select>
-              </Field>
-            </div>
-            <JourneyLocation
-              label={`Local de embarque · deslocamento ${i + 1}`}
-              tripId={trip.id}
-              legId={leg.id}
-              kind="boarding"
-              onPosition={(position, location) =>
-                setJourneys(
-                  journeys.map((j, n) =>
-                    n === i
-                      ? {
-                          ...j,
-                          boarding_position: position,
-                          boarding_location: location,
-                        }
-                      : j,
-                  ),
-                )
-              }
-              value={journeys[i].boarding_location}
-              onChange={(value) =>
-                setJourneys(
-                  journeys.map((j, n) =>
-                    n === i ? { ...j, boarding_location: value } : j,
-                  ),
-                )
-              }
-            />
-            <JourneyLocation
-              label={`Local de desembarque · deslocamento ${i + 1}`}
-              tripId={trip.id}
-              legId={leg.id}
-              kind="dropoff"
-              onPosition={(position, location) =>
-                setJourneys(
-                  journeys.map((j, n) =>
-                    n === i
-                      ? {
-                          ...j,
-                          dropoff_position: position,
-                          dropoff_location: location,
-                        }
-                      : j,
-                  ),
-                )
-              }
-              value={journeys[i].dropoff_location}
-              onChange={(value) =>
-                setJourneys(
-                  journeys.map((j, n) =>
-                    n === i ? { ...j, dropoff_location: value } : j,
-                  ),
-                )
-              }
-            />
-            {journeys[i].boarding_location && (
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() =>
-                  setJourneys(
-                    journeys.map((j) => {
-                      const target = trip.legs.find((l) => l.id === j.leg_id)!;
-                      const location = { ...journeys[i].boarding_location! };
-                      return {
-                        ...j,
-                        ...(target.origin === leg.origin
-                          ? {
-                              boarding_location: location,
-                              boarding_position: 0,
-                            }
-                          : {}),
-                        ...(target.destination === leg.origin
-                          ? {
-                              dropoff_location: location,
-                              dropoff_position: target.stops.length + 1,
-                            }
-                          : {}),
-                      };
-                    }),
-                  )
-                }
-              >
-                Usar este hotel nos passeios com a mesma origem e no retorno
-              </button>
-            )}
-          </fieldset>
-        ))}
+        <ReservationJourneyEditor
+          trip={trip}
+          journeys={journeys}
+          onChange={setJourneys}
+          repeatInitially
+        />
         {!validJourneys && (
           <Alert>
             O desembarque deve ser posterior ao embarque em cada trecho.
           </Alert>
         )}
-        <Field label="Veículo da família">
-          <select
-            aria-label="Veículo da família"
-            value={allocation}
-            onChange={(e) => setAllocation(e.target.value)}
-          >
-            <option value="">Usar sugestão do sistema</option>
-            {availability.data?.vehicles.map((v) => (
-              <option
-                key={v.allocation_id}
-                value={v.allocation_id}
-                disabled={!v.fits_family}
+        <details className="reservation-options">
+          <summary>Opções da reserva · veículo e situação</summary>
+          <div className="form-grid">
+            <Field label="Veículo da família">
+              <select
+                aria-label="Veículo da família"
+                value={allocation}
+                onChange={(e) => setAllocation(e.target.value)}
               >
-                {v.name} · {v.available} lugares no itinerário escolhido
-              </option>
-            ))}
-          </select>
-        </Field>
+                <option value="">Usar sugestão do sistema</option>
+                {availability.data?.vehicles.map((v) => (
+                  <option
+                    key={v.allocation_id}
+                    value={v.allocation_id}
+                    disabled={!v.fits_family}
+                  >
+                    {v.name} · {v.available} lugares no itinerário escolhido
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Situação inicial">
+              <select
+                aria-label="Situação inicial"
+                name="status"
+                defaultValue="confirmed"
+              >
+                <option value="confirmed">Confirmar reserva</option>
+                <option value="pending">Bloquear lugares por 15 minutos</option>
+              </select>
+            </Field>
+          </div>
+        </details>
         {availability.isFetching && (
           <p className="muted">Consultando lugares…</p>
         )}
@@ -727,27 +609,16 @@ function ReservationModal({
           <Alert>{availability.data.message}</Alert>
         )}
         {availability.error && <Alert>{message(availability.error)}</Alert>}
-        <Field label="Situação inicial">
-          <select
-            aria-label="Situação inicial"
-            name="status"
-            defaultValue="confirmed"
-          >
-            <option value="confirmed">Confirmar reserva</option>
-            <option value="pending">Bloquear lugares por 15 minutos</option>
-          </select>
-        </Field>
-        <p>
-          <strong>
-            Total da família: {money(trip.price_cents * passengers.length)}
-          </strong>
-        </p>
-        <p className="muted">
-          Disponibilidade conferida novamente ao salvar. A família nunca será
-          dividida automaticamente.
-        </p>
         {error && <Alert>{error}</Alert>}
-        <footer className="modal-actions">
+        <footer className="modal-actions reservation-submit">
+          <div className="reservation-total">
+            <small>
+              {passengers.length}{" "}
+              {passengers.length === 1 ? "passageiro" : "passageiros"} · total
+              da família
+            </small>
+            <strong>{money(trip.price_cents * passengers.length)}</strong>
+          </div>
           <button type="button" className="button secondary" onClick={onClose}>
             Voltar
           </button>
@@ -885,135 +756,11 @@ function ReservationEditor({
             </div>
           </fieldset>
         ))}
-        {journeys.map((journey, index) => {
-          const leg = trip.legs.find((l) => l.id === journey.leg_id)!;
-          const points = [
-            leg.origin,
-            ...leg.stops.map((s) => s.name),
-            leg.destination,
-          ];
-          return (
-            <fieldset className="operation-card" key={journey.leg_id}>
-              <legend>Locais · deslocamento {index + 1}</legend>
-              <div className="form-grid">
-                <Field label={`Embarque ${index + 1}`}>
-                  <select
-                    value={journey.boarding_position}
-                    onChange={(e) =>
-                      setJourneys(
-                        journeys.map((j, i) =>
-                          i === index
-                            ? {
-                                ...j,
-                                boarding_position: Number(e.target.value),
-                              }
-                            : j,
-                        ),
-                      )
-                    }
-                  >
-                    {points.slice(0, -1).map((p, i) => (
-                      <option
-                        key={i}
-                        value={i}
-                        disabled={
-                          i > 0 &&
-                          !["boarding", "both"].includes(leg.stops[i - 1].kind)
-                        }
-                      >
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label={`Desembarque ${index + 1}`}>
-                  <select
-                    value={journey.dropoff_position}
-                    onChange={(e) =>
-                      setJourneys(
-                        journeys.map((j, i) =>
-                          i === index
-                            ? { ...j, dropoff_position: Number(e.target.value) }
-                            : j,
-                        ),
-                      )
-                    }
-                  >
-                    {points.map((p, i) => (
-                      <option
-                        key={i}
-                        value={i}
-                        disabled={
-                          i <= journey.boarding_position ||
-                          (i < points.length - 1 &&
-                            !["dropoff", "both"].includes(
-                              leg.stops[i - 1]?.kind,
-                            ))
-                        }
-                      >
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-              <JourneyLocation
-                label={`Local de embarque · deslocamento ${index + 1}`}
-                tripId={trip.id}
-                legId={leg.id}
-                kind="boarding"
-                onPosition={(position, location) =>
-                  setJourneys(
-                    journeys.map((j, n) =>
-                      n === index
-                        ? {
-                            ...j,
-                            boarding_position: position,
-                            boarding_location: location,
-                          }
-                        : j,
-                    ),
-                  )
-                }
-                value={journey.boarding_location}
-                onChange={(value) =>
-                  setJourneys(
-                    journeys.map((j, n) =>
-                      n === index ? { ...j, boarding_location: value } : j,
-                    ),
-                  )
-                }
-              />
-              <JourneyLocation
-                label={`Local de desembarque · deslocamento ${index + 1}`}
-                tripId={trip.id}
-                legId={leg.id}
-                kind="dropoff"
-                onPosition={(position, location) =>
-                  setJourneys(
-                    journeys.map((j, n) =>
-                      n === index
-                        ? {
-                            ...j,
-                            dropoff_position: position,
-                            dropoff_location: location,
-                          }
-                        : j,
-                    ),
-                  )
-                }
-                value={journey.dropoff_location}
-                onChange={(value) =>
-                  setJourneys(
-                    journeys.map((j, n) =>
-                      n === index ? { ...j, dropoff_location: value } : j,
-                    ),
-                  )
-                }
-              />
-            </fieldset>
-          );
-        })}
+        <ReservationJourneyEditor
+          trip={trip}
+          journeys={journeys}
+          onChange={setJourneys}
+        />
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
           <button type="button" className="button secondary" onClick={onClose}>
@@ -1211,11 +958,11 @@ function ReservationDetail({
                 return (
                   <p key={j.leg_id}>
                     {j.boarding_location
-                      ? `${j.boarding_location.name} · ${j.boarding_location.address} · ${j.boarding_location.complement}`
+                      ? locationText(j.boarding_location)
                       : points[j.boarding_position]}{" "}
                     →{" "}
                     {j.dropoff_location
-                      ? `${j.dropoff_location.name} · ${j.dropoff_location.address} · ${j.dropoff_location.complement}`
+                      ? locationText(j.dropoff_location)
                       : points[j.dropoff_position]}
                   </p>
                 );

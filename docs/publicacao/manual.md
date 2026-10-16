@@ -214,7 +214,7 @@ Em **Detalhes**, confira roteiro, equipe, capacidade, reservas e finalização. 
 3. Preencha nome do responsável, telefone da família e país do telefone.
 4. Adicione os passageiros, um cadastro por pessoa. Inclua o responsável na lista se ele também viajar.
 5. Informe CPF e as exceções aplicáveis, conforme o capítulo seguinte.
-6. Escolha pontos de embarque e desembarque para cada trecho. O desembarque deve vir depois do embarque.
+6. Informe **Local de embarque**: selecione um ponto sugerido ou digite o hotel/endereço. Confira no Maps se necessário. O destino e o retorno são sugeridos; abra os ajustes apenas se precisar mudá-los.
 7. Confira a sugestão de veículo e a disponibilidade para a família inteira.
 8. Salve como confirmada ou bloqueio pendente, conforme a operação, e confira o resultado.
 
@@ -222,11 +222,13 @@ Uma reserva pode ter de 1 a 200 passageiros com um único telefone compartilhado
 
 ### Embarque em hotel ou outro endereço
 
-Na reserva, cada deslocamento permite escolher um ponto da viagem ou **Outro local / hotel**. Informe nome, endereço completo com cidade e UF e, se necessário, complemento. Hotéis já utilizados na mesma saída podem ser selecionados novamente.
+Em **Local de embarque**, digite somente o nome do hotel ou o endereço. O mesmo campo oferece os pontos da viagem e locais já utilizados como sugestões. Não é necessário preencher nome e endereço separadamente.
 
-O hotel de embarque será visitado após o ponto selecionado; o hotel de desembarque, antes do ponto selecionado. A **ordem de visita dos hotéis** organiza os locais entre esses pontos. Confira o roteiro do veículo depois de salvar. Endereços digitados não são localizados nem ordenados automaticamente.
+Clique em **Conferir no Maps** para abrir a busca do local em uma nova aba. Confira se o resultado corresponde ao hotel desejado; se preferir, copie o endereço e cole no campo. A escolha feita no Maps não é transferida automaticamente para o formulário.
 
-Use **Usar este hotel nos passeios com a mesma origem e no retorno** para repetir o local nos deslocamentos correspondentes do pacote. Cada deslocamento continua editável. Para familiares que embarcam em locais diferentes, faça reservas separadas.
+Nas novas reservas, **Usar este local nos passeios com saída da cidade e no retorno** vem marcado quando há deslocamentos correspondentes. Ao informar o embarque, esses locais são preenchidos juntos. Abra **Ajustar locais por passeio/trecho** para alterar apenas um deles. O destino principal aparece no resumo; use **Alterar desembarque** quando necessário. Reservas já existentes preservam os locais de cada deslocamento ao abrir o editor.
+
+Veículo e situação inicial ficam em **Opções da reserva**. O padrão é confirmar a reserva usando a sugestão de veículo. Para familiares que embarcam em locais diferentes, faça reservas separadas.
 
 Esses locais pertencem à reserva e ao veículo de cada saída. A Rota cadastrada permanece disponível para reutilização. Motoristas e guias consultam os endereços, complementos e passageiros previstos no roteiro e abrem a navegação. Após alterações, sincronize ou prepare novamente o trecho no Android antes de operar sem internet.
 

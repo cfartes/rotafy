@@ -35,6 +35,16 @@ def served_positions(vehicle, leg):
     return {0, len(leg["stops"]) + 1, *stops}
 
 
+def point_query(point):
+    if point["address"]:
+        return point["address"]
+    if point.get("city"):
+        return ", ".join(
+            filter(None, [point["name"], point["city"], point.get("uf"), "Brasil"])
+        )
+    return f"{point['name']}, {point['uf'] or ''}, Brasil"
+
+
 @router.get("/locations/states")
 async def states():
     return DATA["states"]
@@ -135,7 +145,12 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
                         "name": location["name"],
                         "address": location["address"],
                         "complement": location.get("complement", ""),
-                        "uf": None,
+                        "uf": leg["origin_uf"]
+                        if kind == "boarding"
+                        else leg["destination_uf"],
+                        "city": leg["origin"]
+                        if kind == "boarding"
+                        else leg["destination"],
                         "scheduled_at": None,
                         "kind": kind,
                         "passenger_names": [],
@@ -154,7 +169,7 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
             for entry in sorted(ordered, key=lambda entry: (entry[0], entry[1]))
         ]
         for index, point in enumerate(points):
-            query = point["address"] or f"{point['name']}, {point['uf'] or ''}, Brasil"
+            query = point_query(point)
             point["maps_url"] = "https://www.google.com/maps/dir/?" + urlencode(
                 {
                     "api": 1,
@@ -164,9 +179,7 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
                 }
             )
             point["position"] = index
-        queries = [
-            p["address"] or f"{p['name']}, {p['uf'] or ''}, Brasil" for p in points
-        ]
+        queries = [point_query(p) for p in points]
         stages = []
         for start in range(0, len(points) - 1, 4):
             end = min(start + 4, len(points) - 1)

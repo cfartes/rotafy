@@ -50,6 +50,217 @@
   border-radius: 10px;
   color: #0d6564;
 }
+.reservation-form {
+  display: grid;
+  gap: 20px;
+}
+.reservation-form .field {
+  margin-bottom: 0;
+}
+.reservation-form .reservation-passenger-fields > .field {
+  grid-row: 1;
+}
+.reservation-form .reservation-passenger-fields > .field:first-of-type {
+  grid-column: 1;
+}
+.reservation-form .reservation-passenger-fields > .field:last-of-type {
+  grid-column: 2;
+}
+.reservation-form .reservation-passenger-fields > div {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding-top: 0;
+}
+.reservation-form .reservation-passenger-fields > div > .field {
+  flex-basis: 100%;
+}
+.reservation-form input {
+  scroll-margin: 100px 0 180px;
+}
+.reservation-trip-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #f0f7f7;
+  color: #174c54;
+}
+.reservation-trip-summary span {
+  font-size: 14px;
+}
+.reservation-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.reservation-section-heading h3 {
+  margin: 0;
+  font-size: 19px;
+}
+.reservation-section-heading p {
+  margin: 3px 0 0;
+  color: #567183;
+  font-size: 14px;
+}
+.reservation-step {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2f2ef;
+  color: #075e5a;
+  font-weight: 700;
+}
+.reservation-section-heading > svg {
+  margin-left: auto;
+  color: #0c7772;
+}
+.reservation-pickup {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #0c7772;
+  border-radius: 14px;
+}
+.reservation-pickup .reservation-section-heading {
+  margin: 0 0 4px;
+}
+.pickup-field {
+  min-width: 0;
+}
+.pickup-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+.pickup-tools small {
+  color: #567183;
+  max-width: 65ch;
+}
+.pickup-maps {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  color: #096d68;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pickup-repeat {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #eff8f6;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #245e59;
+  cursor: pointer;
+}
+.pickup-repeat input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+  accent-color: #0c7772;
+}
+.pickup-destination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+  font-size: 14px;
+  color: #456173;
+}
+.pickup-text-button {
+  background: transparent;
+  border: 0;
+  padding: 10px 0;
+  min-height: 44px;
+  color: #096d68;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.pickup-per-leg,
+.reservation-options {
+  padding-top: 12px;
+  border-top: 1px solid #dce4e8;
+}
+.pickup-per-leg summary,
+.reservation-options summary {
+  cursor: pointer;
+  color: #285468;
+  min-height: 44px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.pickup-leg {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #dce4e8;
+}
+.pickup-leg h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+.reservation-submit {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 2;
+  border-top: 1px solid #dce4e8;
+  padding-top: 16px;
+}
+.reservation-total {
+  display: grid;
+  gap: 3px;
+  margin-right: auto;
+}
+.reservation-total small {
+  color: #567183;
+}
+.reservation-total strong {
+  font-size: 24px;
+  color: #075e5a;
+}
+@media (max-width: 640px) {
+  .reservation-form .reservation-passenger-fields > .field:first-of-type,
+  .reservation-form .reservation-passenger-fields > .field:last-of-type,
+  .reservation-form .reservation-passenger-fields > div {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .reservation-pickup {
+    padding: 16px;
+  }
+  .reservation-submit {
+    flex-wrap: wrap;
+  }
+  .reservation-total {
+    width: 100%;
+  }
+  .reservation-submit .button {
+    flex: 1;
+  }
+}
 @media (max-width: 600px) {
   .reservation-actions,
   .reservation-actions .button {

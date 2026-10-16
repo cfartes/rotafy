@@ -72,7 +72,7 @@ def test_hotel_route_manifest_offline_vehicle_isolation_and_cancel(client, seede
 
 def test_location_validation_capacity_edit_and_history_guard(client, seeded):
     trip = setup(client, seeded, capacities=(3,))
-    bad = journeys(trip, HOTEL | {"address": ""})
+    bad = journeys(trip, HOTEL | {"name": "", "address": ""})
     assert (
         client.post(
             f"/api/v1/trips/{trip['id']}/reservations", json=family(journeys=bad)
@@ -157,3 +157,38 @@ def test_hotels_order_grouping_reallocation_and_ticket_address(client, seeded):
         if p["name"] == "Hotel Central"
     ]
     assert len(old[0]["passenger_names"]) == 1
+
+
+def test_hotel_name_only_and_address_only_acceptance_and_maps_context(client, seeded):
+    from urllib.parse import parse_qs, urlparse
+
+    trip = setup(client, seeded, capacities=(10,))
+    hotel = {"name": "Hotel Central"}
+    reservation = reserve(client, trip, family(journeys=journeys(trip, hotel)))
+    location = next(
+        j["boarding_location"]
+        for j in reservation["journeys"]
+        if j["boarding_location"]
+    )
+    assert location["name"] == "Hotel Central" and location["address"] == ""
+    route = client.get(
+        f"/api/v1/trips/{trip['id']}/vehicles/{reservation['allocation_id']}/route"
+    ).json()
+    query = parse_qs(urlparse(route["legs"][0]["points"][1]["maps_url"]).query)[
+        "destination"
+    ][0]
+    assert "Hotel Central" in query and "Blumenau" in query and "SC" in query
+    reservation = reserve(
+        client,
+        trip,
+        family(
+            "Endereço sem hotel",
+            journeys=journeys(trip, {"address": "Rua Azul, 200, Blumenau SC"}),
+        ),
+    )
+    location = next(
+        j["boarding_location"]
+        for j in reservation["journeys"]
+        if j["boarding_location"]
+    )
+    assert location["name"] == location["address"] == "Rua Azul, 200, Blumenau SC"

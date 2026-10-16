@@ -57,10 +57,18 @@ class Passenger(OperationalInput):
 
 
 class JourneyLocation(OperationalInput):
-    name: str = Field(min_length=2, max_length=150)
-    address: str = Field(min_length=8, max_length=300)
+    name: str = Field(default="", max_length=300)
+    address: str = Field(default="", max_length=300)
     complement: str = Field(default="", max_length=200)
     order: int = Field(default=1, ge=1, le=10000, strict=True)
+
+    @model_validator(mode="after")
+    def usable_location(self):
+        if len(self.name or self.address) < 2:
+            raise ValueError("Informe o nome do hotel ou o endereço do local.")
+        if not self.name:
+            self.name = self.address
+        return self
 
 
 class Journey(OperationalInput):

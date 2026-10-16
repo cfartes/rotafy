@@ -1,6 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
 
-async function setup(page: Page, role = "admin") {
+async function setup(
+  page: Page,
+  role = "admin",
+  itinerary?: { legs: any[]; mode: string },
+) {
   const future = new Date(Date.now() + 7 * 86400000).toISOString();
   const trips = [
     ["open", "Transfer futuro", "scheduled"],
@@ -101,7 +105,8 @@ async function setup(page: Page, role = "admin") {
         ...trip,
         edit_version: 3,
         route_snapshot: { id: "route", name: "Rota do transfer", version: 1 },
-        legs: [leg],
+        legs: itinerary?.legs ?? [leg],
+        mode: itinerary?.mode ?? trip?.mode,
         completion:
           trip?.status === "completed"
             ? {
@@ -315,10 +320,11 @@ test("ticket sale is not offered to drivers or guides", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("ticket sale saves hotel pickup and rejects an incomplete address", async ({
+test("ticket sale accepts one hotel field, checks Maps and requires a location", async ({
   page,
 }) => {
   const saved = await setup(page);
+  await page.setViewportSize({ width: 1440, height: 1050 });
   await page
     .getByRole("navigation")
     .getByRole("button", { name: "Vender bilhete", exact: true })
@@ -329,22 +335,40 @@ test("ticket sale saves hotel pickup and rejects an incomplete address", async (
     .getByRole("button", { name: "Vender bilhete", exact: true })
     .click();
   const dialog = page.getByRole("dialog", { name: "Nova reserva familiar" });
-  await dialog.getByLabel("Nome do responsável").fill("Família Hotel");
-  await dialog.getByLabel("Telefone da família").fill("47999998888");
+  await dialog
+    .getByLabel("Nome do respons\u00e1vel")
+    .fill("Fam\u00edlia Hotel");
+  await dialog.getByLabel("Telefone da fam\u00edlia").fill("47999998888");
   await dialog
     .getByLabel("Nome do passageiro 1", { exact: true })
     .fill("Cliente Hotel");
-  const label = "Local de embarque · deslocamento 1";
-  await dialog.getByLabel(`${label}: tipo de local`).selectOption("custom");
-  await dialog
-    .getByLabel(`${label}: nome do hotel ou local`)
-    .fill("Hotel Central");
+  const pickup = dialog.getByRole("combobox", {
+    name: "Local de embarque",
+    exact: true,
+  });
+  await pickup.fill("");
   await dialog.getByRole("button", { name: "Salvar reserva" }).click();
   expect(saved).toHaveLength(0);
-  await dialog
-    .getByLabel(`${label}: endereço completo`)
-    .fill("Rua das Flores, 100, Blumenau SC");
-  await dialog.getByLabel(`${label}: complemento`).fill("Recepção");
+  await pickup.fill("Hotel Central");
+  const maps = dialog.getByRole("link", {
+    name: "Conferir local de embarque no Google Maps (nova aba)",
+  });
+  const url = new URL((await maps.getAttribute("href"))!);
+  expect(url.searchParams.get("query")).toContain("Hotel Central, Blumenau");
+  expect(await maps.getAttribute("target")).toBe("_blank");
+  await expect(
+    dialog.getByLabel(/tipo de local|endere\u00e7o completo|ordem de visita/),
+  ).toHaveCount(0);
+  await dialog.locator(".reservation-pickup").scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: "../artifacts/review-reservation-desktop.png",
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await dialog.locator(".reservation-pickup").scrollIntoViewIfNeeded();
+  expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: "../artifacts/review-reservation-mobile.png" });
   await dialog.getByRole("button", { name: "Salvar reserva" }).click();
   await expect(dialog).not.toBeVisible();
   expect(saved[0]).toMatchObject({
@@ -352,11 +376,136 @@ test("ticket sale saves hotel pickup and rejects an incomplete address", async (
       {
         boarding_location: {
           name: "Hotel Central",
-          address: "Rua das Flores, 100, Blumenau SC",
-          complement: "Recepção",
+          address: "",
+          complement: "",
           order: 1,
         },
       },
     ],
+  });
+});
+
+test("package repeats pickup for daily tours and return, with an independent override", async ({
+  page,
+}) => {
+  const legs = [
+    { id: "out1", origin: "Maceió", destination: "Maragogi", stops: [] },
+    { id: "back1", origin: "Maragogi", destination: "Maceió", stops: [] },
+    { id: "out2", origin: "Maceió", destination: "Praia do Gunga", stops: [] },
+    { id: "back2", origin: "Praia do Gunga", destination: "Maceió", stops: [] },
+  ];
+  const saved = await setup(page, "admin", { legs, mode: "multi_destination" });
+  await page
+    .getByRole("navigation")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  await page.getByLabel("Viagem para vender bilhete").selectOption("open");
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Nova reserva familiar" });
+  await dialog.getByLabel("Nome do responsável").fill("Família Passeio");
+  await dialog.getByLabel("Telefone da família").fill("47999998888");
+  await dialog
+    .getByLabel("Nome do passageiro 1", { exact: true })
+    .fill("Pessoa Teste");
+  await dialog
+    .getByRole("combobox", { name: "Local de embarque", exact: true })
+    .fill("Hotel da Praia");
+  await expect(
+    dialog.getByLabel(
+      "Usar este local nos passeios com saída de Maceió e no retorno",
+    ),
+  ).toBeChecked();
+  await dialog
+    .getByText("Ajustar locais por passeio (4)", { exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("combobox", {
+      name: "Embarque · deslocamento 3",
+      exact: true,
+    }),
+  ).toHaveValue("Hotel da Praia");
+  await expect(
+    dialog.getByRole("combobox", {
+      name: "Desembarque · deslocamento 2",
+      exact: true,
+    }),
+  ).toHaveValue("Hotel da Praia");
+  await dialog
+    .getByRole("combobox", {
+      name: "Desembarque · deslocamento 4",
+      exact: true,
+    })
+    .fill("Aeroporto de Maceió");
+  await expect(
+    dialog.getByLabel(
+      "Usar este local nos passeios com saída de Maceió e no retorno",
+    ),
+  ).not.toBeChecked();
+  await dialog.getByRole("button", { name: "Salvar reserva" }).click();
+  await expect(dialog).not.toBeVisible();
+  expect(saved[0]).toMatchObject({
+    journeys: [
+      { leg_id: "out1", boarding_location: { name: "Hotel da Praia" } },
+      { leg_id: "back1", dropoff_location: { name: "Hotel da Praia" } },
+      { leg_id: "out2", boarding_location: { name: "Hotel da Praia" } },
+      { leg_id: "back2", dropoff_location: { name: "Aeroporto de Maceió" } },
+    ],
+  });
+});
+
+test("existing hotel preserves address, complement and order when selected by name", async ({
+  page,
+}) => {
+  const saved = await setup(page);
+  const location = {
+    name: "Hotel Central",
+    address: "Rua das Flores, 100",
+    complement: "Recepção",
+    order: 7,
+  };
+  await page.route("**/api/v1/trips/open/boarding-locations", (route) =>
+    route.fulfill({
+      json: [
+        {
+          leg_id: "leg",
+          boarding_position: 0,
+          dropoff_position: 1,
+          boarding_location: location,
+          dropoff_location: null,
+        },
+      ],
+    }),
+  );
+  await page
+    .getByRole("navigation")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  await page.getByLabel("Viagem para vender bilhete").selectOption("open");
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Nova reserva familiar" });
+  await dialog.getByLabel("Nome do responsável").fill("Família Reutilizada");
+  await dialog.getByLabel("Telefone da família").fill("47999998888");
+  await dialog
+    .getByLabel("Nome do passageiro 1", { exact: true })
+    .fill("Cliente Hotel");
+  await expect(
+    dialog.locator('datalist option[value="Hotel Central — Rua das Flores, 100"]'),
+  ).toHaveCount(1);
+  await dialog
+    .getByRole("combobox", { name: "Local de embarque", exact: true })
+    .fill("Hotel Central");
+  await expect(
+    dialog.getByRole("combobox", { name: "Local de embarque", exact: true }),
+  ).toHaveValue("Hotel Central — Rua das Flores, 100");
+  await dialog.getByRole("button", { name: "Salvar reserva" }).click();
+  await expect(dialog).not.toBeVisible();
+  expect(saved[0]).toMatchObject({
+    journeys: [{ boarding_location: location }],
   });
 });
