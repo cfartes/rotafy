@@ -47,9 +47,9 @@ test("separate registrations and edit collaborator role", async ({ page }) => {
   await expect(nav.getByRole("button").first()).toHaveText("Visão geral");
   await expect
     .poll(async () =>
-      (await nav.getByRole("button").allTextContents()).slice(1, 6),
+      (await nav.getByRole("button").allTextContents()).slice(1, 7),
     )
-    .toEqual(["Equipe", "Veículos", "Rotas", "Viagens", "Vender bilhete"]);
+    .toEqual(["Equipe", "Veículos", "Rotas", "Pacotes", "Viagens", "Vender bilhete"]);
   await expect(
     nav.getByRole("button", { name: "Identidade da empresa", exact: true }),
   ).toHaveCount(0);
