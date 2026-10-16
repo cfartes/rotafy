@@ -1429,36 +1429,6 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           )}
           {page === "overview" && (
             <>
-              {!isNexus && (isAdmin || user.role === "attendant") && (
-                <section className="panel">
-                  <header className="panel-header">
-                    <div>
-                      <h2>Cadastros e operação da empresa</h2>
-                      <p>Organize a frota, as viagens e os passageiros.</p>
-                    </div>
-                  </header>
-                  <div className="modal-actions">
-                    {[
-                      ["vehicles", "Gerenciar veículos"],
-                      ["trips", "Criar e gerenciar viagens"],
-                      ["allocations", "Distribuir veículos nas viagens"],
-                      ["passengers", "Cadastrar passageiros"],
-                    ].map(([module, label]) => (
-                      <button
-                        className="button secondary"
-                        key={module}
-                        onClick={() => {
-                          setOperationModule(module);
-                          setReportTripId(null);
-                          setPage("operations");
-                        }}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
               <div className="stats-grid">
                 <div className="stat-card">
                   <span className="stat-icon">
