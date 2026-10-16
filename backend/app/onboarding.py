@@ -100,6 +100,9 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
     else:
         await insert_period(db, sub, 0, plan["version_id"])
     await audit(db, company_id, audit_actor, "subscription.created", sub_id)
+    from app.whatsapp_connection import queue_connection
+
+    await queue_connection(db, company_id, payload.contact_phone, audit_actor)
     return dict(
         (
             await db.execute(

@@ -1,5 +1,6 @@
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
+import { CompanyWhatsApp } from "./CompanyWhatsApp";
 import { Collections } from "./Collections";
 import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
@@ -50,6 +51,7 @@ import {
   LogOut,
   Menu,
   Plus,
+  Phone,
   Route,
   Search,
   ShieldCheck,
@@ -843,6 +845,8 @@ const actionNames: Record<string, string> = {
   "trip.routes_refreshed": "Rotas da viagem atualizadas com o catálogo atual",
   "integrations.configured": "Configuração das integrações atualizada",
   "whatsapp.session_configured": "Sessão WhatsApp da empresa configurada",
+  "whatsapp.connection_requested":
+    "Conexão do WhatsApp solicitada pelo administrador",
   "whatsapp.queued": "Mensagem WhatsApp adicionada à fila",
   "trip.unpublished": "Viagem retirada da página pública",
   "reservation.paid": "Reserva marcada PAGO",
@@ -969,6 +973,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "integrations"
     | "collections"
     | "nexus-team"
+    | "whatsapp"
   >("overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1074,41 +1079,43 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "nexus-team"
-      ? "Equipe Nexus"
-      : page === "collections"
-        ? "Financeiro e cobranças"
-        : page === "integrations"
-          ? "Configurações"
-          : page === "routes"
-            ? "Rotas"
-            : page === "ticket-sales"
-              ? "Vender bilhete"
-              : page === "sales"
-                ? "Página pública e integrações"
-                : page === "reports"
-                  ? "Relatórios"
-                  : page === "operations"
-                    ? {
-                        vehicles: "Veículos",
-                        trips: "Viagens",
-                        packages: "Pacotes",
-                        allocations: "Alocar veículos em viagens",
-                        passengers: "Passageiros",
-                      }[operationModule] || "Operação de viagens"
-                    : page === "overview"
-                      ? "Visão geral"
-                      : page === "billing"
-                        ? isNexus
-                          ? companyPlanOnly
-                            ? "Plano da empresa"
-                            : "Planos e assinaturas"
-                          : "Meu plano"
-                        : page === "audit"
-                          ? "Histórico de atividades"
-                          : isNexus
-                            ? "Empresas"
-                            : "Equipe";
+    page === "whatsapp"
+      ? "WhatsApp"
+      : page === "nexus-team"
+        ? "Equipe Nexus"
+        : page === "collections"
+          ? "Financeiro e cobranças"
+          : page === "integrations"
+            ? "Configurações"
+            : page === "routes"
+              ? "Rotas"
+              : page === "ticket-sales"
+                ? "Vender bilhete"
+                : page === "sales"
+                  ? "Página pública e integrações"
+                  : page === "reports"
+                    ? "Relatórios"
+                    : page === "operations"
+                      ? {
+                          vehicles: "Veículos",
+                          trips: "Viagens",
+                          packages: "Pacotes",
+                          allocations: "Alocar veículos em viagens",
+                          passengers: "Passageiros",
+                        }[operationModule] || "Operação de viagens"
+                      : page === "overview"
+                        ? "Visão geral"
+                        : page === "billing"
+                          ? isNexus
+                            ? companyPlanOnly
+                              ? "Plano da empresa"
+                              : "Planos e assinaturas"
+                            : "Meu plano"
+                          : page === "audit"
+                            ? "Histórico de atividades"
+                            : isNexus
+                              ? "Empresas"
+                              : "Equipe";
   function menuActive(id: string) {
     if (page === "operations")
       return id === "operations"
@@ -1130,6 +1137,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "reports",
     "collections",
     "billing",
+    "whatsapp",
     "audit",
   ];
   return (
@@ -1173,6 +1181,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <nav>
           {[
             { id: "overview", label: "Visão geral", icon: LayoutDashboard },
+            ...(isAdmin
+              ? [{ id: "whatsapp", label: "WhatsApp", icon: Phone }]
+              : []),
             ...(fullNexus || isAdmin || user.role === "attendant"
               ? [{ id: "reports", label: "Relatórios", icon: ChartColumn }]
               : []),
@@ -1379,6 +1390,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <NexusTeam currentUserId={user.id} />
           )}
           {page === "integrations" && fullNexus && <IntegrationSettings />}
+          {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
               isNexus={isNexus}

@@ -254,6 +254,10 @@ async def main():
                 from app.session_discovery import process_discovery
 
                 await process_discovery(engine)
+                from app.whatsapp_connection import process_connection
+
+                Path("/tmp/rotafy-whatsapp-health").touch()
+                await process_connection(engine)
                 Path("/tmp/rotafy-whatsapp-health").touch()
             except (SQLAlchemyError, OSError, ValueError):
                 logger.error('{"event":"whatsapp.cycle_failed"}')

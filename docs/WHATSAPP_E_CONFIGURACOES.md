@@ -1,5 +1,9 @@
 # WhatsApp OpenWA e configuração Resend
 
+## Conexão pelo administrador da empresa
+
+Desde 16/10/2026, novos cadastros agendam a criação automática da sessão. O administrador da empresa pode informar o número e ler o QR no menu **WhatsApp** do Rotafy, sem conhecer o ID ou a chave. As instruções abaixo de associação por ID/telefone continuam disponíveis como alternativas de suporte Nexus. A operação exige permissão da chave para criar/iniciar sessões e autorização no celular. Consulte [Conexão WhatsApp da empresa](CONEXAO_WHATSAPP_EMPRESA.md) para o fluxo, a migração e os controles de segurança.
+
 ## Modelos financeiros com QR Code
 
 Novas notificações financeiras usam um envelope `billing-v1` criptografado na fila, contendo texto, HTML e o BR Code estático. O QR PNG é gerado localmente; dados Pix não são enviados a um gerador externo. O Resend recebe HTML com `cid:pix-rotafy` e attachment base64 com `content_id`, conforme [documentação de imagens incorporadas](https://resend.com/changelog/embed-images-using-cid). O OpenWA recebe uma única chamada `messages/send-image` com base64, mimetype, filename e caption; resultados ambíguos não são reenviados. Legendas longas são resumidas, preservando o total e o prazo. Filas antigas em texto continuam compatíveis. Nenhum envio antigo é reescrito.
