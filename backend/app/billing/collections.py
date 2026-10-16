@@ -131,6 +131,12 @@ async def collect_company(db, company_id, now=None):
         ),
         {"id": company_id},
     )
+    if mode == "postpaid30":
+        from app.billing.postpaid import collect_postpaid
+
+        await collect_postpaid(db, company_id, settings, now)
+        await notify_overdue(db, company_id, now)
+        return
     if mode == "prepaid":
         from app.billing.prepaid import collect_prepaid
 

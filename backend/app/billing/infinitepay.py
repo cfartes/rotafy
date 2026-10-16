@@ -163,7 +163,7 @@ async def process_checkout(engine, request_fn=request_payment, base_url=None):
             (job["setup_cents"], "Taxa de setup Nexus Rotafy"),
             (
                 job["extra_trip_cents"] * job["extra_trips"],
-                f"{job['extra_trips']} viagens excedentes do período anterior",
+                f"{job['extra_trips']} viagens excedentes do período apurado",
             ),
         ):
             if price:

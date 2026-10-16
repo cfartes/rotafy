@@ -407,16 +407,21 @@ function SubscriptionDetails({
             : "Assinatura encerrada"}
         </span>
         <small>
-          Início: {dateOnly(sub.starts_on)} · ciclo mensal por aniversário
+          Início: {dateOnly(sub.starts_on)} ·{" "}
+          {sub.billing_mode === "postpaid30"
+            ? "ciclo de 30 dias, cobrança no fechamento"
+            : "ciclo mensal por aniversário"}
         </small>
       </div>
       {sub.trialing && sub.trial_ends_on && (
         <div className="billing-notice">
           <Clock3 size={20} />
           <p>
-            Teste até {dateOnly(sub.trial_ends_on)}. Nesse dia será enviado o
-            link para pagar setup e primeira mensalidade. A franquia do período
-            pago começará do zero.
+            Teste até {dateOnly(sub.trial_ends_on)}. Nesse dia será enviado o{" "}
+            {sub.billing_mode === "postpaid30"
+              ? "link para pagar somente o setup, quando houver. A mensalidade e os excedentes serão cobrados após 30 dias de uso."
+              : "link para pagar setup e primeira mensalidade."}{" "}
+            A franquia do período pago começará do zero.
           </p>
         </div>
       )}

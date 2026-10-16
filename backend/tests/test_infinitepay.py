@@ -97,7 +97,7 @@ def invoices(client):
 
 
 def ready_checkout(client, company):
-    start, _ = boundaries(date(2027, 1, 17), 0)
+    start, _ = boundaries(date(2027, 1, 17), 0, "postpaid30")
     collect(company, start)
     invoice = invoices(client)[0]
     captured = {}
@@ -135,7 +135,7 @@ def test_trial_contract_quota_reset_first_charge_and_renewal(client, seeded):
 
     with pytest.raises(HTTPException, match="franquia"):
         platform_call(exceed)
-    start, end = boundaries(date(2027, 1, 17), 0)
+    start, end = boundaries(date(2027, 1, 17), 0, "postpaid30")
     collect(company, start - timedelta(hours=12))
     assert invoices(client)[0]["status"] == "preview"
     assert invoices(client)[0]["payment_url"] == ""
@@ -143,7 +143,7 @@ def test_trial_contract_quota_reset_first_charge_and_renewal(client, seeded):
     collect(company, start)
     invoice = invoices(client)[0]
     assert len(invoices(client)) == 1
-    assert invoice["total_cents"] == 19900 and invoice["setup_cents"] == 10000
+    assert invoice["total_cents"] == 10000 and invoice["setup_cents"] == 10000
     assert invoice["extra_trips"] == 0
     assert (
         not report["current_period"]["is_trial"]
@@ -175,8 +175,8 @@ def test_checkout_webhook_confirmation_idempotency_notifications_and_isolation(
 ):
     company = setup(client)
     invoice, payload = ready_checkout(client, company)
-    assert sum(i["price"] * i["quantity"] for i in payload["items"]) == 19900
-    assert len(payload["items"]) == 2
+    assert sum(i["price"] * i["quantity"] for i in payload["items"]) == 10000
+    assert len(payload["items"]) == 1
     assert (
         payload["handle"] == "nexus-test"
         and payload["customer"]["phone_number"] == PAYLOAD["contact_phone"]
@@ -197,7 +197,7 @@ def test_checkout_webhook_confirmation_idempotency_notifications_and_isolation(
     def verify(path, data):
         calls.append(data)
         assert path == "/payment_check" and data["order_nsu"] == payload["order_nsu"]
-        return {"success": True, "paid": True, "amount": 19900, "paid_amount": 20000}
+        return {"success": True, "paid": True, "amount": 10000, "paid_amount": 10100}
 
     assert run_job(process_payment_event, verify)
     assert not run_job(process_payment_event, verify)
@@ -270,8 +270,8 @@ def test_no_release_for_wrong_amount_or_payment_after_cancellation(
         return {
             "success": True,
             "paid": True,
-            "amount": 123 if mismatch else 19900,
-            "paid_amount": 19900,
+            "amount": 123 if mismatch else 10000,
+            "paid_amount": 10000,
         }
 
     assert run_job(process_payment_event, verify)
@@ -282,7 +282,7 @@ def test_no_release_for_wrong_amount_or_payment_after_cancellation(
 
 def test_checkout_failure_retry_and_settings_snapshot(client, seeded):
     company = setup(client)
-    start, _ = boundaries(date(2027, 1, 17), 0)
+    start, _ = boundaries(date(2027, 1, 17), 0, "postpaid30")
     collect(company, start)
 
     def offline(path, payload):

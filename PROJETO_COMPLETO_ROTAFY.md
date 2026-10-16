@@ -584,7 +584,7 @@ Se a consulta atingir o limite, reduza o período ou escolha uma viagem. O siste
 
 **Acesso:** administrador da empresa → **Meu plano**.
 
-Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, extras e valor estimado. Os ciclos mensais seguem o aniversário da assinatura; a franquia não acumula para o mês seguinte.
+Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, extras e valor estimado. Nos novos contratos automáticos, os ciclos têm 30 dias e a cobrança ocorre após o uso; a franquia não acumula para o período seguinte. Contratos legados preservam o calendário contratado.
 
 | Operação | Consumo |
 | --- | --- |
@@ -702,7 +702,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 
 O administrador encontra as cobranças da assinatura em **Meu plano** e no menu **Financeiro e cobranças**. Cada demonstrativo apresenta período, plano, utilização, excedentes, setup quando aplicável, total e prazo para pagamento.
 
-Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada a cobrança de setup e primeira mensalidade. Nas renovações, o demonstrativo reúne o próximo mês e os excedentes do período pago anterior. Contratos anteriores preservam suas condições.
+Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada somente a cobrança de setup, quando houver. A primeira mensalidade e os excedentes são cobrados após 30 dias de uso. Os ciclos seguintes também duram 30 dias e são cobrados no fechamento. Contratos anteriores preservam suas condições.
 
 Um dia antes da cobrança, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva. Use **Pagar agora** para acessar o pagamento seguro, também enviado por e-mail e WhatsApp. A confirmação é automática após aprovação; o retorno do checkout pode aguardar alguns instantes pela conferência.
 
@@ -850,9 +850,9 @@ Os dados de **Pix manual** ficam em uma seção separada. Utilize essa configura
 
 No cadastro, a empresa recebe a franquia do plano durante o teste, sem cobrança de setup, mensalidade ou excedentes. A criação de viagens além dessa franquia é impedida durante o teste.
 
-Exemplo: cadastro dia **10**, com **7 dias** de teste. No dia **17**, o sistema registra uma cobrança de **setup + primeira mensalidade**, gera o link e agenda o envio por e-mail e WhatsApp. Nessa data começa o primeiro mês contratado, com franquia nova. A utilização do teste não é transferida como excedente para o período pago.
+Exemplo: cadastro em **10/10**, com **7 dias** de teste. Em **17/10**, o sistema registra somente o **setup**, gera o link e agenda o envio por e-mail e WhatsApp. Nessa data começa o primeiro ciclo de 30 dias, com franquia nova. Em **16/11**, cobra a **primeira mensalidade e os excedentes desse ciclo**. A utilização do teste não é transferida como excedente para o período pago. Setup configurado como zero não gera cobrança separada.
 
-Na renovação, a cobrança reúne a mensalidade do próximo mês e os excedentes do período pago anterior. O setup aparece somente na primeira cobrança. A data de referência é o término do teste; em meses curtos, o calendário preserva o aniversário original quando possível.
+Cada renovação cobra a mensalidade e os excedentes do período de 30 dias que acabou de ser utilizado. O setup é uma cobrança única e separada. Como os períodos são fixos de 30 dias, o dia do mês pode variar: 17/10 → 16/11 → 16/12 → 15/01. A franquia também é renovada a cada ciclo de 30 dias.
 
 Clientes anteriores à ativação mantêm seus ciclos e não recebem setup ou teste retroativos. Novas cobranças definitivas desses contratos podem utilizar o link automático quando a integração estiver habilitada.
 

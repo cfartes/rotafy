@@ -132,9 +132,9 @@ Os dados de **Pix manual** ficam em uma seção separada. Utilize essa configura
 
 No cadastro, a empresa recebe a franquia do plano durante o teste, sem cobrança de setup, mensalidade ou excedentes. A criação de viagens além dessa franquia é impedida durante o teste.
 
-Exemplo: cadastro dia **10**, com **7 dias** de teste. No dia **17**, o sistema registra uma cobrança de **setup + primeira mensalidade**, gera o link e agenda o envio por e-mail e WhatsApp. Nessa data começa o primeiro mês contratado, com franquia nova. A utilização do teste não é transferida como excedente para o período pago.
+Exemplo: cadastro em **10/10**, com **7 dias** de teste. Em **17/10**, o sistema registra somente o **setup**, gera o link e agenda o envio por e-mail e WhatsApp. Nessa data começa o primeiro ciclo de 30 dias, com franquia nova. Em **16/11**, cobra a **primeira mensalidade e os excedentes desse ciclo**. A utilização do teste não é transferida como excedente para o período pago. Setup configurado como zero não gera cobrança separada.
 
-Na renovação, a cobrança reúne a mensalidade do próximo mês e os excedentes do período pago anterior. O setup aparece somente na primeira cobrança. A data de referência é o término do teste; em meses curtos, o calendário preserva o aniversário original quando possível.
+Cada renovação cobra a mensalidade e os excedentes do período de 30 dias que acabou de ser utilizado. O setup é uma cobrança única e separada. Como os períodos são fixos de 30 dias, o dia do mês pode variar: 17/10 → 16/11 → 16/12 → 15/01. A franquia também é renovada a cada ciclo de 30 dias.
 
 Clientes anteriores à ativação mantêm seus ciclos e não recebem setup ou teste retroativos. Novas cobranças definitivas desses contratos podem utilizar o link automático quando a integração estiver habilitada.
 

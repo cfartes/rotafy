@@ -100,7 +100,9 @@ async def lock_company(
 async def insert_period(
     db: AsyncConnection, subscription: dict, index: int, version_id: UUID
 ) -> dict:
-    starts_at, ends_at = boundaries(subscription["starts_on"], index)
+    starts_at, ends_at = boundaries(
+        subscription["starts_on"], index, subscription.get("billing_mode", "arrears")
+    )
     row = (
         (
             await db.execute(
@@ -129,7 +131,7 @@ async def refresh_company(
     """Materializa ciclos vencidos com as versões publicadas antes de cada início.
 
     A trava de empresa protege atribuição, renovação e lançamentos concorrentes.
-    O aniversário é sempre calculado a partir da data original (31 -> 28 -> 31).
+    Contratos postpaid30 usam dias fixos; contratos legados mantêm aniversário.
     """
     now = now or utc_now()
     await lock_company(db, company_id)
@@ -164,7 +166,7 @@ async def refresh_company(
         last = await insert_period(db, sub, 0, sub["initial_version_id"])
     while now >= last["ends_at"]:
         index = last["cycle_index"] + 1
-        start, _ = boundaries(sub["starts_on"], index)
+        start, _ = boundaries(sub["starts_on"], index, sub["billing_mode"])
         if sub["pending_version_id"] and sub["pending_effective_at"] <= start:
             version_id = sub["pending_version_id"]
             plan_id = await db.scalar(
@@ -271,7 +273,7 @@ async def subscription_report(
     )
     sub["trial_ends_on"] = (
         sub["starts_on"]
-        if sub["billing_mode"] == "prepaid" and sub["trial_days"]
+        if sub["billing_mode"] in {"prepaid", "postpaid30"} and sub["trial_days"]
         else None
     )
     sub["trialing"] = bool(

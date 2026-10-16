@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 SAO_PAULO = ZoneInfo("America/Sao_Paulo")
@@ -22,10 +22,18 @@ def anniversary(anchor: date, index: int) -> date:
     return date(year, month, min(anchor.day, monthrange(year, month)[1]))
 
 
-def boundaries(anchor: date, index: int) -> tuple[datetime, datetime]:
+def boundaries(
+    anchor: date, index: int, mode: str = "arrears"
+) -> tuple[datetime, datetime]:
+    if index < 0:
+        raise ValueError("O índice do ciclo não pode ser negativo.")
     return tuple(
         datetime.combine(
-            anniversary(anchor, i), datetime.min.time(), SAO_PAULO
+            anchor + timedelta(days=30 * i)
+            if mode == "postpaid30"
+            else anniversary(anchor, i),
+            datetime.min.time(),
+            SAO_PAULO,
         ).astimezone(timezone.utc)
         for i in (index, index + 1)
     )
