@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **15/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **16/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -220,7 +220,17 @@ Em **Detalhes**, confira roteiro, equipe, capacidade, reservas e finalização. 
 
 Uma reserva pode ter de 1 a 200 passageiros com um único telefone compartilhado. O valor nominal é o preço por passageiro da saída multiplicado pelo total de passageiros e fica preservado na reserva.
 
-### Como os lugares são calculados
+### Embarque em hotel ou outro endereço
+
+Na reserva, cada deslocamento permite escolher um ponto da viagem ou **Outro local / hotel**. Informe nome, endereço completo com cidade e UF e, se necessário, complemento. Hotéis já utilizados na mesma saída podem ser selecionados novamente.
+
+O hotel de embarque será visitado após o ponto selecionado; o hotel de desembarque, antes do ponto selecionado. A **ordem de visita dos hotéis** organiza os locais entre esses pontos. Confira o roteiro do veículo depois de salvar. Endereços digitados não são localizados nem ordenados automaticamente.
+
+Use **Usar este hotel nos passeios com a mesma origem e no retorno** para repetir o local nos deslocamentos correspondentes do pacote. Cada deslocamento continua editável. Para familiares que embarcam em locais diferentes, faça reservas separadas.
+
+Esses locais pertencem à reserva e ao veículo de cada saída. A Rota cadastrada permanece disponível para reutilização. Motoristas e guias consultam os endereços, complementos e passageiros previstos no roteiro e abrem a navegação. Após alterações, sincronize ou prepare novamente o trecho no Android antes de operar sem internet.
+
+### Ocupação por segmento
 
 A capacidade é conferida entre cada par de pontos consecutivos. Quem desembarca antes do destino libera o lugar para outro passageiro que embarque depois. A sugestão procura um veículo que comporte toda a família e deixe menos lugares livres no percurso reservado.
 

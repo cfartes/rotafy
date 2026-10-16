@@ -1,14 +1,14 @@
 {
   "edition": "2026.10",
-  "revised_at": "2026-10-15",
+  "revised_at": "2026-10-16",
   "files": [
     {
       "name": "manual.html",
-      "bytes": 595959
+      "bytes": 597250
     },
     {
       "name": "manual.pdf",
-      "bytes": 726187
+      "bytes": 729618
     },
     {
       "name": "manual-superadmin.html",

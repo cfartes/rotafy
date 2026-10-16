@@ -19,6 +19,7 @@ from app.reservations import (
     fingerprint,
     itinerary,
     reservation_detail,
+    save_journey_locations,
     validate_passengers,
 )
 
@@ -446,9 +447,16 @@ async def edit_reservation(
             )
         for journey in journeys:
             previous = next(j for j in old["journeys"] if j["leg_id"] == journey.leg_id)
-            if (journey.boarding_position, journey.dropoff_position) != (
-                previous["boarding_position"],
-                previous["dropoff_position"],
+            if (
+                (journey.boarding_position, journey.dropoff_position)
+                != (
+                    previous["boarding_position"],
+                    previous["dropoff_position"],
+                )
+                or journey.model_dump()["boarding_location"]
+                != previous.get("boarding_location")
+                or journey.model_dump()["dropoff_location"]
+                != previous.get("dropoff_location")
             ) and await db.scalar(
                 text(
                     "SELECT 1 FROM boarding_events WHERE reservation_id=:id AND leg_id=:leg LIMIT 1"
@@ -514,6 +522,7 @@ async def edit_reservation(
                 ),
                 journey.model_dump() | {"reservation": reservation_id},
             )
+            await save_journey_locations(db, reservation_id, journey)
         # Invalida versões capturadas offline, sem alterar eventos históricos.
         await invalidate_waiting(db, reservation_id=reservation_id)
         await audit(

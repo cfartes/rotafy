@@ -952,6 +952,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const fullNexus = user.role === "nexus";
   const isAdmin = user.role === "admin";
   const [operationModule, setOperationModule] = useState("trips");
+  const [ticketSalesVisit, setTicketSalesVisit] = useState(0);
   const [reportTripId, setReportTripId] = useState<string | null>(null);
   const [page, setPage] = useState<
     | "overview"
@@ -1252,6 +1253,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 key={item.id}
                 className={menuActive(item.id) ? "active" : ""}
                 onClick={() => {
+                  if (item.id === "ticket-sales")
+                    setTicketSalesVisit((v) => v + 1);
                   if (
                     [
                       "vehicles",
@@ -1399,7 +1402,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "ticket-sales" &&
             !isNexus &&
             (isAdmin || user.role === "attendant") && (
-              <TicketSales onLogout={onLogout} />
+              <TicketSales key={ticketSalesVisit} onLogout={onLogout} />
             )}
           {page === "routes" &&
             !isNexus &&

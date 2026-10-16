@@ -68,7 +68,7 @@
 </div>
 </section><section class="chapter"><h2 id="visao-geral">1. Conheça o Nexus Rotafy</h2>
 <p>O <strong>Nexus Rotafy</strong> organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.</p>
-<p>Este manual descreve a implementação disponível em <strong>15/10/2026</strong>. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.</p>
+<p>Este manual descreve a implementação disponível em <strong>16/10/2026</strong>. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.</p>
 <p><strong>Endereço do painel:</strong> <a href="https://rotafy.nexusdataanalytics.tech">https://rotafy.nexusdataanalytics.tech</a>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza <code>/ajuda</code>.</p>
 <h3 id="o-fluxo-de-trabalho">O fluxo de trabalho</h3>
 <ol>
@@ -251,7 +251,12 @@
 <li>Salve como confirmada ou bloqueio pendente, conforme a operação, e confira o resultado.</li>
 </ol>
 <p>Uma reserva pode ter de 1 a 200 passageiros com um único telefone compartilhado. O valor nominal é o preço por passageiro da saída multiplicado pelo total de passageiros e fica preservado na reserva.</p>
-<h3 id="como-os-lugares-sao-calculados">Como os lugares são calculados</h3>
+<h3 id="embarque-em-hotel-ou-outro-endereco">Embarque em hotel ou outro endereço</h3>
+<p>Na reserva, cada deslocamento permite escolher um ponto da viagem ou <strong>Outro local / hotel</strong>. Informe nome, endereço completo com cidade e UF e, se necessário, complemento. Hotéis já utilizados na mesma saída podem ser selecionados novamente.</p>
+<p>O hotel de embarque será visitado após o ponto selecionado; o hotel de desembarque, antes do ponto selecionado. A <strong>ordem de visita dos hotéis</strong> organiza os locais entre esses pontos. Confira o roteiro do veículo depois de salvar. Endereços digitados não são localizados nem ordenados automaticamente.</p>
+<p>Use <strong>Usar este hotel nos passeios com a mesma origem e no retorno</strong> para repetir o local nos deslocamentos correspondentes do pacote. Cada deslocamento continua editável. Para familiares que embarcam em locais diferentes, faça reservas separadas.</p>
+<p>Esses locais pertencem à reserva e ao veículo de cada saída. A Rota cadastrada permanece disponível para reutilização. Motoristas e guias consultam os endereços, complementos e passageiros previstos no roteiro e abrem a navegação. Após alterações, sincronize ou prepare novamente o trecho no Android antes de operar sem internet.</p>
+<h3 id="ocupacao-por-segmento">Ocupação por segmento</h3>
 <p>A capacidade é conferida entre cada par de pontos consecutivos. Quem desembarca antes do destino libera o lugar para outro passageiro que embarque depois. A sugestão procura um veículo que comporte toda a família e deixe menos lugares livres no percurso reservado.</p>
 <p>Somar vagas de ônibus diferentes não garante lugar para uma família no mesmo ônibus. Se nenhum veículo comportar todos os integrantes nos trechos necessários, o sistema informa indisponibilidade e não divide a família automaticamente. Em pacotes, a combinação deve atender todos os deslocamentos; o veículo pode mudar entre eles.</p>
 <h3 id="situacoes-da-reserva">Situações da reserva</h3>

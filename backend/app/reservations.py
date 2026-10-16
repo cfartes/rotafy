@@ -56,10 +56,56 @@ class Passenger(OperationalInput):
         return digits
 
 
+class JourneyLocation(OperationalInput):
+    name: str = Field(min_length=2, max_length=150)
+    address: str = Field(min_length=8, max_length=300)
+    complement: str = Field(default="", max_length=200)
+    order: int = Field(default=1, ge=1, le=10000, strict=True)
+
+
 class Journey(OperationalInput):
     leg_id: UUID
     boarding_position: int = Field(default=0, ge=0, le=51, strict=True)
     dropoff_position: int = Field(ge=1, le=51, strict=True)
+    boarding_location: JourneyLocation | None = None
+    dropoff_location: JourneyLocation | None = None
+
+
+async def save_journey_locations(db, reservation_id, journey):
+    if await db.scalar(
+        text("""SELECT 1 FROM reservation_legs rl
+        JOIN trip_vehicles tv ON tv.id=rl.allocation_id
+        WHERE rl.reservation_id=:reservation AND rl.leg_id=:leg
+        AND tv.journey_states -> rl.leg_id::text ->> 'status' = 'completed'
+        AND (rl.boarding_location IS DISTINCT FROM CAST(:boarding AS jsonb)
+          OR rl.dropoff_location IS DISTINCT FROM CAST(:dropoff AS jsonb))"""),
+        {
+            "reservation": reservation_id,
+            "leg": journey.leg_id,
+            "boarding": json.dumps(journey.boarding_location.model_dump())
+            if journey.boarding_location
+            else None,
+            "dropoff": json.dumps(journey.dropoff_location.model_dump())
+            if journey.dropoff_location
+            else None,
+        },
+    ):
+        raise HTTPException(409, "O local de um deslocamento concluído não pode mudar.")
+    await db.execute(
+        text("""UPDATE reservation_legs SET boarding_location=CAST(:boarding AS jsonb),
+        dropoff_location=CAST(:dropoff AS jsonb)
+        WHERE reservation_id=:reservation AND leg_id=:leg"""),
+        {
+            "reservation": reservation_id,
+            "leg": journey.leg_id,
+            "boarding": json.dumps(journey.boarding_location.model_dump())
+            if journey.boarding_location
+            else None,
+            "dropoff": json.dumps(journey.dropoff_location.model_dump())
+            if journey.dropoff_location
+            else None,
+        },
+    )
 
 
 class Availability(OperationalInput):
@@ -448,7 +494,7 @@ async def reservation_detail(db, reservation_id):
     )
     result["journeys"] = await rows(
         db,
-        "SELECT leg_id,boarding_position,dropoff_position FROM reservation_legs WHERE reservation_id=:id ORDER BY leg_id",
+        "SELECT leg_id,boarding_position,dropoff_position,boarding_location,dropoff_location FROM reservation_legs WHERE reservation_id=:id ORDER BY leg_id",
         id=reservation_id,
     )
     result["leg_allocations"] = await rows(
@@ -586,6 +632,7 @@ async def create_reservation(db, actor, trip, data, import_id=None, reference=No
                 ),
             },
         )
+        await save_journey_locations(db, reservation_id, journey)
     await audit(
         db, actor.company_id, actor.user["id"], "reservation.created", reservation_id
     )
@@ -616,6 +663,21 @@ async def list_reservations(trip_id: UUID, actor: Auth):
        WHERE r.trip_id=:trip ORDER BY r.created_at DESC,r.id""",
         trip=trip_id,
         now=utc_now(),
+    )
+
+
+@router.get("/trips/{trip_id}/boarding-locations")
+async def boarding_locations(trip_id: UUID, actor: Auth):
+    tenant(actor, write=True)
+    await trip_detail(actor.db, trip_id)
+    return await rows(
+        actor.db,
+        """SELECT DISTINCT rl.leg_id,rl.boarding_position,rl.dropoff_position,
+        rl.boarding_location,rl.dropoff_location
+        FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
+        WHERE r.trip_id=:trip AND (r.status='confirmed' OR (r.status='pending' AND r.expires_at>now()))
+        AND (rl.boarding_location IS NOT NULL OR rl.dropoff_location IS NOT NULL)""",
+        trip=trip_id,
     )
 
 

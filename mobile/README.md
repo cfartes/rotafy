@@ -6,6 +6,8 @@ Motorista e guia usam login da empresa e os mesmos recursos: viagens atribuídas
 
 ## Desenvolvimento
 
+A versão **1.6.0 (11)** exibe as paradas de hotéis e outros endereços definidos na reserva, com complemento e passageiros previstos por ponto, para motorista e guia. Inclui navegação por ponto e por etapas. Atualize o backend e sincronize ou prepare novamente o deslocamento para receber alterações; os dados preparados ficam disponíveis offline.
+
 A versão **1.5.2 (9)** inclui o botão **Mostrar senha / Ocultar senha** no login. A senha começa oculta e a visualização pode ser alternada sem apagar o texto digitado.
 
 A versão **1.5.1 (8)** utiliza `https://rotafy.nexusdataanalytics.tech` para acessar o painel e a API. O APK release mantém o pacote `br.com.nexusdataanalytics.rotafy` e a assinatura de distribuição existente, permitindo atualizar a versão anterior. Depois da atualização, entre com o usuário da empresa cadastrada na instalação do domínio correto.

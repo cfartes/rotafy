@@ -14,6 +14,9 @@ type Route = {
       to_position: number;
     }[];
     points: {
+      complement?: string;
+      passenger_names?: string[];
+      pending_passenger_names?: string[];
       position: number;
       name: string;
       address: string;
@@ -86,6 +89,16 @@ export function VehicleRoute({
                     }).format(new Date(point.scheduled_at))
                   : "Hor?rio n?o definido"}
                 <p>{point.address}</p>
+                {point.complement && <p>{point.complement}</p>}
+                {!!point.passenger_names?.length && (
+                  <p>Passageiros: {point.passenger_names.join(", ")}</p>
+                )}
+                {!!point.pending_passenger_names?.length && (
+                  <p>
+                    Reservas temporárias:{" "}
+                    {point.pending_passenger_names.join(", ")}
+                  </p>
+                )}
                 {disabled || closedLegIds.includes(leg.id) ? (
                   <button className="button secondary" disabled>
                     {point.position === 0

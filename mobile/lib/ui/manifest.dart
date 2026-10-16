@@ -292,6 +292,31 @@ class _ManifestPageState extends State<ManifestPage> {
                       ),
                     ),
               const SizedBox(height: 16),
+              if (route.isNotEmpty)
+                ...((route.first['points'] as List?) ?? []).map(
+                  (point) => Card(
+                    child: ListTile(
+                      title: Text('${point['position'] + 1}. ${point['name']}'),
+                      subtitle: Text(
+                        [
+                          point['address'] ?? '',
+                          point['complement'] ?? '',
+                          if ((point['passenger_names'] as List? ?? [])
+                              .isNotEmpty)
+                            'Passageiros: ${(point['passenger_names'] as List).join(', ')}',
+                          if ((point['pending_passenger_names'] as List? ?? [])
+                              .isNotEmpty)
+                            'Reservas temporárias: ${(point['pending_passenger_names'] as List).join(', ')}',
+                        ].where((line) => line.isNotEmpty).join('\n'),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.directions),
+                        tooltip: 'Navegar até este ponto',
+                        onPressed: () => openMaps(context, point['maps_url']),
+                      ),
+                    ),
+                  ),
+                ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text('${passengers.length} passageiros'),

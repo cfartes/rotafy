@@ -94,7 +94,8 @@ async function setup(page: Page, role = "admin") {
     } else if (path.endsWith("/refresh-routes")) {
       saved.push({ path, ...request.postDataJSON() });
       body = { id: "open" };
-    } else if (path.startsWith("/trips/")) {
+    } else if (path.endsWith("/boarding-locations")) body = [];
+    else if (path.startsWith("/trips/")) {
       const trip = trips.find((t) => t.id === path.split("/")[2]);
       body = {
         ...trip,
@@ -157,9 +158,7 @@ test("route refresh requires confirmation and is disabled for closed trips", asy
       routeReads++;
   });
   const saved = await setup(page);
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   await page
     .locator("tbody tr")
     .filter({ hasText: "Transfer futuro" })
@@ -194,9 +193,7 @@ test("trip list filters open, ongoing, completed and cancelled states", async ({
   page,
 }) => {
   await setup(page);
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   const filter = page.getByLabel("Situação da viagem");
   await filter.selectOption("open");
   await expect(page.locator("tbody tr")).toHaveCount(3);
@@ -215,9 +212,7 @@ test("completed detail is wide, read only and shows arrival coordinates", async 
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await setup(page);
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   await page.getByLabel("Situação da viagem").selectOption("completed");
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Detalhes da viagem" });
@@ -253,9 +248,7 @@ test("cancelled detail disables navigation and fits a phone screen", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await setup(page);
   await page.getByRole("button", { name: "Abrir navegação" }).click();
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   await page.getByLabel("Situação da viagem").selectOption("cancelled");
   await page.getByRole("button", { name: "Detalhes", exact: true }).click();
   const dialog = page.getByRole("dialog");
@@ -303,8 +296,12 @@ for (const role of ["admin", "attendant"])
       status: "confirmed",
       passengers: [{ full_name: "Passageiro Teste" }],
     });
+    await expect(
+      page.getByRole("button", { name: "Voltar à venda de bilhetes" }),
+    ).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Voltar à venda de bilhetes" })
+      .getByRole("navigation")
+      .getByRole("button", { name: "Vender bilhete", exact: true })
       .click();
     await expect(select).toBeVisible();
   });
@@ -316,4 +313,50 @@ test("ticket sale is not offered to drivers or guides", async ({ page }) => {
       .getByRole("complementary")
       .getByRole("button", { name: "Vender bilhete", exact: true }),
   ).toHaveCount(0);
+});
+
+test("ticket sale saves hotel pickup and rejects an incomplete address", async ({
+  page,
+}) => {
+  const saved = await setup(page);
+  await page
+    .getByRole("navigation")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  await page.getByLabel("Viagem para vender bilhete").selectOption("open");
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Vender bilhete", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Nova reserva familiar" });
+  await dialog.getByLabel("Nome do responsável").fill("Família Hotel");
+  await dialog.getByLabel("Telefone da família").fill("47999998888");
+  await dialog
+    .getByLabel("Nome do passageiro 1", { exact: true })
+    .fill("Cliente Hotel");
+  const label = "Local de embarque · deslocamento 1";
+  await dialog.getByLabel(`${label}: tipo de local`).selectOption("custom");
+  await dialog
+    .getByLabel(`${label}: nome do hotel ou local`)
+    .fill("Hotel Central");
+  await dialog.getByRole("button", { name: "Salvar reserva" }).click();
+  expect(saved).toHaveLength(0);
+  await dialog
+    .getByLabel(`${label}: endereço completo`)
+    .fill("Rua das Flores, 100, Blumenau SC");
+  await dialog.getByLabel(`${label}: complemento`).fill("Recepção");
+  await dialog.getByRole("button", { name: "Salvar reserva" }).click();
+  await expect(dialog).not.toBeVisible();
+  expect(saved[0]).toMatchObject({
+    journeys: [
+      {
+        boarding_location: {
+          name: "Hotel Central",
+          address: "Rua das Flores, 100, Blumenau SC",
+          complement: "Recepção",
+          order: 1,
+        },
+      },
+    ],
+  });
 });

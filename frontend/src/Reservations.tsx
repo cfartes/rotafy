@@ -10,11 +10,14 @@ import { Alert, Field, Modal } from "./components/ui";
 import { money } from "./billing/types";
 import "./reservations.css";
 import { TicketManager } from "./Tickets";
+import { JourneyLocation, type Location } from "./JourneyLocation";
 
 type Journey = {
   leg_id: string;
   boarding_position: number;
   dropoff_position: number;
+  boarding_location?: Location | null;
+  dropoff_location?: Location | null;
 };
 type Passenger = PassengerDocuments & {
   id?: string;
@@ -126,12 +129,14 @@ export function Reservations({
   onLogout,
   initialCreate = false,
   backLabel = "Voltar às viagens",
+  hideBack = false,
 }: {
   tripId: string;
   onBack: () => void;
   onLogout: () => void;
   initialCreate?: boolean;
   backLabel?: string;
+  hideBack?: boolean;
 }) {
   const client = useQueryClient();
   const [creating, setCreating] = useState(initialCreate);
@@ -158,6 +163,10 @@ export function Reservations({
     if (queryError instanceof ApiError && queryError.status === 401) onLogout();
   }, [queryError, onLogout]);
   async function refresh() {
+    await client.invalidateQueries({
+      queryKey: ["boarding-locations", tripId],
+    });
+    await client.invalidateQueries({ queryKey: ["vehicle-route", tripId] });
     await client.invalidateQueries({ queryKey: ["reservations"] });
     await client.invalidateQueries({ queryKey: ["availability"] });
     await client.invalidateQueries({ queryKey: ["audit"] });
@@ -167,9 +176,11 @@ export function Reservations({
     new Date(trip.data.starts_at) > new Date();
   return (
     <div className="reservation-workspace">
-      <button className="button secondary" onClick={onBack}>
-        {backLabel}
-      </button>
+      {!hideBack && (
+        <button className="button secondary" onClick={onBack}>
+          {backLabel}
+        </button>
+      )}
       <div className="reservation-heading">
         <div>
           <p className="eyebrow">ATENDIMENTO</p>
@@ -363,12 +374,19 @@ function ReservationModal({
   const validJourneys = journeys.every(
     (j) => j.boarding_position < j.dropoff_position,
   );
+  const capacityJourneys = journeys.map(
+    ({ leg_id, boarding_position, dropoff_position }) => ({
+      leg_id,
+      boarding_position,
+      dropoff_position,
+    }),
+  );
   const availability = useQuery({
-    queryKey: ["availability", trip.id, passengers.length, journeys],
+    queryKey: ["availability", trip.id, passengers.length, capacityJourneys],
     queryFn: () =>
       post<Availability>(`/trips/${trip.id}/availability`, {
         group_size: passengers.length,
-        journeys,
+        journeys: capacityJourneys,
       }),
     enabled: validJourneys,
     refetchInterval: 15000,
@@ -585,6 +603,91 @@ function ReservationModal({
                 </select>
               </Field>
             </div>
+            <JourneyLocation
+              label={`Local de embarque · deslocamento ${i + 1}`}
+              tripId={trip.id}
+              legId={leg.id}
+              kind="boarding"
+              onPosition={(position, location) =>
+                setJourneys(
+                  journeys.map((j, n) =>
+                    n === i
+                      ? {
+                          ...j,
+                          boarding_position: position,
+                          boarding_location: location,
+                        }
+                      : j,
+                  ),
+                )
+              }
+              value={journeys[i].boarding_location}
+              onChange={(value) =>
+                setJourneys(
+                  journeys.map((j, n) =>
+                    n === i ? { ...j, boarding_location: value } : j,
+                  ),
+                )
+              }
+            />
+            <JourneyLocation
+              label={`Local de desembarque · deslocamento ${i + 1}`}
+              tripId={trip.id}
+              legId={leg.id}
+              kind="dropoff"
+              onPosition={(position, location) =>
+                setJourneys(
+                  journeys.map((j, n) =>
+                    n === i
+                      ? {
+                          ...j,
+                          dropoff_position: position,
+                          dropoff_location: location,
+                        }
+                      : j,
+                  ),
+                )
+              }
+              value={journeys[i].dropoff_location}
+              onChange={(value) =>
+                setJourneys(
+                  journeys.map((j, n) =>
+                    n === i ? { ...j, dropoff_location: value } : j,
+                  ),
+                )
+              }
+            />
+            {journeys[i].boarding_location && (
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() =>
+                  setJourneys(
+                    journeys.map((j) => {
+                      const target = trip.legs.find((l) => l.id === j.leg_id)!;
+                      const location = { ...journeys[i].boarding_location! };
+                      return {
+                        ...j,
+                        ...(target.origin === leg.origin
+                          ? {
+                              boarding_location: location,
+                              boarding_position: 0,
+                            }
+                          : {}),
+                        ...(target.destination === leg.origin
+                          ? {
+                              dropoff_location: location,
+                              dropoff_position: target.stops.length + 1,
+                            }
+                          : {}),
+                      };
+                    }),
+                  )
+                }
+              >
+                Usar este hotel nos passeios com a mesma origem e no retorno
+              </button>
+            )}
           </fieldset>
         ))}
         {!validJourneys && (
@@ -790,63 +893,125 @@ function ReservationEditor({
             leg.destination,
           ];
           return (
-            <div className="form-grid" key={journey.leg_id}>
-              <Field label={`Embarque ${index + 1}`}>
-                <select
-                  value={journey.boarding_position}
-                  onChange={(e) =>
-                    setJourneys(
-                      journeys.map((j, i) =>
-                        i === index
-                          ? { ...j, boarding_position: Number(e.target.value) }
-                          : j,
-                      ),
-                    )
-                  }
-                >
-                  {points.slice(0, -1).map((p, i) => (
-                    <option
-                      key={i}
-                      value={i}
-                      disabled={
-                        i > 0 &&
-                        !["boarding", "both"].includes(leg.stops[i - 1].kind)
-                      }
-                    >
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label={`Desembarque ${index + 1}`}>
-                <select
-                  value={journey.dropoff_position}
-                  onChange={(e) =>
-                    setJourneys(
-                      journeys.map((j, i) =>
-                        i === index
-                          ? { ...j, dropoff_position: Number(e.target.value) }
-                          : j,
-                      ),
-                    )
-                  }
-                >
-                  {points.map((p, i) => (
-                    <option
-                      key={i}
-                      value={i}
-                      disabled={
-                        i <= journey.boarding_position ||
-                        (i < points.length - 1 &&
-                          !["dropoff", "both"].includes(leg.stops[i - 1]?.kind))
-                      }
-                    >
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+            <fieldset className="operation-card" key={journey.leg_id}>
+              <legend>Locais · deslocamento {index + 1}</legend>
+              <div className="form-grid">
+                <Field label={`Embarque ${index + 1}`}>
+                  <select
+                    value={journey.boarding_position}
+                    onChange={(e) =>
+                      setJourneys(
+                        journeys.map((j, i) =>
+                          i === index
+                            ? {
+                                ...j,
+                                boarding_position: Number(e.target.value),
+                              }
+                            : j,
+                        ),
+                      )
+                    }
+                  >
+                    {points.slice(0, -1).map((p, i) => (
+                      <option
+                        key={i}
+                        value={i}
+                        disabled={
+                          i > 0 &&
+                          !["boarding", "both"].includes(leg.stops[i - 1].kind)
+                        }
+                      >
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label={`Desembarque ${index + 1}`}>
+                  <select
+                    value={journey.dropoff_position}
+                    onChange={(e) =>
+                      setJourneys(
+                        journeys.map((j, i) =>
+                          i === index
+                            ? { ...j, dropoff_position: Number(e.target.value) }
+                            : j,
+                        ),
+                      )
+                    }
+                  >
+                    {points.map((p, i) => (
+                      <option
+                        key={i}
+                        value={i}
+                        disabled={
+                          i <= journey.boarding_position ||
+                          (i < points.length - 1 &&
+                            !["dropoff", "both"].includes(
+                              leg.stops[i - 1]?.kind,
+                            ))
+                        }
+                      >
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+              <JourneyLocation
+                label={`Local de embarque · deslocamento ${index + 1}`}
+                tripId={trip.id}
+                legId={leg.id}
+                kind="boarding"
+                onPosition={(position, location) =>
+                  setJourneys(
+                    journeys.map((j, n) =>
+                      n === index
+                        ? {
+                            ...j,
+                            boarding_position: position,
+                            boarding_location: location,
+                          }
+                        : j,
+                    ),
+                  )
+                }
+                value={journey.boarding_location}
+                onChange={(value) =>
+                  setJourneys(
+                    journeys.map((j, n) =>
+                      n === index ? { ...j, boarding_location: value } : j,
+                    ),
+                  )
+                }
+              />
+              <JourneyLocation
+                label={`Local de desembarque · deslocamento ${index + 1}`}
+                tripId={trip.id}
+                legId={leg.id}
+                kind="dropoff"
+                onPosition={(position, location) =>
+                  setJourneys(
+                    journeys.map((j, n) =>
+                      n === index
+                        ? {
+                            ...j,
+                            dropoff_position: position,
+                            dropoff_location: location,
+                          }
+                        : j,
+                    ),
+                  )
+                }
+                value={journey.dropoff_location}
+                onChange={(value) =>
+                  setJourneys(
+                    journeys.map((j, n) =>
+                      n === index ? { ...j, dropoff_location: value } : j,
+                    ),
+                  )
+                }
+              />
+            </fieldset>
           );
         })}
         {error && <Alert>{error}</Alert>}
@@ -1045,7 +1210,13 @@ function ReservationDetail({
                 ];
                 return (
                   <p key={j.leg_id}>
-                    {points[j.boarding_position]} → {points[j.dropoff_position]}
+                    {j.boarding_location
+                      ? `${j.boarding_location.name} · ${j.boarding_location.address} · ${j.boarding_location.complement}`
+                      : points[j.boarding_position]}{" "}
+                    →{" "}
+                    {j.dropoff_location
+                      ? `${j.dropoff_location.name} · ${j.dropoff_location.address} · ${j.dropoff_location.complement}`
+                      : points[j.dropoff_position]}
                   </p>
                 );
               })}

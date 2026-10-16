@@ -54,6 +54,7 @@ export function TicketSales({ onLogout }: { onLogout: () => void }) {
         key={selling}
         tripId={selling}
         initialCreate
+        hideBack
         backLabel="Voltar à venda de bilhetes"
         onBack={() => {
           setSelling(null);

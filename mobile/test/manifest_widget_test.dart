@@ -30,6 +30,24 @@ void main() {
         final data = fixture();
         data['operator']['role'] = role;
         data['journey'] = {'status': 'in_progress'};
+        data['route'] = {
+          'legs': [
+            {
+              'id': 'ida',
+              'navigation_stages': [],
+              'points': [
+                {
+                  'position': 0,
+                  'name': 'Hotel Central',
+                  'address': 'Rua das Flores, 100',
+                  'complement': 'Recepção',
+                  'passenger_names': ['Pessoa aguardando'],
+                  'maps_url': 'https://www.google.com/maps/dir/?api=1',
+                },
+              ],
+            },
+          ],
+        };
         data['leg'] = {
           'id': 'ida',
           'origin': 'Origem',
@@ -98,6 +116,12 @@ void main() {
       await tester.tap(find.byTooltip('Expandir passageiros'));
       await tester.pump();
       expect(find.text('Pessoa a bordo'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('1. Hotel Central'), -200);
+      expect(find.textContaining('Rua das Flores, 100'), findsOneWidget);
+      expect(
+        find.textContaining('Passageiros: Pessoa aguardando'),
+        findsOneWidget,
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       controller.dispose();
       await tester.runAsync(() => db.close());

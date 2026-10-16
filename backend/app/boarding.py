@@ -275,18 +275,33 @@ def check_leg_allocation(allocation, leg):
         )
 
 
-def journey_points(leg, boarding, dropoff):
+def journey_points(
+    leg, boarding, dropoff, boarding_location=None, dropoff_location=None
+):
     points = [
         {"name": leg["origin"], "scheduled_at": leg["starts_at"]},
         *leg["stops"],
         {"name": leg["destination"], "scheduled_at": leg["ends_at"]},
     ]
-    return {
+    result = {
         "boarding": points[boarding]["name"],
         "dropoff": points[dropoff]["name"],
         "boarding_at": points[boarding]["scheduled_at"],
         "dropoff_at": points[dropoff]["scheduled_at"],
     }
+    for kind, location in (
+        ("boarding", boarding_location),
+        ("dropoff", dropoff_location),
+    ):
+        if location:
+            result[kind] = " · ".join(
+                filter(
+                    None,
+                    [location["name"], location["address"], location.get("complement")],
+                )
+            )
+            result[f"{kind}_at"] = None
+    return result
 
 
 @router.get("/trips/{trip_id}/vehicles/{allocation_id}/legs/{leg_id}/manifest")
@@ -297,7 +312,7 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
     check_leg_allocation(allocation, leg)
     passengers = await rows(
         actor.db,
-        """SELECT p.id,p.full_name,rl.boarding_position,rl.dropoff_position,
+        """SELECT p.id,p.full_name,rl.boarding_position,rl.dropoff_position,rl.boarding_location,rl.dropoff_location,
       COALESCE(bs.status,'waiting') AS status,COALESCE(bs.version,0) AS version,bs.updated_at
       FROM reservations r JOIN passengers p ON p.reservation_id=r.id
       JOIN reservation_legs rl ON rl.reservation_id=r.id AND rl.leg_id=:leg
@@ -313,6 +328,8 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
                 leg,
                 passenger.pop("boarding_position"),
                 passenger.pop("dropoff_position"),
+                passenger.get("boarding_location"),
+                passenger.get("dropoff_location"),
             )
         )
     counts = {
@@ -368,7 +385,7 @@ async def offline_manifest(
 
 TICKET_SELECT = """SELECT tk.id,tk.trip_id,tk.reservation_id,tk.passenger_id,tk.leg_id,tk.revoked_at,tk.created_at,tk.shared_token_hash IS NOT NULL AS shared,
  p.full_name,rl.allocation_id,r.status AS reservation_status,t.name AS trip_name,t.status AS trip_status,
- v.name AS vehicle_name,rl.boarding_position,rl.dropoff_position,
+ v.name AS vehicle_name,rl.boarding_position,rl.dropoff_position,rl.boarding_location,rl.dropoff_location,
  COALESCE(bs.status,'waiting') AS boarding_status,COALESCE(bs.version,0) AS version
  FROM tickets tk JOIN passengers p ON p.id=tk.passenger_id
  JOIN reservations r ON r.id=tk.reservation_id JOIN trips t ON t.id=tk.trip_id
@@ -593,7 +610,11 @@ async def public_ticket(data: Tracking, request: Request):
                     "boarding_status": entry["boarding_status"],
                 }
                 | journey_points(
-                    route, entry["boarding_position"], entry["dropoff_position"]
+                    route,
+                    entry["boarding_position"],
+                    entry["dropoff_position"],
+                    entry.get("boarding_location"),
+                    entry.get("dropoff_location"),
                 )
             )
         return {
@@ -612,7 +633,11 @@ async def public_ticket(data: Tracking, request: Request):
                 ]
             }
             | journey_points(
-                leg, ticket["boarding_position"], ticket["dropoff_position"]
+                leg,
+                ticket["boarding_position"],
+                ticket["dropoff_position"],
+                ticket.get("boarding_location"),
+                ticket.get("dropoff_location"),
             ),
             "is_valid": ticket["reservation_status"] == "confirmed"
             and ticket["trip_status"] in {"scheduled", "in_progress"},

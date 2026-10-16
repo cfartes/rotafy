@@ -50,7 +50,7 @@ async def cities(uf: str):
 
 @router.get("/trips/{trip_id}/vehicles/{allocation_id}/route")
 async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
-    from app.operations import detail, tenant
+    from app.operations import detail, rows, tenant
 
     tenant(actor)
     trip = await detail(actor.db, trip_id)
@@ -64,6 +64,17 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
     ):
         raise HTTPException(404, "Rota não encontrada para este acesso.")
     legs = []
+    locations = await rows(
+        actor.db,
+        """SELECT rl.leg_id,rl.boarding_position,rl.dropoff_position,
+        rl.boarding_location,rl.dropoff_location,r.status,r.id,
+        ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names
+        FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
+        WHERE rl.allocation_id=:allocation AND r.trip_id=:trip
+        AND (r.status='confirmed' OR (r.status='pending' AND r.expires_at>now())) ORDER BY r.created_at,r.id""",
+        allocation=allocation_id,
+        trip=trip_id,
+    )
     for leg in trip["legs"]:
         if (
             vehicle.get("leg_positions")
@@ -96,6 +107,52 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
                 "scheduled_at": leg["ends_at"],
             }
         )
+        # Addresses are per reservation/vehicle. Anchors preserve capacity segments
+        # and template stop positions; pickups follow the anchor, dropoffs precede it.
+        ordered = [
+            (pos * 3, 0, point)
+            for pos, point in zip(sorted(served_positions(vehicle, leg)), points)
+        ]
+        grouped = {}
+        for entry in locations:
+            if entry["leg_id"] != leg["id"]:
+                continue
+            for kind in ("boarding", "dropoff"):
+                location = entry[f"{kind}_location"]
+                if not location:
+                    continue
+                anchor = entry[f"{kind}_position"] * 3 + (
+                    1 if kind == "boarding" else -1
+                )
+                key = (
+                    anchor,
+                    location["name"].casefold(),
+                    location["address"].casefold(),
+                    location.get("complement", "").casefold(),
+                )
+                if key not in grouped:
+                    point = {
+                        "name": location["name"],
+                        "address": location["address"],
+                        "complement": location.get("complement", ""),
+                        "uf": None,
+                        "scheduled_at": None,
+                        "kind": kind,
+                        "passenger_names": [],
+                        "pending_passenger_names": [],
+                    }
+                    grouped[key] = point
+                    ordered.append((anchor, location.get("order", 1), point))
+                field = (
+                    "passenger_names"
+                    if entry["status"] == "confirmed"
+                    else "pending_passenger_names"
+                )
+                grouped[key][field].extend(entry["passenger_names"])
+        points = [
+            entry[2]
+            for entry in sorted(ordered, key=lambda entry: (entry[0], entry[1]))
+        ]
         for index, point in enumerate(points):
             query = point["address"] or f"{point['name']}, {point['uf'] or ''}, Brasil"
             point["maps_url"] = "https://www.google.com/maps/dir/?" + urlencode(
