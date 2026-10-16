@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api, ApiError, patch, post, type Company } from "../api";
 import { Alert, Field, Modal } from "../components/ui";
+import { Collections } from "../Collections";
 import {
   dateOnly,
   localToday,
@@ -272,7 +273,11 @@ function PeriodSummary({ period }: { period: Period }) {
         </div>
         <div className="subscription-value">
           <strong>{money(period.price_cents)}</strong>
-          <small>mensalidade · versão {period.version}</small>
+          <small>
+            {period.is_trial
+              ? "período de teste sem cobrança"
+              : `mensalidade · versão ${period.version}`}
+          </small>
         </div>
       </div>
       <div className="billing-metrics">
@@ -405,6 +410,16 @@ function SubscriptionDetails({
           Início: {dateOnly(sub.starts_on)} · ciclo mensal por aniversário
         </small>
       </div>
+      {sub.trialing && sub.trial_ends_on && (
+        <div className="billing-notice">
+          <Clock3 size={20} />
+          <p>
+            Teste até {dateOnly(sub.trial_ends_on)}. Nesse dia será enviado o
+            link para pagar setup e primeira mensalidade. A franquia do período
+            pago começará do zero.
+          </p>
+        </div>
+      )}
       {report.current_period ? (
         <PeriodSummary period={report.current_period} />
       ) : report.upcoming_period ? (
@@ -842,6 +857,7 @@ export function Billing({
       {history && (
         <PlanHistory plan={history} onClose={() => setHistory(null)} />
       )}
+      {!isNexus && <Collections nexus={false} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
@@ -79,6 +80,12 @@ async def test_delivery(data: TestDelivery, actor: Auth):
             "receiver_name": config["receiver_name"],
             "pix_key": config["pix_key"],
             "pix_copy_paste": config["pix_copy_paste"],
+            "payment_provider": "infinitepay"
+            if config["infinitepay_enabled"]
+            else "manual",
+            "payment_url": Settings().public_base_url.rstrip("/") + "/?teste-cobranca=1"
+            if config["infinitepay_enabled"]
+            else "",
         },
         {"trade_name": "Empresa de demonstração"},
         "invoice",
@@ -163,6 +170,10 @@ class CollectionSettings(Input):
     receiver_name: str = Field(max_length=150)
     nexus_session_id: UUID | None = None
     pix_copy_paste: str | None = Field(default=None, max_length=1024)
+    infinitepay_enabled: bool | None = None
+    infinitepay_handle: str | None = Field(default=None, max_length=101)
+    setup_cents: int | None = Field(default=None, ge=0, le=1_000_000_000, strict=True)
+    trial_days: int | None = Field(default=None, ge=0, le=365, strict=True)
 
     @field_validator("pix_key", "receiver_name")
     @classmethod
@@ -185,10 +196,43 @@ async def settings(actor: Auth):
 @router.put("/nexus/billing/settings")
 async def save_settings(data: CollectionSettings, actor: Auth):
     require_nexus(actor)
-    existing = await actor.db.scalar(
-        text("SELECT pix_copy_paste FROM billing_settings WHERE id=true")
+    previous = (
+        (
+            await actor.db.execute(
+                text("SELECT * FROM billing_settings WHERE id=true FOR UPDATE")
+            )
+        )
+        .mappings()
+        .one()
     )
-    copy = existing if data.pix_copy_paste is None else data.pix_copy_paste.strip()
+    gateway = (
+        previous["infinitepay_enabled"]
+        if data.infinitepay_enabled is None
+        else data.infinitepay_enabled
+    )
+    handle = (
+        previous["infinitepay_handle"]
+        if data.infinitepay_handle is None
+        else data.infinitepay_handle.strip().removeprefix("$")
+    )
+    setup = previous["setup_cents"] if data.setup_cents is None else data.setup_cents
+    trial = previous["trial_days"] if data.trial_days is None else data.trial_days
+    if handle and not re.fullmatch(r"[A-Za-z0-9._-]{2,100}", handle):
+        raise HTTPException(422, "Informe a InfiniteTag sem espaços e sem o símbolo $.")
+    if not handle and (
+        gateway
+        or await actor.db.scalar(
+            text(
+                "SELECT 1 FROM subscriptions WHERE billing_mode='prepaid' AND status='active' LIMIT 1"
+            )
+        )
+    ):
+        raise HTTPException(422, "Informe o identificador da conta InfinitePay.")
+    copy = (
+        previous["pix_copy_paste"]
+        if data.pix_copy_paste is None
+        else data.pix_copy_paste.strip()
+    )
     if copy:
         try:
             key = static_pix_key(copy)
@@ -199,7 +243,9 @@ async def save_settings(data: CollectionSettings, actor: Auth):
         except (ValueError, UnicodeError) as exc:
             raise HTTPException(422, str(exc)) from None
     if data.enabled:
-        if not data.pix_key or not data.receiver_name or not data.nexus_session_id:
+        if not data.nexus_session_id or (
+            not gateway and (not data.pix_key or not data.receiver_name)
+        ):
             raise HTTPException(
                 422,
                 "Informe a chave Pix, favorecido e sessão WhatsApp da Nexus antes de ativar.",
@@ -218,6 +264,7 @@ async def save_settings(data: CollectionSettings, actor: Auth):
             await actor.db.execute(
                 text("""UPDATE billing_settings SET pix_key=:pix,receiver_name=:receiver,
         nexus_session_id=:session,enabled=:enabled,pix_copy_paste=:copy,
+        infinitepay_enabled=:gateway,infinitepay_handle=:handle,setup_cents=:setup,trial_days=:trial,
         enabled_at=CASE WHEN :enabled AND NOT enabled THEN clock_timestamp() ELSE enabled_at END,
         version=version+1,updated_at=clock_timestamp() WHERE id=true AND version=:version RETURNING *"""),
                 {
@@ -227,6 +274,10 @@ async def save_settings(data: CollectionSettings, actor: Auth):
                     "enabled": data.enabled,
                     "version": data.expected_version,
                     "copy": copy,
+                    "gateway": gateway,
+                    "handle": handle,
+                    "setup": setup,
+                    "trial": trial,
                 },
             )
         )

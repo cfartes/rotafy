@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import QRCode from "qrcode";
+import { moneyInput, parseMoney } from "./billing/types";
 
 type Settings = {
   version: number;
@@ -11,6 +12,10 @@ type Settings = {
   pix_copy_paste?: string;
   receiver_name: string;
   nexus_session_id: string | null;
+  infinitepay_enabled?: boolean;
+  infinitepay_handle?: string;
+  setup_cents?: number;
+  trial_days?: number;
 };
 type Invoice = {
   id: string;
@@ -33,6 +38,14 @@ type Invoice = {
   paid_at: string | null;
   confirmed_at: string | null;
   payment_note: string;
+  payment_provider?: string;
+  payment_url?: string;
+  payment_error?: string | null;
+  setup_cents?: number;
+  receipt_url?: string;
+  transaction_nsu?: string | null;
+  extras_starts_at?: string | null;
+  extras_ends_at?: string | null;
 };
 const money = (n: number) =>
   (n / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -126,8 +139,9 @@ function BillingDeliveryTests() {
       <p>
         Utiliza a configuração salva de e-mail e o WhatsApp de cobrança da
         Nexus, mesmo com a cobrança automática desativada. Salve as alterações
-        antes de testar. Usa o modelo real com valores ilustrativos, QR Code e
-        aviso de NÃO PAGAR. Não cria cobrança nem altera assinaturas.
+        antes de testar. Usa o modelo real com valores ilustrativos, link ou QR
+        Code conforme a configuração e aviso de NÃO PAGAR. Não cria cobrança nem
+        altera assinaturas.
       </p>
       <div className="pix-preview-field">
         <Field label="E-mail para teste de cobrança">
@@ -267,6 +281,10 @@ export function CollectionSettings() {
     pix_copy_paste: "",
     receiver_name: "",
     nexus_session_id: "",
+    infinitepay_enabled: false,
+    infinitepay_handle: "",
+    setup_value: "0,00",
+    trial_days: 7,
   });
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -279,6 +297,10 @@ export function CollectionSettings() {
         pix_copy_paste: query.data.pix_copy_paste ?? "",
         receiver_name: query.data.receiver_name ?? "",
         nexus_session_id: query.data.nexus_session_id ?? "",
+        infinitepay_enabled: query.data.infinitepay_enabled ?? false,
+        infinitepay_handle: query.data.infinitepay_handle ?? "",
+        setup_value: moneyInput(query.data.setup_cents ?? 0),
+        trial_days: query.data.trial_days ?? 7,
       });
   }, [query.data?.version]);
   async function save(e: FormEvent) {
@@ -287,10 +309,12 @@ export function CollectionSettings() {
     setError("");
     setSaved(false);
     try {
+      const { setup_value, ...configuration } = values;
       await api("/nexus/billing/settings", {
         method: "PUT",
         body: JSON.stringify({
-          ...values,
+          ...configuration,
+          setup_cents: parseMoney(setup_value),
           nexus_session_id: values.nexus_session_id || null,
           expected_version: query.data?.version,
         }),
@@ -308,113 +332,183 @@ export function CollectionSettings() {
   return (
     <>
       <form className="operation-card modal-form" onSubmit={save}>
-        <h2>Cobrança mensal da Nexus · Pix manual</h2>
+        <h2>Cobrança e período de teste</h2>
         <p>
-          Configure os dados que serão enviados às empresas. O recebimento do
-          Pix precisa ser confirmado pelo superadmin em Financeiro e cobranças.
+          Configure a cobrança das empresas assinantes. As condições de setup e
+          teste serão aplicadas às novas contratações.
         </p>
-        <div className="pix-preview-field">
-          <Field label="Chave Pix da Nexus">
+        <fieldset className="operation-card package-route-card">
+          <legend>Pagamento automático · InfinitePay</legend>
+          <label className="operation-checkbox">
             <input
-              required={values.enabled}
-              maxLength={140}
-              value={values.pix_key}
+              type="checkbox"
+              checked={values.infinitepay_enabled}
               onChange={(e) => {
                 setSaved(false);
-                setValues({ ...values, pix_key: e.target.value });
+                setValues({ ...values, infinitepay_enabled: e.target.checked });
               }}
             />
-          </Field>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={previewBusy || !values.pix_key.trim()}
-            onClick={() => void showPix(false)}
-          >
-            Ver QR Code da chave Pix
-          </button>
-        </div>
-        <div className="pix-preview-field">
-          <Field label="Pix Copia e Cola sem valor definido (opcional)">
-            <textarea
-              rows={4}
-              maxLength={1024}
-              value={values.pix_copy_paste}
-              onChange={(e) => {
-                setSaved(false);
-                setValues({ ...values, pix_copy_paste: e.target.value });
-              }}
-              placeholder="Cole o código completo gerado pelo seu banco"
-            />
-          </Field>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={previewBusy || !values.pix_copy_paste.trim()}
-            onClick={() => void showPix(true)}
-          >
-            Ver QR Code do Copia e Cola
-          </button>
-        </div>
-        {preview && (
-          <Modal
-            title={`QR Code · ${preview.source}`}
-            onClose={() => setPreview(null)}
-          >
-            <div className="modal-form">
-              <p>
-                Leia com o aplicativo do banco e confira a chave e o favorecido.
-                QR Code sem valor definido.
-              </p>
-              <img
-                src={preview.image}
-                alt="QR Code Pix para conferência"
-                width={360}
-                height={360}
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  alignSelf: "center",
+            Usar InfinitePay nas novas cobranças
+          </label>
+          <div className="form-grid">
+            <Field label="Identificador InfinitePay (InfiniteTag)">
+              <input
+                value={values.infinitepay_handle}
+                required={values.infinitepay_enabled}
+                maxLength={101}
+                placeholder="sua-tag (sem $)"
+                onChange={(e) => {
+                  setSaved(false);
+                  setValues({ ...values, infinitepay_handle: e.target.value });
                 }}
               />
-              <p>
-                Chave Pix: <strong>{preview.key}</strong>
-              </p>
-              <Field label="Pix Copia e Cola do QR Code">
-                <textarea rows={4} value={preview.payload} readOnly />
-              </Field>
-              <p className="muted">
-                A visualização usa os campos preenchidos, sem salvar alterações
-                nem consultar sua conta bancária.
-              </p>
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() => setPreview(null)}
-              >
-                Fechar QR Code
-              </button>
-            </div>
-          </Modal>
-        )}
-        <p className="muted">
-          Utilize um código estático, sem valor, da mesma chave Pix acima. O
-          código será incluído no e-mail, no WhatsApp e no demonstrativo das
-          novas cobranças. A cobrança definitiva também envia o QR Code no
-          e-mail e como imagem no WhatsApp. Sem Copia e Cola, o QR é gerado a
-          partir da chave e do favorecido. O cliente informa o total no banco.
-        </p>
-        <Field label="Nome do favorecido do Pix">
-          <input
-            required={values.enabled}
-            maxLength={150}
-            value={values.receiver_name}
-            onChange={(e) => {
-              setSaved(false);
-              setValues({ ...values, receiver_name: e.target.value });
-            }}
-          />
-        </Field>
+            </Field>
+            <Field label="Taxa de setup (R$)">
+              <input
+                required
+                inputMode="decimal"
+                value={values.setup_value}
+                onChange={(e) => {
+                  setSaved(false);
+                  setValues({ ...values, setup_value: e.target.value });
+                }}
+              />
+            </Field>
+            <Field label="Prazo de teste (dias)">
+              <input
+                required
+                type="number"
+                min={0}
+                max={365}
+                value={values.trial_days}
+                onChange={(e) => {
+                  setSaved(false);
+                  setValues({ ...values, trial_days: Number(e.target.value) });
+                }}
+              />
+            </Field>
+          </div>
+          <p className="muted">
+            Teste iniciado dia 10 com 7 dias: cobrança de setup e primeira
+            mensalidade no dia 17, por e-mail e WhatsApp. Uma nova franquia
+            começa nessa data. Durante o teste não há cobrança de excedentes; a
+            utilização respeita a franquia do plano.
+          </p>
+          <p className="muted">
+            Nas renovações: próximo mês mais excedentes do período anterior. A
+            confirmação dos pagamentos é automática. Contratos anteriores mantêm
+            seus ciclos; cobranças já emitidas não são alteradas.
+          </p>
+          <p className="muted">
+            Contratos antecipados existentes continuam nesse modelo. Para pausar
+            novas cobranças e envios, desative a automação geral abaixo.
+          </p>
+        </fieldset>
+        <details open={!values.infinitepay_enabled}>
+          <summary>Pix manual · configuração para cobranças manuais</summary>
+          <div className="pix-preview-field">
+            <Field label="Chave Pix da Nexus">
+              <input
+                required={values.enabled && !values.infinitepay_enabled}
+                maxLength={140}
+                value={values.pix_key}
+                onChange={(e) => {
+                  setSaved(false);
+                  setValues({ ...values, pix_key: e.target.value });
+                }}
+              />
+            </Field>
+            <button
+              type="button"
+              className="button secondary"
+              disabled={previewBusy || !values.pix_key.trim()}
+              onClick={() => void showPix(false)}
+            >
+              Ver QR Code da chave Pix
+            </button>
+          </div>
+          <div className="pix-preview-field">
+            <Field label="Pix Copia e Cola sem valor definido (opcional)">
+              <textarea
+                rows={4}
+                maxLength={1024}
+                value={values.pix_copy_paste}
+                onChange={(e) => {
+                  setSaved(false);
+                  setValues({ ...values, pix_copy_paste: e.target.value });
+                }}
+                placeholder="Cole o código completo gerado pelo seu banco"
+              />
+            </Field>
+            <button
+              type="button"
+              className="button secondary"
+              disabled={previewBusy || !values.pix_copy_paste.trim()}
+              onClick={() => void showPix(true)}
+            >
+              Ver QR Code do Copia e Cola
+            </button>
+          </div>
+          {preview && (
+            <Modal
+              title={`QR Code · ${preview.source}`}
+              onClose={() => setPreview(null)}
+            >
+              <div className="modal-form">
+                <p>
+                  Leia com o aplicativo do banco e confira a chave e o
+                  favorecido. QR Code sem valor definido.
+                </p>
+                <img
+                  src={preview.image}
+                  alt="QR Code Pix para conferência"
+                  width={360}
+                  height={360}
+                  style={{
+                    maxWidth: "100%",
+                    height: "auto",
+                    alignSelf: "center",
+                  }}
+                />
+                <p>
+                  Chave Pix: <strong>{preview.key}</strong>
+                </p>
+                <Field label="Pix Copia e Cola do QR Code">
+                  <textarea rows={4} value={preview.payload} readOnly />
+                </Field>
+                <p className="muted">
+                  A visualização usa os campos preenchidos, sem salvar
+                  alterações nem consultar sua conta bancária.
+                </p>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setPreview(null)}
+                >
+                  Fechar QR Code
+                </button>
+              </div>
+            </Modal>
+          )}
+          <p className="muted">
+            Utilize um código estático, sem valor, da mesma chave Pix acima. O
+            código será incluído no e-mail, no WhatsApp e no demonstrativo das
+            novas cobranças. A cobrança definitiva também envia o QR Code no
+            e-mail e como imagem no WhatsApp. Sem Copia e Cola, o QR é gerado a
+            partir da chave e do favorecido. O cliente informa o total no banco.
+          </p>
+          <Field label="Nome do favorecido do Pix">
+            <input
+              required={values.enabled && !values.infinitepay_enabled}
+              maxLength={150}
+              value={values.receiver_name}
+              onChange={(e) => {
+                setSaved(false);
+                setValues({ ...values, receiver_name: e.target.value });
+              }}
+            />
+          </Field>
+        </details>
         <Field label="ID da sessão WhatsApp de cobrança da Nexus">
           <input
             required={values.enabled}
@@ -488,6 +582,50 @@ export function CollectionSettings() {
   );
 }
 
+function PaymentEvents() {
+  const events = useQuery({
+    queryKey: ["payment-events"],
+    queryFn: () =>
+      api<
+        Array<{
+          id: string;
+          company_name: string;
+          transaction_nsu: string;
+          status: string;
+          attempts: number;
+          error_code: string | null;
+        }>
+      >("/nexus/billing/payment-events"),
+    refetchInterval: 30000,
+  });
+  return (
+    <section className="operation-card modal-form">
+      <h3>Confirmações automáticas de pagamento</h3>
+      {events.error && <Alert>{events.error.message}</Alert>}
+      {!events.data?.length && <p>Nenhuma confirmação recebida.</p>}
+      {events.data?.map((e) => (
+        <p key={e.id}>
+          <strong>{e.company_name}</strong> ·{" "}
+          {
+            (
+              {
+                pending: "Aguardando verificação",
+                verifying: "Conferindo pagamento",
+                verified: "Confirmado",
+                rejected: "Não confirmado",
+                review: "Requer conferência da Nexus",
+              } as Record<string, string>
+            )[e.status]
+          }{" "}
+          · {e.attempts} tentativa(s)
+          <br />
+          <small>Transação: {e.transaction_nsu}</small>
+        </p>
+      ))}
+    </section>
+  );
+}
+
 export function Collections({ nexus }: { nexus: boolean }) {
   const cache = useQueryClient();
   const query = useQuery<Invoice[] | { blocked: boolean; invoices: Invoice[] }>(
@@ -521,6 +659,20 @@ export function Collections({ nexus }: { nexus: boolean }) {
     [filter, setFilter] = useState("all"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  async function retryLink(i: Invoice) {
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/nexus/billing/invoices/${i.id}/retry-checkout`, {
+        method: "POST",
+      });
+      await cache.invalidateQueries({ queryKey: ["collection-invoices"] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao solicitar o link.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const data = query.data;
   const rows = Array.isArray(data) ? data : data?.invoices || [];
   const blocked = !Array.isArray(data) && data?.blocked;
@@ -570,8 +722,9 @@ export function Collections({ nexus }: { nexus: boolean }) {
       <section className="operation-card modal-form">
         <h2>{nexus ? "Financeiro e cobranças" : "Financeiro da empresa"}</h2>
         <p>
-          Mensalidade e excedentes consolidados por ciclo. A confirmação do Pix
-          é manual pela Nexus.
+          Consulte setup, mensalidades e excedentes. Cobranças com link de
+          pagamento têm confirmação automática; pagamentos manuais dependem da
+          conferência da Nexus.
         </p>
         {blocked && (
           <Alert>
@@ -636,6 +789,17 @@ export function Collections({ nexus }: { nexus: boolean }) {
             <p>
               Excedentes: {i.extra_trips} × {money(i.extra_trip_cents)}
             </p>
+            {!!i.setup_cents && (
+              <p>
+                Setup (cobrança única): <strong>{money(i.setup_cents)}</strong>
+              </p>
+            )}
+            {i.extras_starts_at && i.extras_ends_at && (
+              <p>
+                Excedentes referentes ao período de {date(i.extras_starts_at)}{" "}
+                até {date(i.extras_ends_at)}.
+              </p>
+            )}
             <p>
               Total: <strong>{money(i.total_cents)}</strong> · Confirmação até{" "}
               <strong>{due(i.due_on)}</strong>
@@ -646,7 +810,54 @@ export function Collections({ nexus }: { nexus: boolean }) {
                 definitiva.
               </p>
             )}
-            {i.status === "open" && (
+            {i.status === "open" && i.payment_provider === "infinitepay" && (
+              <div className="reservation-suggestion">
+                {i.payment_error === "payment_requires_review" ? (
+                  <p>
+                    Pagamento em conferência. Aguarde a orientação da Nexus
+                    antes de pagar novamente.
+                  </p>
+                ) : i.payment_url ? (
+                  <>
+                    <a
+                      className="button primary"
+                      href={i.payment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Pagar agora
+                    </a>
+                    <p>
+                      O pagamento será confirmado automaticamente após
+                      aprovação.
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    {i.payment_error
+                      ? "Link de pagamento indisponível no momento. A Nexus pode consultar a situação desta cobrança."
+                      : "Preparando link de pagamento. Esta tela será atualizada automaticamente."}
+                  </p>
+                )}
+                {nexus && !i.payment_url && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    disabled={busy}
+                    onClick={() => void retryLink(i)}
+                  >
+                    Tentar gerar link novamente
+                  </button>
+                )}
+              </div>
+            )}
+            {i.payment_error === "payment_requires_review" && (
+              <Alert>
+                Pagamento recebido com divergência ou após baixa/cancelamento. A
+                conferência da Nexus é necessária.
+              </Alert>
+            )}
+            {i.status === "open" && i.payment_provider !== "infinitepay" && (
               <>
                 <p>
                   Pix: <strong>{i.pix_key}</strong>
@@ -677,6 +888,17 @@ export function Collections({ nexus }: { nexus: boolean }) {
               </p>
             )}
             {nexus && i.payment_note && <p>Observação: {i.payment_note}</p>}
+            {i.receipt_url && (
+              <p>
+                <a
+                  href={i.receipt_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Consultar comprovante
+                </a>
+              </p>
+            )}
             <small>Referência: {i.id}</small>
             {nexus && (
               <div className="modal-actions">
@@ -689,7 +911,9 @@ export function Collections({ nexus }: { nexus: boolean }) {
                       setSelected(i);
                     }}
                   >
-                    Confirmar recebimento do Pix
+                    {i.payment_provider === "infinitepay"
+                      ? "Baixa manual excepcional"
+                      : "Confirmar recebimento do Pix"}
                   </button>
                 )}
                 {["preview", "open"].includes(i.status) && (
@@ -745,6 +969,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
           ))}
         </section>
       )}
+      {nexus && <PaymentEvents />}
       {selected && (
         <Modal
           title="Confirmar recebimento do Pix"

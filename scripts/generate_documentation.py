@@ -19,7 +19,7 @@ OUTPUT = ROOT / "frontend" / "public" / "documentacao"
 NAVY = "0B253F"
 TEAL = "0C7A76"
 MUTED = "577084"
-DATE = "09/10/2026"
+DATE = "16/10/2026"
 
 
 def image_url(name):

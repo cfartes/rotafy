@@ -1,18 +1,21 @@
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from fastapi import HTTPException
 from sqlalchemy import text
 
-from app.billing.calendar import local_today
+from app.billing.calendar import SAO_PAULO, local_today
 from app.billing.service import available_plan, insert_period
 from app.identity import audit
 from app.schemas import CompanyCreate
 from app.security import passwords
 
-COMPANY_FIELDS = "id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile"
+COMPANY_FIELDS = """id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile,
+ (SELECT s.starts_on FROM subscriptions s WHERE s.company_id=companies.id AND s.status='active' AND s.billing_mode='prepaid' AND s.trial_days>0) AS trial_ends_on"""
 
 
 async def register_company(db, payload: CompanyCreate, actor_id=None):
+    registered_on = local_today()
     plan = await available_plan(db, payload.plan_id)
     if await db.scalar(
         text("SELECT 1 FROM companies WHERE slug=:slug"), {"slug": payload.slug}
@@ -50,24 +53,52 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
     )
     await audit(db, company_id, audit_actor, "company.created", company_id)
     sub_id = uuid4()
+    terms = (
+        (await db.execute(text("SELECT * FROM billing_settings WHERE id=true")))
+        .mappings()
+        .one()
+    )
+    prepaid = terms["infinitepay_enabled"] and terms["enabled"]
+    trial_days = terms["trial_days"] if prepaid else 0
+    starts_on = registered_on + timedelta(days=trial_days)
     sub = dict(
         (
             await db.execute(
-                text("""INSERT INTO subscriptions(id,company_id,plan_id,initial_version_id,starts_on)
-        VALUES(:id,:company,:plan,:version,:starts) RETURNING *"""),
+                text("""INSERT INTO subscriptions(id,company_id,plan_id,initial_version_id,starts_on,billing_mode,trial_days,setup_cents)
+        VALUES(:id,:company,:plan,:version,:starts,:mode,:trial,:setup) RETURNING *"""),
                 {
                     "id": sub_id,
                     "company": company_id,
                     "plan": plan["id"],
                     "version": plan["version_id"],
-                    "starts": local_today(),
+                    "starts": starts_on,
+                    "mode": "prepaid" if prepaid else "arrears",
+                    "trial": trial_days,
+                    "setup": terms["setup_cents"] if prepaid else 0,
                 },
             )
         )
         .mappings()
         .one()
     )
-    await insert_period(db, sub, 0, plan["version_id"])
+    if trial_days:
+        await db.execute(
+            text("""INSERT INTO billing_periods
+          (id,company_id,subscription_id,plan_version_id,cycle_index,starts_at,ends_at,is_trial)
+          VALUES(:id,:company,:sub,:version,-1,:start,:end,true)"""),
+            {
+                "id": uuid4(),
+                "company": company_id,
+                "sub": sub_id,
+                "version": plan["version_id"],
+                "start": datetime.combine(
+                    registered_on, datetime.min.time(), SAO_PAULO
+                ),
+                "end": datetime.combine(starts_on, datetime.min.time(), SAO_PAULO),
+            },
+        )
+    else:
+        await insert_period(db, sub, 0, plan["version_id"])
     await audit(db, company_id, audit_actor, "subscription.created", sub_id)
     return dict(
         (

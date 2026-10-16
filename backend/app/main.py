@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.billing.collection_routes import router as collections_router
+from app.billing.infinitepay import router as infinitepay_router
 from app.billing.routes import router as billing_router
 from app.billing.service import list_plans
 from app.boarding import router as boarding_router
@@ -726,6 +727,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(company_welcome_router)
     application.include_router(billing_router)
     application.include_router(collections_router)
+    application.include_router(infinitepay_router)
     application.include_router(operations_router)
     application.include_router(reservations_router)
     application.include_router(reservation_imports_router)

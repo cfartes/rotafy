@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.billing.collections import collect_company
+from app.billing.infinitepay import process_checkout, process_payment_event
 from app.billing.notifications import process_notification
 from app.billing.service import lock_company, refresh_company
 from app.identity import scope
@@ -39,7 +40,16 @@ async def main():
                         await expire_holds(db, company_id)
                         await refresh_company(db, company_id)
                         await collect_company(db, company_id)
+                    Path("/tmp/rotafy-billing-health").touch()
                 # Canais financeiros independentes das sessões das empresas.
+                for _ in range(5):
+                    if not await process_checkout(engine):
+                        break
+                    Path("/tmp/rotafy-billing-health").touch()
+                for _ in range(10):
+                    if not await process_payment_event(engine):
+                        break
+                    Path("/tmp/rotafy-billing-health").touch()
                 await process_notification(engine)
                 Path("/tmp/rotafy-billing-health").touch()
                 logger.info('{"event":"billing.cycle_completed"}')

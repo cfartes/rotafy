@@ -114,21 +114,33 @@ Confira remetente autorizado, credenciais e destinatário. Consulte o histórico
 Acesse `/ajuda` para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em `/nexus/ajuda`.
 
 
-## 7. Cobranças mensais e confirmação do Pix {#cobrancas}
+## 7. Setup, teste e cobranças da assinatura {#cobrancas}
 
 ### Configurar e ativar
 
-1. Entre em **Configurações**, na seção **Cobrança mensal da Nexus · Pix manual**.
-2. Informe **Chave Pix da Nexus** e **Nome do favorecido do Pix**. Opcionalmente, preencha **Pix Copia e Cola sem valor definido**, com o código completo gerado pelo banco para a mesma chave Pix.
+1. Entre em **Configurações**, na seção **Cobrança e período de teste**.
+2. Marque **Usar InfinitePay nas novas cobranças**, informe **Identificador InfinitePay (InfiniteTag)**, sem `$`, **Taxa de setup (R$)** e **Prazo de teste (dias)**. O identificador deve pertencer à conta da Nexus que receberá os pagamentos.
 3. Selecione ou informe o **ID da sessão WhatsApp de cobrança da Nexus**. As cobranças saem pelo número da Nexus, utilizando as credenciais de comunicação configuradas no painel.
 4. Confira o e-mail remetente e os canais de comunicação.
 5. Marque **Ativar avisos e cobranças mensais automáticas** e salve.
 
-A configuração começa desativada. A ativação considera ciclos cujo fechamento ocorrer após ela; não gera cobranças retroativas de ciclos antigos. Desativar pausa os novos fechamentos e envios, mas não cancela débitos existentes. Alterar a chave Pix ou o Pix Copia e Cola não reescreve cobranças já fechadas. O Copia e Cola é validado para conferir o formato, a integridade, a correspondência da chave e a ausência de valor fixo. Novas cobranças definitivas e avisos de bloqueio incluem QR Code no e-mail e uma imagem com legenda no WhatsApp. Sem Copia e Cola, o QR é gerado a partir da chave e do favorecido. O cliente precisa informar o valor total no banco. Avisos prévios e confirmações de pagamento não incluem QR Code para pagamento.
+A configuração começa desativada. Configure e ative antes de cadastrar clientes com teste. Setup e prazo de teste são registrados na nova contratação; alterações posteriores não modificam essas condições nos clientes já cadastrados. Desativar a cobrança automática pausa novos fechamentos e envios, preservando débitos e pagamentos existentes. A confirmação de pagamentos já efetuados continua sendo processada.
+
+Os dados de **Pix manual** ficam em uma seção separada. Utilize essa configuração para cobranças manuais: chave, favorecido e, opcionalmente, Pix Copia e Cola sem valor definido. Cobranças antigas preservam o meio de pagamento que receberam quando foram emitidas.
+
+### Novos clientes e período de teste
+
+No cadastro, a empresa recebe a franquia do plano durante o teste, sem cobrança de setup, mensalidade ou excedentes. A criação de viagens além dessa franquia é impedida durante o teste.
+
+Exemplo: cadastro dia **10**, com **7 dias** de teste. No dia **17**, o sistema registra uma cobrança de **setup + primeira mensalidade**, gera o link e agenda o envio por e-mail e WhatsApp. Nessa data começa o primeiro mês contratado, com franquia nova. A utilização do teste não é transferida como excedente para o período pago.
+
+Na renovação, a cobrança reúne a mensalidade do próximo mês e os excedentes do período pago anterior. O setup aparece somente na primeira cobrança. A data de referência é o término do teste; em meses curtos, o calendário preserva o aniversário original quando possível.
+
+Clientes anteriores à ativação mantêm seus ciclos e não recebem setup ou teste retroativos. Novas cobranças definitivas desses contratos podem utilizar o link automático quando a integração estiver habilitada.
 
 ### Calendário e mensagens automáticas
 
-O ciclo segue a data inicial da assinatura de cada empresa. Um dia antes do fechamento, a empresa recebe um aviso com valor parcial, sujeito a alteração; deve aguardar a cobrança definitiva para pagar. No fechamento, o sistema consolida mensalidade e excedentes, preserva os valores da cobrança e envia o demonstrativo com Pix e favorecido.
+Um dia antes da cobrança, a empresa recebe um aviso parcial, sujeito a alteração e sem link para pagamento. Na data prevista, o sistema consolida os valores, preserva a cobrança no financeiro e disponibiliza o link de pagamento. Se houver falha na geração do link, a cobrança permanece registrada e o sistema tenta novamente. O envio definitivo aguarda a disponibilidade do link.
 
 O prazo termina ao fim do segundo dia útil contado a partir do dia seguinte ao fechamento, no horário de Brasília. Sábados, domingos e feriados do calendário nacional, incluindo a Sexta-feira da Paixão, não entram na contagem. Pontos facultativos e feriados estaduais ou municipais não são considerados.
 
@@ -138,9 +150,13 @@ Os e-mails são enviados aos administradores ativos da empresa. O WhatsApp utili
 
 Abra **Financeiro e cobranças**. Utilize o filtro de situação para consultar avisos parciais, cobranças abertas, vencidas, pagas e canceladas. Cada cobrança apresenta ciclo, plano, franquia, utilização, excedentes, valor total, prazo e referência.
 
-Depois de conferir o recebimento integral no banco, clique em **Confirmar recebimento do Pix**, informe a data e hora do recebimento e, se necessário, a referência ou observação. Confirme o pagamento integral. O sistema registra o usuário e o momento da confirmação e agenda a comunicação à empresa.
+Nas cobranças com link, a confirmação é automática após verificação do pagamento. O painel mostra **Pagar agora**, situação e identificação da transação; o cliente recebe confirmação por e-mail e WhatsApp. A página de retorno aguarda a conferência do sistema.
 
-A confirmação é manual: realizar o Pix não atualiza o sistema sozinho. O registro de recebimento e o registro da confirmação são distintos. Não é possível dar baixa em um aviso parcial nem confirmar uma data de recebimento futura. Uma cobrança já paga não gera outra baixa ao repetir a mesma solicitação.
+Consulte **Confirmações automáticas de pagamento** para acompanhar verificações pendentes, confirmadas e situações que exigem conferência. Pagamentos com valor divergente ou após cancelamento/baixa ficam sinalizados para análise. A confirmação repetida da mesma transação não gera outra baixa.
+
+Se a geração do link for recusada, confira a InfiniteTag e use **Tentar gerar link novamente**. Essa ação permite corrigir a conta de uma solicitação recusada que ainda não disponibilizou link. Links já emitidos preservam a conta de recebimento original.
+
+Para um recebimento conferido fora desse fluxo, use **Baixa manual excepcional**; nas cobranças antigas, **Confirmar recebimento do Pix**. Informe data/hora e referência. O usuário da baixa fica registrado. Não é possível dar baixa em aviso parcial ou informar uma data futura.
 
 ### Bloqueio e liberação
 
@@ -148,7 +164,7 @@ Se não houver confirmação até o prazo, novas operações ficam bloqueadas e 
 
 A baixa retira a restrição daquela cobrança. Se houver outras cobranças vencidas, a empresa continua restrita. Uma suspensão administrativa permanece independente e não é removida pelo pagamento.
 
-A ação **Cancelar cobrança** preserva o histórico e retira aquela cobrança da apuração de bloqueio. Não representa devolução de dinheiro. Não cancele uma cobrança apenas para registrar um Pix recebido; utilize a confirmação de recebimento.
+A ação **Cancelar cobrança** preserva o histórico e retira aquela cobrança da apuração de bloqueio. Não representa devolução de dinheiro nem cancela um link externo já emitido. Um pagamento posterior será sinalizado para conferência. Não cancele uma cobrança para registrar um recebimento; utilize a baixa correspondente.
 
 ### Histórico dos envios financeiros
 

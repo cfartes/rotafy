@@ -21,6 +21,9 @@ export type PlanVersion = {
   created_at: string;
 };
 export type Subscription = {
+  trialing?: boolean;
+  trial_ends_on?: string | null;
+  billing_mode?: string;
   id: string;
   company_id: string;
   plan_id: string;
@@ -46,6 +49,7 @@ export type SubscriptionRow = {
   pending_plan_name: string | null;
 };
 export type Period = {
+  is_trial?: boolean;
   id: string;
   subscription_id: string;
   plan_version_id: string;

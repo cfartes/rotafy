@@ -1,6 +1,7 @@
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { Collections } from "./Collections";
+import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
 import { NexusTeam } from "./NexusTeam";
@@ -399,8 +400,9 @@ function CreateCompany({
       <form onSubmit={submit} className="modal-form">
         <p className="muted">
           Crie o espaço da empresa e seu primeiro administrador. Escolha o plano
-          para iniciar a assinatura mensal hoje. O CPF/CNPJ é obrigatório para
-          cobrança. Todos os campos deste cadastro são obrigatórios.
+          conforme as condições de contratação e teste configuradas. O CPF/CNPJ
+          é obrigatório para cobrança. Todos os campos deste cadastro são
+          obrigatórios.
         </p>
         <div className="form-grid">
           <Field label="Nome comercial">
@@ -1640,6 +1642,16 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                 <span />
                                 {row.is_active ? "Ativo" : "Suspenso"}
                               </span>
+                              {"trial_ends_on" in row && row.trial_ends_on && (
+                                <small className="muted">
+                                  {" "}
+                                  · Teste até{" "}
+                                  {row.trial_ends_on
+                                    .split("-")
+                                    .reverse()
+                                    .join("/")}
+                                </small>
+                              )}
                             </td>
                             <td>
                               <div className="row-actions">
@@ -1894,6 +1906,8 @@ export function App() {
       </main>
     );
   if (window.location.pathname === "/redefinir") return <Reset />;
+  if (window.location.pathname === "/pagamento-concluido")
+    return <PaymentReturn />;
   if (window.location.pathname === "/offline")
     return (
       <Suspense fallback={<p>Preparando operação local…</p>}>
