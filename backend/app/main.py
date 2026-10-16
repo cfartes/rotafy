@@ -445,6 +445,7 @@ def create_app(settings: Settings | None = None):
         company_id: UUID, payload: CompanyDetailsUpdate, actor: Auth
     ):
         nexus_team(actor)
+        await actor.db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
         previous_profile = await actor.db.scalar(
             text("SELECT operational_profile FROM companies WHERE id=:id FOR UPDATE"),
             {"id": company_id},
@@ -453,6 +454,9 @@ def create_app(settings: Settings | None = None):
             raise HTTPException(404, "Empresa não encontrada.")
         previous_slug = await actor.db.scalar(
             text("SELECT slug FROM companies WHERE id=:id"), {"id": company_id}
+        )
+        previous_phone = await actor.db.scalar(
+            text("SELECT contact_phone FROM companies WHERE id=:id"), {"id": company_id}
         )
         await change_profile(
             actor.db,
@@ -500,6 +504,28 @@ def create_app(settings: Settings | None = None):
             .mappings()
             .one()
         )
+        if (
+            "contact_phone" in payload.model_fields_set
+            and previous_phone != payload.contact_phone
+        ):
+            await scope(actor.db, company_id)
+            await actor.db.execute(
+                text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
+                {"id": company_id},
+            )
+            await actor.db.execute(
+                text(
+                    "UPDATE company_whatsapp_discovery SET automatic=false,version=version+1 WHERE company_id=:id"
+                ),
+                {"id": company_id},
+            )
+            await actor.db.execute(
+                text("""UPDATE company_whatsapp_connection
+                SET phone=COALESCE(:phone,phone),version=version+1,error_code=NULL,next_attempt_at=now(),
+                status=CASE WHEN status IN ('paused','managed') THEN status ELSE 'pending' END
+                WHERE company_id=:id"""),
+                {"id": company_id, "phone": payload.contact_phone},
+            )
         await audit(
             actor.db, company_id, actor.user["id"], "company.updated", company_id
         )

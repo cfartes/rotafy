@@ -40,12 +40,20 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
   await page.goto("/");
   await page.getByRole("button", { name: "WhatsApp", exact: true }).click();
   await expect(
+    page.getByRole("button", { name: "Conectar WhatsApp", exact: true }),
+  ).toHaveClass(/button primary/);
+  const checkbox = await page.getByRole("checkbox").boundingBox();
+  expect(checkbox!.width).toBeLessThanOrEqual(24);
+  expect(checkbox!.height).toBeLessThanOrEqual(24);
+  await expect(
     page.getByText("Aguardando conexão", { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Conectar WhatsApp", exact: true })
     .click();
-  expect(submitted).toEqual({ contact_phone: "+5547999999999", enabled: true });
+  expect(submitted).toEqual({ enabled: true });
+  await expect(page.locator('input[type="tel"]')).toHaveValue("+5547999999999");
+  await expect(page.locator('input[type="tel"]')).toHaveAttribute("readonly", "");
   await expect(
     page.getByRole("img", {
       name: "QR Code para conectar o WhatsApp da empresa",
@@ -138,4 +146,79 @@ test("company sees number mismatch as a suspended connection instead of a succes
     "Os envios estão suspensos",
   );
   await expect(page.getByRole("img")).toHaveCount(0);
+});
+
+test("admin sees retry countdown, pauses automatic requests and resumes", async ({
+  page,
+}) => {
+  let status = "unavailable";
+  let requests = 0;
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [];
+    if (path === "/auth/me")
+      body = {
+        id: "admin",
+        role: "admin",
+        company_id: "a",
+        full_name: "Admin",
+        is_active: true,
+      };
+    if (path === "/company")
+      body = {
+        id: "a",
+        slug: "a",
+        trade_name: "Empresa A",
+        operational_profile: "tourism",
+      };
+    if (path === "/company/whatsapp/pause") {
+      status = "paused";
+      body = { status };
+    }
+    if (path === "/company/whatsapp/connect") {
+      status = "pending";
+      body = { status };
+    }
+    if (path === "/company/whatsapp") {
+      requests += 1;
+      body = {
+        phone: "+5547999999999",
+        status,
+        error_code: status === "unavailable" ? "status_http_404" : null,
+        send_enabled: true,
+        connect_requested: status !== "paused",
+        next_attempt_at: new Date(Date.now() + 40000).toISOString(),
+      };
+    }
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "WhatsApp", exact: true }).click();
+  await expect(
+    page.getByText(/Próxima tentativa automática em \d+ s/),
+  ).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText(
+    "sessão vinculada não foi encontrada",
+  );
+  await expect(
+    page.getByText("Código de suporte: status_http_404"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Interromper tentativas" }).click();
+  await expect(
+    page.getByText("Tentativas interrompidas", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/Próxima tentativa automática em/)).toHaveCount(
+    0,
+  );
+  await expect(page.getByText(/Atualização desta tela em/)).toHaveCount(0);
+  const pausedRequests = requests;
+  await page.waitForTimeout(5500);
+  expect(requests).toBe(pausedRequests);
+  await page.getByRole("button", { name: "Retomar conexão" }).click();
+  await expect(
+    page.getByText("Preparando conexão", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Interromper tentativas" }),
+  ).toBeVisible();
 });

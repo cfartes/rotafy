@@ -6,7 +6,7 @@ Entrega de 16/10/2026. Compatibilidade conferida pelo código e contrato OpenAPI
 
 - O cadastro de uma empresa grava um pedido durável de criação de sessão na mesma transação. Não faz chamadas externas nem impede o cadastro por indisponibilidade do serviço.
 - O worker WhatsApp prepara uma sessão exclusiva com nome estável `rotafy-{company_uuid}`. O ID retornado fica salvo no backend e o vínculo começa com envios desabilitados.
-- A sessão não é iniciada automaticamente na criação: o administrador abre **WhatsApp**, informa o número e solicita a conexão. Isso evita abrir navegadores para clientes que ainda não autorizaram o pareamento.
+- A sessão não é iniciada automaticamente na criação: o administrador abre **WhatsApp**, confere o telefone obtido do cadastro da empresa e solicita a conexão. O telefone é somente leitura nessa tela.
 - Empresas existentes usam o mesmo botão. Se já existe vínculo manual, ele é reutilizado; a empresa não fornece IDs ou credenciais.
 - O worker inicia a sessão e acompanha seu estado. O painel consulta o QR Code temporário pelo backend, sem receber a chave global ou o ID.
 - O administrador escaneia em WhatsApp → Aparelhos conectados → Conectar aparelho. O worker compara o telefone efetivamente conectado com o informado. Só libera envios após correspondência exata e se a opção de envio estiver marcada.
@@ -17,7 +17,7 @@ Entrega de 16/10/2026. Compatibilidade conferida pelo código e contrato OpenAPI
 
 A chave cadastrada nas configurações Nexus precisa permitir listar sessões, criar e iniciar sessões e consultar QR. Na versão 0.24.0, a criação exige papel **OPERATOR** ou superior e uma chave não restrita a sessões específicas. O serviço deve estar acessível ao worker e à API e ter capacidade para iniciar a sessão. Permissões negadas ou indisponibilidade são exibidas sem revelar a resposta bruta do provedor.
 
-O pareamento pelo celular continua obrigatório. O telefone de envio pode ser diferente do contato comercial da empresa; essa escolha não altera o destinatário das cobranças SaaS. Os convites iniciais da nova empresa e as cobranças continuam utilizando a sessão da Nexus configurada para essa finalidade.
+O pareamento pelo celular continua obrigatório. O telefone é consultado diretamente em `companies.contact_phone`, inclusive pelo worker, evitando números antigos na configuração da conexão. Alterar o telefone no cadastro suspende os envios pelo vínculo anterior e invalida resultados pendentes. Os convites iniciais da nova empresa e as cobranças continuam utilizando a sessão da Nexus configurada para essa finalidade.
 
 ## Persistência e segurança
 
@@ -26,7 +26,8 @@ A migração incremental `0031_whatsapp_connection` cria `company_whatsapp_conne
 Endpoints:
 
 - `GET /api/v1/company/whatsapp`: estado sanitizado da própria empresa.
-- `POST /api/v1/company/whatsapp/connect`: solicitação autenticada com CSRF, origem permitida e limitação de tentativas. Aceita apenas telefone e opção de envio.
+- `POST /api/v1/company/whatsapp/connect`: solicitação autenticada com CSRF, origem permitida e limitação de tentativas. Usa o telefone cadastrado e recebe a opção de envio; rejeita telefone divergente enviado por clientes antigos.
+- `POST /api/v1/company/whatsapp/pause`: interrompe tentativas e invalida resultados em processamento. Não desconecta a conta no provedor.
 - `GET /api/v1/company/whatsapp/qr`: QR PNG em base64 da sessão vinculada à própria empresa, somente durante pareamento. Não persiste o QR em banco ou arquivo. Recusa SVG, URLs externas e dados maiores que o limite. Confere novamente o vínculo após a consulta ao provedor.
 
 Motorista, guia, atendente e usuários Nexus não podem usar esses endpoints de empresa. O suporte Nexus mantém suas configurações existentes. Uma alteração manual ou identificação automática pelo suporte interrompe o gerenciamento desse vínculo pelo novo worker até uma nova solicitação explícita do administrador da empresa.
@@ -46,3 +47,16 @@ A atualização aplica a migração, reconstrói API/painel e atualiza o worker.
 ## Validação
 
 Foram aprovados 371 testes na suíte backend e, após os ajustes finais de fila e precedência de configuração Nexus, 60 testes direcionados de conexão, identificação de sessão e mensagens. Os testes cobrem criação em segundo plano, recuperação após timeout sem duplicar a sessão, leitura de QR, confirmação do número, desconexão, isolamento e permissões, rejeição de QR externo/inválido e respeito às alterações de suporte. Doze testes de navegador passaram, incluindo conexão do administrador, ausência do menu para atendente, número divergente, navegação, configurações Nexus e documentação. Build web e Ruff aprovados. O pareamento real depende da chave e do aparelho autorizado na instalação.
+
+## Tentativas, pausa e diagnóstico
+
+A tela mostra separadamente a contagem para a próxima tentativa do worker e para a atualização da consulta. **Interromper tentativas** pausa o processamento e as consultas da tela; **Retomar conexão** registra uma nova solicitação. Uma chamada externa já enviada pode terminar, mas seu resultado antigo não reativa os envios.
+
+Se a consulta de estado retornar 404, o worker confere a lista de sessões. Só recupera ou cria uma substituta quando a sessão anterior realmente não consta nessa lista. Se ela ainda estiver listada, preserva o vínculo e exibe o código de suporte da etapa, como `status_http_404`. Falhas de criação, início e consulta possuem códigos distintos, sem expor respostas ou credenciais.
+
+Diagnóstico somente leitura, sem enviar mensagens ou iniciar sessões:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml \
+exec -T whatsapp python - < scripts/diagnose_whatsapp_connection.py
+```

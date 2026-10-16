@@ -1,14 +1,15 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field } from "./components/ui";
-import { PhoneInput } from "./components/PhoneInput";
 
 type Connection = {
   phone: string | null;
   status: string;
   error_code?: string | null;
   send_enabled: boolean;
+  next_attempt_at?: string | null;
+  connect_requested?: boolean;
 };
 
 const labels: Record<string, string> = {
@@ -23,17 +24,47 @@ const labels: Record<string, string> = {
   wrong_number: "Número conectado diferente do informado",
   conflict: "Conexão precisa de conferência",
   unavailable: "Conexão indisponível",
+  paused: "Tentativas interrompidas",
+  phone_changed: "Telefone cadastral atualizado",
 };
+
+function connectionError(code?: string | null) {
+  if (
+    code === "not_configured" ||
+    code?.endsWith("http_401") ||
+    code?.endsWith("http_403")
+  )
+    return "A Nexus precisa conferir a chave e a permissão do serviço de WhatsApp. Seu cadastro está preservado.";
+  if (code === "status_http_404" || code === "start_http_404")
+    return "A sessão vinculada não foi encontrada no serviço de WhatsApp. Solicite à Nexus a conferência do vínculo antes de tentar novamente.";
+  if (code === "start_http_400" || code === "start_http_409")
+    return "O serviço recusou iniciar a sessão. A Nexus deve conferir se ela já está em execução ou se o limite de sessões foi atingido.";
+  if (code === "create_http_400" || code === "create_http_409")
+    return "O serviço recusou criar a sessão. A Nexus deve conferir a configuração e se já existe uma sessão com o mesmo nome.";
+  if (code?.endsWith("http_429"))
+    return "O serviço limitou as solicitações. Aguarde a próxima tentativa automática.";
+  if (code?.endsWith("timeout") || code?.endsWith("http_504"))
+    return "O serviço demorou além do prazo para responder. A conexão será conferida novamente automaticamente.";
+  if (code?.endsWith("invalid_response"))
+    return "O serviço retornou uma resposta inesperada. A Nexus precisa conferir a compatibilidade da integração.";
+  return "Não foi possível concluir a conexão. O sistema tentará consultar o serviço novamente.";
+}
 
 export function CompanyWhatsApp() {
   const cache = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [requested, setRequested] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const state = useQuery({
     queryKey: ["company-whatsapp"],
     queryFn: () => api<Connection>("/company/whatsapp"),
-    refetchInterval: 5000,
+    refetchInterval: (query) =>
+      query.state.data?.status === "paused" ? false : 5000,
   });
   const pairing = ["qr_ready", "starting"].includes(state.data?.status || "");
   const qr = useQuery({
@@ -44,6 +75,35 @@ export function CompanyWhatsApp() {
     gcTime: 0,
     retry: false,
   });
+  const remaining = state.data?.next_attempt_at
+    ? Math.max(
+        0,
+        Math.ceil((Date.parse(state.data.next_attempt_at) - now) / 1000),
+      )
+    : null;
+  const refreshRemaining = Math.max(
+    0,
+    Math.ceil((state.dataUpdatedAt + 5000 - now) / 1000),
+  );
+  async function pause() {
+    setBusy(true);
+    setError("");
+    setRequested(false);
+    try {
+      await api("/company/whatsapp/pause", { method: "POST" });
+      cache.setQueryData<Connection>(["company-whatsapp"], (old) =>
+        old ? { ...old, status: "paused", connect_requested: false } : old,
+      );
+      cache.removeQueries({ queryKey: ["company-whatsapp-qr"] });
+      await cache.invalidateQueries({ queryKey: ["company-whatsapp"] });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Não foi possível interromper.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -54,7 +114,6 @@ export function CompanyWhatsApp() {
       await api("/company/whatsapp/connect", {
         method: "POST",
         body: JSON.stringify({
-          contact_phone: form.get("contact_phone"),
           enabled: form.get("enabled") === "on",
         }),
       });
@@ -84,12 +143,33 @@ export function CompanyWhatsApp() {
           <p role="status">
             <strong>{labels[state.data.status] || "Aguardando conexão"}</strong>
           </p>
+          {state.data.status === "paused" ? (
+            <p>
+              As tentativas automáticas estão pausadas. Clique em Retomar
+              conexão quando desejar continuar.
+            </p>
+          ) : (
+            <div className="muted" aria-live="off">
+              {state.data.connect_requested !== false &&
+                !["connected", "managed", "created", "not_started"].includes(
+                  state.data.status,
+                ) &&
+                remaining !== null && (
+                  <p>
+                    {remaining > 0
+                      ? `Próxima tentativa automática em ${remaining} s.`
+                      : "Aguardando o processamento da próxima tentativa…"}
+                  </p>
+                )}
+              <p>Atualização desta tela em {refreshRemaining} s.</p>
+            </div>
+          )}
           {state.data.status === "unavailable" && (
             <Alert>
-              {state.data.error_code === "not_configured" ||
-              ["http_401", "http_403"].includes(state.data.error_code || "")
-                ? "A Nexus precisa conferir a configuração e a permissão do serviço de WhatsApp. Seu cadastro está preservado."
-                : "O serviço não respondeu. A conexão será consultada novamente automaticamente."}
+              {connectionError(state.data.error_code)}
+              {state.data.error_code && (
+                <p>Código de suporte: {state.data.error_code}</p>
+              )}
             </Alert>
           )}
           {state.data.status === "wrong_number" && (
@@ -117,20 +197,50 @@ export function CompanyWhatsApp() {
             key={state.data.phone || "new"}
           >
             <Field label="WhatsApp de envio da empresa">
-              <PhoneInput initialValue={state.data.phone || ""} required />
+              <input type="tel" value={state.data.phone || ""} readOnly />
             </Field>
-            <label>
+            <p className="muted">Telefone obtido do cadastro da empresa. Para alterar, solicite à Nexus a atualização cadastral.</p>
+            {!state.data.phone && <Alert>Informe o telefone no cadastro da empresa antes de conectar o WhatsApp.</Alert>}
+            {state.data.status === "phone_changed" && <Alert>O telefone cadastrado foi alterado. Conecte o WhatsApp correspondente ao número exibido.</Alert>}
+            <label className="operation-checkbox">
               <input
                 type="checkbox"
+                style={{
+                  width: 18,
+                  height: 18,
+                  minHeight: 18,
+                  padding: 0,
+                  flex: "0 0 18px",
+                }}
                 name="enabled"
                 defaultChecked={state.data.send_enabled}
               />{" "}
               Habilitar envios após conectar e conferir o número
             </label>
-            <div>
-              <button className="primary" disabled={busy} type="submit">
-                {busy ? "Solicitando…" : "Conectar WhatsApp"}
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <button className="button primary" disabled={busy || !state.data.phone} type="submit">
+                {busy
+                  ? "Solicitando…"
+                  : state.data.status === "paused"
+                    ? "Retomar conexão"
+                    : "Conectar WhatsApp"}
               </button>
+              {![
+                "connected",
+                "managed",
+                "created",
+                "not_started",
+                "paused",
+              ].includes(state.data.status) && (
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={pause}
+                  disabled={busy}
+                >
+                  Interromper tentativas
+                </button>
+              )}
             </div>
           </form>
           {requested && (

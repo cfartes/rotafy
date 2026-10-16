@@ -25,6 +25,10 @@ def configured(client, seeded, owner, tmp_path, monkeypatch):
     configure(client, seeded)
     with owner.begin() as db:
         db.execute(
+            text("UPDATE companies SET contact_phone=:phone WHERE id=:id"),
+            {"phone": PHONE, "id": seeded["a"]},
+        )
+        db.execute(
             text("DELETE FROM company_whatsapp WHERE company_id=:id"),
             {"id": seeded["a"]},
         )
@@ -57,6 +61,123 @@ def state(client):
     assert result.status_code == 200
     assert "session_id" not in result.text and "api_key" not in result.text
     return result.json()
+
+
+def test_registered_phone_is_authoritative(client, seeded, owner, configured):
+    assert state(client)["phone"] == PHONE
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"enabled": True}
+        ).status_code
+        == 202
+    )
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE company_whatsapp_connection SET phone='+5511999999999' WHERE company_id=:id"
+            ),
+            {"id": seeded["a"]},
+        )
+    result = state(client)
+    assert result["phone"] == PHONE
+    assert result["status"] == "phone_changed"
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect",
+            json={"contact_phone": "+5511999999999", "enabled": True},
+        ).status_code
+        == 409
+    )
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"enabled": True}
+        ).status_code
+        == 202
+    )
+    with owner.begin() as db:
+        assert (
+            db.scalar(
+                text(
+                    "SELECT phone FROM company_whatsapp_connection WHERE company_id=:id"
+                ),
+                {"id": seeded["a"]},
+            )
+            == PHONE
+        )
+
+
+def test_missing_registered_phone_cannot_connect(client, seeded, owner, configured):
+    with owner.begin() as db:
+        db.execute(
+            text("UPDATE companies SET contact_phone=NULL WHERE id=:id"),
+            {"id": seeded["a"]},
+        )
+    assert state(client)["phone"] is None
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"enabled": True}
+        ).status_code
+        == 409
+    )
+
+
+def test_company_phone_edit_invalidates_connection(client, seeded, owner, configured):
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"enabled": True}
+        ).status_code
+        == 202
+    )
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO company_whatsapp(company_id,session_id,enabled) VALUES(:id,:session,true)"
+            ),
+            {"id": seeded["a"], "session": uuid4()},
+        )
+        before = db.scalar(
+            text(
+                "SELECT version FROM company_whatsapp_connection WHERE company_id=:id"
+            ),
+            {"id": seeded["a"]},
+        )
+        company = (
+            db.execute(
+                text(
+                    "SELECT slug,trade_name,corporate_name,cnpj FROM companies WHERE id=:id"
+                ),
+                {"id": seeded["a"]},
+            )
+            .mappings()
+            .one()
+        )
+    login(client, nexus=True, email="nexus@example.com")
+    result = client.patch(
+        f"/api/v1/nexus/companies/{seeded['a']}/details",
+        json=dict(company) | {"contact_phone": "+5511999999999", "cnpj": "52998224725"},
+    )
+    assert result.status_code == 200, result.text
+    with owner.begin() as db:
+        row = (
+            db.execute(
+                text(
+                    "SELECT phone,version,status FROM company_whatsapp_connection WHERE company_id=:id"
+                ),
+                {"id": seeded["a"]},
+            )
+            .mappings()
+            .one()
+        )
+        assert row["phone"] == "+5511999999999"
+        assert row["version"] == before + 1
+        assert row["status"] == "pending"
+        assert (
+            db.scalar(
+                text("SELECT enabled FROM company_whatsapp WHERE company_id=:id"),
+                {"id": seeded["a"]},
+            )
+            is False
+        )
 
 
 def test_company_admin_connects_without_id_or_key(
@@ -95,6 +216,7 @@ def test_company_admin_connects_without_id_or_key(
     due(owner, seeded["a"])
     assert job()
     assert state(client)["status"] == "connected"
+    assert client.post("/api/v1/company/whatsapp/pause").status_code == 409
     with owner.begin() as db:
         assert db.scalar(
             text("SELECT enabled FROM company_whatsapp WHERE company_id=:id"),
@@ -267,6 +389,91 @@ def test_creation_recovers_ambiguous_timeout_by_stable_name(
     assert len([c for c in calls if c[0] == "/sessions" and c[1]]) == 1
 
 
+@pytest.mark.parametrize("listed", [False, True])
+def test_missing_session_is_recovered_only_after_confirming_list_absence(
+    client, seeded, owner, configured, monkeypatch, listed
+):
+    old, replacement = uuid4(), uuid4()
+    created = []
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO company_whatsapp(company_id,session_id,enabled) VALUES(:id,:session,false)"
+            ),
+            {"id": seeded["a"], "session": old},
+        )
+
+    def provider(key, path, payload=None):
+        if path == f"/sessions/{old}":
+            raise HTTPError("https://private", 404, "private-response", None, None)
+        if path == "/sessions" and payload is None:
+            return [{"id": str(old), "name": "existing"}] if listed else []
+        if path == "/sessions" and payload:
+            created.append(payload)
+            return {"id": str(replacement)}
+        assert path == f"/sessions/{replacement}"
+        return {"id": str(replacement), "status": "qr_ready"}
+
+    monkeypatch.setattr("app.whatsapp_connection.openwa_request", provider)
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE}
+        ).status_code
+        == 202
+    )
+    assert job()
+    with owner.begin() as db:
+        bound = db.scalar(
+            text("SELECT session_id FROM company_whatsapp WHERE company_id=:id"),
+            {"id": seeded["a"]},
+        )
+    if listed:
+        assert created == [] and bound == old
+        assert state(client)["error_code"] == "status_http_404"
+    else:
+        assert created == [{"name": f"rotafy-{seeded['a']}"}] and bound == replacement
+        assert state(client)["status"] == "qr_ready"
+        due(owner, seeded["a"])
+        assert job()
+        assert len(created) == 1
+
+
+@pytest.mark.parametrize(
+    "failure,expected",
+    [
+        ("create", "create_http_400"),
+        ("start", "start_http_400"),
+        ("timeout", "create_timeout"),
+        ("format", "create_invalid_response"),
+    ],
+)
+def test_connection_errors_identify_the_failed_step_without_provider_details(
+    client, seeded, configured, monkeypatch, failure, expected
+):
+    identifier = uuid4()
+
+    def provider(key, path, payload=None):
+        if path == "/sessions" and payload is None:
+            return []
+        if path == "/sessions" and payload:
+            if failure == "timeout":
+                raise TimeoutError("private-timeout")
+            if failure == "format":
+                return {"unexpected": "private-body"}
+            if failure == "create":
+                raise HTTPError("https://private", 400, "private-body", None, None)
+            return {"id": str(identifier)}
+        if path.endswith("/start"):
+            raise HTTPError("https://private", 400, "private-body", None, None)
+        return {"status": "created"}
+
+    monkeypatch.setattr("app.whatsapp_connection.openwa_request", provider)
+    client.post("/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE})
+    assert job()
+    assert state(client)["error_code"] == expected
+    assert "private" not in str(state(client))
+
+
 def test_wrong_number_cannot_enable_messages(
     client, seeded, owner, configured, monkeypatch
 ):
@@ -326,6 +533,7 @@ def test_permissions_company_scope_and_no_foreign_qr(
         ).status_code
         == 403
     )
+    assert client.post("/api/v1/company/whatsapp/pause").status_code == 403
     login(client, nexus=True, email="nexus@example.com")
     assert client.get("/api/v1/company/whatsapp").status_code == 403
     engine = create_engine(APP_URL)
@@ -348,10 +556,70 @@ def test_provider_refusal_is_sanitized(client, seeded, configured, monkeypatch, 
         raise HTTPError("https://private", code, "secret-key", None, None)
 
     monkeypatch.setattr("app.integration_settings.openwa_request", fail)
+    monkeypatch.setattr("app.whatsapp_connection.openwa_request", fail)
     client.post("/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE})
     assert job()
     assert state(client)["status"] == "unavailable"
     assert "secret-key" not in str(state(client))
+
+
+def test_pause_stops_worker_and_hides_qr_until_resume(
+    client, seeded, owner, configured, monkeypatch
+):
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE}
+        ).status_code
+        == 202
+    )
+    snapshot = state(client)
+    assert snapshot["next_attempt_at"] and snapshot["connect_requested"]
+    assert client.post("/api/v1/company/whatsapp/pause").status_code == 202
+    assert state(client)["status"] == "paused"
+    assert not state(client)["connect_requested"]
+
+    def forbidden(*args):
+        raise AssertionError("Paused requests must never call the provider")
+
+    monkeypatch.setattr("app.whatsapp_connection.openwa_request", forbidden)
+    due(owner, seeded["a"])
+    assert not job()
+    assert client.get("/api/v1/company/whatsapp/qr").json() == {"qr_code": None}
+    assert (
+        client.post(
+            "/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE}
+        ).status_code
+        == 202
+    )
+    assert state(client)["status"] == "pending" and state(client)["connect_requested"]
+
+
+def test_pause_during_creation_discards_stale_worker_result(
+    client, seeded, owner, configured, monkeypatch
+):
+    identifier = uuid4()
+    calls = []
+
+    def provider(key, path, payload=None):
+        calls.append((path, payload))
+        if path == "/sessions" and payload is None:
+            return []
+        assert path == "/sessions" and payload
+        assert client.post("/api/v1/company/whatsapp/pause").status_code == 202
+        return {"id": str(identifier)}
+
+    monkeypatch.setattr("app.whatsapp_connection.openwa_request", provider)
+    client.post("/api/v1/company/whatsapp/connect", json={"contact_phone": PHONE})
+    assert not job()
+    assert state(client)["status"] == "paused"
+    due(owner, seeded["a"])
+    assert not job()
+    assert len(calls) == 2
+    with owner.begin() as db:
+        assert not db.scalar(
+            text("SELECT enabled FROM company_whatsapp WHERE company_id=:id"),
+            {"id": seeded["a"]},
+        )
 
 
 @pytest.mark.parametrize(

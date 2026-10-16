@@ -847,6 +847,8 @@ const actionNames: Record<string, string> = {
   "whatsapp.session_configured": "Sessão WhatsApp da empresa configurada",
   "whatsapp.connection_requested":
     "Conexão do WhatsApp solicitada pelo administrador",
+  "whatsapp.connection_paused":
+    "Tentativas de conexão do WhatsApp interrompidas",
   "whatsapp.queued": "Mensagem WhatsApp adicionada à fila",
   "trip.unpublished": "Viagem retirada da página pública",
   "reservation.paid": "Reserva marcada PAGO",
