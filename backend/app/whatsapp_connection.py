@@ -53,10 +53,56 @@ async def invalidate_phone_connection(db, company_id, phone):
     await db.execute(
         text("""UPDATE company_whatsapp_connection
         SET phone=COALESCE(:phone,phone),version=version+1,error_code=NULL,next_attempt_at=now(),
-        status=CASE WHEN status IN ('paused','managed') THEN status ELSE 'pending' END
+        status=CASE WHEN disconnect_requested THEN 'disconnecting' WHEN status IN ('paused','managed') THEN status ELSE 'pending' END
         WHERE company_id=:id"""),
         {"id": company_id, "phone": phone},
     )
+
+
+async def queue_disconnect(db, company_id, actor_id=None):
+    """Persist intent under the shared advisory lock, before any external call."""
+    await scope(db, company_id)
+    await db.execute(
+        text("""INSERT INTO company_whatsapp_connection(company_id,phone,session_id)
+        SELECT c.id,COALESCE(c.contact_phone,''),w.session_id FROM companies c
+        LEFT JOIN company_whatsapp w ON w.company_id=c.id WHERE c.id=:id
+        ON CONFLICT(company_id) DO NOTHING"""),
+        {"id": company_id},
+    )
+    await db.execute(
+        text("""UPDATE company_whatsapp_connection q SET
+        session_id=COALESCE((SELECT session_id FROM company_whatsapp WHERE company_id=:id),q.session_id),
+        disconnect_requested=true,connect_requested=false,status='disconnecting',
+        version=version+1,error_code=NULL,next_attempt_at=now(),requested_by=:actor
+        WHERE company_id=:id"""),
+        {"id": company_id, "actor": actor_id},
+    )
+    await db.execute(
+        text("UPDATE company_whatsapp SET enabled=false WHERE company_id=:id"),
+        {"id": company_id},
+    )
+    await db.execute(
+        text(
+            "UPDATE company_whatsapp_discovery SET automatic=false,version=version+1 WHERE company_id=:id"
+        ),
+        {"id": company_id},
+    )
+
+
+@router.post("/disconnect", status_code=202)
+async def disconnect(actor: Auth, request: Request):
+    admin(actor)
+    async with request.app.state.platform_engine.begin() as db:
+        await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
+        await queue_disconnect(db, actor.company_id, actor.user["id"])
+        await audit(
+            db,
+            actor.company_id,
+            actor.user["id"],
+            "whatsapp.disconnect_requested",
+            actor.company_id,
+        )
+    return {"status": "disconnecting"}
 
 
 @router.get("")
@@ -66,7 +112,7 @@ async def connection(actor: Auth):
         (
             await actor.db.execute(
                 text("""SELECT c.contact_phone AS phone,q.status,q.error_code,q.last_checked_at,
-        q.send_enabled,q.connect_requested,q.next_attempt_at,
+        q.send_enabled,q.connect_requested,q.next_attempt_at,q.disconnect_requested,
         q.phone IS DISTINCT FROM c.contact_phone AS phone_changed
         FROM company_whatsapp_connection q JOIN companies c ON c.id=q.company_id WHERE q.company_id=:company"""),
                 {"company": actor.company_id},
@@ -77,7 +123,12 @@ async def connection(actor: Auth):
     )
     if row:
         result = dict(row)
-        if result["phone_changed"] and result["status"] not in {"paused", "managed"}:
+        if result["phone_changed"] and result["status"] not in {
+            "paused",
+            "managed",
+            "disconnecting",
+            "disconnected",
+        }:
             result["status"] = "phone_changed"
         return result
     phone = await actor.db.scalar(
@@ -101,6 +152,25 @@ async def connect(data: ConnectionInput, actor: Auth, request: Request):
     async with request.app.state.platform_engine.begin() as db:
         await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
         await scope(db, actor.company_id)
+        current = (
+            (
+                await db.execute(
+                    text(
+                        "SELECT status,disconnect_requested FROM company_whatsapp_connection WHERE company_id=:id"
+                    ),
+                    {"id": actor.company_id},
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if current and (
+            current["status"] == "connected" or current["disconnect_requested"]
+        ):
+            raise HTTPException(
+                409,
+                "O WhatsApp já está conectado ou possui uma desconexão pendente. Atualize esta tela.",
+            )
         registered_phone = await db.scalar(
             text("SELECT contact_phone FROM companies WHERE id=:id FOR UPDATE"),
             {"id": actor.company_id},
@@ -157,7 +227,7 @@ async def pause(actor: Auth, request: Request):
             (
                 await db.execute(
                     text(
-                        "SELECT status FROM company_whatsapp_connection WHERE company_id=:id FOR UPDATE"
+                        "SELECT status,disconnect_requested FROM company_whatsapp_connection WHERE company_id=:id FOR UPDATE"
                     ),
                     {"id": actor.company_id},
                 )
@@ -167,7 +237,7 @@ async def pause(actor: Auth, request: Request):
         )
         if not row:
             raise HTTPException(404, "Não há tentativa de conexão para interromper.")
-        if row["status"] == "connected":
+        if row["status"] == "connected" or row["disconnect_requested"]:
             raise HTTPException(
                 409, "O WhatsApp já está conectado. Não há tentativa para interromper."
             )
@@ -282,7 +352,7 @@ async def request_is_current(engine, job):
             await db.scalar(
                 text("""SELECT 1 FROM company_whatsapp_connection q
             JOIN companies c ON c.id=q.company_id WHERE q.company_id=:id AND q.version=:version
-            AND q.status<>'paused' AND c.is_active AND c.contact_phone IS NOT DISTINCT FROM :phone"""),
+            AND q.status<>'paused' AND NOT q.disconnect_requested AND c.is_active AND c.contact_phone IS NOT DISTINCT FROM :phone"""),
                 {
                     "id": job["company_id"],
                     "version": job["version"],
@@ -293,6 +363,8 @@ async def request_is_current(engine, job):
 
 
 async def process_connection(engine):
+    if await process_disconnection(engine):
+        return True
     async with engine.begin() as db:
         companies = list(
             (
@@ -308,8 +380,8 @@ async def process_connection(engine):
                 (
                     await db.execute(
                         text("""SELECT * FROM company_whatsapp_connection
-              WHERE company_id=:id AND next_attempt_at<=now() AND
-              ((session_id IS NULL AND status NOT IN ('managed','paused')) OR connect_requested) FOR UPDATE SKIP LOCKED"""),
+              WHERE company_id=:id AND NOT disconnect_requested AND next_attempt_at<=now() AND
+              ((session_id IS NULL AND status NOT IN ('managed','paused','disconnected','disconnecting')) OR connect_requested) FOR UPDATE SKIP LOCKED"""),
                         {"id": company},
                     )
                 )
@@ -433,6 +505,7 @@ async def process_connection(engine):
         )
         if (
             not current
+            or current["disconnect_requested"]
             or current["version"] != job["version"]
             or not await db.scalar(
                 text(
@@ -489,4 +562,102 @@ async def process_connection(engine):
                 else 5,
             },
         )
+    return True
+
+
+async def process_disconnection(engine):
+    async with engine.begin() as db:
+        companies = list(
+            (await db.execute(text("SELECT id FROM companies ORDER BY id"))).scalars()
+        )
+        job = None
+        for company in companies:
+            await scope(db, company)
+            row = (
+                (
+                    await db.execute(
+                        text("""SELECT * FROM company_whatsapp_connection
+                WHERE company_id=:id AND disconnect_requested AND next_attempt_at<=now()
+                FOR UPDATE SKIP LOCKED"""),
+                        {"id": company},
+                    )
+                )
+                .mappings()
+                .first()
+            )
+            if row and (job is None or row["next_attempt_at"] < job["next_attempt_at"]):
+                job = dict(row)
+        if not job:
+            return False
+        await scope(db, job["company_id"])
+        await db.execute(
+            text(
+                "UPDATE company_whatsapp_connection SET next_attempt_at=now()+interval '1 minute' WHERE company_id=:id"
+            ),
+            {"id": job["company_id"]},
+        )
+    session = job["session_id"]
+    error = None
+    try:
+        async with engine.begin() as db:
+            key = await openwa_key(db)
+        if not session:
+            # Recover a create that was in flight when suspension was requested.
+            matches = [
+                s
+                for s in await list_sessions(key)
+                if s.get("name") == f"rotafy-{job['company_id']}"
+            ]
+            if len(matches) > 1:
+                raise ValueError("Ambiguous session")
+            session = UUID(str(matches[0]["id"])) if matches else None
+        if session:
+            try:
+                result = await asyncio.to_thread(
+                    openwa_request, key, f"/sessions/{session}/stop", {}
+                )
+                body = result.get("data", result) if isinstance(result, dict) else {}
+                if str(body.get("status", "")).upper() not in {
+                    "DISCONNECTED",
+                    "STOPPED",
+                    "CREATED",
+                }:
+                    raise ValueError("Stop not confirmed")
+            except HTTPError as exc:
+                if exc.code != 404 or any(
+                    str(s.get("id")) == str(session) for s in await list_sessions(key)
+                ):
+                    raise
+    except HTTPException:
+        error = "not_configured"
+    except HTTPError as exc:
+        error = f"stop_http_{exc.code}"
+    except (URLError, OSError):
+        error = "stop_connection_error"
+    except (ValueError, TypeError, AttributeError, KeyError):
+        error = "stop_invalid_response"
+    async with engine.begin() as db:
+        await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
+        await scope(db, job["company_id"])
+        updated = await db.scalar(
+            text("""UPDATE company_whatsapp_connection SET
+            disconnect_requested=:pending,status=:status,error_code=:error,last_checked_at=now(),
+            next_attempt_at=now()+interval '1 minute'
+            WHERE company_id=:id AND version=:version AND disconnect_requested RETURNING company_id"""),
+            {
+                "id": job["company_id"],
+                "version": job["version"],
+                "pending": bool(error),
+                "status": "disconnecting" if error else "disconnected",
+                "error": error,
+            },
+        )
+        if updated and not error:
+            await audit(
+                db,
+                job["company_id"],
+                job["requested_by"],
+                "whatsapp.disconnected",
+                job["company_id"],
+            )
     return True

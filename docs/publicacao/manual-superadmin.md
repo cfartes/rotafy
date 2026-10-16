@@ -24,6 +24,8 @@ Em **Equipe Nexus**, o administrador completo consulta **Log de acesso dos colab
 
 Cadastre ou edite dados comerciais, contato e perfil operacional. O CPF/CNPJ é obrigatório e validado. Crie o primeiro administrador e selecione o plano. Utilize suspender/ativar conforme o contrato, preservando os dados históricos.
 
+Ao suspender uma empresa, o sistema também suspende os envios e agenda automaticamente a desconexão do WhatsApp. A solicitação permanece registrada para nova tentativa se o serviço estiver indisponível. Reativar a empresa não reconecta o WhatsApp: o administrador deve solicitar a conexão no painel.
+
 O cadastro de novas empresas é exclusivo da equipe Nexus, incluindo o perfil restrito **Equipe Nexus**. O cliente não possui opção de cadastro no login. Após salvar, utilize **Enviar acesso por e-mail**, **Enviar acesso por WhatsApp** ou **Enviar pelos dois canais**. O destinatário de e-mail é o primeiro administrador ativo da empresa; o WhatsApp utiliza o telefone informado no cadastro da empresa. As mensagens incluem os dados cadastrais, identificador, e-mail de login e um link para definir senha, válido por 24 horas. A senha inicial não é enviada em texto.
 
 O WhatsApp utiliza a sessão da Nexus definida para comunicação/cobrança, sem exigir pareamento prévio da empresa recém-criada. Acompanhe o resultado nessa tela. Se faltar configuração, a empresa permanece cadastrada; corrija a configuração e envie novamente. Também é possível usar **Enviar acesso** na lista de empresas. Um novo convite invalida os links anteriores.

@@ -502,6 +502,8 @@ O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é prepa
 4. No celular do número informado, abra **WhatsApp → Aparelhos conectados → Conectar aparelho** e escaneie o código mostrado no painel.
 5. Aguarde o estado **Conectado**. O número é conferido antes de liberar os envios. O QR é atualizado automaticamente e deixa de aparecer após a conexão.
 
+Após a conexão, a contagem e a mensagem de espera desaparecem. O botão passa a ser **Desconectar WhatsApp**. Ao clicar, os envios são suspensos imediatamente e o sistema solicita a desconexão. Se o serviço estiver indisponível, a solicitação fica pendente e será repetida automaticamente. Aguarde **Desconectado** antes de conectar novamente.
+
 A tela mostra a contagem para a próxima tentativa e para a atualização da consulta. Use **Interromper tentativas** para pausar e **Retomar conexão** para continuar. Uma solicitação já enviada pode terminar, mas seu resultado antigo não reativa os envios.
 
 Se aparecer **Número conectado diferente do informado**, os envios ficam suspensos. Confira o telefone; se utilizou outro WhatsApp, desconecte o dispositivo no celular e conecte o número correto. Se aparecer **Desconectado**, clique em Conectar WhatsApp para tentar novamente. Indisponibilidade do serviço ou falta de autorização deve ser conferida pela Nexus.

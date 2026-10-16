@@ -445,10 +445,27 @@ async def bind_session(company_id: UUID, data: SessionInput, actor: Auth):
 
 async def save_binding(db, company_id, data, actor_id, *, connection_managed=False):
     await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
-    if not await db.scalar(
-        text("SELECT 1 FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
+    await scope(db, company_id)
+    if await db.scalar(
+        text(
+            "SELECT disconnect_requested FROM company_whatsapp_connection WHERE company_id=:id"
+        ),
+        {"id": company_id},
     ):
+        raise HTTPException(
+            409,
+            "Aguarde a conclusão da desconexão do WhatsApp antes de alterar o vínculo.",
+        )
+    active = await db.scalar(
+        text("SELECT is_active FROM companies WHERE id=:id FOR UPDATE"),
+        {"id": company_id},
+    )
+    if active is None:
         raise HTTPException(404, "Empresa não encontrada.")
+    if not active:
+        raise HTTPException(
+            409, "Reative a empresa antes de configurar sua conexão WhatsApp."
+        )
     # A unicidade impede que duas empresas compartilhem acidentalmente o número.
     for other in (
         await db.execute(
@@ -520,12 +537,28 @@ async def automatic_session(company_id: UUID, data: AutomaticSessionInput, actor
             422, "Informe um telefone válido com DDD ou código internacional."
         ) from None
     await actor.db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
-    if not await actor.db.scalar(
-        text("SELECT 1 FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
-    ):
+    active = await actor.db.scalar(
+        text("SELECT is_active FROM companies WHERE id=:id FOR UPDATE"),
+        {"id": company_id},
+    )
+    if active is None:
         raise HTTPException(404, "Empresa não encontrada.")
+    if not active:
+        raise HTTPException(
+            409, "Reative a empresa antes de configurar sua conexão WhatsApp."
+        )
     await scope(actor.db, company_id)
     # Stop sending with a previous number while a changed number is being resolved.
+    if await actor.db.scalar(
+        text(
+            "SELECT disconnect_requested FROM company_whatsapp_connection WHERE company_id=:id"
+        ),
+        {"id": company_id},
+    ):
+        raise HTTPException(
+            409,
+            "Aguarde a conclusão da desconexão do WhatsApp antes de alterar o vínculo.",
+        )
     await actor.db.execute(
         text("""UPDATE company_whatsapp_connection SET session_id=NULL,connect_requested=false,
         status='managed',version=version+1 WHERE company_id=:id"""),

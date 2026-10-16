@@ -63,7 +63,7 @@ from app.schemas import (
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
 from app.whatsapp import router as whatsapp_router
-from app.whatsapp_connection import invalidate_phone_connection
+from app.whatsapp_connection import invalidate_phone_connection, queue_disconnect
 from app.whatsapp_connection import router as whatsapp_connection_router
 
 USER_FIELDS = "id, company_id, full_name, email, role, is_active"
@@ -414,6 +414,7 @@ def create_app(settings: Settings | None = None):
     @application.patch("/api/v1/nexus/companies/{company_id}")
     async def activate_company(company_id: UUID, payload: ActiveUpdate, actor: Auth):
         nexus_team(actor)
+        await actor.db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
         row = (
             (
                 await actor.db.execute(
@@ -429,6 +430,7 @@ def create_app(settings: Settings | None = None):
         if not row:
             raise HTTPException(404, "Empresa não encontrada.")
         if not payload.is_active:
+            await queue_disconnect(actor.db, company_id, actor.user["id"])
             await actor.db.execute(
                 text("DELETE FROM sessions WHERE company_id=:id"), {"id": company_id}
             )

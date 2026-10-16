@@ -10,6 +10,7 @@ type Connection = {
   send_enabled: boolean;
   next_attempt_at?: string | null;
   connect_requested?: boolean;
+  disconnect_requested?: boolean;
 };
 
 const labels: Record<string, string> = {
@@ -19,6 +20,7 @@ const labels: Record<string, string> = {
   starting: "Iniciando WhatsApp",
   qr_ready: "Escaneie o QR Code",
   connected: "Conectado",
+  disconnecting: "Desconectando WhatsApp",
   disconnected: "Desconectado",
   managed: "Configuração gerenciada pela Nexus",
   wrong_number: "Número conectado diferente do informado",
@@ -56,16 +58,22 @@ export function CompanyWhatsApp() {
   const [error, setError] = useState("");
   const [requested, setRequested] = useState(false);
   const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
   const state = useQuery({
     queryKey: ["company-whatsapp"],
     queryFn: () => api<Connection>("/company/whatsapp"),
     refetchInterval: (query) =>
-      query.state.data?.status === "paused" ? false : 5000,
+      ["paused", "disconnected"].includes(query.state.data?.status || "")
+        ? false
+        : query.state.data?.status === "connected" ? 60000 : 5000,
   });
+  const connected = state.data?.status === "connected";
+  const disconnecting = state.data?.disconnect_requested || state.data?.status === "disconnecting";
+  useEffect(() => {
+    if (connected || ["paused", "disconnected"].includes(state.data?.status || "")) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [connected, state.data?.status]);
   const pairing = ["qr_ready", "starting"].includes(state.data?.status || "");
   const qr = useQuery({
     queryKey: ["company-whatsapp-qr"],
@@ -104,8 +112,24 @@ export function CompanyWhatsApp() {
       setBusy(false);
     }
   }
+  async function disconnect() {
+    setBusy(true);
+    setError("");
+    setRequested(false);
+    try {
+      await api("/company/whatsapp/disconnect", { method: "POST" });
+      cache.setQueryData<Connection>(["company-whatsapp"], (old) => old ? { ...old, status: "disconnecting", disconnect_requested: true, connect_requested: false } : old);
+      cache.removeQueries({ queryKey: ["company-whatsapp-qr"] });
+      await cache.invalidateQueries({ queryKey: ["company-whatsapp"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível solicitar a desconexão.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (connected || disconnecting) return;
     const form = new FormData(event.currentTarget);
     setBusy(true);
     setError("");
@@ -148,7 +172,7 @@ export function CompanyWhatsApp() {
               As tentativas automáticas estão pausadas. Clique em Retomar
               conexão quando desejar continuar.
             </p>
-          ) : (
+          ) : !connected && state.data.status !== "disconnected" && (
             <div className="muted" aria-live="off">
               {state.data.connect_requested !== false &&
                 !["connected", "managed", "created", "not_started"].includes(
@@ -164,9 +188,9 @@ export function CompanyWhatsApp() {
               <p>Atualização desta tela em {refreshRemaining} s.</p>
             </div>
           )}
-          {state.data.status === "unavailable" && (
+          {(state.data.status === "unavailable" || (disconnecting && state.data.error_code)) && (
             <Alert>
-              {connectionError(state.data.error_code)}
+              {disconnecting ? "Envios suspensos. A desconexão ainda não foi confirmada pelo serviço e será tentada novamente automaticamente." : connectionError(state.data.error_code)}
               {state.data.error_code && (
                 <p>Código de suporte: {state.data.error_code}</p>
               )}
@@ -187,7 +211,7 @@ export function CompanyWhatsApp() {
           )}
           {state.data.status === "disconnected" && (
             <p>
-              O WhatsApp perdeu a conexão. Clique em Conectar WhatsApp para
+              O WhatsApp está desconectado. Clique em Conectar WhatsApp para
               tentar novamente.
             </p>
           )}
@@ -213,24 +237,32 @@ export function CompanyWhatsApp() {
                   flex: "0 0 18px",
                 }}
                 name="enabled"
+                disabled={connected || disconnecting}
                 defaultChecked={state.data.send_enabled}
               />{" "}
               Habilitar envios após conectar e conferir o número
             </label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button className="button primary" disabled={busy || !state.data.phone} type="submit">
+              {connected ? (
+                <button className="button secondary" type="button" onClick={disconnect} disabled={busy}>
+                  {busy ? "Solicitando…" : "Desconectar WhatsApp"}
+                </button>
+              ) : <button className="button primary" disabled={busy || !state.data.phone || disconnecting} type="submit">
                 {busy
                   ? "Solicitando…"
+                  : disconnecting ? "Desconectando…"
                   : state.data.status === "paused"
                     ? "Retomar conexão"
                     : "Conectar WhatsApp"}
-              </button>
+              </button>}
               {![
                 "connected",
                 "managed",
                 "created",
                 "not_started",
                 "paused",
+                "disconnecting",
+                "disconnected",
               ].includes(state.data.status) && (
                 <button
                   className="button secondary"
@@ -243,7 +275,7 @@ export function CompanyWhatsApp() {
               )}
             </div>
           </form>
-          {requested && (
+          {requested && !connected && !disconnecting && state.data.connect_requested !== false && (
             <p role="status">
               Solicitação registrada. Aguarde a preparação do QR Code; a tela
               atualiza automaticamente.
