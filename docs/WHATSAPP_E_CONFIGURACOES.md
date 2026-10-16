@@ -2,7 +2,7 @@
 
 ## Conexão pelo administrador da empresa
 
-Desde 16/10/2026, novos cadastros agendam a criação automática da sessão. O administrador da empresa pode informar o número e ler o QR no menu **WhatsApp** do Rotafy, sem conhecer o ID ou a chave. As instruções abaixo de associação por ID/telefone continuam disponíveis como alternativas de suporte Nexus. A operação exige permissão da chave para criar/iniciar sessões e autorização no celular. Consulte [Conexão WhatsApp da empresa](CONEXAO_WHATSAPP_EMPRESA.md) para o fluxo, a migração e os controles de segurança.
+Desde 16/10/2026, novos cadastros agendam a criação automática da sessão. O administrador da empresa confere o telefone do cadastro da empresa e pode ler o QR no menu **WhatsApp** do Rotafy, sem conhecer o ID ou a chave. As instruções abaixo de associação por ID/telefone continuam disponíveis como alternativas de suporte Nexus. A operação exige permissão da chave para criar/iniciar sessões e autorização no celular. Consulte [Conexão WhatsApp da empresa](CONEXAO_WHATSAPP_EMPRESA.md) para o fluxo, a migração e os controles de segurança.
 
 ## Modelos financeiros com QR Code
 

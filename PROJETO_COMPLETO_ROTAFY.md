@@ -607,11 +607,14 @@ A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bil
 
 O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é preparada automaticamente em segundo plano; não é necessário conhecer um ID ou acessar as configurações da Nexus. Empresas já cadastradas podem iniciar a conexão pelo mesmo menu.
 
-1. Informe o **WhatsApp de envio da empresa**, com DDD. Ele pode ser diferente do telefone de contato cadastrado para cobrança.
+1. Confira o **WhatsApp de envio da empresa**, obtido diretamente do cadastro da empresa. O campo não permite edição; solicite à Nexus a atualização cadastral quando necessário.
+
 2. Mantenha **Habilitar envios após conectar e conferir o número** marcado quando desejar ativar as mensagens.
 3. Clique em **Conectar WhatsApp** e aguarde a preparação do QR Code.
 4. No celular do número informado, abra **WhatsApp → Aparelhos conectados → Conectar aparelho** e escaneie o código mostrado no painel.
 5. Aguarde o estado **Conectado**. O número é conferido antes de liberar os envios. O QR é atualizado automaticamente e deixa de aparecer após a conexão.
+
+A tela mostra a contagem para a próxima tentativa e para a atualização da consulta. Use **Interromper tentativas** para pausar e **Retomar conexão** para continuar. Uma solicitação já enviada pode terminar, mas seu resultado antigo não reativa os envios.
 
 Se aparecer **Número conectado diferente do informado**, os envios ficam suspensos. Confira o telefone; se utilizou outro WhatsApp, desconecte o dispositivo no celular e conecte o número correto. Se aparecer **Desconectado**, clique em Conectar WhatsApp para tentar novamente. Indisponibilidade do serviço ou falta de autorização deve ser conferida pela Nexus.
 
@@ -798,7 +801,7 @@ Mantenha as chaves restritas à equipe autorizada. Não inclua credenciais em ca
 
 #### WhatsApp de cada empresa
 
-Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agendam a criação da sessão automaticamente. O administrador da empresa encontra o menu **WhatsApp**, informa o número de envio e escaneia o QR Code no próprio Rotafy. O sistema confere o número antes de liberar os envios. A criação da empresa não aguarda a disponibilidade do serviço de mensagens.
+Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agendam a criação da sessão automaticamente. O administrador da empresa encontra o menu **WhatsApp**, confere o telefone do cadastro da empresa e escaneia o QR Code no próprio Rotafy. O sistema confere o número antes de liberar os envios. A criação da empresa não aguarda a disponibilidade do serviço de mensagens.
 
 1. Localize a empresa em **WhatsApp de cada empresa**.
 2. Confira o **WhatsApp de envio**. O telefone de contato aparece como sugestão; ajuste para o número conectado. Utilize + e código do país para números internacionais.
