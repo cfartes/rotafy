@@ -125,6 +125,18 @@ async def collect_company(db, company_id, now=None):
     )
     if not settings["enabled"]:
         return
+    mode = await db.scalar(
+        text(
+            "SELECT billing_mode FROM subscriptions WHERE company_id=:id AND status='active'"
+        ),
+        {"id": company_id},
+    )
+    if mode == "prepaid":
+        from app.billing.prepaid import collect_prepaid
+
+        await collect_prepaid(db, company_id, settings, now)
+        await notify_overdue(db, company_id, now)
+        return
     periods = (
         (
             await db.execute(
@@ -132,7 +144,7 @@ async def collect_company(db, company_id, now=None):
         COALESCE(sum(e.quantity),0)::integer AS used_trips
         FROM billing_periods bp JOIN plan_versions pv ON pv.id=bp.plan_version_id
         LEFT JOIN usage_events e ON e.period_id=bp.id AND e.company_id=bp.company_id
-        WHERE bp.company_id=:company AND bp.ends_at>:enabled AND bp.starts_at<=:now
+        WHERE bp.company_id=:company AND NOT bp.is_trial AND bp.ends_at>:enabled AND bp.starts_at<=:now
         GROUP BY bp.id,pv.id ORDER BY bp.ends_at"""),
                 {"company": company_id, "enabled": settings["enabled_at"], "now": now},
             )
@@ -198,7 +210,24 @@ async def collect_company(db, company_id, now=None):
             .mappings()
             .one()
         )
-        await notify(db, invoice, "invoice" if closing else "preview")
+        if closing and settings["infinitepay_enabled"]:
+            from app.billing.infinitepay import queue_checkout
+
+            invoice = dict(invoice)
+            await db.execute(
+                text(
+                    "UPDATE billing_invoices SET payment_provider='infinitepay' WHERE id=:id"
+                ),
+                {"id": invoice["id"]},
+            )
+            invoice["payment_provider"] = "infinitepay"
+            await queue_checkout(db, invoice, settings)
+        else:
+            await notify(db, invoice, "invoice" if closing else "preview")
+    await notify_overdue(db, company_id, now)
+
+
+async def notify_overdue(db, company_id, now):
     for invoice in (
         await db.execute(
             text("""SELECT * FROM billing_invoices WHERE company_id=:company
@@ -206,4 +235,5 @@ async def collect_company(db, company_id, now=None):
             {"company": company_id, "now": now},
         )
     ).mappings():
-        await notify(db, invoice, "blocked")
+        if invoice["payment_provider"] != "infinitepay" or invoice["payment_url"]:
+            await notify(db, invoice, "blocked")

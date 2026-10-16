@@ -18,6 +18,7 @@ def amount(cents):
 
 
 def encode_notice(invoice, company, kind, demo=False):
+    gateway = invoice.get("payment_provider") == "infinitepay"
     titles = {
         "invoice": "Sua mensalidade está disponível",
         "preview": "Seu ciclo está próximo do fechamento",
@@ -47,6 +48,16 @@ def encode_notice(invoice, company, kind, demo=False):
             amount(invoice["total_cents"]),
         ),
     ]
+    if invoice.get("setup_cents"):
+        rows.insert(-1, ("Setup (cobrança única)", amount(invoice["setup_cents"])))
+    if invoice.get("extras_starts_at"):
+        rows.insert(
+            -1,
+            (
+                "Período dos excedentes",
+                f"{invoice['extras_starts_at'].astimezone(SAO_PAULO):%d/%m/%Y} a {(invoice['extras_ends_at'] - timedelta(seconds=1)).astimezone(SAO_PAULO):%d/%m/%Y}",
+            ),
+        )
     if kind != "paid":
         rows.append(("Confirmar pagamento até", invoice["due_on"].strftime("%d/%m/%Y")))
     notes = {
@@ -55,8 +66,16 @@ def encode_notice(invoice, company, kind, demo=False):
         "blocked": "Novas operações estão restritas até a confirmação do Pix. O acesso às viagens já vendidas permanece disponível.",
         "paid": "Recebimento confirmado pela equipe Nexus. A restrição financeira desta cobrança foi removida.",
     }
+    if gateway:
+        notes.update(
+            invoice="Acesse o link para pagar. A confirmação será automática após aprovação do pagamento.",
+            blocked="Novas operações estão restritas até a confirmação do pagamento. As viagens já vendidas continuam disponíveis.",
+            paid="Pagamento confirmado. A restrição financeira desta cobrança foi removida.",
+        )
+        if kind in {"invoice", "blocked"} and invoice.get("payment_url"):
+            rows.append(("Pagar agora", invoice["payment_url"]))
     pix = ""
-    if kind in {"invoice", "blocked"}:
+    if kind in {"invoice", "blocked"} and not gateway:
         rows.extend(
             [
                 ("Favorecido", invoice["receiver_name"]),
@@ -107,6 +126,12 @@ def encode_notice(invoice, company, kind, demo=False):
         if pix
         else ""
     )
+    if gateway and kind in {"invoice", "blocked"} and invoice.get("payment_url"):
+        payment = (
+            f'<p style="text-align:center;margin:28px 0"><a href="{escape(invoice["payment_url"], quote=True)}" style="display:inline-block;background:#0d7773;color:white;text-decoration:none;padding:16px 28px;border-radius:8px;font-weight:bold">Pagar setup e mensalidade</a></p>'
+            if invoice.get("setup_cents")
+            else f'<p style="text-align:center;margin:28px 0"><a href="{escape(invoice["payment_url"], quote=True)}" style="display:inline-block;background:#0d7773;color:white;text-decoration:none;padding:16px 28px;border-radius:8px;font-weight:bold">Pagar mensalidade</a></p>'
+        )
     html = f'<!doctype html><html lang="pt-BR"><body style="margin:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#15324b"><div style="max-width:620px;margin:auto;background:white;padding:28px"><div style="background:#0d7773;color:white;padding:20px;font-size:22px;font-weight:bold">Nexus Rotafy</div>{warning}<h1 style="font-size:24px">{escape(title)}</h1><table style="width:100%;border-collapse:collapse;font-size:15px">{table}</table>{payment}<p style="line-height:1.6">{escape(notes[kind])}</p><p>Consulte Financeiro no painel da empresa.</p><p style="font-size:12px;color:#526579">Referência: {escape(str(invoice["id"]))}</p></div></body></html>'
     return json.dumps(
         {

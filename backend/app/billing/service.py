@@ -180,6 +180,8 @@ async def refresh_company(
             sub.update(
                 plan_id=plan_id, pending_version_id=None, pending_effective_at=None
             )
+        elif index == 0:
+            version_id = sub["initial_version_id"]
         else:
             await db.execute(
                 text("SELECT id FROM plans WHERE id=:id FOR SHARE"),
@@ -228,7 +230,7 @@ async def subscription_report(
     results = (
         await db.execute(
             text("""SELECT bp.id,bp.subscription_id,bp.starts_at,bp.ends_at,bp.cycle_index,
-        bp.plan_version_id,pv.name AS plan_name,pv.version,pv.included_trips,pv.price_cents,pv.extra_trip_cents,
+        bp.plan_version_id,bp.is_trial,pv.name AS plan_name,pv.version,pv.included_trips,pv.price_cents,pv.extra_trip_cents,
         COALESCE(SUM(e.quantity),0)::integer AS used_trips
         FROM billing_periods bp JOIN plan_versions pv ON pv.id=bp.plan_version_id
         LEFT JOIN usage_events e ON e.company_id=bp.company_id AND e.period_id=bp.id
@@ -245,6 +247,10 @@ async def subscription_report(
         period["extra_trips"] = max(0, period["used_trips"] - period["included_trips"])
         period["extras_cents"] = period["extra_trips"] * period["extra_trip_cents"]
         period["total_cents"] = period["price_cents"] + period["extras_cents"]
+        if period["is_trial"]:
+            period.update(
+                price_cents=0, extra_trip_cents=0, extras_cents=0, total_cents=0
+            )
         periods.append(period)
     current = next(
         (
@@ -262,6 +268,14 @@ async def subscription_report(
             if p["subscription_id"] == sub["id"] and p["starts_at"] > now
         ),
         None,
+    )
+    sub["trial_ends_on"] = (
+        sub["starts_on"]
+        if sub["billing_mode"] == "prepaid" and sub["trial_days"]
+        else None
+    )
+    sub["trialing"] = bool(
+        sub["status"] == "active" and current and current["is_trial"]
     )
     return {
         "subscription": sub,
@@ -344,6 +358,23 @@ async def consume_trip(
     )
     if not period_id:
         raise HTTPException(409, "A assinatura ainda não iniciou.")
+    trial = (
+        (
+            await db.execute(
+                text("""SELECT bp.is_trial,pv.included_trips,
+        COALESCE((SELECT sum(quantity) FROM usage_events WHERE period_id=bp.id),0) AS used
+        FROM billing_periods bp JOIN plan_versions pv ON pv.id=bp.plan_version_id WHERE bp.id=:id"""),
+                {"id": period_id},
+            )
+        )
+        .mappings()
+        .one()
+    )
+    if trial["is_trial"] and trial["used"] + quantity > trial["included_trips"]:
+        raise HTTPException(
+            409,
+            "A franquia do período de teste foi atingida. Não há cobrança de excedentes durante o teste.",
+        )
     row = (
         (
             await db.execute(

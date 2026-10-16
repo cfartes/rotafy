@@ -589,13 +589,15 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
 
-O administrador encontra as cobranças da assinatura no menu **Financeiro e cobranças**. Cada demonstrativo apresenta o ciclo, plano contratado, franquia, viagens utilizadas, excedentes, total e prazo para a confirmação do pagamento.
+O administrador encontra as cobranças da assinatura em **Meu plano** e no menu **Financeiro e cobranças**. Cada demonstrativo apresenta período, plano, utilização, excedentes, setup quando aplicável, total e prazo para pagamento.
 
-Um dia antes do fechamento, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva antes de efetuar o pagamento. No fechamento, o demonstrativo informa a chave Pix e o favorecido da Nexus. Quando disponibilizado pela Nexus, também apresenta o Pix Copia e Cola. Copie o código completo e informe no banco o valor total da cobrança; o código não possui valor predefinido.
+Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada a cobrança de setup e primeira mensalidade. Nas renovações, o demonstrativo reúne o próximo mês e os excedentes do período pago anterior. Contratos anteriores preservam suas condições.
+
+Um dia antes da cobrança, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva. Use **Pagar agora** para acessar o pagamento seguro, também enviado por e-mail e WhatsApp. A confirmação é automática após aprovação; o retorno do checkout pode aguardar alguns instantes pela conferência.
 
 O prazo é de dois dias úteis a partir do dia seguinte ao fechamento, no horário de Brasília, excluindo fins de semana e feriados do calendário nacional, incluindo a Sexta-feira da Paixão. Pontos facultativos e feriados estaduais ou municipais não entram nesse calendário.
 
-Depois de pagar, a equipe Nexus precisa conferir o recebimento e registrar a baixa. O Pix não é reconhecido automaticamente pelo sistema. Em caso de divergência, informe à Nexus a referência da cobrança e os dados do pagamento.
+Cobranças manuais ou antigas podem apresentar chave Pix, favorecido e Copia e Cola, com baixa pela Nexus. Nesses casos, siga as instruções do demonstrativo. Em caso de divergência ou pagamento em conferência, informe à Nexus a referência da cobrança e os dados do pagamento.
 
 Sem confirmação no prazo, novas operações ficam bloqueadas. A empresa mantém acesso às consultas, ao financeiro e aos embarques de viagens já vendidas. A confirmação remove a restrição da cobrança paga; outros débitos vencidos podem manter o bloqueio. Uma suspensão administrativa segue tratamento separado.
 

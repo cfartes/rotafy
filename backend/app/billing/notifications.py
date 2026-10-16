@@ -173,7 +173,7 @@ async def process_notification(engine, whatsapp=openwa_request, email=send_email
                     ),
                     "subject": {
                         "preview": "Nexus Rotafy — aviso de fechamento do ciclo",
-                        "invoice": "Nexus Rotafy — cobrança mensal por Pix",
+                        "invoice": "Nexus Rotafy — sua cobrança está disponível",
                         "blocked": "Nexus Rotafy — confirmação de pagamento pendente",
                         "paid": "Nexus Rotafy — pagamento confirmado",
                         "test": "Nexus Rotafy — teste do envio de cobrança (não pagar)",

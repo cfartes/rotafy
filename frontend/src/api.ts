@@ -11,6 +11,7 @@ export type User = {
   is_active: boolean;
 };
 export type Company = {
+  trial_ends_on?: string | null;
   operational_profile?: "tourism" | "regular";
   capabilities?: {
     packages: boolean;

@@ -151,7 +151,7 @@ async def authenticate(request: Request):
             ):
                 raise HTTPException(
                     402,
-                    "Há cobrança vencida aguardando confirmação do Pix pela Nexus. Novas operações estão bloqueadas; consultas e embarques de viagens já vendidas permanecem disponíveis.",
+                    "Há cobrança vencida aguardando confirmação do pagamento. Novas operações estão bloqueadas; consultas e embarques de viagens já vendidas permanecem disponíveis.",
                 )
         user = {
             key: value
