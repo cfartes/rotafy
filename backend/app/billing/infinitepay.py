@@ -17,7 +17,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.billing.collections import notify
 from app.config import Settings
-from app.identity import Auth, audit, nexus, throttle
+from app.identity import Auth, admin, audit, nexus, scope, throttle
 from app.integration_secrets import decrypt, encrypt
 from app.security import digest
 
@@ -381,6 +381,64 @@ async def retry_checkout(invoice_id: UUID, actor: Auth):
         "billing.checkout_retry",
         invoice_id,
     )
+    return {"status": "queued"}
+
+
+@router.post("/company/invoices/{invoice_id}/payment-link", status_code=202)
+async def own_payment_link(invoice_id: UUID, actor: Auth, request: Request):
+    admin(actor)
+    await throttle(request, f"company-checkout:{actor.company_id}", platform=True)
+    async with request.app.state.platform_engine.begin() as db:
+        await scope(db, actor.company_id)
+        row = (
+            (
+                await db.execute(
+                    text(
+                        "SELECT * FROM billing_invoices WHERE id=:id AND company_id=:company FOR UPDATE"
+                    ),
+                    {"id": invoice_id, "company": actor.company_id},
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if not row:
+            raise HTTPException(404, "Cobrança não encontrada.")
+        if (
+            row["status"] != "open"
+            or row["payment_provider"] != "infinitepay"
+            or row["payment_error"] == "payment_requires_review"
+            or row["total_cents"] <= 0
+        ):
+            raise HTTPException(
+                409, "Esta cobrança não está disponível para gerar link."
+            )
+        if row["payment_url"]:
+            return {"status": "ready"}
+        config = (
+            (await db.execute(text("SELECT * FROM billing_settings WHERE id=true")))
+            .mappings()
+            .one()
+        )
+        if not config["infinitepay_enabled"] or not config["infinitepay_handle"]:
+            raise HTTPException(
+                409, "O pagamento online precisa ser conferido pela Nexus."
+            )
+        await queue_checkout(db, row, config)
+        # Retrying preserves the snapshotted merchant and idempotent invoice reference.
+        await db.execute(
+            text(
+                "UPDATE billing_checkouts SET status='pending',next_attempt_at=now(),error_code=NULL WHERE invoice_id=:id AND status='failed'"
+            ),
+            {"id": invoice_id},
+        )
+        await audit(
+            db,
+            actor.company_id,
+            actor.user["id"],
+            "billing.checkout_requested",
+            invoice_id,
+        )
     return {"status": "queued"}
 
 

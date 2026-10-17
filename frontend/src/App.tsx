@@ -1,6 +1,7 @@
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
+import { BillingUpcoming } from "./BillingUpcoming";
 import { Collections } from "./Collections";
 import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
@@ -974,6 +975,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const isNexus = user.role === "nexus" || user.role === "nexus_staff";
   const fullNexus = user.role === "nexus";
   const isAdmin = user.role === "admin";
+  const financialOnly = isAdmin && !!user.financial_blocked;
   const [operationModule, setOperationModule] = useState("trips");
   const [ticketSalesVisit, setTicketSalesVisit] = useState(0);
   const [reportTripId, setReportTripId] = useState<string | null>(null);
@@ -991,7 +993,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "collections"
     | "nexus-team"
     | "whatsapp"
-  >("overview");
+  >(financialOnly ? "collections" : "overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingCollaborator, setEditingCollaborator] = useState<User | null>(
@@ -1017,7 +1019,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const team = useQuery({
     queryKey: ["users"],
     queryFn: () => api<User[]>("/users"),
-    enabled: isAdmin,
+    enabled: isAdmin && !financialOnly,
   });
   const company = useQuery({
     queryKey: ["company"],
@@ -1027,18 +1029,26 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const audit = useQuery({
     queryKey: ["audit"],
     queryFn: () => api<AuditEvent[]>("/audit"),
-    enabled: isNexus || isAdmin,
+    enabled: isNexus || (isAdmin && !financialOnly),
   });
   const rows = isNexus ? companies.data || [] : team.data || [];
   const active = rows.filter((row) => row.is_active).length;
-  const canManage = isNexus || isAdmin;
+  const canManage = isNexus || (isAdmin && !financialOnly);
   const loading = isNexus
     ? companies.isPending
     : isAdmin
       ? team.isPending
       : company.isPending;
   const queryError =
-    companies.error || team.error || company.error || audit.error;
+    companies.error || (!financialOnly && team.error) || company.error || (!financialOnly && audit.error);
+  useEffect(() => {
+    if (financialOnly) {
+      setPage("collections");
+      setCreating(false);
+      setBrandingOpen(false);
+      setEditingCollaborator(null);
+    }
+  }, [financialOnly]);
   useEffect(() => {
     if (queryError instanceof ApiError && queryError.status === 401) onLogout();
   }, [queryError, onLogout]);
@@ -1172,7 +1182,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       <aside className={`sidebar ${menu ? "open" : ""}`}>
         <Logo light />
         <div className="workspace">
-          {isAdmin && company.data && (
+          {isAdmin && !financialOnly && company.data && (
             <button
               type="button"
               className="workspace-edit"
@@ -1283,6 +1293,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 ]
               : []),
           ]
+            .filter((item) => !financialOnly || item.id === "collections")
             .sort((a, b) =>
               isNexus
                 ? 0
@@ -1322,12 +1333,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 {menuActive(item.id) && <span className="nav-active-dot" />}
               </button>
             ))}
-          <a
+          {!financialOnly && <a
             className="documentation-nav-link"
             href={isNexus ? "/nexus/ajuda" : "/ajuda"}
           >
             <BookOpen size={19} /> <span>Ajuda e manuais</span>
-          </a>
+          </a>}
         </nav>
         <div className="sidebar-bottom">
           <span className="secure-note">
@@ -1406,11 +1417,12 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           )}
           {user.financial_blocked && (
             <Alert>
-              Há cobrança vencida aguardando confirmação do Pix pela Nexus.
-              Novas operações estão bloqueadas; consultas e embarques permanecem
-              disponíveis.
+              {financialOnly
+                ? "Há cobrança vencida. Seu acesso está restrito ao Financeiro. Gere ou abra o link da fatura pendente para regularizar o pagamento."
+                : "Há cobrança vencida. Novas operações estão bloqueadas; as viagens já vendidas permanecem disponíveis para motorista e guia."}
             </Alert>
           )}
+          {isAdmin && page !== "collections" && <BillingUpcoming notice />}
           {page === "collections" && (fullNexus || isAdmin) && (
             <Collections nexus={isNexus} />
           )}

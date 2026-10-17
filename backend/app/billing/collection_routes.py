@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import EmailStr, Field, TypeAdapter, ValidationError, field_validator
 from sqlalchemy import text
 
-from app.billing.calendar import utc_now
+from app.billing.calendar import local_today, utc_now
 from app.billing.collections import financially_blocked, notify
 from app.billing.pix import key_payload, normalize_key, static_pix_key
 from app.config import Settings
@@ -330,6 +330,71 @@ async def own_invoices(actor: Auth):
             ).mappings()
         ],
     }
+
+
+@router.get("/company/billing/upcoming")
+async def upcoming_invoice(actor: Auth):
+    admin(actor)
+    from app.billing.upcoming import next_invoice
+
+    now = utc_now()
+    upcoming = await next_invoice(actor.db, actor.company_id, now)
+    subscription = (
+        (
+            await actor.db.execute(
+                text("""SELECT s.status,s.starts_on,s.trial_days,v.price_cents
+        FROM subscriptions s LEFT JOIN LATERAL (
+          SELECT plan_version_id FROM billing_periods p WHERE p.subscription_id=s.id
+          AND NOT p.is_trial AND p.starts_at<=:now AND p.ends_at>:now LIMIT 1
+        ) p ON true JOIN plan_versions v ON v.id=COALESCE(p.plan_version_id,s.initial_version_id)
+        WHERE s.company_id=:company ORDER BY s.created_at DESC LIMIT 1"""),
+                {"now": now, "company": actor.company_id},
+            )
+        )
+        .mappings()
+        .first()
+    )
+    blocked = await financially_blocked(actor.db, actor.company_id, now)
+    enabled = await actor.db.scalar(
+        text(
+            "SELECT billing_reminder_enabled FROM users WHERE id=:id AND company_id=:company"
+        ),
+        {"id": actor.user["id"], "company": actor.company_id},
+    )
+    days = (upcoming["due_on"] - local_today(now)).days if upcoming else None
+    return {
+        "upcoming": upcoming,
+        "reminder_enabled": bool(enabled),
+        "days_until_due": days,
+        "show_reminder": bool(enabled and days is not None and 0 <= days <= 5),
+        "plan_price_cents": subscription["price_cents"] if subscription else None,
+        "subscription_status": "blocked"
+        if blocked
+        else "trial"
+        if subscription
+        and subscription["status"] == "active"
+        and subscription["trial_days"]
+        and local_today(now) < subscription["starts_on"]
+        else subscription["status"]
+        if subscription
+        else "none",
+    }
+
+
+class ReminderPreference(Input):
+    enabled: bool
+
+
+@router.put("/company/billing/reminder")
+async def reminder_preference(data: ReminderPreference, actor: Auth):
+    admin(actor)
+    await actor.db.execute(
+        text(
+            "UPDATE users SET billing_reminder_enabled=:enabled WHERE id=:id AND company_id=:company"
+        ),
+        {"enabled": data.enabled, "id": actor.user["id"], "company": actor.company_id},
+    )
+    return {"reminder_enabled": data.enabled}
 
 
 class ConfirmPayment(Input):

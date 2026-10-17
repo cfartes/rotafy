@@ -1,6 +1,6 @@
 # Nexus Rotafy — documentação consolidada do projeto
 
-**Data da consolidação:** 16/10/2026.  
+**Data da consolidação:** 17/10/2026.\
 **Produto:** Nexus Rotafy.  
 **Responsável pela plataforma:** Nexus.  
 **Painel:** https://rotafy.nexusdataanalytics.tech  
@@ -122,7 +122,7 @@ As subseções abaixo detalham os recursos disponíveis à empresa e à equipe o
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **16/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **17/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -723,6 +723,17 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 
 O administrador encontra as cobranças da assinatura em **Meu plano** e no menu **Financeiro e cobranças**. Cada demonstrativo apresenta período, plano, utilização, excedentes, setup quando aplicável, total e prazo para pagamento.
 
+### A vencer e resumo da assinatura
+
+A tela Financeiro apresenta cinco cards: **Valor a vencer**, **Parcela X/12**, **Valor do plano**, **Próximo vencimento** e **Situação da assinatura**. Antes da emissão, o valor previsto soma a mensalidade e os excedentes apurados até o momento; pode mudar até o fechamento. Depois da emissão, prevalece o valor definitivo da fatura. O vencimento corresponde ao prazo de pagamento.
+
+**Parcela X/12** é um contador dos ciclos da assinatura: após 12/12, reinicia em 1/12. Não cria um contrato parcelado ou fidelidade. O setup é uma cobrança única e não entra nesse contador.
+
+Nos cinco dias anteriores ao vencimento e no próprio dia, o administrador vê uma caixa informativa ao abrir o app, com data e valor. Use **Desativar avisos de vencimento para mim** para ocultá-la. Para reativar, abra Financeiro e utilize **Reativar avisos de vencimento para mim**. A preferência fica salva por usuário; os demais administradores não são afetados. Os cards continuam disponíveis e os envios de cobrança por e-mail e WhatsApp mantêm seu funcionamento.
+
+Abrir essa tela não emite uma nova fatura. Para uma cobrança definitiva com pagamento online, utilize **Gerar link para pagamento** quando o link ainda não estiver disponível. O sistema prepara o link e mostra **Pagar agora**. Se houver pagamento em conferência, aguarde a orientação da Nexus antes de pagar novamente.
+
+
 Quando houver período de teste, ele aparece em **Meu plano**. A franquia do plano vale para o teste, sem cobrança de excedentes. Na data do término, começa uma nova franquia e é enviada somente a cobrança de setup, quando houver. A primeira mensalidade e os excedentes são cobrados após 30 dias de uso. Os ciclos seguintes também duram 30 dias e são cobrados no fechamento. Contratos anteriores preservam suas condições.
 
 Um dia antes da cobrança, o aviso é parcial e ainda pode mudar. Aguarde a cobrança definitiva. Use **Pagar agora** para acessar o pagamento seguro, também enviado por e-mail e WhatsApp. A confirmação é automática após aprovação; o retorno do checkout pode aguardar alguns instantes pela conferência.
@@ -731,7 +742,7 @@ O prazo é de dois dias úteis a partir do dia seguinte ao fechamento, no horár
 
 Cobranças manuais ou antigas podem apresentar chave Pix, favorecido e Copia e Cola, com baixa pela Nexus. Nesses casos, siga as instruções do demonstrativo. Em caso de divergência ou pagamento em conferência, informe à Nexus a referência da cobrança e os dados do pagamento.
 
-Sem confirmação no prazo, novas operações ficam bloqueadas. A empresa mantém acesso às consultas, ao financeiro e aos embarques de viagens já vendidas. A confirmação remove a restrição da cobrança paga; outros débitos vencidos podem manter o bloqueio. Uma suspensão administrativa segue tratamento separado.
+Sem confirmação no prazo, o administrador passa a acessar somente o Financeiro para consultar e pagar a cobrança pendente. Motorista e guia preservam o acesso à operação das viagens já vendidas. A confirmação remove a restrição da cobrança paga; outros débitos vencidos podem manter o bloqueio. Uma suspensão administrativa segue tratamento separado.
 
 Os avisos são enviados por e-mail aos administradores ativos e por WhatsApp ao telefone de contato da empresa. Mantenha seus dados atualizados.
 
@@ -901,7 +912,7 @@ Para um recebimento conferido fora desse fluxo, use **Baixa manual excepcional**
 
 #### Bloqueio e liberação
 
-Se não houver confirmação até o prazo, novas operações ficam bloqueadas e a empresa recebe aviso por e-mail e WhatsApp. Consultas, acesso ao financeiro, leitura de bilhetes e operação dos embarques e deslocamentos já vendidos permanecem disponíveis.
+Se não houver confirmação até o prazo, a empresa recebe aviso por e-mail e WhatsApp. O administrador fica restrito ao Financeiro, onde pode solicitar o link da cobrança pendente e pagar. Motorista e guia preservam o acesso às viagens já vendidas. O resumo financeiro mostra valor a vencer, contador de ciclos X/12, mensalidade, vencimento e situação. O aviso de cinco dias pode ser desabilitado individualmente, sem alterar as mensagens de cobrança.
 
 A baixa retira a restrição daquela cobrança. Se houver outras cobranças vencidas, a empresa continua restrita. Uma suspensão administrativa permanece independente e não é removida pelo pagamento.
 

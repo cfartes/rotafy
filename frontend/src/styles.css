@@ -426,6 +426,48 @@ textarea:focus {
   padding: 14px 10px;
   border-radius: 9px;
 }
+.billing-upcoming {
+  padding: 20px;
+  border: 1px solid #0c7a7640;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.billing-due-notice {
+  background: #eef8f7;
+  color: #0b253f;
+}
+.billing-upcoming-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.billing-upcoming-title h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.billing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.billing-summary-card {
+  border: 1px solid #d7e5e8;
+  border-top: 3px solid #0c7a76;
+  border-radius: 10px;
+  background: #fff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.billing-summary-card strong {
+  font-size: 1.25rem;
+}
+.billing-summary-card small {
+  color: #577084;
+}
 .workspace:has(.workspace-edit) {
   padding-right: 30px;
 }

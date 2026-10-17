@@ -142,7 +142,29 @@ async def authenticate(request: Request):
             allowed = request.url.path in {
                 "/api/v1/auth/logout",
                 "/api/v1/auth/password",
+                "/api/v1/company/billing/reminder",
             }
+            financial_link = re.fullmatch(
+                r"/api/v1/company/invoices/[0-9a-f-]+/payment-link", request.url.path
+            )
+            if financial_link:
+                allowed = True
+            if blocked and row["role"] == "admin":
+                financial_read = request.method in {
+                    "GET",
+                    "HEAD",
+                } and request.url.path in {
+                    "/api/v1/auth/me",
+                    "/api/v1/company",
+                    "/api/v1/company/invoices",
+                    "/api/v1/company/billing/upcoming",
+                    "/api/v1/company/subscription",
+                }
+                if not financial_read and not allowed:
+                    raise HTTPException(
+                        402,
+                        "Acesso restrito ao Financeiro até a confirmação do pagamento.",
+                    )
             if (
                 blocked
                 and request.method not in {"GET", "HEAD", "OPTIONS"}
