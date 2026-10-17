@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import QRCode from "qrcode";
+import { BillingUpcoming } from "./BillingUpcoming";
 import { moneyInput, parseMoney } from "./billing/types";
 
 type Settings = {
@@ -668,7 +669,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
     setBusy(true);
     setError("");
     try {
-      await api(`/nexus/billing/invoices/${i.id}/retry-checkout`, {
+      await api(nexus ? `/nexus/billing/invoices/${i.id}/retry-checkout` : `/company/invoices/${i.id}/payment-link`, {
         method: "POST",
       });
       await cache.invalidateQueries({ queryKey: ["collection-invoices"] });
@@ -731,11 +732,10 @@ export function Collections({ nexus }: { nexus: boolean }) {
           pagamento têm confirmação automática; pagamentos manuais dependem da
           conferência da Nexus.
         </p>
+        {!nexus && <BillingUpcoming />}
         {blocked && (
           <Alert>
-            Há cobrança vencida aguardando confirmação. Novas operações estão
-            bloqueadas. Consultas e operação das viagens já vendidas permanecem
-            disponíveis.
+            Há cobrança vencida aguardando confirmação. Regularize a fatura pendente para liberar o acesso. Motorista e guia mantêm acesso às viagens já vendidas.
           </Alert>
         )}
         <Field label="Situação da cobrança">
@@ -765,6 +765,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
             filter === "all" ||
             (filter === "overdue" ? i.overdue : i.status === filter),
         )
+        .sort((a, b) => blocked ? Number(b.overdue) - Number(a.overdue) : 0)
         .map((i) => (
           <article
             className="operation-card package-route-card modal-form"
@@ -852,14 +853,14 @@ export function Collections({ nexus }: { nexus: boolean }) {
                       : "Preparando link de pagamento. Esta tela será atualizada automaticamente."}
                   </p>
                 )}
-                {nexus && !i.payment_url && (
+                {!i.payment_url && i.payment_error !== "payment_requires_review" && (
                   <button
                     type="button"
                     className="button secondary"
                     disabled={busy}
                     onClick={() => void retryLink(i)}
                   >
-                    Tentar gerar link novamente
+                    {nexus ? "Tentar gerar link novamente" : "Gerar link para pagamento"}
                   </button>
                 )}
               </div>

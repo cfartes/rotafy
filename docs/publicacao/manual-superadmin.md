@@ -162,7 +162,7 @@ Para um recebimento conferido fora desse fluxo, use **Baixa manual excepcional**
 
 ### Bloqueio e liberação
 
-Se não houver confirmação até o prazo, novas operações ficam bloqueadas e a empresa recebe aviso por e-mail e WhatsApp. Consultas, acesso ao financeiro, leitura de bilhetes e operação dos embarques e deslocamentos já vendidos permanecem disponíveis.
+Se não houver confirmação até o prazo, a empresa recebe aviso por e-mail e WhatsApp. O administrador fica restrito ao Financeiro, onde pode solicitar o link da cobrança pendente e pagar. Motorista e guia preservam o acesso às viagens já vendidas. O resumo financeiro mostra valor a vencer, contador de ciclos X/12, mensalidade, vencimento e situação. O aviso de cinco dias pode ser desabilitado individualmente, sem alterar as mensagens de cobrança.
 
 A baixa retira a restrição daquela cobrança. Se houver outras cobranças vencidas, a empresa continua restrita. Uma suspensão administrativa permanece independente e não é removida pelo pagamento.
 

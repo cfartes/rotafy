@@ -149,8 +149,10 @@ def test_payment_unblocks_only_financial_debt_preserving_admin_suspension(
     assert client.get("/api/v1/auth/me").json()["financial_blocked"]
     assert client.get("/api/v1/company/invoices").json()["blocked"]
     assert client.post("/api/v1/vehicles", json={}).status_code == 402
-    # Boarding mutation is not financially blocked; it reaches its own validation/authorization.
+    # Administrators are restricted to Finance; guides retain boarding access.
     path = "/api/v1/trips/{0}/vehicles/{0}/legs/{0}/scan".format(uuid4())
+    assert client.post(path, json={}).status_code == 402
+    login(client, email="guide@example.com")
     assert client.post(path, json={}).status_code != 402
     login(client, email="nexus@example.com", nexus=True)
     with owner.begin() as db:
