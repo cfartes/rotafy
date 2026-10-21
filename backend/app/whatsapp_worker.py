@@ -87,7 +87,11 @@ async def process_company(engine, company_id, transport=openwa_request):
             {"id": company_id},
         ):
             return False
-        if item["kind"] == "invitation":
+        if item["kind"] in {"departure", "proximity"}:
+            from app.tracking import alert_valid
+
+            valid = await alert_valid(db, item)
+        elif item["kind"] == "invitation":
             valid = await db.scalar(
                 text("""SELECT 1 FROM password_resets r JOIN users u ON u.id=r.user_id
               WHERE r.id=:reset AND u.id=:user AND u.is_active AND r.used_at IS NULL AND r.expires_at>now()
@@ -250,6 +254,9 @@ async def main():
                         (await db.execute(text("SELECT id FROM companies"))).scalars()
                     )
                 for company in companies:
+                    from app.tracking import process_alerts
+
+                    await process_alerts(engine, company)
                     await process_company(engine, company)
                 from app.session_discovery import process_discovery
 

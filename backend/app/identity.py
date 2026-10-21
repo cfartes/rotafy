@@ -171,6 +171,11 @@ async def authenticate(request: Request):
                 r"/api/v1/trips/[0-9a-f-]+/vehicles/[0-9a-f-]+/legs/[0-9a-f-]+/(journey|boarding|scan)",
                 request.url.path,
             )
+            if row["role"] in {"driver", "guide"} and re.fullmatch(
+                r"/api/v1/tracking/sessions(?:/[0-9a-f-]+(?:/positions)?)?",
+                request.url.path,
+            ):
+                boarding = True
             allowed = request.url.path in {
                 "/api/v1/auth/logout",
                 "/api/v1/auth/password",

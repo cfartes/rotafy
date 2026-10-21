@@ -1,4 +1,5 @@
 import { MobileRelease } from "./MobileRelease";
+import { Tracking } from "./Tracking";
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
@@ -996,6 +997,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "operations"
     | "sales"
     | "routes"
+    | "tracking"
     | "ticket-sales"
     | "reports"
     | "integrations"
@@ -1117,7 +1119,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "contract" ? "Meu contrato" : page === "whatsapp"
+    page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
@@ -1168,6 +1170,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "routes",
     "packages",
     "operations",
+    "tracking",
     "ticket-sales",
     "allocations",
     "passengers",
@@ -1261,6 +1264,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                       ]
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
+                  ...(isAdmin ? [{ id: "tracking", label: "Rastreamento", icon: Route }] : []),
                   { id: "vehicles", label: "Veículos", icon: Route },
                   ...(companyCapabilities(company.data).packages
                     ? [{ id: "packages", label: "Pacotes", icon: Route }]
@@ -1477,6 +1481,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "routes" &&
             !isNexus &&
             (isAdmin || user.role === "attendant") && <RouteCatalog />}
+          {page === "tracking" && isAdmin && <Tracking />}
           {page === "operations" && (
             <Operations
               key={`${operationModule}:${reportTripId || ""}`}

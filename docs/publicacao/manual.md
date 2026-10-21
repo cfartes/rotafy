@@ -669,3 +669,16 @@ O sistema verifica a versão ao abrir e ao retornar à tela. Quando houver atual
 No Android, a partir da versão 1.7.0, o botão abre o download de uma versão mais nova disponibilizada pela Nexus. Sincronize os registros pendentes e instale por cima do aplicativo atual, sem desinstalar. Versões anteriores precisam receber a primeira atualização manualmente. Sem conexão, o trabalho offline permanece disponível.
 
 Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distinguem os nomes; os passageiros aparecem na lista. Cada mensagem de bilhete identifica o passageiro do QR correspondente.
+
+
+## Rastreamento e avisos de embarque {#rastreamento}
+
+O administrador acessa **Rastreamento** para ativar a coleta durante as viagens, ajustar o raio de proximidade (inicialmente cinco quilômetros) e habilitar o lembrete de saída. Os controles são independentes: o lembrete pode funcionar sem GPS.
+
+Em **Locais de embarque para avisos**, selecione a viagem e confirme cada local no mapa, incluindo hotéis. Sem coordenadas confirmadas, não há aviso de proximidade. Alterar o endereço exige nova confirmação. É possível clicar no mapa ou colar coordenadas explícitas de um link completo do Google Maps.
+
+No Android, a partir de 1.8.0, inicie o trecho e use **Assumir rastreamento deste veículo**. Autorize a localização e mantenha o celular no veículo. Uma notificação acompanha a coleta a cada cinco minutos. Outro motorista ou guia atribuído pode confirmar a transferência. O rastreamento termina na chegada; cada retorno ou próximo trecho exige nova ativação. **Interromper rastreamento neste celular** permite parar o compartilhamento.
+
+O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.
+
+Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, embarque confirmado no mapa e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.

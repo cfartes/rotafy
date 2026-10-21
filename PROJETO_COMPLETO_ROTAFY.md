@@ -1157,3 +1157,8 @@ O responsável pelo projeto aprovou o contrato r2 em 21/10/2026 após revisar o 
 ## Identificação nas mensagens e atualização dos aplicativos
 
 As mensagens de reserva identificam separadamente empresa, responsável e passageiros. O bilhete enviado por WhatsApp identifica o passageiro do QR correspondente. O navegador verifica a versão publicada ao abrir ou retornar à janela e oferece atualização confirmada pelo usuário. O Android, a partir da versão 1.7.0, verifica versões superiores do mesmo aplicativo ao iniciar ou retornar ao primeiro plano. O Superadmin completo publica o APK em Configurações, com histórico de compilação e SHA-256; arquivos ficam em volume persistente e os metadados em tabela própria. Consulte `docs/ATUALIZACOES_DO_APP.md` para distribuição e primeira instalação.
+
+
+## Rastreamento por APK e alertas de embarque
+
+O administrador da empresa habilita o rastreamento por deslocamento e acompanha a trilha de posições coletadas a cada cinco minutos. O APK 1.8.0 permite que um motorista/guia atribuído assuma o celular responsável pelo veículo, com transferência, serviço Android visível e encerramento na chegada. A empresa pode desligar a coleta e configurar o raio de proximidade, inicialmente cinco quilômetros. Pontos de embarque são confirmados no mapa, sem API paga. A fila WhatsApp envia proximidade e lembretes nos quinze minutos anteriores à saída de cada trecho, ida e volta, uma vez por família/veículo/deslocamento. Alertas vencidos e passageiros embarcados são revalidados antes do envio. Posições ficam retidas por noventa dias. Consulte `docs/RASTREAMENTO_E_AVISOS.md` para operação, limites e homologação.
