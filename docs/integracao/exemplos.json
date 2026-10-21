@@ -1,0 +1,157 @@
+{
+  "login": {
+    "company": "empresaexemplo",
+    "email": "integracao@example.com",
+    "password": "SENHA_DO_USUARIO_TECNICO"
+  },
+  "create_driver": {
+    "full_name": "Motorista Exemplo",
+    "email": "motorista@example.com",
+    "password": "ExemploTrocar!2026",
+    "role": "driver"
+  },
+  "create_vehicle": {
+    "name": "Onibus Exemplo",
+    "plate": "ABC1D23",
+    "capacity": 46,
+    "is_active": true
+  },
+  "create_trip": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000001",
+    "name": "Passeio Blumenau e Navegantes",
+    "destination": "Navegantes",
+    "mode": "round_trip",
+    "price_cents": 12000,
+    "legs": [
+      {
+        "origin": "Blumenau",
+        "destination": "Navegantes",
+        "origin_city_id": 4202404,
+        "destination_city_id": 4211306,
+        "origin_uf": "SC",
+        "destination_uf": "SC",
+        "origin_address": "Endereco do embarque em Blumenau",
+        "destination_address": "Endereco da chegada em Navegantes",
+        "starts_at": "2026-12-10T08:00:00-03:00",
+        "ends_at": "2026-12-10T09:30:00-03:00",
+        "stops": []
+      },
+      {
+        "origin": "Navegantes",
+        "destination": "Blumenau",
+        "origin_city_id": 4211306,
+        "destination_city_id": 4202404,
+        "origin_uf": "SC",
+        "destination_uf": "SC",
+        "origin_address": "Endereco do retorno em Navegantes",
+        "destination_address": "Endereco da chegada em Blumenau",
+        "starts_at": "2026-12-10T17:00:00-03:00",
+        "ends_at": "2026-12-10T18:30:00-03:00",
+        "stops": []
+      }
+    ],
+    "vehicles": [
+      {
+        "vehicle_id": "00000003-0000-4000-8000-000000000003",
+        "driver_ids": [
+          "00000002-0000-4000-8000-000000000002"
+        ],
+        "guide_ids": []
+      }
+    ]
+  },
+  "availability": {
+    "group_size": 1
+  },
+  "create_reservation": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000002",
+    "contact_name": "Responsavel Exemplo",
+    "phone": "+5511999999999",
+    "status": "confirmed",
+    "allocation_id": "00000005-0000-4000-8000-000000000005",
+    "passengers": [
+      {
+        "full_name": "Passageiro Exemplo",
+        "is_foreign": false,
+        "under_five": false
+      }
+    ],
+    "journeys": [
+      {
+        "leg_id": "00000006-0000-4000-8000-000000000006",
+        "boarding_position": 0,
+        "dropoff_position": 1,
+        "boarding_location": {
+          "name": "Hotel Exemplo",
+          "address": "Endereco completo do hotel em Blumenau",
+          "complement": "Recepcao",
+          "order": 1
+        }
+      },
+      {
+        "leg_id": "00000007-0000-4000-8000-000000000007",
+        "boarding_position": 0,
+        "dropoff_position": 1
+      }
+    ]
+  },
+  "send_reservation": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000003"
+  },
+  "send_ticket": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000004",
+    "token": "bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "start_journey": {
+    "status": "in_progress"
+  },
+  "scan": {
+    "token": "bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "board": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000005",
+    "passenger_id": "00000009-0000-4000-8000-000000000009",
+    "expected_version": 0,
+    "action": "board",
+    "token": "bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "device_id": "aparelho-exemplo-01",
+    "offline": false
+  },
+  "disembark": {
+    "operation_key": "aaaaaaaa-0000-4000-8000-000000000006",
+    "passenger_id": "00000009-0000-4000-8000-000000000009",
+    "expected_version": 1,
+    "action": "disembark",
+    "device_id": "aparelho-exemplo-01",
+    "offline": false
+  },
+  "complete_journey": {
+    "status": "completed",
+    "arrival_location": {
+      "status": "unavailable",
+      "reason": "position_unavailable"
+    }
+  },
+  "paid": {
+    "is_paid": true
+  },
+  "cancel_reservation": {
+    "status": "cancelled"
+  },
+  "integration_key": {
+    "name": "Parceiro Exemplo",
+    "valid_days": 90
+  },
+  "ids": {
+    "company": "00000001-0000-4000-8000-000000000001",
+    "driver": "00000002-0000-4000-8000-000000000002",
+    "vehicle": "00000003-0000-4000-8000-000000000003",
+    "trip": "00000004-0000-4000-8000-000000000004",
+    "allocation": "00000005-0000-4000-8000-000000000005",
+    "leg_ida": "00000006-0000-4000-8000-000000000006",
+    "leg_volta": "00000007-0000-4000-8000-000000000007",
+    "reservation": "00000008-0000-4000-8000-000000000008",
+    "passenger": "00000009-0000-4000-8000-000000000009",
+    "ticket": "0000000a-0000-4000-8000-00000000000a"
+  }
+}

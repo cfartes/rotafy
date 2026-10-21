@@ -152,3 +152,6 @@ O projeto Flutter está em [mobile/](mobile/README.md), usando a mesma API e as 
 Detalhes e endpoints em [cadastro SaaS](docs/CADASTRO_SAAS.md).
 
 Instalador Hostinger/Traefik: [guia e comandos](docs/INSTALACAO_VPS.md).
+## Integração com sistemas parceiros
+
+O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os endpoints existentes, dados necessários, autenticação, exemplos, OpenAPI e coleção Postman para integrar um sistema externo à comunicação e à operação pelo APK.
