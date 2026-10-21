@@ -5,9 +5,11 @@ import json
 import secrets
 from datetime import timedelta
 from typing import Literal
+from urllib.parse import quote
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from pydantic import AwareDatetime, Field, model_validator
 from sqlalchemy import text
 
@@ -19,10 +21,23 @@ from app.operations import detail as trip_detail
 from app.public_sales import Tracking, limited, public_company, token_company
 from app.reservations import reservation_detail
 from app.security import digest
-from app.ticket_links import ticket_url
+from app.ticket_links import ticket_token, ticket_url
 from app.whatsapp import queue_message
 
 router = APIRouter(prefix="/api/v1", tags=["Bilhetes e embarque"])
+
+
+@router.api_route("/public/bilhete/{code}", methods=["GET", "HEAD"])
+async def open_ticket_link(code: str):
+    try:
+        token = ticket_token(code)
+    except ValueError:
+        raise HTTPException(404, "Link do bilhete inválido.") from None
+    return RedirectResponse(
+        "/bilhete#token=" + quote(token, safe=""),
+        status_code=303,
+        headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
+    )
 
 
 class BoardingCommand(OperationalInput):
