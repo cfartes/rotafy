@@ -131,8 +131,40 @@ async def authenticate(request: Request):
                     403, "Validação de segurança falhou. Atualize a página."
                 )
         blocked = False
+        contract_required = False
         if not platform:
             from app.billing.collections import financially_blocked
+            from app.contracts import pending
+
+            contract_required = await pending(db, company_id)
+            contract_path = request.url.path.startswith("/api/v1/company/contract")
+            contract_allowed = request.url.path in {
+                "/api/v1/auth/me",
+                "/api/v1/auth/logout",
+                "/api/v1/auth/password",
+            } or (
+                row["role"] == "admin"
+                and (
+                    contract_path
+                    or request.url.path
+                    in {
+                        "/api/v1/company",
+                        "/api/v1/company/invoices",
+                        "/api/v1/company/billing/upcoming",
+                        "/api/v1/company/billing/reminder",
+                        "/api/v1/company/subscription",
+                    }
+                    or re.fullmatch(
+                        r"/api/v1/company/invoices/[0-9a-f-]+/payment-link",
+                        request.url.path,
+                    )
+                )
+            )
+            if contract_required and not contract_allowed:
+                raise HTTPException(
+                    423,
+                    "O representante da empresa deve ler e aceitar o contrato no primeiro acesso.",
+                )
 
             blocked = await financially_blocked(db, company_id)
             boarding = re.fullmatch(
@@ -148,6 +180,10 @@ async def authenticate(request: Request):
                 r"/api/v1/company/invoices/[0-9a-f-]+/payment-link", request.url.path
             )
             if financial_link:
+                allowed = True
+            if contract_path or (
+                contract_required and request.url.path == "/api/v1/company"
+            ):
                 allowed = True
             if blocked and row["role"] == "admin":
                 financial_read = request.method in {
@@ -181,6 +217,7 @@ async def authenticate(request: Request):
             if key not in ("session_id", "csrf_hash")
         }
         user["financial_blocked"] = blocked
+        user["contract_pending"] = contract_required
         yield Actor(db, user, row["session_id"], platform)
 
 

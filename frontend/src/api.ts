@@ -1,6 +1,7 @@
 export type Role =
   "nexus" | "nexus_staff" | "admin" | "attendant" | "guide" | "driver";
 export type User = {
+  contract_pending?: boolean;
   financial_blocked?: boolean;
   contact_phone?: string | null;
   id: string;
@@ -11,6 +12,15 @@ export type User = {
   is_active: boolean;
 };
 export type Company = {
+  address?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  required_contract_version_id?: string | null;
+  contract_sha256?: string | null;
   trial_ends_on?: string | null;
   operational_profile?: "tourism" | "regular";
   capabilities?: {

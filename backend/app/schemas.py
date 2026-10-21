@@ -4,37 +4,17 @@ from uuid import UUID
 import phonenumbers
 from pydantic import (
     BaseModel,
-    ConfigDict,
     EmailStr,
     Field,
-    ValidationInfo,
     field_validator,
 )
 
+from app.company_address import AddressInput
 from app.documents import company_document
 from app.password_policy import validate_password
+from app.schemas_base import Input
 
 Role = Literal["admin", "attendant", "guide", "driver"]
-
-
-class Input(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def trim_labels(cls, value, info: ValidationInfo):
-        if info.field_name in {
-            "full_name",
-            "trade_name",
-            "corporate_name",
-            "company",
-            "email",
-            "cnpj",
-            "name",
-            "code",
-        } and isinstance(value, str):
-            return value.strip()
-        return value
 
 
 class Login(Input):
@@ -77,7 +57,7 @@ class CompanyContact(Input):
         return phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164)
 
 
-class CompanyCreate(CompanyContact):
+class CompanyCreate(CompanyContact, AddressInput):
     contact_phone: str = Field(min_length=1, max_length=50)
     operational_profile: Literal["tourism", "regular"]
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+$")
@@ -109,7 +89,7 @@ class ActiveUpdate(Input):
     is_active: bool
 
 
-class CompanyDetailsUpdate(CompanyContact):
+class CompanyDetailsUpdate(CompanyContact, AddressInput):
     operational_profile: Literal["tourism", "regular"] | None = None
     expected_profile: Literal["tourism", "regular"] | None = None
     slug: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -126,7 +106,7 @@ class CompanyDetailsUpdate(CompanyContact):
         return result
 
 
-class BrandingUpdate(CompanyContact):
+class BrandingUpdate(CompanyContact, AddressInput):
     cnpj: str | None = None
     trade_name: str = Field(min_length=2, max_length=150)
     corporate_name: str = Field(min_length=2, max_length=150)
@@ -161,6 +141,7 @@ class ResetRedeem(Input):
 
 
 class UserView(BaseModel):
+    contract_pending: bool = False
     financial_blocked: bool = False
     contact_phone: str | None = None
     id: UUID

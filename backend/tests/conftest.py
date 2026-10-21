@@ -77,6 +77,7 @@ def seeded(owner):
         db.execute(
             text("TRUNCATE companies,platform_users,auth_attempts,plans CASCADE")
         )
+        db.execute(text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true"))
         db.execute(
             text("""INSERT INTO plans(id,code,name) VALUES
             ('10000000-0000-4000-8000-000000000001','basic','Basic'),
