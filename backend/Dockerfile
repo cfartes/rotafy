@@ -5,5 +5,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN chmod -R a+rX /app && useradd --create-home rotafy
+RUN mkdir -p /app/mobile-releases && chown rotafy:rotafy /app/mobile-releases
 USER rotafy
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

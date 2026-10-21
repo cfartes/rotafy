@@ -1,3 +1,4 @@
+import { MobileRelease } from "./MobileRelease";
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
@@ -1442,6 +1443,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           )}
           {page === "integrations" && fullNexus && <IntegrationSettings />}
           {page === "integrations" && fullNexus && <NexusContracts />}
+          {page === "integrations" && fullNexus && <MobileRelease />}
           {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
           {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}

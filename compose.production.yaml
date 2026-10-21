@@ -68,7 +68,7 @@ services:
       traefik.http.routers.rotafy-tech-api.priority: "100"
       traefik.http.routers.rotafy-tech-api.service: rotafy-tech-api
       traefik.http.services.rotafy-tech-api.loadbalancer.server.port: "8000"
-    volumes: [integration_keys:/run/rotafy:ro]
+    volumes: [integration_keys:/run/rotafy:ro, mobile_releases:/app/mobile-releases]
     depends_on:
       bootstrap: {condition: service_completed_successfully}
       integration-secrets: {condition: service_completed_successfully}
@@ -131,7 +131,10 @@ services:
       retries: 3
   web:
     image: nexus-rotafy-tech-web:${RELEASE:?Configure RELEASE}
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        APP_RELEASE: ${RELEASE:-development}
     restart: unless-stopped
     logging: *logging
     networks: [frontend, traefik]
@@ -172,3 +175,4 @@ networks:
 volumes:
   database: {}
   integration_keys: {}
+  mobile_releases: {}

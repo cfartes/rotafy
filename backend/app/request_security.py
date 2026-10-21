@@ -19,8 +19,17 @@ class RequestBodyLimit:
         invalid = len(lengths) > 1 or (
             lengths and (not lengths[0].isdigit() or len(lengths[0]) > 10)
         )
-        if invalid or (lengths and int(lengths[0]) > self.limit):
+        # The APK endpoint authenticates before streaming and enforces its own
+        # bounded limit. Do not buffer a large upload before authentication.
+        apk_upload = (
+            scope.get("path") == "/api/v1/nexus/mobile-release"
+            and scope.get("method") == "PUT"
+        )
+        limit = 150 * 1024 * 1024 if apk_upload else self.limit
+        if invalid or (lengths and int(lengths[0]) > limit):
             return await self.reject(scope, receive, send)
+        if apk_upload:
+            return await self.app(scope, receive, send)
         body = bytearray()
         while True:
             message = await receive()

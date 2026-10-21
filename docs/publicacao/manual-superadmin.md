@@ -192,3 +192,10 @@ A proposta fixa as condições do plano escolhido e envia um convite por e-mail 
 O representante lê, baixa e aceita o aditivo no próprio acesso, com confirmação por e-mail. Somente então a mudança fica agendada para o próximo ciclo, sem novo setup, reinício do teste ou cobrança proporcional. Caso a data prevista passe, o cliente prepara outra cópia com vigência atualizada. O botão de cancelamento de proposta não remove uma alteração já aceita.
 
 A edição do catálogo não reajusta automaticamente os clientes nos ciclos futuros. Para alterar as condições de uma empresa, proponha um aditivo. Em **Empresas → Contrato**, consulte o histórico e baixe os aditivos aceitos e seus comprovantes. O contrato inicial e os documentos anteriores são preservados.
+
+
+## 9. Publicar atualização Android {#atualizacao-android}
+
+Em **Configurações → Atualizações do aplicativo Android**, selecione o APK e clique em **Publicar atualização Android**. A tela informa versão, compilação, data, SHA-256 e download. Utilize uma compilação superior, com o mesmo aplicativo e chave de assinatura.
+
+A partir de 1.7.0, o Android consulta atualizações ao abrir e oferece o botão para baixar uma versão mais nova. Versões anteriores precisam receber essa primeira atualização manualmente. O cliente instala por cima, sem desinstalar, e deve sincronizar os registros pendentes antes.

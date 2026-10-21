@@ -101,20 +101,20 @@ async def queue_reset(
     company_label = "Nexus"
     if company_id:
         company_label = await db.scalar(
-            text("SELECT slug FROM companies WHERE id=:id"), {"id": company_id}
+            text("SELECT trade_name FROM companies WHERE id=:id"), {"id": company_id}
         )
     body = f"Olá, {user['full_name']}.\n\n{label}.\nEmpresa: {company_label}\n\nDefina sua senha neste link:\n{link}\n\nValidade: {'24 horas' if invitation else '1 hora'}. O link pode ser usado uma vez. Se não solicitou este acesso, ignore a mensagem."
     if company_details:
         portal = (
             settings.public_base_url.rstrip("/")
             + "/?empresa="
-            + quote(company_label, safe="")
+            + quote(company_details["slug"], safe="")
         )
         body = (
             f"Olá, {user['full_name']}!\n\nBem-vindo ao Nexus Rotafy\nSeu acesso foi preparado pela equipe Nexus.\n\n"
             f"DADOS DA EMPRESA\nNome: {company_details['trade_name']}\nRazão social: {company_details['corporate_name']}\n"
             f"CPF/CNPJ: {company_details['cnpj']}\nTelefone: {company_details['contact_phone']}\n\n"
-            f"SEU ACESSO\nPágina de acesso: {portal}\nIdentificador da empresa: {company_label}\nE-mail de login: {user['email']}\n\n"
+            f"SEU ACESSO\nPágina de acesso: {portal}\nIdentificador da empresa: {company_details['slug']}\nE-mail de login: {user['email']}\n\n"
             f"DEFINA SUA SENHA\n{link}\n\nO link é válido por 24 horas e pode ser utilizado uma única vez. Não compartilhe este link.\n"
             "Após definir a senha, entre usando o identificador da empresa e seu e-mail.\nEquipe Nexus Rotafy"
         )
