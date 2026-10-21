@@ -640,7 +640,7 @@ Os avisos são enviados por e-mail aos administradores ativos e por WhatsApp ao 
 
 Quando a Nexus publica uma versão aprovada do contrato, os novos cadastros passam a exigir o aceite do representante da empresa. Cadastros anteriores à ativação não recebem aceite retroativo.
 
-1. Entre com o administrador da empresa e confira seus dados. Complete endereço, número, bairro, cidade, UF e CEP; complemento é opcional.
+1. Entre com o administrador da empresa e confira seus dados. Comece pelo CEP: ao completar oito dígitos, o sistema preenche endereço, bairro, cidade e UF. Confira os dados e informe número e complemento, se houver. Todos os campos podem ser corrigidos manualmente; se a consulta falhar, preencha o endereço diretamente.
 2. Informe nome, CPF e função do representante e declare os poderes para representar a empresa.
 3. Clique em **Conferir dados e preparar contrato**. Use **Ler contrato completo** e **Baixar PDF antes de aceitar** para consultar a cópia personalizada.
 4. Após abrir o texto integral, solicite o código pelo e-mail do seu acesso. O código vale por dez minutos e permite até cinco tentativas. Se os dados estiverem errados, solicite a correção ou gere outra cópia antes de aceitar.

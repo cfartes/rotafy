@@ -160,6 +160,13 @@ async def authenticate(request: Request):
                     )
                 )
             )
+            postal_lookup = request.method == "GET" and bool(
+                re.fullmatch(
+                    r"/api/v1/locations/postal-code/[0-9]{8}", request.url.path
+                )
+            )
+            if row["role"] == "admin" and postal_lookup:
+                contract_allowed = True
             if contract_required and not contract_allowed:
                 raise HTTPException(
                     423,
@@ -201,6 +208,7 @@ async def authenticate(request: Request):
                     "/api/v1/company/billing/upcoming",
                     "/api/v1/company/subscription",
                 }
+                financial_read = financial_read or (contract_required and postal_lookup)
                 if not financial_read and not allowed:
                     raise HTTPException(
                         402,

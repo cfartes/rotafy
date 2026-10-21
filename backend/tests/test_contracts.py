@@ -84,6 +84,19 @@ def prepare(client):
     return result.json()
 
 
+def test_pending_contract_can_lookup_cep_without_opening_operational_access(
+    client, contract_company, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.postal_codes.lookup",
+        lambda postal, day: {"postal_code": postal, **ADDRESS},
+    )
+    result = client.get("/api/v1/locations/postal-code/89010000")
+    assert result.status_code == 200, result.text
+    assert client.get("/api/v1/trips").status_code == 423
+    assert client.get("/api/v1/users").status_code == 423
+
+
 def view_and_code(client, owner, document):
     data = {"document_id": document["id"], "sha256": document["sha256"]}
     assert client.post("/api/v1/company/contract/viewed", json=data).status_code == 200
