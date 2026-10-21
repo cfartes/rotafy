@@ -27,6 +27,19 @@ def output(args):
     return execute(args, text=True, capture_output=True, cwd=ROOT).stdout.strip()
 
 
+def activate_approved_contract(run):
+    try:
+        run("exec", "-T", "api", "python", "-m", "app.approved_contract")
+    except subprocess.CalledProcessError as error:
+        if error.returncode != 2:
+            raise
+        print(
+            "Contrato ainda não ativado: configure o e-mail e a chave de proteção, "
+            "depois execute app.approved_contract conforme docs/CONTRATOS_E_ACEITE.md. "
+            "Os serviços foram atualizados; nenhum aceite de cliente foi criado."
+        )
+
+
 def read_env(path):
     values = {}
     if path.exists():
@@ -427,6 +440,9 @@ def deploy(args):
                     "Serviços iniciados, mas HTTPS público indisponível. Confira DNS e Traefik. Sem rollback automático."
                 ) from None
             time.sleep(5)
+    # The exact r2 text was approved for this release. This publishes terms only;
+    # customer acceptance still requires the representative's own email code.
+    activate_approved_contract(run)
     print(f"Publicado: https://{DOMAIN}")
     print(
         "Credenciais Nexus: BOOTSTRAP_EMAIL/BOOTSTRAP_PASSWORD em .env.production; não compartilhe esse arquivo."

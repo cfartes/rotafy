@@ -174,7 +174,7 @@ O painel mostra o evento, canal, empresa, situação e motivo de falha de cada c
 
 ## 8. Contratos e aceitação pelo cliente {#contratos}
 
-Em **Configurações → Contrato de utilização**, o administrador Nexus completo consulta a minuta e prepara novas versões em rascunho. Leia o texto integral e revise as condições comerciais e jurídicas antes de marcar a aprovação e usar **Publicar versão aprovada**. A instalação inicial não publica o texto automaticamente.
+Em **Configurações → Contrato de utilização**, o administrador Nexus completo consulta a minuta e prepara novas versões em rascunho. Leia o texto integral e revise as condições comerciais e jurídicas antes de marcar a aprovação e usar **Publicar versão aprovada**. A versão r2 aprovada é ativada pelo processo de atualização, após conferir o texto e a configuração de e-mail. Novas versões preparadas no painel continuam dependendo de revisão e publicação explícita.
 
 A publicação exige configuração de e-mail e ativa o aceite apenas para empresas criadas depois dela. Versões publicadas não podem ser alteradas e aceites anteriores não são reescritos por outra publicação. O cadastro passa a incluir endereço, número, complemento opcional, bairro, cidade, UF e CEP.
 
