@@ -1,0 +1,883 @@
+{
+  "info": {
+    "name": "Rotafy — WhatsApp, QR e embarque",
+    "description": "Contrato de endpoints existentes. Executar etapas individualmente em homologação. A reserva confirmada pode gerar mensagem; não executar toda a coleção em produção. Cookie jar habilitado; nunca compartilhar exportação com senhas/tokens preenchidos. operation_key deve ser preservada em retries e renovada para um novo comando de negócio. Preparação exige admin; sincronização usa usuário técnico; APK usa operador atribuído.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "origin",
+      "value": "https://rotafy.nexusdataanalytics.tech",
+      "type": "string"
+    },
+    {
+      "key": "base_url",
+      "value": "https://rotafy.nexusdataanalytics.tech/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "company",
+      "value": "empresaexemplo",
+      "type": "string"
+    },
+    {
+      "key": "csrf",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operator_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operator_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticket_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "presence_version",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "company_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vehicle_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "allocation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leg_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "return_leg_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passenger_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticket_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operator_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operation_key_trip",
+      "value": "aaaaaaaa-0000-4000-8000-000000000001",
+      "type": "string"
+    },
+    {
+      "key": "operation_key_reservation",
+      "value": "aaaaaaaa-0000-4000-8000-000000000002",
+      "type": "string"
+    },
+    {
+      "key": "operation_key_ticket",
+      "value": "aaaaaaaa-0000-4000-8000-000000000004",
+      "type": "string"
+    },
+    {
+      "key": "operation_key_board",
+      "value": "aaaaaaaa-0000-4000-8000-000000000005",
+      "type": "string"
+    },
+    {
+      "key": "operation_key_disembark",
+      "value": "aaaaaaaa-0000-4000-8000-000000000006",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 — Preparação administrativa opcional (requer admin)",
+      "item": [
+        {
+          "name": "Login administrador da empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"{{company}}\",\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const cookie = pm.response.headers.all().find(h => h.key.toLowerCase() === 'set-cookie' && h.value.startsWith('rotafy_csrf='));",
+                  "  if (cookie) pm.collectionVariables.set('csrf', decodeURIComponent(cookie.value.split(';')[0].slice('rotafy_csrf='.length)));",
+                  "  const user=pm.response.json(); pm.collectionVariables.set('operator_id',user.id); pm.collectionVariables.set('company_id',user.company_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar motorista (ou preencher driver_id existente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Motorista Exemplo\",\n  \"email\": \"motorista@example.com\",\n  \"password\": \"{{driver_password}}\",\n  \"role\": \"driver\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('driver_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar veículo (ou preencher vehicle_id existente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/vehicles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Onibus Exemplo\",\n  \"plate\": \"ABC1D23\",\n  \"capacity\": 46,\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('vehicle_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 — Sincronização operacional",
+      "item": [
+        {
+          "name": "Login usuário técnico da empresa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"{{company}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const cookie = pm.response.headers.all().find(h => h.key.toLowerCase() === 'set-cookie' && h.value.startsWith('rotafy_csrf='));",
+                  "  if (cookie) pm.collectionVariables.set('csrf', decodeURIComponent(cookie.value.split(';')[0].slice('rotafy_csrf='.length)));",
+                  "  const user=pm.response.json(); pm.collectionVariables.set('operator_id',user.id); pm.collectionVariables.set('company_id',user.company_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conferir sessão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/auth/me"
+          }
+        },
+        {
+          "name": "Criar viagem ida e volta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_trip}}\",\n  \"name\": \"Passeio Blumenau e Navegantes\",\n  \"destination\": \"Navegantes\",\n  \"mode\": \"round_trip\",\n  \"price_cents\": 12000,\n  \"legs\": [\n    {\n      \"origin\": \"Blumenau\",\n      \"destination\": \"Navegantes\",\n      \"origin_city_id\": 4202404,\n      \"destination_city_id\": 4211306,\n      \"origin_uf\": \"SC\",\n      \"destination_uf\": \"SC\",\n      \"origin_address\": \"Endereco do embarque em Blumenau\",\n      \"destination_address\": \"Endereco da chegada em Navegantes\",\n      \"starts_at\": \"2026-12-10T08:00:00-03:00\",\n      \"ends_at\": \"2026-12-10T09:30:00-03:00\",\n      \"stops\": []\n    },\n    {\n      \"origin\": \"Navegantes\",\n      \"destination\": \"Blumenau\",\n      \"origin_city_id\": 4211306,\n      \"destination_city_id\": 4202404,\n      \"origin_uf\": \"SC\",\n      \"destination_uf\": \"SC\",\n      \"origin_address\": \"Endereco do retorno em Navegantes\",\n      \"destination_address\": \"Endereco da chegada em Blumenau\",\n      \"starts_at\": \"2026-12-10T17:00:00-03:00\",\n      \"ends_at\": \"2026-12-10T18:30:00-03:00\",\n      \"stops\": []\n    }\n  ],\n  \"vehicles\": [\n    {\n      \"vehicle_id\": \"{{vehicle_id}}\",\n      \"driver_ids\": [\n        \"{{driver_id}}\"\n      ],\n      \"guide_ids\": []\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) {",
+                  " const trip=pm.response.json(); pm.collectionVariables.set('trip_id',trip.id);",
+                  " const legs=[...trip.legs].sort((a,b)=>a.position-b.position);",
+                  " pm.collectionVariables.set('leg_id',legs[0].id); pm.collectionVariables.set('return_leg_id',legs[1].id);",
+                  " pm.collectionVariables.set('allocation_id',trip.vehicles[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/availability",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_size\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar reserva confirmada (pode gerar mensagem)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/reservations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_reservation}}\",\n  \"contact_name\": \"Responsavel Exemplo\",\n  \"phone\": \"+5511999999999\",\n  \"status\": \"confirmed\",\n  \"allocation_id\": \"{{allocation_id}}\",\n  \"passengers\": [\n    {\n      \"full_name\": \"Passageiro Exemplo\",\n      \"is_foreign\": false,\n      \"under_five\": false\n    }\n  ],\n  \"journeys\": [\n    {\n      \"leg_id\": \"{{leg_id}}\",\n      \"boarding_position\": 0,\n      \"dropoff_position\": 1,\n      \"boarding_location\": {\n        \"name\": \"Hotel Exemplo\",\n        \"address\": \"Endereco completo do hotel em Blumenau\",\n        \"complement\": \"Recepcao\",\n        \"order\": 1\n      }\n    },\n    {\n      \"leg_id\": \"{{return_leg_id}}\",\n      \"boarding_position\": 0,\n      \"dropoff_position\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('reservation_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalhes da reserva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}"
+          }
+        },
+        {
+          "name": "Histórico de WhatsApp",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/whatsapp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Bilhete individual",
+      "item": [
+        {
+          "name": "Emitir bilhetes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/tickets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  " const issued=pm.response.json().issued;",
+                  " const ticket=issued.find(t=>t.leg_id===pm.collectionVariables.get('leg_id')) || issued[0];",
+                  " if (ticket) { pm.collectionVariables.set('ticket_id',ticket.id); pm.collectionVariables.set('ticket_token',ticket.token); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Relacionar ticket_id ao passenger_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/tickets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code===200) {",
+                  " const ticket=pm.response.json().find(t=>t.id===pm.collectionVariables.get('ticket_id'));",
+                  " if(ticket) pm.collectionVariables.set('passenger_id',ticket.passenger_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enviar link do bilhete por WhatsApp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/tickets/{{ticket_id}}/whatsapp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_ticket}}\",\n  \"token\": \"{{ticket_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Consultar fila de mensagens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/whatsapp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 — Reprodução da operação do APK (usuário atribuído)",
+      "item": [
+        {
+          "name": "Login do motorista/guia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"{{company}}\",\n  \"email\": \"{{operator_email}}\",\n  \"password\": \"{{operator_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const cookie = pm.response.headers.all().find(h => h.key.toLowerCase() === 'set-cookie' && h.value.startsWith('rotafy_csrf='));",
+                  "  if (cookie) pm.collectionVariables.set('csrf', decodeURIComponent(cookie.value.split(';')[0].slice('rotafy_csrf='.length)));",
+                  "  const user=pm.response.json(); pm.collectionVariables.set('operator_id',user.id); pm.collectionVariables.set('company_id',user.company_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manifesto atribuído",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/manifest"
+          }
+        },
+        {
+          "name": "Preparar manifesto offline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/offline-manifest"
+          }
+        },
+        {
+          "name": "Iniciar trecho",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/journey",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Conferir QR (não registra embarque)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/scan",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{ticket_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code===200) pm.collectionVariables.set('presence_version',pm.response.json().version);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar embarque",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/boarding",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_board}}\",\n  \"passenger_id\": \"{{passenger_id}}\",\n  \"expected_version\": {{presence_version}},\n  \"action\": \"board\",\n  \"token\": \"{{ticket_token}}\",\n  \"device_id\": \"aparelho-exemplo-01\",\n  \"offline\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code===201) pm.collectionVariables.set('presence_version',pm.response.json().version);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar desembarque",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/boarding",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_disembark}}\",\n  \"passenger_id\": \"{{passenger_id}}\",\n  \"expected_version\": {{presence_version}},\n  \"action\": \"disembark\",\n  \"device_id\": \"aparelho-exemplo-01\",\n  \"offline\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code===201) pm.collectionVariables.set('presence_version',pm.response.json().version);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar eventos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/boarding-history"
+          }
+        },
+        {
+          "name": "Registrar chegada sem GPS disponível",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/vehicles/{{allocation_id}}/legs/{{leg_id}}/journey",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"arrival_location\": {\n    \"status\": \"unavailable\",\n    \"reason\": \"position_unavailable\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 — Distribuição Android",
+      "item": [
+        {
+          "name": "Consultar versão APK publicada",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/public/mobile-version?package_id=br.com.nexusdataanalytics.rotafy"
+          }
+        }
+      ]
+    }
+  ]
+}

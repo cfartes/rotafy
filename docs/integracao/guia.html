@@ -1,0 +1,661 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rotafy — Guia de integração</title><style>body{font:15px/1.6 Arial,sans-serif;color:#17324b;margin:auto;padding:32px;max-width:1080px}h1,h2,h3{color:#0c7a76;line-height:1.25;break-after:avoid}h2{border-bottom:1px solid #bad8d4;padding-bottom:8px;margin-top:36px}a{color:#0c7a76}table{border-collapse:collapse;width:100%;font-size:13px;margin:16px 0}td,th{border:1px solid #d4e0e7;padding:8px;vertical-align:top}th{background:#edf6f4;text-align:left}pre{background:#f1f5f7;border:1px solid #d4e0e7;border-radius:6px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}code{overflow-wrap:anywhere}nav{background:#edf6f4;padding:16px}tr{break-inside:avoid}@page{size:A4;margin:16mm 14mm 20mm}@media print{body{padding:0;font-size:10px;max-width:none}table{font-size:9px}pre{font-size:9px}nav{display:none}}</style></head><body><nav><strong>Nexus Rotafy · Integração técnica</strong><div class="toc">
+<ul>
+<li><a href="#rotafy-integracao-de-whatsapp-bilhetes-e-embarque">Rotafy — Integração de WhatsApp, bilhetes e embarque</a><ul>
+<li><a href="#1-escopo-e-condicoes-de-uso">1. Escopo e condições de uso</a><ul>
+<li><a href="#responsabilidade-por-dados">Responsabilidade por dados</a></li>
+</ul>
+</li>
+<li><a href="#2-preparacao-pela-nexus-e-pelo-administrador-da-empresa">2. Preparação pela Nexus e pelo administrador da empresa</a></li>
+<li><a href="#3-autenticacao-operacional">3. Autenticação operacional</a><ul>
+<li><a href="#31-login">3.1 Login</a></li>
+<li><a href="#32-exemplo-de-transporte">3.2 Exemplo de transporte</a></li>
+</ul>
+</li>
+<li><a href="#4-dados-minimos-e-identificacao">4. Dados mínimos e identificação</a><ul>
+<li><a href="#41-entidades">4.1 Entidades</a></li>
+<li><a href="#42-mapeamento-no-adaptador">4.2 Mapeamento no adaptador</a></li>
+<li><a href="#43-convencoes">4.3 Convenções</a></li>
+</ul>
+</li>
+<li><a href="#5-sequencia-de-integracao">5. Sequência de integração</a></li>
+<li><a href="#6-sincronizar-a-operacao">6. Sincronizar a operação</a><ul>
+<li><a href="#61-colaboradores-veiculos-e-localidades">6.1 Colaboradores, veículos e localidades</a></li>
+<li><a href="#62-viagem-e-alocacoes">6.2 Viagem e alocações</a></li>
+<li><a href="#63-reserva-e-passageiro">6.3 Reserva e passageiro</a></li>
+</ul>
+</li>
+<li><a href="#7-mensagens-por-whatsapp">7. Mensagens por WhatsApp</a><ul>
+<li><a href="#71-gatilhos-existentes">7.1 Gatilhos existentes</a></li>
+<li><a href="#72-envio-manual">7.2 Envio manual</a></li>
+<li><a href="#73-situacao-dos-envios">7.3 Situação dos envios</a></li>
+</ul>
+</li>
+<li><a href="#8-bilhete-individual-e-qr-code">8. Bilhete individual e QR Code</a><ul>
+<li><a href="#81-emitir">8.1 Emitir</a></li>
+<li><a href="#82-link-e-envio">8.2 Link e envio</a></li>
+<li><a href="#83-reemitir-e-revogar">8.3 Reemitir e revogar</a></li>
+</ul>
+</li>
+<li><a href="#9-apk-e-operacoes-de-campo">9. APK e operações de campo</a><ul>
+<li><a href="#91-distribuicao-e-login">9.1 Distribuição e login</a></li>
+<li><a href="#92-carregar-a-lista-de-passageiros">9.2 Carregar a lista de passageiros</a></li>
+<li><a href="#93-conferir-o-qr">9.3 Conferir o QR</a></li>
+<li><a href="#94-registrar-embarque">9.4 Registrar embarque</a></li>
+<li><a href="#95-registrar-desembarque-e-corrigir">9.5 Registrar desembarque e corrigir</a></li>
+<li><a href="#96-inicio-e-chegada-do-trecho">9.6 Início e chegada do trecho</a></li>
+<li><a href="#97-offline">9.7 Offline</a></li>
+</ul>
+</li>
+<li><a href="#10-retornar-embarques-ao-sistema-parceiro">10. Retornar embarques ao sistema parceiro</a><ul>
+<li><a href="#101-consultas-disponiveis">10.1 Consultas disponíveis</a></li>
+<li><a href="#102-sincronizacao-recomendada">10.2 Sincronização recomendada</a></li>
+</ul>
+</li>
+<li><a href="#11-alteracoes-cancelamento-e-idempotencia">11. Alterações, cancelamento e idempotência</a></li>
+<li><a href="#12-chave-bearer-de-reservas-externas-escopo-limitado">12. Chave Bearer de reservas externas — escopo limitado</a></li>
+<li><a href="#13-respostas-e-tratamento-de-falhas">13. Respostas e tratamento de falhas</a></li>
+<li><a href="#14-homologacao-do-parceiro">14. Homologação do parceiro</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav><h1 id="rotafy-integracao-de-whatsapp-bilhetes-e-embarque">Rotafy — Integração de WhatsApp, bilhetes e embarque</h1>
+<p><strong>Versão do guia:</strong> 1.0 · <strong>Revisão:</strong> 21/10/2026</p>
+<p>Este guia descreve endpoints existentes no Rotafy para integrar um sistema que já vende viagens e pacotes à comunicação por WhatsApp e ao controle de embarque/desembarque pelo APK. A empresa parceira mantém seu sistema de vendas como origem dos dados; um adaptador sincroniza os registros operacionais necessários no Rotafy.</p>
+<p><strong>Base de produção:</strong> <code>https://rotafy.nexusdataanalytics.tech/api/v1</code>. Os caminhos abaixo são relativos a essa base. O ambiente de homologação deve ser informado pela Nexus; este guia não presume que exista um domínio de testes publicado.</p>
+<p>Arquivos de apoio:</p>
+<ul>
+<li><a href="openapi.json">OpenAPI JSON</a>: rotas e esquemas extraídos da aplicação, com autenticação e observações de integração.</li>
+<li><a href="rotafy.postman_collection.json">Coleção Postman</a>: sequência de chamadas com variáveis, sem credenciais reais.</li>
+<li><a href="exemplos.json">Exemplos JSON</a>: corpos de requisição com IDs fictícios.</li>
+<li><a href="guia.html">Versão HTML</a> e <a href="guia.pdf">versão PDF</a>.</li>
+</ul>
+<p>Na coleção Postman, preencher <code>base_url</code>, <code>origin</code>, <code>company</code> e as credenciais locais de cada perfil. A pasta de preparação exige administrador; a sincronização usa a conta técnica; a reprodução do APK usa motorista/guia atribuído. Manter o cookie jar habilitado. Os testes da coleção guardam IDs, CSRF e credenciais emitidas nas variáveis da sessão de trabalho: não compartilhar uma exportação preenchida. As UUIDs <code>operation_key_*</code> de exemplo devem ser renovadas para um novo comando de negócio e preservadas em uma repetição do mesmo comando.</p>
+<h2 id="1-escopo-e-condicoes-de-uso">1. Escopo e condições de uso</h2>
+<p>O fluxo completo usa a API operacional autenticada por sessão. Existe também uma chave Bearer para <strong>criar e consultar reservas externas</strong>, mas ela não autoriza emissão de bilhete, WhatsApp ou comandos de embarque. São mecanismos distintos, detalhados na seção 12.</p>
+<p>O contrato descrito não cria um usuário de passageiro nem exige que ele instale aplicativo: o passageiro recebe o link do bilhete e apresenta seu QR Code. Motorista e guia utilizam o APK Rotafy, com suas próprias credenciais e alocação na viagem.</p>
+<p>Os endpoints não recebem um pacote arbitrário de dados para “mandar uma mensagem”. Mensagens e bilhetes são derivados de viagem, reserva e passageiro registrados no Rotafy. O adaptador cria esses registros automaticamente, evitando cadastro manual duplicado.</p>
+<p>Este documento não ativa a configuração de módulos por empresa. A autenticação, as regras de assinatura/franquia, capacidade, perfil operacional e permissões hoje existentes continuam valendo. Uma viagem criada pela integração não fica automaticamente isenta de consumo ou cobrança por ter vindo de outro sistema.</p>
+<h3 id="responsabilidade-por-dados">Responsabilidade por dados</h3>
+<table>
+<thead>
+<tr>
+<th>Informação</th>
+<th>Origem e responsabilidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Venda, preço, passageiro e cancelamento comercial</td>
+<td>Sistema parceiro</td>
+</tr>
+<tr>
+<td>Sincronização e relacionamento entre IDs</td>
+<td>Adaptador do parceiro</td>
+</tr>
+<tr>
+<td>Credencial do bilhete, validação e fila de mensagens</td>
+<td>Rotafy</td>
+</tr>
+<tr>
+<td>Embarque/desembarque realizado em campo</td>
+<td>Operador identificado no APK</td>
+</tr>
+<tr>
+<td>Retorno da situação ao sistema parceiro</td>
+<td>Consulta periódica pelo adaptador</td>
+</tr>
+</tbody>
+</table>
+<p>Não há webhook de embarque/desembarque ou de mensagens neste contrato. O webhook de pagamentos existente no produto não serve para esses eventos.</p>
+<h2 id="2-preparacao-pela-nexus-e-pelo-administrador-da-empresa">2. Preparação pela Nexus e pelo administrador da empresa</h2>
+<ol>
+<li>Provisionar uma empresa ativa no Rotafy, com identificador de acesso, perfil operacional, assinatura e capacidade operacional compatíveis.</li>
+<li>Concluir eventual aceite contratual e regularizar bloqueios financeiros que impeçam novas operações.</li>
+<li>Criar um usuário técnico da <strong>própria empresa</strong>, preferencialmente com perfil <code>attendant</code>, para sincronizar viagens, reservas, bilhetes e mensagens. Ele não deve usar credenciais de Superadmin Nexus.</li>
+<li>O administrador cria os motoristas/guias com contas individuais e os veículos. A API também permite automatizar esses cadastros usando uma sessão administrativa, separada da conta técnica.</li>
+<li>O administrador conecta o WhatsApp da empresa e habilita os envios. O número remetente vem do cadastro da empresa. Ler o QR de conexão do WhatsApp é uma ação do responsável pelo número; esse QR não é um bilhete de passageiro.</li>
+<li>Instalar o APK atual pelo download disponível na ajuda ou pela publicação do Superadmin. Usar o mesmo identificador de empresa no login dos operadores.</li>
+</ol>
+<p>Credenciais do provedor de WhatsApp e configurações globais pertencem à Nexus; não devem ser entregues ao parceiro nem incluídas no aplicativo dele.</p>
+<h2 id="3-autenticacao-operacional">3. Autenticação operacional</h2>
+<h3 id="31-login">3.1 Login</h3>
+<p><code>POST /auth/login</code></p>
+<pre><code class="language-json">{
+  &quot;company&quot;: &quot;empresaexemplo&quot;,
+  &quot;email&quot;: &quot;integracao@example.com&quot;,
+  &quot;password&quot;: &quot;SENHA_DO_USUARIO_TECNICO&quot;
+}
+</code></pre>
+<p>Enviar <code>Content-Type: application/json</code> e <code>Origin: https://rotafy.nexusdataanalytics.tech</code>. A resposta <code>200</code> contém os dados do usuário; a autenticação é entregue por <code>Set-Cookie</code>, não por um campo <code>access_token</code> no JSON.</p>
+<table>
+<thead>
+<tr>
+<th>Cookie/header</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rotafy_session</code></td>
+<td>Cookie de sessão; HttpOnly, Secure em produção e SameSite=Lax</td>
+</tr>
+<tr>
+<td><code>rotafy_csrf</code></td>
+<td>Cookie com o valor de proteção CSRF</td>
+</tr>
+<tr>
+<td><code>X-CSRF-Token</code></td>
+<td>Repetir o valor de <code>rotafy_csrf</code> nas operações autenticadas de escrita</td>
+</tr>
+<tr>
+<td><code>Origin</code></td>
+<td>Obrigatório nas operações de escrita; deve corresponder a uma origem permitida pelo servidor</td>
+</tr>
+</tbody>
+</table>
+<p>Guardar cookies em um cookie jar seguro. A validade é configurável na implantação; o padrão do código é oito horas. <code>GET /auth/me</code> valida a sessão e informa o usuário, empresa, perfil e eventuais bloqueios. <code>POST /auth/logout</code> encerra a sessão e retorna <code>204</code>.</p>
+<p>A integração deve ocorrer <strong>do backend do parceiro para o backend Rotafy</strong>. Não embutir a senha técnica em JavaScript público ou no APK do parceiro. Não assumir que um navegador em outro domínio poderá reutilizar esses cookies; CORS e SameSite não constituem uma API pública entre sites.</p>
+<p>Em <code>401</code>, autenticar novamente e repetir a mesma operação com a mesma chave de idempotência. Não repetir login a cada chamada. Em <code>402</code>, <code>403</code> ou <code>423</code>, tratar a restrição; um novo login não a remove.</p>
+<h3 id="32-exemplo-de-transporte">3.2 Exemplo de transporte</h3>
+<pre><code class="language-http">POST /api/v1/reservations/{reservation_id}/whatsapp HTTP/1.1
+Host: rotafy.nexusdataanalytics.tech
+Content-Type: application/json
+Origin: https://rotafy.nexusdataanalytics.tech
+Cookie: rotafy_session=VALOR_DA_SESSAO; rotafy_csrf=VALOR_CSRF
+X-CSRF-Token: VALOR_CSRF
+
+{&quot;operation_key&quot;:&quot;aaaaaaaa-0000-4000-8000-000000000003&quot;}
+</code></pre>
+<p>Os valores acima são ilustrativos. O cookie deve ser obtido no login, nunca montado ou assinado pelo parceiro.</p>
+<h2 id="4-dados-minimos-e-identificacao">4. Dados mínimos e identificação</h2>
+<h3 id="41-entidades">4.1 Entidades</h3>
+<table>
+<thead>
+<tr>
+<th>Entidade</th>
+<th>Dados necessários</th>
+<th>Identificador retornado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Empresa</td>
+<td>Provisionada pela Nexus; identificador de acesso no login</td>
+<td><code>company_id</code></td>
+</tr>
+<tr>
+<td>Colaborador</td>
+<td>Nome, e-mail, senha inicial e papel; motorista/guia para operação</td>
+<td><code>id</code> de usuário</td>
+</tr>
+<tr>
+<td>Veículo</td>
+<td>Nome, placa e capacidade</td>
+<td><code>vehicle_id</code></td>
+</tr>
+<tr>
+<td>Viagem comercial</td>
+<td>Nome, destino, modalidade, preço, trechos e veículos/equipe</td>
+<td><code>trip_id</code></td>
+</tr>
+<tr>
+<td>Trecho/deslocamento</td>
+<td>Origem/destino com cidade IBGE, datas e horários, endereços e paradas</td>
+<td><code>leg_id</code></td>
+</tr>
+<tr>
+<td>Veículo na viagem</td>
+<td>Veículo físico e equipe atribuída aos trechos</td>
+<td><code>allocation_id</code></td>
+</tr>
+<tr>
+<td>Reserva familiar</td>
+<td>Responsável, telefone, passageiros, trechos e veículo</td>
+<td><code>reservation_id</code></td>
+</tr>
+<tr>
+<td>Passageiro</td>
+<td>Nome; CPF opcional; dados adicionais quando aplicáveis</td>
+<td><code>passenger_id</code></td>
+</tr>
+<tr>
+<td>Bilhete</td>
+<td>Emitido pelo Rotafy para passageiro/reserva</td>
+<td><code>ticket_id</code> e credencial <code>token</code></td>
+</tr>
+<tr>
+<td>Comando de presença</td>
+<td>Passageiro, veículo na viagem, trecho, ação e versão</td>
+<td><code>id</code> do evento</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>vehicle_id</code> e <code>allocation_id</code> não são intercambiáveis.</strong> Os caminhos de manifesto e embarque usam <code>allocation_id</code> em <code>/vehicles/{allocation_id}</code>. O mesmo veículo físico pode ter alocações distintas.</p>
+<h3 id="42-mapeamento-no-adaptador">4.2 Mapeamento no adaptador</h3>
+<p>Manter uma tabela local com <code>empresa</code>, <code>tipo_entidade</code>, <code>id_no_parceiro</code>, <code>id_rotafy</code>, versão sincronizada e situação. Usar chave única por empresa/tipo/ID externo. Exemplos: viagem externa → <code>trip_id</code>; deslocamento externo → <code>leg_id</code>; reserva externa → <code>reservation_id</code>; passageiro externo → <code>passenger_id</code>.</p>
+<p>Os corpos operacionais não possuem um campo genérico <code>external_id</code>, e campos não reconhecidos são rejeitados (<code>422</code>). Não usar nome ou CPF como chave de sincronização: nomes repetem, CPF é opcional e a mesma pessoa pode viajar mais de uma vez. O relacionamento do passageiro deve incluir a reserva quando o sistema parceiro tiver um cadastro global de pessoas.</p>
+<h3 id="43-convencoes">4.3 Convenções</h3>
+<ul>
+<li>IDs internos e <code>operation_key</code> são UUIDs.</li>
+<li>Valores monetários são inteiros em centavos: <code>12000</code> representa R$ 120,00.</li>
+<li>Datas operacionais incluem fuso: <code>2026-12-10T08:00:00-03:00</code>. Não enviar datas sem offset.</li>
+<li>Telefone preferencialmente em E.164: <code>+5511999999999</code>. Um telefone atende à reserva familiar; o sistema não escolhe um telefone diferente por passageiro nessa mesma reserva.</li>
+<li>Nomes da empresa, do responsável e do passageiro são distintos; informar cada um corretamente para as mensagens.</li>
+<li>Menor de cinco anos exige <code>under_five: true</code> e <code>birth_date</code> em <code>AAAA-MM-DD</code>. CPF, quando fornecido, é validado; estrangeiro usa <code>is_foreign</code> conforme o cadastro real.</li>
+</ul>
+<h2 id="5-sequencia-de-integracao">5. Sequência de integração</h2>
+<figure><svg viewBox="0 0 1020 250" role="img" aria-label="Sistema parceiro integrado ao Rotafy por adaptador; o Rotafy envia WhatsApp e recebe presença do APK" style="width:100%;height:auto"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8" fill="#0c7a76"/></marker></defs><g fill="#edf6f4" stroke="#0c7a76" stroke-width="2"><rect x="10" y="90" width="180" height="65" rx="10"/><rect x="270" y="90" width="180" height="65" rx="10"/><rect x="530" y="90" width="180" height="65" rx="10"/><rect x="820" y="15" width="180" height="65" rx="10"/><rect x="820" y="170" width="180" height="65" rx="10"/></g><g fill="#17324b" font-family="Arial" font-size="19" text-anchor="middle"><text x="100" y="129">Sistema parceiro</text><text x="360" y="129">Adaptador backend</text><text x="620" y="129">API Rotafy</text><text x="910" y="54">WhatsApp</text><text x="910" y="210">APK motorista/guia</text></g><g stroke="#0c7a76" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M190,122 L270,122"/><path d="M450,122 L530,122" marker-start="url(#arrow)"/><path d="M710,110 L820,48"/><path d="M710,140 L820,202" marker-start="url(#arrow)"/></g></svg><figcaption>O parceiro sincroniza dados pelo adaptador. O Rotafy processa as mensagens e recebe os eventos do APK; o adaptador consulta os resultados.</figcaption></figure>
+<p>O diagrama representa chamadas e processamento assíncrono, não confirmação de entrega do WhatsApp.</p>
+<h2 id="6-sincronizar-a-operacao">6. Sincronizar a operação</h2>
+<h3 id="61-colaboradores-veiculos-e-localidades">6.1 Colaboradores, veículos e localidades</h3>
+<table>
+<thead>
+<tr>
+<th>Método e caminho</th>
+<th>Perfil</th>
+<th>Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /users</code></td>
+<td>Administrador</td>
+<td>Consultar colaboradores</td>
+</tr>
+<tr>
+<td><code>POST /users</code></td>
+<td>Administrador</td>
+<td>Criar colaborador</td>
+</tr>
+<tr>
+<td><code>PATCH /users/{user_id}</code></td>
+<td>Administrador</td>
+<td>Editar dados, função ou situação conforme esquema</td>
+</tr>
+<tr>
+<td><code>GET /operations/crew</code></td>
+<td>Admin/atendente</td>
+<td>Consultar motoristas e guias disponíveis</td>
+</tr>
+<tr>
+<td><code>GET /vehicles</code></td>
+<td>Admin/atendente</td>
+<td>Consultar veículos</td>
+</tr>
+<tr>
+<td><code>POST /vehicles</code></td>
+<td>Admin/atendente</td>
+<td>Criar veículo</td>
+</tr>
+<tr>
+<td><code>PUT /vehicles/{vehicle_id}</code></td>
+<td>Admin/atendente</td>
+<td>Atualizar os dados do veículo</td>
+</tr>
+<tr>
+<td><code>GET /locations/states</code></td>
+<td>Público</td>
+<td>Listar UFs</td>
+</tr>
+<tr>
+<td><code>GET /locations/cities/{uf}</code></td>
+<td>Público</td>
+<td>Listar municípios e IDs IBGE</td>
+</tr>
+</tbody>
+</table>
+<p>Exemplos completos: <code>create_driver</code> e <code>create_vehicle</code> em <code>exemplos.json</code>. A senha inicial do colaborador deve atender à política: pelo menos oito caracteres, uma letra maiúscula e um caractere especial. O exemplo público não é uma senha de produção.</p>
+<h3 id="62-viagem-e-alocacoes">6.2 Viagem e alocações</h3>
+<p><code>POST /trips</code> → <code>201</code>. Corpo <code>create_trip</code> em <code>exemplos.json</code>.</p>
+<p>Campos obrigatórios: <code>operation_key</code>, <code>name</code>, <code>destination</code>, <code>mode</code>, <code>price_cents</code>, <code>legs</code> e <code>vehicles</code>. Para cada trecho, informar <code>origin</code>, <code>destination</code>, <code>origin_city_id</code>, <code>destination_city_id</code>, <code>starts_at</code> e <code>ends_at</code>. Os IDs IBGE de origem/destino são exigidos na criação. UF e nomes são validados contra esses IDs; a chegada deve ser posterior à saída.</p>
+<p>Em <code>vehicles</code>, usar <code>vehicle_id</code>, pelo menos um <code>driver_ids</code> e, quando aplicável, <code>guide_ids</code>. Uma pessoa ou um veículo não pode ser duplicado no mesmo trecho. A API valida conflito de agenda. <code>leg_positions</code> vazio significa todos os trechos; posições explícitas começam em <strong>1</strong>.</p>
+<p><code>one_way</code> exige um trecho; <code>round_trip</code> exige dois, com a volta invertendo as cidades e começando após a chegada da ida. <code>multi_destination</code> exige o pacote com roteiro completo e regras de turismo; não é um atalho para enviar uma lista arbitrária de destinos. O exemplo de ida e volta não exige criar uma Rota reutilizável ou um pacote modelo no Rotafy.</p>
+<p>Guardar <code>id</code> como <code>trip_id</code>, <code>legs[].id</code> como <code>leg_id</code> e <code>vehicles[].id</code> como <code>allocation_id</code>. Consultar <code>GET /trips/{trip_id}</code> para obter a estrutura completa. Não deduzir esses IDs pelo veículo físico nem pela ordem de uma lista sem conferir <code>position</code>.</p>
+<p><code>GET /trips</code> lista as viagens visíveis ao usuário. Os estados de API são <code>scheduled</code>, <code>in_progress</code>, <code>completed</code> e <code>cancelled</code>. A classificação visual “Aberta” nas 48 horas anteriores à saída não é um novo valor aceito no campo <code>status</code> da API.</p>
+<h3 id="63-reserva-e-passageiro">6.3 Reserva e passageiro</h3>
+<ol>
+<li><code>POST /trips/{trip_id}/availability</code>, com <code>{"group_size":1}</code>, consulta capacidade e retorna <code>suggested_allocation_id</code>, <code>vehicles</code> e <code>can_book</code>.</li>
+<li><code>POST /trips/{trip_id}/reservations</code> → <code>201</code>, usando <code>create_reservation</code> em <code>exemplos.json</code>.</li>
+<li>Guardar <code>id</code>, <code>passengers[].id</code> e <code>leg_allocations[].allocation_id</code>. Consultar <code>GET /reservations/{reservation_id}</code> para reconciliar o registro.</li>
+</ol>
+<p>Campos principais: <code>operation_key</code>, <code>contact_name</code>, <code>phone</code>, <code>passengers</code>; informar <code>status:"confirmed"</code> quando a venda do parceiro já estiver confirmada. <code>allocation_id</code> escolhe o veículo na viagem, sujeito à capacidade. Se omitido, a API escolhe uma alocação compatível; conferir o resultado em vez de presumir um veículo.</p>
+<p><code>journeys</code> deve contemplar <strong>todos os trechos</strong>, inclusive volta. Se omitido, usa origem e destino completos de cada trecho. As posições dentro de um trecho são: origem <code>0</code>; paradas <code>1…N</code>; destino <code>N+1</code>. São diferentes das posições dos trechos, que começam em 1. No exemplo sem paradas, embarque <code>0</code> e desembarque <code>1</code>.</p>
+<p>Para buscar no hotel, informar <code>boarding_location</code> com <code>name</code>, <code>address</code>, <code>complement</code> opcional e <code>order</code>. Não inserir hotel como um novo destino comercial. <code>dropoff_location</code> aceita a mesma estrutura para desembarque personalizado.</p>
+<p>A criação só aceita novas reservas antes da saída, com viagem ainda <code>scheduled</code>, capacidade e cadastro geográfico completos. Não é uma importação livre de passageiros para uma viagem já encerrada ou iniciada.</p>
+<p><strong>Preço:</strong> o valor total atual é calculado por <code>price_cents</code> da viagem × quantidade de passageiros. Não enviar um <code>total_cents</code> externo no corpo: ele não é um campo aceito. Antes de automatizar mensagens financeiras, conferir a compatibilidade com descontos e preços individuais do parceiro.</p>
+<h2 id="7-mensagens-por-whatsapp">7. Mensagens por WhatsApp</h2>
+<h3 id="71-gatilhos-existentes">7.1 Gatilhos existentes</h3>
+<table>
+<thead>
+<tr>
+<th>Ação</th>
+<th>Endpoint</th>
+<th>Efeito na comunicação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Criar reserva confirmada</td>
+<td><code>POST /trips/{trip_id}/reservations</code></td>
+<td>Enfileira confirmação quando o WhatsApp está habilitado</td>
+</tr>
+<tr>
+<td>Confirmar reserva pendente válida</td>
+<td><code>PATCH /reservations/{reservation_id}/status</code> com <code>confirmed</code></td>
+<td>Enfileira confirmação</td>
+</tr>
+<tr>
+<td>Cancelar reserva</td>
+<td>Mesmo endpoint com <code>cancelled</code></td>
+<td>Enfileira cancelamento</td>
+</tr>
+<tr>
+<td>Registrar pagamento</td>
+<td><code>PATCH /reservations/{reservation_id}/payment</code> com <code>{"is_paid":true}</code></td>
+<td>Enfileira aviso PAGO quando muda para pago</td>
+</tr>
+<tr>
+<td>Reenviar resumo</td>
+<td><code>POST /reservations/{reservation_id}/whatsapp</code></td>
+<td>Enfileira resumo manual; requer <code>operation_key</code></td>
+</tr>
+<tr>
+<td>Enviar bilhete</td>
+<td><code>POST /tickets/{ticket_id}/whatsapp</code></td>
+<td>Enfileira link individual; requer <code>token</code> e <code>operation_key</code></td>
+</tr>
+</tbody>
+</table>
+<p>Não disparar um resumo manual imediatamente após uma confirmação automática apenas para obter a mesma mensagem: isso pode produzir dois avisos. A criação bem-sucedida da reserva não garante que uma mensagem tenha sido enfileirada se o WhatsApp não estiver habilitado. Consultar o histórico.</p>
+<p>O conteúdo do resumo identifica empresa, responsável e passageiros, viagem, saída, quantidade, valor, referência e situação. O bilhete identifica seu passageiro. Esses endpoints não aceitam um texto livre, telefone arbitrário ou template externo; o telefone é o da reserva.</p>
+<h3 id="72-envio-manual">7.2 Envio manual</h3>
+<p><code>POST /reservations/{reservation_id}/whatsapp</code></p>
+<pre><code class="language-json">{&quot;operation_key&quot;:&quot;aaaaaaaa-0000-4000-8000-000000000003&quot;}
+</code></pre>
+<p>Resposta <code>202</code>:</p>
+<pre><code class="language-json">{&quot;id&quot;:&quot;0000000b-0000-4000-8000-00000000000b&quot;,&quot;status&quot;:&quot;pending&quot;}
+</code></pre>
+<p><code>202</code> significa aceitação na fila do Rotafy. Não significa entregue ou lido pelo passageiro.</p>
+<h3 id="73-situacao-dos-envios">7.3 Situação dos envios</h3>
+<p><code>GET /reservations/{reservation_id}/whatsapp</code> retorna até <strong>30 registros</strong>, mais recentes primeiro: <code>id</code>, <code>kind</code>, <code>status</code>, <code>attempts</code>, <code>error_code</code>, <code>created_at</code> e <code>sent_at</code>. O corpo privado da mensagem não é retornado.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Tratamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pending</code></td>
+<td>Aguardando processamento ou nova tentativa permitida</td>
+</tr>
+<tr>
+<td><code>sending</code></td>
+<td>Processamento em andamento</td>
+</tr>
+<tr>
+<td><code>sent</code></td>
+<td>Aceito pelo provedor; não comprova entrega/leitura</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td>Falha registrada; consultar <code>error_code</code></td>
+</tr>
+<tr>
+<td><code>uncertain</code></td>
+<td>Não foi possível confirmar a aceitação; conferir antes de reenviar</td>
+</tr>
+<tr>
+<td><code>discarded</code></td>
+<td>Aviso expirado ou deixou de ser válido</td>
+</tr>
+</tbody>
+</table>
+<p>Preservar o <code>id</code> da fila para reconciliar o comando. A mesma <code>operation_key</code> no mesmo tipo de envio evita repetição; uma nova chave representa novo pedido. Não transformar <code>uncertain</code> em uma nova tentativa automática com outra chave.</p>
+<h2 id="8-bilhete-individual-e-qr-code">8. Bilhete individual e QR Code</h2>
+<h3 id="81-emitir">8.1 Emitir</h3>
+<p><code>POST /reservations/{reservation_id}/tickets</code>, sem corpo → <code>201</code>.</p>
+<p>Trecho ilustrativo da resposta:</p>
+<pre><code class="language-json">{
+  &quot;issued&quot;: [
+    {
+      &quot;id&quot;:&quot;0000000a-0000-4000-8000-00000000000a&quot;,
+      &quot;full_name&quot;:&quot;Passageiro Exemplo&quot;,
+      &quot;leg_id&quot;:&quot;00000006-0000-4000-8000-000000000006&quot;,
+      &quot;token&quot;:&quot;bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;
+    }
+  ]
+}
+</code></pre>
+<p>O exemplo de token é fictício. A resposta pode conter <strong>uma linha por passageiro/trecho</strong>, com o <strong>mesmo token nos trechos do mesmo passageiro</strong>. Agrupar por token e enviar um bilhete por passageiro, não um envio por linha da resposta. Não agrupar por nome, pois pode haver homônimos.</p>
+<p>Para relacionar a emissão ao passageiro, <code>GET /reservations/{reservation_id}/tickets</code> retorna <code>id</code>, <code>passenger_id</code>, <code>leg_id</code> e demais dados de situação. Relacionar pelo <code>ticket_id</code>. O <code>token</code> em texto claro só é disponibilizado na emissão/reemissão, não nessa listagem.</p>
+<p>Se o bilhete já está emitido, uma nova emissão pode retornar <code>issued:[]</code>. Isso não recupera o segredo existente. Preserve a credencial com proteção apropriada ou use reemissão controlada quando for necessário gerar outra; não reemita em todo ciclo de sincronização.</p>
+<h3 id="82-link-e-envio">8.2 Link e envio</h3>
+<p><code>POST /tickets/{ticket_id}/whatsapp</code></p>
+<pre><code class="language-json">{
+  &quot;operation_key&quot;:&quot;aaaaaaaa-0000-4000-8000-000000000004&quot;,
+  &quot;token&quot;:&quot;bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;
+}
+</code></pre>
+<p>O Rotafy constrói o link público compatível com Android/iOS, no formato <code>/api/v1/public/bilhete/{codigo_alfanumerico}</code>. Não enviar link do portal de acesso ou de redefinição de senha no lugar do bilhete.</p>
+<p>O passageiro abre a página sem login. Ela mostra o QR cujo conteúdo é <strong>exatamente o token emitido</strong>. Se o parceiro renderizar o QR em sua própria interface, codificar esse token, sem criar outro identificador ou incluir CPF e dados pessoais no QR. A decisão de validade é do Rotafy; gerar a imagem não cria uma credencial válida.</p>
+<p>A API não retorna diretamente uma imagem PNG do QR nem um <code>ticket_url</code> no JSON de emissão. Para enviar via WhatsApp, usar o endpoint acima. Para montar a URL em um backend Python autorizado, a função de referência é <code>app.ticket_links.ticket_url(base_url, token)</code>; a página antiga <code>/bilhete#token=...</code> permanece reconhecida, mas o formato alfanumérico é o utilizado nos novos envios.</p>
+<h3 id="83-reemitir-e-revogar">8.3 Reemitir e revogar</h3>
+<ul>
+<li><code>POST /tickets/{ticket_id}/reissue</code> → <code>200</code>, <code>{"token":"NOVA_CREDENCIAL"}</code>. Substitui a credencial para todos os trechos desse passageiro na reserva; o QR anterior deixa de valer.</li>
+<li><code>POST /tickets/{ticket_id}/revoke</code> → <code>204</code>. Revoga o bilhete do passageiro nessa reserva, incluindo seus trechos.</li>
+<li>Cancelar a reserva ou encerrar a viagem também impede o uso operacional, conforme as validações de estado.</li>
+</ul>
+<p>Não existe garantia global de “QR nunca reutilizado”: o mesmo bilhete serve para a volta e outros trechos contratados. O controle de uso é por passageiro, veículo e trecho, com estado e versão.</p>
+<h2 id="9-apk-e-operacoes-de-campo">9. APK e operações de campo</h2>
+<h3 id="91-distribuicao-e-login">9.1 Distribuição e login</h3>
+<p><code>GET /public/mobile-version?package_id=br.com.nexusdataanalytics.rotafy</code> é público. Retorna <code>{"android":null}</code> quando não há arquivo publicado; caso exista, o objeto contém <code>version</code>, <code>build</code>, <code>sha256</code> e <code>download_url</code>. Usar a URL retornada, não um caminho fixo para o APK.</p>
+<p>O arquivo é Android; não é instalável no iPhone. O APK atual utiliza a API e o login da própria empresa. O operador entra com usuário <code>driver</code> ou <code>guide</code> e precisa estar atribuído ao veículo/trecho. Não compartilhar a conta técnica de sincronização entre os motoristas.</p>
+<h3 id="92-carregar-a-lista-de-passageiros">9.2 Carregar a lista de passageiros</h3>
+<p>Prefixo operacional:</p>
+<pre><code class="language-text">/trips/{trip_id}/vehicles/{allocation_id}/legs/{leg_id}
+</code></pre>
+<p><code>GET {prefixo}/manifest</code> retorna <code>trip</code>, <code>vehicle</code>, <code>leg</code>, <code>journey</code>, <code>passengers</code>, <code>counts</code> e <code>can_write</code>. Cada passageiro contém <code>id</code>, <code>full_name</code>, <code>status</code>, <code>version</code>, dados de embarque/desembarque e locais personalizados quando informados.</p>
+<p>Estados de presença: <code>waiting</code> = aguardando; <code>onboard</code> = a bordo; <code>alighted</code> = desembarcado. Não confundir com o estado comercial da reserva ou da viagem.</p>
+<h3 id="93-conferir-o-qr">9.3 Conferir o QR</h3>
+<p><code>POST {prefixo}/scan</code>, corpo <code>scan</code> de <code>exemplos.json</code>:</p>
+<pre><code class="language-json">{&quot;token&quot;:&quot;bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;}
+</code></pre>
+<p>Resposta <code>200</code> inclui <code>passenger_id</code>, <code>full_name</code>, <code>boarding_status</code> e <code>version</code>. <strong>Scan não registra embarque.</strong> Ele confere a credencial e retorna a situação; o operador deve confirmar o comando seguinte.</p>
+<h3 id="94-registrar-embarque">9.4 Registrar embarque</h3>
+<p><code>POST {prefixo}/boarding</code> → <code>201</code>:</p>
+<pre><code class="language-json">{
+  &quot;operation_key&quot;:&quot;aaaaaaaa-0000-4000-8000-000000000005&quot;,
+  &quot;passenger_id&quot;:&quot;00000009-0000-4000-8000-000000000009&quot;,
+  &quot;expected_version&quot;:0,
+  &quot;action&quot;:&quot;board&quot;,
+  &quot;token&quot;:&quot;bt.00000001-0000-4000-8000-000000000001.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;,
+  &quot;device_id&quot;:&quot;aparelho-exemplo-01&quot;,
+  &quot;offline&quot;:false
+}
+</code></pre>
+<p>Resposta ilustrativa:</p>
+<pre><code class="language-json">{&quot;id&quot;:&quot;0000000c-0000-4000-8000-00000000000c&quot;,&quot;status&quot;:&quot;onboard&quot;,&quot;version&quot;:1,&quot;replayed&quot;:false}
+</code></pre>
+<p>Usar a versão retornada pelo manifesto/scan, não assumir que seja sempre zero. Se uma resposta se perder, repetir <strong>o mesmo corpo, usuário e <code>operation_key</code></strong>; o Rotafy retorna o evento já processado com <code>replayed:true</code>. Isso não é outro embarque.</p>
+<p>O token é opcional no esquema para permitir operação manual autorizada. Quando presente, deve corresponder ao passageiro, viagem, veículo e trecho; a origem do evento é registrada como <code>qr</code>. Sem token, a origem é <code>manual</code>. O APK oferece a leitura do QR e os controles de presença.</p>
+<h3 id="95-registrar-desembarque-e-corrigir">9.5 Registrar desembarque e corrigir</h3>
+<p>No mesmo endpoint, enviar <code>action:"disembark"</code>, a versão atual e <strong>outra</strong> <code>operation_key</code>. Exemplo completo: <code>disembark</code> em <code>exemplos.json</code>. O resultado normal é <code>status:"alighted"</code>, versão incrementada.</p>
+<p>Transições aceitas:</p>
+<table>
+<thead>
+<tr>
+<th>Estado atual</th>
+<th>Ação</th>
+<th>Novo estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waiting</code></td>
+<td><code>board</code></td>
+<td><code>onboard</code></td>
+</tr>
+<tr>
+<td><code>onboard</code></td>
+<td><code>disembark</code></td>
+<td><code>alighted</code></td>
+</tr>
+<tr>
+<td><code>onboard</code></td>
+<td><code>reverse</code></td>
+<td><code>waiting</code></td>
+</tr>
+<tr>
+<td><code>alighted</code></td>
+<td><code>reverse</code></td>
+<td><code>onboard</code></td>
+</tr>
+</tbody>
+</table>
+<p>Uma segunda tentativa de embarque já a bordo, com uma nova chave, não cria uma presença duplicada: recebe conflito. O APK atual oferece embarque/desembarque e desembarque em lote pela interface; este contrato não define um endpoint separado de “desembarcar todos”.</p>
+<h3 id="96-inicio-e-chegada-do-trecho">9.6 Início e chegada do trecho</h3>
+<p><code>PATCH {prefixo}/journey</code> com <code>{"status":"in_progress"}</code> inicia a operação; com <code>{"status":"completed"}</code> registra a chegada. São ações online. A volta exige concluir o trecho anterior; não é concluída automaticamente com a ida. A chegada não pode ser confirmada com passageiros a bordo: desembarcar e sincronizar primeiro.</p>
+<p><code>arrival_location</code> é opcional no comando de chegada e aceita coordenadas ou motivo de indisponibilidade, conforme o OpenAPI. O APK tenta capturar GPS, mas a indisponibilidade não inventa uma posição. A conclusão de todos os veículos/trechos pode concluir a viagem comercial; não fechar a viagem global após a chegada de apenas um veículo.</p>
+<h3 id="97-offline">9.7 Offline</h3>
+<p><code>GET {prefixo}/offline-manifest</code> prepara o trecho quando há conexão. A resposta acrescenta <code>operator</code>, <code>tickets</code> com hashes, <code>prepared_at</code> e <code>expires_at</code>. A validade é o menor valor entre o vencimento da sessão e oito horas a partir da preparação.</p>
+<p>O APK conserva a lista e a fila local, projeta estados pendentes e sincroniza os comandos pelo endpoint de <code>boarding</code> com <code>offline:true</code>, <code>captured_at</code>, <code>device_id</code> e <code>expected_actor_id</code>. Revogações, cancelamentos e mudanças feitas por outro aparelho são revalidados na sincronização. A tela local não prova que o backend já aceitou o evento.</p>
+<p>Uma leitura offline não pode descobrir um cancelamento ocorrido depois da preparação. Se o servidor recusar o comando, o operador precisa revisar o conflito. Preparar/sincronizar com frequência e antes de sair da área com conexão.</p>
+<h2 id="10-retornar-embarques-ao-sistema-parceiro">10. Retornar embarques ao sistema parceiro</h2>
+<h3 id="101-consultas-disponiveis">10.1 Consultas disponíveis</h3>
+<ul>
+<li><code>GET {prefixo}/manifest</code>: estado atual dos passageiros naquele veículo/trecho.</li>
+<li><code>GET {prefixo}/boarding-history</code>: até <strong>200 eventos</strong>, mais recentes primeiro, com <code>id</code>, <code>passenger_id</code>, <code>full_name</code>, <code>action</code>, <code>previous_status</code>, <code>status</code>, <code>version</code>, <code>source</code>, <code>created_at</code>, <code>client_recorded_at</code>, <code>is_offline</code> e <code>actor_name</code>.</li>
+</ul>
+<p><code>created_at</code> é o registro recebido no servidor. <code>client_recorded_at</code> é o horário informado pelo aparelho quando presente. Conservar ambos; um evento offline pode chegar depois de sua captura.</p>
+<h3 id="102-sincronizacao-recomendada">10.2 Sincronização recomendada</h3>
+<p>Consultar os trechos ativos a cada 15–30 segundos, sem abrir uma sessão por chamada. Relacionar cada <code>passenger_id</code> à reserva/pessoa do parceiro e aplicar o maior <code>version</code> confirmado para o contexto passageiro/trecho. Preservar o <code>id</code> do evento como chave de deduplicação.</p>
+<p>O histórico vem em ordem decrescente. Para aplicar uma sequência de transições, reordenar por versão por passageiro/trecho, não simplesmente processar a ordem recebida. Uma reversão é outro evento e não deve ser descartada apenas porque já houve embarque anterior.</p>
+<p>O endpoint de histórico não possui cursor, filtro <code>since</code> ou paginação. Se mais de 200 eventos ocorrerem entre consultas, não é possível garantir a cópia de todo o histórico por ele. Reconciliar a situação atual pelo manifesto; não prometer ao parceiro uma trilha de eventos completa baseada apenas nessa janela limitada. O mesmo cuidado vale para a janela de 30 mensagens por reserva.</p>
+<h2 id="11-alteracoes-cancelamento-e-idempotencia">11. Alterações, cancelamento e idempotência</h2>
+<table>
+<thead>
+<tr>
+<th>Operação</th>
+<th>Regra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PATCH /trips/{trip_id}</code></td>
+<td>Corpo completo <code>TripEdit</code>, com <code>expected_version</code>; não é patch de um único campo</td>
+</tr>
+<tr>
+<td><code>PATCH /reservations/{reservation_id}</code></td>
+<td>Corpo <code>ReservationEdit</code>, com <code>expected_version</code> e IDs dos passageiros já existentes</td>
+</tr>
+<tr>
+<td><code>PATCH /reservations/{reservation_id}/vehicle</code></td>
+<td>Corpo <code>{"allocation_id":"UUID"}</code>; remaneja sujeito a capacidade e estado</td>
+</tr>
+<tr>
+<td><code>PATCH /reservations/{reservation_id}/status</code></td>
+<td><code>confirmed</code> ou <code>cancelled</code>, conforme estado atual</td>
+</tr>
+<tr>
+<td><code>PATCH /trips/{trip_id}/status</code></td>
+<td><code>in_progress</code>, <code>completed</code> ou <code>cancelled</code>; sujeito às regras operacionais</td>
+</tr>
+</tbody>
+</table>
+<p>Consultar os detalhes antes de editar e usar <code>edit_version</code> da viagem ou da reserva em <code>expected_version</code>. Esse contador de edição é diferente do <code>version</code> da presença de cada passageiro no embarque. Preservar IDs de passageiros e alocações. Não apagar e recriar reservas como mecanismo normal de sincronização: isso altera identidade, referências e bilhetes.</p>
+<p><code>operation_key</code> garante idempotência em operações que a recebem. Gere uma UUID por comando de negócio e persista antes da primeira chamada; reutilize-a somente ao repetir o mesmo comando. Reutilizar a chave com outro conteúdo pode receber <code>409</code>. Os endpoints que não recebem essa chave não devem ser presumidos idempotentes; emissão/reemissão de bilhete exige o tratamento específico da seção 8.</p>
+<p>Um cancelamento comercial deve ser sincronizado antes de permitir novos embarques. Uma reserva com passageiros a bordo pode ter o cancelamento recusado. Mudanças após embarques e edições que alterem ocupação são limitadas; tratar o conflito, não forçar o estado por SQL.</p>
+<h2 id="12-chave-bearer-de-reservas-externas-escopo-limitado">12. Chave Bearer de reservas externas — escopo limitado</h2>
+<p>O administrador da empresa pode usar <code>POST /integrations/keys</code>, corpo <code>{"name":"Parceiro Exemplo","valid_days":90}</code>, para criar uma chave. A resposta traz <code>id</code> e <code>token</code>; guardar o segredo nessa ocasião. <code>GET /integrations/keys</code> lista metadados, sem recuperar o token. <code>POST /integrations/keys/{key_id}/revoke</code> revoga a chave.</p>
+<p>Essa chave usa <code>Authorization: Bearer rk...</code> <strong>somente</strong> nos endpoints:</p>
+<ul>
+<li><code>POST /external/reservations</code>;</li>
+<li><code>GET /external/reservations/{reservation_id}</code>.</li>
+</ul>
+<p>A criação externa exige viagem publicada, agendada e futura; usa <code>trip_id</code> e os dados de <code>ExternalBooking</code> do OpenAPI. Inclui <code>access_token</code> de acompanhamento no formato <code>rt.{company_id}.{segredo_base64url}</code>, gerado pelo cliente com pelo menos 32 bytes aleatórios, distinto do bilhete <code>bt...</code>. O cliente deve preservar esse token e a <code>operation_key</code> em uma repetição. <code>journeys</code>, quando fornecido nessa entrada, admite no máximo dois trechos.</p>
+<p>A publicação da viagem, quando cabível a esse canal, usa sessão operacional em <code>PATCH /trips/{trip_id}/publication</code> com <code>{"is_published":true}</code>. A chave Bearer não publica a viagem. Um segredo de acompanhamento pode ser gerado no backend com <code>secrets.token_urlsafe(32)</code> em Python; não usar um CPF, número sequencial ou senha como segredo.</p>
+<p>O resultado é uma reserva <strong>pendente</strong>, com bloqueio temporário de quinze minutos, e uma visão resumida do comprador. Não confirma automaticamente uma venda já feita no parceiro, não emite QR de embarque e não retorna a estrutura completa de IDs operacionais do fluxo principal. A consulta Bearer fica restrita às reservas vinculadas à mesma chave; outra chave da mesma empresa não herda essa consulta.</p>
+<p>Por isso essa entrada não substitui a integração operacional das seções anteriores. Não enviar a chave <code>rk...</code> para <code>/tickets</code>, <code>/whatsapp</code> ou <code>/boarding</code> esperando autorização. As chaves do provedor de WhatsApp também não autenticam essas rotas.</p>
+<h2 id="13-respostas-e-tratamento-de-falhas">13. Respostas e tratamento de falhas</h2>
+<table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th>Significado operacional</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code></td>
+<td>Consulta ou comando concluído conforme a rota</td>
+</tr>
+<tr>
+<td><code>201</code></td>
+<td>Registro/emissão/comando criado; conferir o corpo</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td>Solicitação aceita para processamento assíncrono</td>
+</tr>
+<tr>
+<td><code>204</code></td>
+<td>Concluído sem corpo JSON</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>Sessão/chave ausente, inválida ou expirada</td>
+</tr>
+<tr>
+<td><code>402</code></td>
+<td>Restrição financeira</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>Perfil, origem ou CSRF não autorizado</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td>Recurso não encontrado no escopo permitido ou credencial inválida</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td>Conflito de versão, estado, capacidade, agenda ou idempotência</td>
+</tr>
+<tr>
+<td><code>422</code></td>
+<td>Corpo ou campo inválido; inclui campos extras não aceitos</td>
+</tr>
+<tr>
+<td><code>423</code></td>
+<td>Acesso condicionado a aceite contratual</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>Limite de chamadas; respeitar <code>Retry-After</code> quando presente</td>
+</tr>
+<tr>
+<td><code>5xx</code></td>
+<td>Falha temporária; reconciliar resultado antes de repetir um comando</td>
+</tr>
+</tbody>
+</table>
+<p>Em <code>version_conflict</code>, atualizar o manifesto e pedir revisão operacional antes de gerar outro comando. O header <code>X-Rotafy-Error</code> pode diferenciar <code>version_conflict</code>, <code>identity_changed</code>, <code>trip_closed</code> e <code>leg_closed</code>. Não presumir que toda resposta de erro tenha esse header.</p>
+<p>Guardar o <code>X-Request-ID</code> quando retornado para diagnóstico. Nunca registrar senha, cookies, CSRF, chave de integração, token de bilhete ou URL privada em logs comuns. Usar TLS validado, sessões por empresa e credenciais com acesso mínimo; nenhum exemplo exige acesso direto ao banco Rotafy.</p>
+<h2 id="14-homologacao-do-parceiro">14. Homologação do parceiro</h2>
+<ol>
+<li>Autenticar na empresa correta e verificar que o usuário não acessa dados de outra empresa.</li>
+<li>Criar equipe, veículo e viagem futura, relacionando os IDs ao sistema de origem.</li>
+<li>Criar uma reserva familiar confirmada e repetir o mesmo comando, comprovando ausência de duplicação.</li>
+<li>Emitir bilhetes de uma reserva com mais de um passageiro e ida/volta; enviar uma mensagem por passageiro, sem duplicar por trecho.</li>
+<li>Abrir o bilhete em Android e iOS, conferir nome e QR e testar uma reemissão/revogação.</li>
+<li>No APK, preparar o veículo/trecho atribuído, ler o QR e confirmar embarque; validar que só ler o QR não altera presença.</li>
+<li>Repetir um comando com a mesma chave e verificar <code>replayed</code>; tentar outro embarque já a bordo e verificar conflito.</li>
+<li>Registrar desembarque, fechar a ida, iniciar a volta e usar o mesmo bilhete no trecho correto.</li>
+<li>Simular falta de rede, sincronização e conflito de versão entre aparelhos; validar a distinção entre horário capturado e recebido.</li>
+<li>Consultar manifesto/histórico no adaptador e reconciliar a situação no sistema parceiro.</li>
+<li>Testar cancelamento, troca de veículo, falha/resultado incerto de WhatsApp e bloqueios de acesso aplicáveis.</li>
+</ol>
+<p>Os corpos exemplificativos são de homologação e contêm IDs fictícios. A criação de uma reserva confirmada em uma empresa com WhatsApp habilitado pode enfileirar comunicação real; configurar os destinatários de teste antes de executar o fluxo.</p></body></html>
