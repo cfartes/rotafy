@@ -6,16 +6,28 @@ from sqlalchemy import text
 
 from app.billing.calendar import SAO_PAULO, local_today
 from app.billing.service import available_plan, insert_period
+from app.company_address import ADDRESS_FIELDS, complete_address
 from app.identity import audit
 from app.schemas import CompanyCreate
 from app.security import passwords
 
 COMPANY_FIELDS = """id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile,
+ address,address_number,address_complement,neighborhood,city,state,postal_code,required_contract_version_id,
+ (SELECT d.sha256 FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id WHERE a.company_id=companies.id) AS contract_sha256,
  (SELECT s.starts_on FROM subscriptions s WHERE s.company_id=companies.id AND s.status='active' AND s.billing_mode IN ('prepaid','postpaid30') AND s.trial_days>0) AS trial_ends_on"""
 
 
 async def register_company(db, payload: CompanyCreate, actor_id=None):
     registered_on = local_today()
+    contract_version = await db.scalar(
+        text("SELECT active_version_id FROM contract_settings WHERE id=true")
+    )
+    if (
+        contract_version or any(getattr(payload, k) is not None for k in ADDRESS_FIELDS)
+    ) and not complete_address(payload.model_dump()):
+        raise HTTPException(
+            422, "Complete endereço, número, bairro, cidade, UF e CEP da empresa."
+        )
     plan = await available_plan(db, payload.plan_id)
     if await db.scalar(
         text("SELECT 1 FROM companies WHERE slug=:slug"), {"slug": payload.slug}
@@ -39,6 +51,13 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
         text("""INSERT INTO companies(id,slug,trade_name,corporate_name,cnpj,contact_phone,primary_color,accent_color,operational_profile)
                                   VALUES(:id,:slug,:trade_name,:corporate_name,:cnpj,:contact_phone,:primary_color,:accent_color,:operational_profile)"""),
         values,
+    )
+    from app.company_address import update_address
+
+    await update_address(db, company_id, payload)
+    await db.execute(
+        text("UPDATE companies SET required_contract_version_id=:version WHERE id=:id"),
+        {"version": contract_version, "id": company_id},
     )
     await db.execute(
         text("""INSERT INTO users(id,company_id,full_name,email,password_hash,role)

@@ -17,8 +17,11 @@ from app.billing.infinitepay import router as infinitepay_router
 from app.billing.routes import router as billing_router
 from app.billing.service import list_plans
 from app.boarding import router as boarding_router
+from app.company_address import update_address
 from app.company_welcome import router as company_welcome_router
 from app.config import Settings
+from app.contracts import pending as contract_pending
+from app.contracts import router as contracts_router
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
 from app.email_auth import router as email_auth_router
@@ -305,7 +308,15 @@ def create_app(settings: Settings | None = None):
                 row["id"],
             )
             set_session(response, request.app.state.settings, token, csrf)
-            return UserView(**dict(row))
+            result = dict(row)
+            if not platform:
+                result["contract_pending"] = await contract_pending(db, company["id"])
+                from app.billing.collections import financially_blocked
+
+                result["financial_blocked"] = await financially_blocked(
+                    db, company["id"]
+                )
+            return UserView(**result)
 
     @application.post("/api/v1/auth/login", response_model=UserView)
     async def login(payload: Login, request: Request, response: Response):
@@ -488,6 +499,7 @@ def create_app(settings: Settings | None = None):
             {"cnpj": payload.cnpj, "id": company_id},
         ):
             raise HTTPException(409, "CPF/CNPJ já cadastrado em outra empresa.")
+        await update_address(actor.db, company_id, payload)
         row = (
             (
                 await actor.db.execute(
@@ -550,6 +562,7 @@ def create_app(settings: Settings | None = None):
                 text("SELECT contact_phone FROM companies WHERE id=:id FOR UPDATE"),
                 {"id": actor.company_id},
             )
+            await update_address(db, actor.company_id, payload)
             row = (
                 (
                     await db.execute(
@@ -809,6 +822,7 @@ def create_app(settings: Settings | None = None):
 
     application.include_router(nexus_users_router)
     application.include_router(company_welcome_router)
+    application.include_router(contracts_router)
     application.include_router(billing_router)
     application.include_router(collections_router)
     application.include_router(infinitepay_router)

@@ -468,6 +468,24 @@ textarea:focus {
 .billing-summary-card small {
   color: #577084;
 }
+.contract-gate {
+  max-width: 1120px;
+  margin: 32px auto;
+  padding: 20px;
+}
+.contract-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 65vh;
+  overflow-y: auto;
+  line-height: 1.7;
+  padding: 20px;
+  background: #f5f9fa;
+  border: 1px solid #d7e5e8;
+  border-radius: 10px;
+}
+.contract-hash { overflow-wrap: anywhere; word-break: break-all; }
+.operation-checkbox > input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; }
 .workspace:has(.workspace-edit) {
   padding-right: 30px;
 }

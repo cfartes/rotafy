@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **17/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **21/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -634,3 +634,18 @@ Cobranças manuais ou antigas podem apresentar chave Pix, favorecido e Copia e C
 Sem confirmação no prazo, o administrador passa a acessar somente o Financeiro para consultar e pagar a cobrança pendente. Motorista e guia preservam o acesso à operação das viagens já vendidas. A confirmação remove a restrição da cobrança paga; outros débitos vencidos podem manter o bloqueio. Uma suspensão administrativa segue tratamento separado.
 
 Os avisos são enviados por e-mail aos administradores ativos e por WhatsApp ao telefone de contato da empresa. Mantenha seus dados atualizados.
+
+
+## 27. Contrato de utilização e aceite no primeiro acesso {#contrato}
+
+Quando a Nexus publica uma versão aprovada do contrato, os novos cadastros passam a exigir o aceite do representante da empresa. Cadastros anteriores à ativação não recebem aceite retroativo.
+
+1. Entre com o administrador da empresa e confira seus dados. Complete endereço, número, bairro, cidade, UF e CEP; complemento é opcional.
+2. Informe nome, CPF e função do representante e declare os poderes para representar a empresa.
+3. Clique em **Conferir dados e preparar contrato**. Use **Ler contrato completo** e **Baixar PDF antes de aceitar** para consultar a cópia personalizada.
+4. Após abrir o texto integral, solicite o código pelo e-mail do seu acesso. O código vale por dez minutos e permite até cinco tentativas. Se os dados estiverem errados, solicite a correção ou gere outra cópia antes de aceitar.
+5. Informe o código, marque a declaração de leitura e aceite e clique em **Confirmar aceite do contrato**. A caixa não vem marcada.
+
+Você receberá por e-mail o PDF aceito e o comprovante. Em **Meu contrato**, consulte versão, data, hash SHA-256 e situação do envio; baixe os documentos ou solicite reenvio ao e-mail confirmado. Uma falha no e-mail não apaga o registro: o sistema tenta enviar novamente. Confira também o spam.
+
+O hash identifica a integridade daquela cópia. Alterações cadastrais posteriores não modificam o contrato aceito. O aceite eletrônico não é apresentado como assinatura certificada ICP-Brasil. A equipe Nexus não marca o aceite pelo cliente.

@@ -143,6 +143,12 @@ async def main():
                     for company_id in [None, *ids]:
                         # Um envio por empresa/ciclo limita rajadas; fila persiste no banco.
                         await process_company(engine, current_settings, company_id)
+                        if company_id:
+                            from app.contract_mail import process_contract_mail
+
+                            await process_contract_mail(
+                                engine, current_settings, company_id, send_email
+                            )
                 Path("/tmp/rotafy-email-health").touch()
             except (SQLAlchemyError, OSError, ValueError, HTTPException):
                 logger.error('{"event":"email.cycle_failed"}')

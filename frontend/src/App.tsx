@@ -2,6 +2,8 @@ import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
 import { BillingUpcoming } from "./BillingUpcoming";
+import { AddressFields, addressPayload } from "./CompanyAddress";
+import { CompanyContract, ContractGate, NexusContracts, NexusCompanyContract } from "./Contracts";
 import { Collections } from "./Collections";
 import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
@@ -374,6 +376,7 @@ function CreateCompany({
     const data = new FormData(event.currentTarget);
     try {
       const result = await post<Company>("/nexus/companies", {
+        ...addressPayload(data),
         trade_name: data.get("trade_name"),
         corporate_name: data.get("corporate_name"),
         slug: data.get("slug"),
@@ -454,6 +457,8 @@ function CreateCompany({
           </div>
         </div>
         <h3 className="form-section">Tipo de operação</h3>
+        <AddressFields />
+        <p className="muted">O representante da empresa poderá ler e baixar o contrato antes de aceitar no primeiro acesso. O aceite não pode ser marcado pela equipe Nexus.</p>
         <ProfileField />
         <h3 className="form-section">Plano da empresa</h3>
         <Field label="Plano escolhido">
@@ -538,6 +543,7 @@ function EditCompany({
     setError("");
     try {
       await patch(`/nexus/companies/${company.id}/details`, {
+        ...addressPayload(form),
         trade_name: form.get("trade_name"),
         corporate_name: form.get("corporate_name"),
         slug: form.get("slug"),
@@ -612,6 +618,7 @@ function EditCompany({
             </small>
           </Field>
         </div>
+        <AddressFields company={company} required={false} />
         <ProfileField
           initial={company.operational_profile || "tourism"}
           editing
@@ -908,7 +915,7 @@ function BrandingModal({
     }
   }
   return (
-    <Modal title="Cadastro da empresa" onClose={onClose}>
+    <Modal title="Cadastro da empresa" onClose={onClose} wide>
       <form className="modal-form" onSubmit={submit}>
         <Field label="Identificador de acesso">
           <input value={company.slug} readOnly />
@@ -939,6 +946,7 @@ function BrandingModal({
             <PhoneInput initialValue={company.contact_phone || ""} required />
           </Field>
         </div>
+        <AddressFields company={company} required={false} />
         <p className="muted">Ao alterar o telefone, confira a conexão no menu WhatsApp. Os envios pelo número anterior serão suspensos.</p>
         <div className="form-grid">
           <Field label="Cor principal">
@@ -993,6 +1001,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "collections"
     | "nexus-team"
     | "whatsapp"
+    | "contract"
   >(financialOnly ? "collections" : "overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1005,6 +1014,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [companyPlanOnly, setCompanyPlanOnly] = useState(false);
   const [password, setPassword] = useState(false);
   const [brandingOpen, setBrandingOpen] = useState(false);
+  const [contractCompany, setContractCompany] = useState<Company | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [resetLink, setResetLink] = useState("");
@@ -1106,7 +1116,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "whatsapp"
+    page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
@@ -1165,6 +1175,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "collections",
     "billing",
     "whatsapp",
+    "contract",
     "audit",
   ];
   return (
@@ -1220,7 +1231,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {[
             { id: "overview", label: "Visão geral", icon: LayoutDashboard },
             ...(isAdmin
-              ? [{ id: "whatsapp", label: "WhatsApp", icon: Phone }]
+              ? [{ id: "whatsapp", label: "WhatsApp", icon: Phone }, { id: "contract", label: "Meu contrato", icon: BookOpen }]
               : []),
             ...(fullNexus || isAdmin || user.role === "attendant"
               ? [{ id: "reports", label: "Relatórios", icon: ChartColumn }]
@@ -1430,6 +1441,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <NexusTeam currentUserId={user.id} />
           )}
           {page === "integrations" && fullNexus && <IntegrationSettings />}
+          {page === "integrations" && fullNexus && <NexusContracts />}
+          {page === "contract" && isAdmin && <CompanyContract />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
@@ -1722,6 +1735,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                                       Enviar acesso
                                     </button>
                                     {fullNexus && (
+                                      <button className="text-button" onClick={() => setContractCompany(row)}>Contrato</button>
+                                    )}
+                                    {fullNexus && (
                                       <button
                                         className="text-button"
                                         onClick={() => {
@@ -1846,6 +1862,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           onClose={() => setBrandingOpen(false)}
         />
       )}
+      {contractCompany && fullNexus && <NexusCompanyContract company={contractCompany} onClose={() => setContractCompany(null)} />}
       {accessCompany && (
         <CompanyAccess
           company={accessCompany}
@@ -2007,5 +2024,6 @@ export function App() {
     ) : (
       <Documentation />
     );
+  if (session.data.contract_pending) return <ContractGate user={session.data} onLogout={loggedOut} />;
   return <Dashboard user={session.data} onLogout={loggedOut} />;
 }

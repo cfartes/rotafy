@@ -1,6 +1,6 @@
 # Nexus Rotafy — documentação consolidada do projeto
 
-**Data da consolidação:** 17/10/2026.\
+**Data da consolidação:** 21/10/2026.\
 **Produto:** Nexus Rotafy.  
 **Responsável pela plataforma:** Nexus.  
 **Painel:** https://rotafy.nexusdataanalytics.tech  
@@ -1123,3 +1123,22 @@ Essas evidências têm escopo e data. Não constituem garantia de ausência de v
 - `docs/SECURITY_REVIEW_2026-10-16.md`: evidências da revisão de segurança.
 
 Os materiais mais antigos do repositório registram etapas históricas e podem conter nomes de menus, caminhos ou condições anteriores. Esta consolidação usa os manuais atuais e a implementação vigente para descrever o produto na data informada.
+
+## Contratos eletrônicos e cadastro completo da empresa
+
+
+### 27. Contrato de utilização e aceite no primeiro acesso {#contrato}
+
+Quando a Nexus publica uma versão aprovada do contrato, os novos cadastros passam a exigir o aceite do representante da empresa. Cadastros anteriores à ativação não recebem aceite retroativo.
+
+1. Entre com o administrador da empresa e confira seus dados. Complete endereço, número, bairro, cidade, UF e CEP; complemento é opcional.
+2. Informe nome, CPF e função do representante e declare os poderes para representar a empresa.
+3. Clique em **Conferir dados e preparar contrato**. Use **Ler contrato completo** e **Baixar PDF antes de aceitar** para consultar a cópia personalizada.
+4. Após abrir o texto integral, solicite o código pelo e-mail do seu acesso. O código vale por dez minutos e permite até cinco tentativas. Se os dados estiverem errados, solicite a correção ou gere outra cópia antes de aceitar.
+5. Informe o código, marque a declaração de leitura e aceite e clique em **Confirmar aceite do contrato**. A caixa não vem marcada.
+
+Você receberá por e-mail o PDF aceito e o comprovante. Em **Meu contrato**, consulte versão, data, hash SHA-256 e situação do envio; baixe os documentos ou solicite reenvio ao e-mail confirmado. Uma falha no e-mail não apaga o registro: o sistema tenta enviar novamente. Confira também o spam.
+
+O hash identifica a integridade daquela cópia. Alterações cadastrais posteriores não modificam o contrato aceito. O aceite eletrônico não é apresentado como assinatura certificada ICP-Brasil. A equipe Nexus não marca o aceite pelo cliente.
+
+A implementação possui versões publicadas imutáveis, PDFs personalizados preservados no banco, hash SHA-256, evidências de aceite, confirmação por e-mail e fila de envio da cópia. A migração 0034 preserva o banco e não ativa o contrato automaticamente: a minuta deve ser aprovada e publicada pelo administrador Nexus completo. Empresas existentes permanecem fora da exigência retroativa. O teste e a cobrança seguem suas datas existentes; aceitar não reinicia os ciclos. Detalhes operacionais em `docs/CONTRATOS_E_ACEITE.md`.
