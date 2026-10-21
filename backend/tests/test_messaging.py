@@ -326,13 +326,22 @@ def test_ticket_link_queue_is_private_idempotent_and_revocation_discards(
         from app.ticket_links import ticket_url
 
         assert (
-            ticket_url("https://rotafy.nexusdataanalytics.tech", ticket["token"]).split(
-                "/b/"
-            )[1]
+            ticket_url(
+                "https://rotafy.nexusdataanalytics.tech", ticket["token"]
+            ).rsplit("/", 1)[1]
             in body
         )
-        assert "/b/" in body and "#token=" not in body
+        assert "/api/v1/public/bilhete/" in body and "#token=" not in body
         assert ticket["token"] not in row["body"]
+    import re
+    from urllib.parse import parse_qs, urlparse
+
+    received_link = re.search(r"https?://\S+", body).group()
+    opened = client.get(urlparse(received_link).path, follow_redirects=False)
+    assert opened.status_code == 303
+    destination = urlparse(opened.headers["location"])
+    assert destination.path == "/bilhete"
+    assert parse_qs(destination.fragment)["token"] == [ticket["token"]]
     client.post(f"/api/v1/tickets/{ticket['id']}/revoke")
     for _ in range(3):
         process(seeded["a"], ready)

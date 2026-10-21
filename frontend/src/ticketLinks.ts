@@ -16,7 +16,7 @@ function encodeSecret(secret: string) {
 export function ticketUrl(token: string, origin = window.location.origin) {
   const match = /^bt\.([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([A-Za-z0-9_-]{43})$/i.exec(token);
   if (!match) return `${origin}/bilhete#token=${encodeURIComponent(token)}`;
-  return `${origin}/b/${match[1].replace(/-/g, "").toLowerCase()}${encodeSecret(match[2])}`;
+  return `${origin}/api/v1/public/bilhete/${match[1].replace(/-/g, "").toLowerCase()}${encodeSecret(match[2])}`;
 }
 
 export function ticketToken(raw: string, origin = window.location.origin) {
@@ -24,7 +24,7 @@ export function ticketToken(raw: string, origin = window.location.origin) {
   if (!input.startsWith(origin + "/")) return input;
   const url = new URL(input);
   if (url.pathname === "/bilhete") return new URLSearchParams(url.hash.slice(1)).get("token") || "";
-  const match = /^\/b\/([0-9a-f]{32})([a-z2-7]{52})$/i.exec(url.pathname);
+  const match = /^\/(?:b|api\/v1\/public\/bilhete)\/([0-9a-f]{32})([a-z2-7]{52})$/i.exec(url.pathname);
   if (!match) return "";
   const company = match[1].toLowerCase();
   let bits = 0, value = 0, binary = "";

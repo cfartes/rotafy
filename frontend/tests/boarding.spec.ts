@@ -194,7 +194,7 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
   const link = page.getByRole("textbox", {
     name: "Link do bilhete de Ana QR",
   });
-  await expect(link).toHaveValue(/\/b\/[a-z0-9]{84}$/);
+  await expect(link).toHaveValue(/\/api\/v1\/public\/bilhete\/[a-z0-9]{84}$/);
   const ticketUrl = await link.inputValue();
   const token = ticketToken(ticketUrl, new URL(ticketUrl).origin);
   const buyerContext = await page
