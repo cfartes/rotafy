@@ -66,6 +66,7 @@ from app.schemas import (
     UserView,
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
+from app.tracking import router as tracking_router
 from app.whatsapp import router as whatsapp_router
 from app.whatsapp_connection import invalidate_phone_connection, queue_disconnect
 from app.whatsapp_connection import router as whatsapp_connection_router
@@ -839,6 +840,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(route_refresh_router)
     application.include_router(integration_settings_router)
     application.include_router(whatsapp_router)
+    application.include_router(tracking_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)

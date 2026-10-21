@@ -5,7 +5,7 @@
 @page{size:A4;margin:18mm 16mm 19mm}@media print{body{background:white;font-size:10.5pt;line-height:1.5;color:#142e42}.toolbar,.sidebar,.no-results{display:none!important}.layout{display:block;padding:0;margin:0}.document{border:0;border-radius:0;overflow:visible}.cover{min-height:245mm;padding:35mm 15mm;background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:page}.cover h1{font-size:43pt;margin:25mm 0 12mm}.cover p{font-size:13pt}.print-toc{display:block;break-after:page;padding:5mm 0}.print-toc ul{columns:1;padding-left:18px}.print-toc li{margin:5px 0;font-size:10pt}.chapter{display:block!important;padding:0;border:0;break-before:page}h2{font-size:23pt;margin-top:5mm;break-after:avoid}h3{font-size:13pt;break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9pt;break-inside:auto}tr{break-inside:avoid}th{background:#edf6f5!important;-webkit-print-color-adjust:exact}.note{break-inside:avoid}figure img{max-height:165mm;border-radius:0}a{color:inherit}.end{padding:8mm 0}}
 .chapter a{overflow-wrap:anywhere}</style></head><body><a class="skip" href="#documento">Ir ao manual</a>
 <header class="toolbar"><strong>rotafy. <small>NEXUS</small></strong><a href="/ajuda">Central de documentação</a><a href="manual.pdf" download="manual.pdf">Baixar PDF</a><a href="manual.html" download="manual.html">Baixar HTML</a><button type="button" onclick="window.print()">Imprimir</button></header>
-<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 28 capítulos</summary><div class="toc">
+<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 29 capítulos</summary><div class="toc">
 <ul>
 <li><a href="#visao-geral">1. Conheça o Nexus Rotafy</a></li>
 <li><a href="#perfis">2. Perfis e permissões</a></li>
@@ -35,6 +35,7 @@
 <li><a href="#financeiro">26. Financeiro da empresa e pagamento da assinatura</a></li>
 <li><a href="#contrato">27. Contrato de utilização e aceite no primeiro acesso</a></li>
 <li><a href="#atualizacao">Atualização do aplicativo</a></li>
+<li><a href="#rastreamento">Rastreamento e avisos de embarque</a></li>
 </ul>
 </div>
 </details><p id="resultado" role="status" aria-live="polite"></p></nav>
@@ -68,6 +69,7 @@
 <li><a href="#financeiro">26. Financeiro da empresa e pagamento da assinatura</a></li>
 <li><a href="#contrato">27. Contrato de utilização e aceite no primeiro acesso</a></li>
 <li><a href="#atualizacao">Atualização do aplicativo</a></li>
+<li><a href="#rastreamento">Rastreamento e avisos de embarque</a></li>
 </ul>
 </div>
 </section><section class="chapter"><h2 id="visao-geral">1. Conheça o Nexus Rotafy</h2>
@@ -723,7 +725,13 @@
 </section><section class="chapter"><h2 id="atualizacao">Atualização do aplicativo</h2>
 <p>O sistema verifica a versão ao abrir e ao retornar à tela. Quando houver atualização no navegador, salve o cadastro em andamento e clique em <strong>Atualizar aplicativo</strong>. A atualização pede confirmação antes de recarregar.</p>
 <p>No Android, a partir da versão 1.7.0, o botão abre o download de uma versão mais nova disponibilizada pela Nexus. Sincronize os registros pendentes e instale por cima do aplicativo atual, sem desinstalar. Versões anteriores precisam receber a primeira atualização manualmente. Sem conexão, o trabalho offline permanece disponível.</p>
-<p>Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distinguem os nomes; os passageiros aparecem na lista. Cada mensagem de bilhete identifica o passageiro do QR correspondente.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual da empresa · Edição 2026.10 · Revisão 4</footer></main></div>
+<p>Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distinguem os nomes; os passageiros aparecem na lista. Cada mensagem de bilhete identifica o passageiro do QR correspondente.</p>
+</section><section class="chapter"><h2 id="rastreamento">Rastreamento e avisos de embarque</h2>
+<p>O administrador acessa <strong>Rastreamento</strong> para ativar a coleta durante as viagens, ajustar o raio de proximidade (inicialmente cinco quilômetros) e habilitar o lembrete de saída. Os controles são independentes: o lembrete pode funcionar sem GPS.</p>
+<p>Em <strong>Locais de embarque para avisos</strong>, selecione a viagem e confirme cada local no mapa, incluindo hotéis. Sem coordenadas confirmadas, não há aviso de proximidade. Alterar o endereço exige nova confirmação. É possível clicar no mapa ou colar coordenadas explícitas de um link completo do Google Maps.</p>
+<p>No Android, a partir de 1.8.0, inicie o trecho e use <strong>Assumir rastreamento deste veículo</strong>. Autorize a localização e mantenha o celular no veículo. Uma notificação acompanha a coleta a cada cinco minutos. Outro motorista ou guia atribuído pode confirmar a transferência. O rastreamento termina na chegada; cada retorno ou próximo trecho exige nova ativação. <strong>Interromper rastreamento neste celular</strong> permite parar o compartilhamento.</p>
+<p>O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.</p>
+<p>Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, embarque confirmado no mapa e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual da empresa · Edição 2026.10 · Revisão 4</footer></main></div>
 <script>
 const search=document.getElementById('busca'),chapters=[...document.querySelectorAll('.chapter')];const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();search.addEventListener('input',()=>{const term=normalize(search.value.trim());let count=0;for(const chapter of chapters){const matches=!term||normalize(chapter.textContent).includes(term);chapter.hidden=!matches;if(matches)count++;}document.getElementById('resultado').textContent=term?`${count} capítulos encontrados.`:'';document.getElementById('sem-resultados').style.display=count?'none':'block';});document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{search.value='';search.dispatchEvent(new Event('input'));}));
 </script></body></html>

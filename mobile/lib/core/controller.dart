@@ -7,6 +7,7 @@ import 'store.dart';
 import 'location.dart';
 import 'biometrics.dart';
 import 'config.dart';
+import 'tracking.dart';
 
 class OperationController extends ChangeNotifier {
   final RotafyApi api;
@@ -219,6 +220,7 @@ class OperationController extends ChangeNotifier {
     if (await store.pendingCount() > 0) {
       throw StateError('Sincronize ou revise os registros antes de sair.');
     }
+    await VehicleTracking.stop();
     try {
       await api.request('POST', '/auth/logout', {});
     } on ApiFailure catch (e) {
@@ -290,6 +292,7 @@ class OperationController extends ChangeNotifier {
         if (status == 'completed') 'arrival_location': await location.capture(),
       }),
     );
+    if (status == 'completed') await VehicleTracking.stop();
     await store.prepare(snapshot['endpoint'], {
       ...Json.from(snapshot['data']),
       ...response,

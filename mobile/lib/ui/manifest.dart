@@ -9,6 +9,7 @@ import '../core/api.dart';
 import '../core/config.dart';
 import '../core/controller.dart';
 import '../core/offline.dart';
+import '../core/tracking.dart';
 
 const presenceLabels = {
   'waiting': 'Aguardando embarque',
@@ -33,6 +34,49 @@ class _ManifestPageState extends State<ManifestPage> {
   String get manifestId => widget.manifestId;
   String filter = 'all';
   bool listOpen = true;
+  String? trackingNotice;
+
+  Future<void> tracking() async {
+    if (!await confirm(
+      'Compartilhar localização do veículo?',
+      'Este celular será o responsável por este veículo. O GPS será coletado a cada 5 minutos durante o trecho, inclusive com a tela bloqueada, com notificação visível. Permaneça no veículo. O administrador poderá acompanhar o percurso e enviar avisos de proximidade aos passageiros.',
+      'Assumir rastreamento',
+    )) {
+      return;
+    }
+    try {
+      final snapshot = await controller.store.snapshot(manifestId);
+      try {
+        await VehicleTracking.start(
+          controller.api,
+          controller.store,
+          Json.from(snapshot),
+        );
+      } on ApiFailure catch (e) {
+        if (e.status != 409 || !e.message.contains('Outro aparelho')) rethrow;
+        if (!await confirm(
+          'Transferir rastreamento?',
+          'Outro celular está responsável. Ao assumir, o rastreamento anterior será encerrado.',
+          'Transferir para este celular',
+        )) {
+          return;
+        }
+        await VehicleTracking.start(
+          controller.api,
+          controller.store,
+          Json.from(snapshot),
+          takeover: true,
+        );
+      }
+      if (mounted) {
+        setState(
+          () => trackingNotice = 'Rastreamento iniciado neste celular. A coleta para ao encerrar o trecho ou interromper o compartilhamento.',
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => trackingNotice = e.toString());
+    }
+  }
 
   Future<bool> confirm(String title, String description, String action) async =>
       await showDialog<bool>(
@@ -247,6 +291,26 @@ class _ManifestPageState extends State<ManifestPage> {
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Iniciar viagem'),
                 ),
+              if (journeyStatus == 'in_progress')
+                OutlinedButton.icon(
+                  onPressed: canOperate ? tracking : null,
+                  icon: const Icon(Icons.my_location),
+                  label: const Text('Assumir rastreamento deste veículo'),
+                ),
+              if (journeyStatus == 'in_progress')
+                TextButton(
+                  onPressed: () async {
+                    await VehicleTracking.stop();
+                    if (mounted) {
+                      setState(
+                        () => trackingNotice =
+                            'Compartilhamento interrompido neste celular.',
+                      );
+                    }
+                  },
+                  child: const Text('Interromper rastreamento neste celular'),
+                ),
+              if (trackingNotice != null) Text(trackingNotice!),
               if (journeyStatus == 'in_progress')
                 FilledButton.icon(
                   onPressed: canOperate && records.isEmpty && onboard == 0
