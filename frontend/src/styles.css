@@ -1012,6 +1012,39 @@ dialog.modal-wide {
   font-size: 14px;
   font-weight: 600;
 }
+.company-address {
+  min-width: 0;
+  border: 2px solid #0c7772;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 8px 0 24px;
+}
+.company-address legend {
+  color: #075e5a;
+  font-weight: 700;
+  padding: 0 8px;
+}
+.app-update-notice {
+  position: fixed;
+  z-index: 100;
+  inset: auto 16px 16px;
+  margin: auto;
+  max-width: 860px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  color: #12344c;
+  background: #fff;
+  border: 2px solid #0c7772;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px #06132030;
+}
+.app-update-notice button { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .app-update-notice { flex-direction: column; align-items: stretch; }
+  .company-address { padding: 14px; }
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;

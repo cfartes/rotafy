@@ -19,11 +19,11 @@ test("cadastro exige todos os campos e explica o identificador sem caracteres es
   );
   await openCompanyRegistration(page);
   await expect(
-    page.getByText("Todos os campos deste cadastro são obrigatórios.", {
+    page.getByText("Preencha todos os campos obrigatórios;", {
       exact: false,
     }),
   ).toBeVisible();
-  const fields = page.locator('form input:not([type="hidden"]), form select');
+  const fields = page.locator('form input:not([type="hidden"]):not([name="address_complement"]), form select');
   for (const field of await fields.all())
     expect(
       await field.evaluate((el: HTMLInputElement) => el.required),
