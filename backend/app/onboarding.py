@@ -13,7 +13,7 @@ from app.security import passwords
 
 COMPANY_FIELDS = """id, slug, trade_name, corporate_name, cnpj, contact_phone, primary_color, accent_color, is_active, created_at, operational_profile,
  address,address_number,address_complement,neighborhood,city,state,postal_code,required_contract_version_id,
- (SELECT d.sha256 FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id WHERE a.company_id=companies.id) AS contract_sha256,
+ (SELECT d.sha256 FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id WHERE a.company_id=companies.id AND a.plan_change_id IS NULL) AS contract_sha256,
  (SELECT s.starts_on FROM subscriptions s WHERE s.company_id=companies.id AND s.status='active' AND s.billing_mode IN ('prepaid','postpaid30') AND s.trial_days>0) AS trial_ends_on"""
 
 
@@ -100,6 +100,11 @@ async def register_company(db, payload: CompanyCreate, actor_id=None):
         .mappings()
         .one()
     )
+    if contract_version:
+        await db.execute(
+            text("UPDATE subscriptions SET freeze_terms=true WHERE id=:id"),
+            {"id": sub["id"]},
+        )
     if trial_days:
         await db.execute(
             text("""INSERT INTO billing_periods

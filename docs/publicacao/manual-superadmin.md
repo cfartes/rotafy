@@ -181,3 +181,14 @@ A publicação exige configuração de e-mail e ativa o aceite apenas para empre
 O representante confirma os dados, lê ou baixa o contrato e aceita no primeiro acesso com código enviado ao próprio e-mail. A equipe comercial não aceita pelo cliente. Enquanto houver pendência exigida, o acesso operacional é restringido; ficam disponíveis os recursos necessários ao aceite e ao Financeiro.
 
 Em **Empresas → Contrato**, consulte a situação, versão, data, e-mail, hash e evidências, e baixe a cópia preservada e seu comprovante. Este acesso é exclusivo do administrador Nexus completo. O registro eletrônico não equivale a certificação ICP-Brasil ou garantia de resultado judicial.
+
+
+### Propor mudança de plano
+
+Em **Planos e assinaturas**, abra a assinatura da empresa, escolha **Plano para o próximo ciclo** e utilize **Enviar aditivo para aceite**. É necessário ter uma versão aprovada do contrato publicada, envio de e-mail configurado e ciclo pago em andamento. A empresa deve concluir eventual aceite inicial pendente antes de receber uma mudança.
+
+A proposta fixa as condições do plano escolhido e envia um convite por e-mail ao administrador da empresa. O painel mostra **Aguardando aceite** e a situação do envio. O plano atual permanece. Uma proposta ainda sem aceite pode ser cancelada pela Nexus; outra proposta só pode ser criada após esse cancelamento.
+
+O representante lê, baixa e aceita o aditivo no próprio acesso, com confirmação por e-mail. Somente então a mudança fica agendada para o próximo ciclo, sem novo setup, reinício do teste ou cobrança proporcional. Caso a data prevista passe, o cliente prepara outra cópia com vigência atualizada. O botão de cancelamento de proposta não remove uma alteração já aceita.
+
+A edição do catálogo não reajusta automaticamente os clientes nos ciclos futuros. Para alterar as condições de uma empresa, proponha um aditivo. Em **Empresas → Contrato**, consulte o histórico e baixe os aditivos aceitos e seus comprovantes. O contrato inicial e os documentos anteriores são preservados.

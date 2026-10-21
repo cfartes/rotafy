@@ -182,6 +182,8 @@ async def refresh_company(
             sub.update(
                 plan_id=plan_id, pending_version_id=None, pending_effective_at=None
             )
+        elif sub.get("freeze_terms") and start >= sub["terms_locked_at"]:
+            version_id = last["plan_version_id"]
         elif index == 0:
             version_id = sub["initial_version_id"]
         else:
@@ -271,6 +273,18 @@ async def subscription_report(
         ),
         None,
     )
+    sub["pending_has_acceptance"] = (
+        bool(
+            await db.scalar(
+                text(
+                    "SELECT 1 FROM plan_change_requests WHERE subscription_id=:id AND status='accepted' AND effective_at=:effective"
+                ),
+                {"id": sub["id"], "effective": sub["pending_effective_at"]},
+            )
+        )
+        if sub["pending_effective_at"]
+        else False
+    )
     sub["trial_ends_on"] = (
         sub["starts_on"]
         if sub["billing_mode"] in {"prepaid", "postpaid30"} and sub["trial_days"]
@@ -279,7 +293,21 @@ async def subscription_report(
     sub["trialing"] = bool(
         sub["status"] == "active" and current and current["is_trial"]
     )
+    change = (
+        (
+            await db.execute(
+                text("""SELECT r.id,r.status,r.effective_at,v.name AS plan_name,v.price_cents,
+        (SELECT m.status FROM contract_mail m WHERE m.plan_change_id=r.id AND m.kind='plan' ORDER BY m.created_at DESC LIMIT 1) AS email_status
+        FROM plan_change_requests r JOIN plan_versions v ON v.id=r.target_version_id
+        WHERE r.subscription_id=:id AND r.status='awaiting' ORDER BY r.created_at DESC LIMIT 1"""),
+                {"id": sub["id"]},
+            )
+        )
+        .mappings()
+        .first()
+    )
     return {
+        "plan_change": dict(change) if change else None,
         "subscription": sub,
         "current_period": current,
         "upcoming_period": upcoming,

@@ -157,6 +157,13 @@ async def next_invoice(db, company_id, now=None):
                 version = sub["initial_version_id"]
             elif sub["pending_version_id"] and sub["pending_effective_at"] <= start:
                 version = sub["pending_version_id"]
+            elif sub.get("freeze_terms") and start >= sub["terms_locked_at"]:
+                previous = [p for n, p in periods.items() if n < index]
+                version = (
+                    max(previous, key=lambda p: p["cycle_index"])["plan_version_id"]
+                    if previous
+                    else sub["initial_version_id"]
+                )
             else:
                 version = await db.scalar(
                     text(

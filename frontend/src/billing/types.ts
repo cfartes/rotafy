@@ -32,6 +32,7 @@ export type Subscription = {
   starts_on: string;
   status: "active" | "cancelled";
   pending_version_id: string | null;
+  pending_has_acceptance?: boolean;
   pending_effective_at: string | null;
   pending_plan_name: string | null;
   pending_included_trips: number | null;
@@ -68,6 +69,7 @@ export type Period = {
   total_cents: number;
 };
 export type Report = {
+  plan_change?: { id: string; status: string; effective_at: string; plan_name: string; price_cents: number; email_status: string | null } | null;
   subscription: Subscription | null;
   current_period: Period | null;
   upcoming_period: Period | null;

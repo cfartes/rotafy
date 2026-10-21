@@ -3,7 +3,7 @@ import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
 import { BillingUpcoming } from "./BillingUpcoming";
 import { AddressFields, addressPayload } from "./CompanyAddress";
-import { CompanyContract, ContractGate, NexusContracts, NexusCompanyContract } from "./Contracts";
+import { CompanyContract, PlanChangeNotice, ContractGate, NexusContracts, NexusCompanyContract } from "./Contracts";
 import { Collections } from "./Collections";
 import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
@@ -1002,7 +1002,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "nexus-team"
     | "whatsapp"
     | "contract"
-  >(financialOnly ? "collections" : "overview");
+  >(financialOnly ? "collections" : isAdmin && new URLSearchParams(window.location.search).get("view") === "contract" ? "contract" : "overview");
   const [menu, setMenu] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingCollaborator, setEditingCollaborator] = useState<User | null>(
@@ -1442,7 +1442,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           )}
           {page === "integrations" && fullNexus && <IntegrationSettings />}
           {page === "integrations" && fullNexus && <NexusContracts />}
-          {page === "contract" && isAdmin && <CompanyContract />}
+          {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
+          {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
