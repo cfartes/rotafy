@@ -1,3 +1,4 @@
+import { ticketToken } from "../ticketLinks";
 import Dexie, { type Table } from "dexie";
 import { api, post, ApiError, type User } from "../api";
 
@@ -225,10 +226,7 @@ export async function enqueue(
 export async function offlineScan(snapshot: Snapshot, raw: string) {
   if (Date.parse(snapshot.data.expires_at) <= Date.now())
     throw new Error("Manifesto vencido. Conecte-se para atualizar.");
-  let token = raw.trim();
-  if (token.startsWith(location.origin + "/bilhete#"))
-    token =
-      new URLSearchParams(new URL(token).hash.slice(1)).get("token") || "";
+  const token = ticketToken(raw);
   if (
     !new RegExp(
       `^bt\\.${snapshot.data.operator.company_id}\\.[A-Za-z0-9_-]{43}$`,

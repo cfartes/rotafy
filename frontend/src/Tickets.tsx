@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
+import { ticketToken, ticketUrl } from "./ticketLinks";
 import { api, post } from "./api";
 import { Alert, Field } from "./components/ui";
 import "./boarding.css";
@@ -158,12 +159,12 @@ export function TicketManager({
                   <Field label={`Link do bilhete de ${t.full_name}`}>
                     <input
                       readOnly
-                      value={`${window.location.origin}/bilhete#token=${encodeURIComponent(credential.token)}`}
+                      value={ticketUrl(credential.token)}
                     />
                   </Field>
                   <a
                     className="button secondary"
-                    href={`/bilhete#token=${encodeURIComponent(credential.token)}`}
+                    href={ticketUrl(credential.token)}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -244,8 +245,7 @@ const labels: Record<string, string> = {
   alighted: "Desembarcado",
 };
 export function TicketPage() {
-  const token =
-    new URLSearchParams(window.location.hash.slice(1)).get("token") || "";
+  const token = ticketToken(window.location.href);
   const ticket = useQuery({
     queryKey: ["public-ticket", token],
     queryFn: () => post<PublicTicket>("/public/ticket", { token }),
