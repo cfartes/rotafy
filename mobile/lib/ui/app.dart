@@ -8,6 +8,7 @@ import '../core/config.dart';
 import '../core/controller.dart';
 import 'manifest.dart';
 import 'agenda.dart';
+import 'update_notice.dart';
 
 class RotafyApp extends StatelessWidget {
   final OperationController controller;
@@ -16,6 +17,10 @@ class RotafyApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: AppConfig.name,
     debugShowCheckedModeBanner: false,
+    builder: (context, child) => UpdateNotice(
+      controller: controller,
+      child: child ?? const SizedBox.shrink(),
+    ),
     theme: ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff087f78)),
       useMaterial3: true,

@@ -660,3 +660,12 @@ Use **Conferir e ler aditivo**, confirme os dados do representante e prepare o d
 A alteração aceita valerá no próximo ciclo indicado no aditivo, sem cobrança proporcional, novo setup ou reinício do teste. Até a vigência, permanece o plano atual. Se a data prevista passar antes da confirmação, gere e leia uma nova cópia com a próxima data válida.
 
 Após o aceite, o PDF e o comprovante serão enviados ao e-mail confirmado. Os aditivos ficam disponíveis em **Meu contrato**, com seus hashes e opção de reenvio. O contrato inicial continua disponível. Alterações posteriores no catálogo não modificam os valores aceitos.
+
+
+## Atualização do aplicativo {#atualizacao}
+
+O sistema verifica a versão ao abrir e ao retornar à tela. Quando houver atualização no navegador, salve o cadastro em andamento e clique em **Atualizar aplicativo**. A atualização pede confirmação antes de recarregar.
+
+No Android, a partir da versão 1.7.0, o botão abre o download de uma versão mais nova disponibilizada pela Nexus. Sincronize os registros pendentes e instale por cima do aplicativo atual, sem desinstalar. Versões anteriores precisam receber a primeira atualização manualmente. Sem conexão, o trabalho offline permanece disponível.
+
+Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distinguem os nomes; os passageiros aparecem na lista. Cada mensagem de bilhete identifica o passageiro do QR correspondente.

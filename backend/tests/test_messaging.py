@@ -303,7 +303,9 @@ def test_invitation_whatsapp_validation_rolls_back_user_and_reset(
 def test_ticket_link_queue_is_private_idempotent_and_revocation_discards(
     client, seeded, owner, protected_key
 ):
-    _trip, booking = queued(client, seeded)
+    configure(client, seeded)
+    trip = create(client, prepare(client, seeded))
+    booking = reserve(client, trip, family(size=2))
     issued = client.post(f"/api/v1/reservations/{booking['id']}/tickets").json()[
         "issued"
     ]
@@ -323,6 +325,22 @@ def test_ticket_link_queue_is_private_idempotent_and_revocation_discards(
             .one()
         )
         body = decrypt(row["body"])
+        passenger = db.scalar(
+            text(
+                "SELECT p.full_name FROM tickets t JOIN passengers p ON p.id=t.passenger_id WHERE t.id=:id"
+            ),
+            {"id": ticket["id"]},
+        )
+        assert f"Passageiro: {passenger}" in body
+        others = db.scalars(
+            text(
+                "SELECT full_name FROM passengers WHERE reservation_id=:id AND full_name<>:name"
+            ),
+            {"id": booking["id"], "name": passenger},
+        ).all()
+        assert others and all(name not in body for name in others)
+        assert "Empresa: " in body
+        assert "Responsável pela reserva:" not in body
         from app.ticket_links import ticket_url
 
         assert (
@@ -454,6 +472,9 @@ def test_events_queue_once_and_sent_body_is_removed(
     assert process(seeded["a"], sender)
     assert calls[0]["chatId"] == "5511999999999@c.us"
     assert "Reserva confirmada" in calls[0]["text"]
+    assert "Empresa: " in calls[0]["text"]
+    assert "Responsável pela reserva: Família A" in calls[0]["text"]
+    assert "Passageiros: 1\n• Família A Pessoa 0" in calls[0]["text"]
     assert "CPF" not in calls[0]["text"]
     with owner.connect() as db:
         item = (

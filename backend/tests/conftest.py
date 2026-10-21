@@ -75,7 +75,7 @@ def seeded(owner):
         # Somente o banco dedicado rotafy_test é limpo.
         assert db.scalar(text("SELECT current_database()")) == test_db
         db.execute(
-            text("TRUNCATE companies,platform_users,auth_attempts,plans CASCADE")
+            text("TRUNCATE companies,platform_users,auth_attempts,plans,mobile_releases CASCADE")
         )
         db.execute(text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true"))
         db.execute(

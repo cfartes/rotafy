@@ -5,7 +5,7 @@
 @page{size:A4;margin:18mm 16mm 19mm}@media print{body{background:white;font-size:10.5pt;line-height:1.5;color:#142e42}.toolbar,.sidebar,.no-results{display:none!important}.layout{display:block;padding:0;margin:0}.document{border:0;border-radius:0;overflow:visible}.cover{min-height:245mm;padding:35mm 15mm;background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:page}.cover h1{font-size:43pt;margin:25mm 0 12mm}.cover p{font-size:13pt}.print-toc{display:block;break-after:page;padding:5mm 0}.print-toc ul{columns:1;padding-left:18px}.print-toc li{margin:5px 0;font-size:10pt}.chapter{display:block!important;padding:0;border:0;break-before:page}h2{font-size:23pt;margin-top:5mm;break-after:avoid}h3{font-size:13pt;break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9pt;break-inside:auto}tr{break-inside:avoid}th{background:#edf6f5!important;-webkit-print-color-adjust:exact}.note{break-inside:avoid}figure img{max-height:165mm;border-radius:0}a{color:inherit}.end{padding:8mm 0}}
 .chapter a{overflow-wrap:anywhere}</style></head><body><a class="skip" href="#documento">Ir ao manual</a>
 <header class="toolbar"><strong>rotafy. <small>NEXUS</small></strong><a href="/nexus/ajuda">Central de documentação</a><a href="manual-superadmin.pdf" download="manual-superadmin.pdf">Baixar PDF</a><a href="manual-superadmin.html" download="manual-superadmin.html">Baixar HTML</a><button type="button" onclick="window.print()">Imprimir</button></header>
-<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 8 capítulos</summary><div class="toc">
+<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 9 capítulos</summary><div class="toc">
 <ul>
 <li><a href="#acesso">1. Acesso à plataforma</a></li>
 <li><a href="#nexus">2. Empresas, planos e assinaturas</a></li>
@@ -15,6 +15,7 @@
 <li><a href="#duvidas">6. Dúvidas frequentes</a></li>
 <li><a href="#cobrancas">7. Setup, teste e cobranças da assinatura</a></li>
 <li><a href="#contratos">8. Contratos e aceitação pelo cliente</a></li>
+<li><a href="#atualizacao-android">9. Publicar atualização Android</a></li>
 </ul>
 </div>
 </details><p id="resultado" role="status" aria-live="polite"></p></nav>
@@ -28,6 +29,7 @@
 <li><a href="#duvidas">6. Dúvidas frequentes</a></li>
 <li><a href="#cobrancas">7. Setup, teste e cobranças da assinatura</a></li>
 <li><a href="#contratos">8. Contratos e aceitação pelo cliente</a></li>
+<li><a href="#atualizacao-android">9. Publicar atualização Android</a></li>
 </ul>
 </div>
 </section><section class="chapter"><h2 id="acesso">1. Acesso à plataforma</h2>
@@ -146,7 +148,10 @@
 <p>Em <strong>Planos e assinaturas</strong>, abra a assinatura da empresa, escolha <strong>Plano para o próximo ciclo</strong> e utilize <strong>Enviar aditivo para aceite</strong>. É necessário ter uma versão aprovada do contrato publicada, envio de e-mail configurado e ciclo pago em andamento. A empresa deve concluir eventual aceite inicial pendente antes de receber uma mudança.</p>
 <p>A proposta fixa as condições do plano escolhido e envia um convite por e-mail ao administrador da empresa. O painel mostra <strong>Aguardando aceite</strong> e a situação do envio. O plano atual permanece. Uma proposta ainda sem aceite pode ser cancelada pela Nexus; outra proposta só pode ser criada após esse cancelamento.</p>
 <p>O representante lê, baixa e aceita o aditivo no próprio acesso, com confirmação por e-mail. Somente então a mudança fica agendada para o próximo ciclo, sem novo setup, reinício do teste ou cobrança proporcional. Caso a data prevista passe, o cliente prepara outra cópia com vigência atualizada. O botão de cancelamento de proposta não remove uma alteração já aceita.</p>
-<p>A edição do catálogo não reajusta automaticamente os clientes nos ciclos futuros. Para alterar as condições de uma empresa, proponha um aditivo. Em <strong>Empresas → Contrato</strong>, consulte o histórico e baixe os aditivos aceitos e seus comprovantes. O contrato inicial e os documentos anteriores são preservados.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual do superadmin Nexus · Edição 2026.10 · Revisão 4</footer></main></div>
+<p>A edição do catálogo não reajusta automaticamente os clientes nos ciclos futuros. Para alterar as condições de uma empresa, proponha um aditivo. Em <strong>Empresas → Contrato</strong>, consulte o histórico e baixe os aditivos aceitos e seus comprovantes. O contrato inicial e os documentos anteriores são preservados.</p>
+</section><section class="chapter"><h2 id="atualizacao-android">9. Publicar atualização Android</h2>
+<p>Em <strong>Configurações → Atualizações do aplicativo Android</strong>, selecione o APK e clique em <strong>Publicar atualização Android</strong>. A tela informa versão, compilação, data, SHA-256 e download. Utilize uma compilação superior, com o mesmo aplicativo e chave de assinatura.</p>
+<p>A partir de 1.7.0, o Android consulta atualizações ao abrir e oferece o botão para baixar uma versão mais nova. Versões anteriores precisam receber essa primeira atualização manualmente. O cliente instala por cima, sem desinstalar, e deve sincronizar os registros pendentes antes.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual do superadmin Nexus · Edição 2026.10 · Revisão 4</footer></main></div>
 <script>
 const search=document.getElementById('busca'),chapters=[...document.querySelectorAll('.chapter')];const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();search.addEventListener('input',()=>{const term=normalize(search.value.trim());let count=0;for(const chapter of chapters){const matches=!term||normalize(chapter.textContent).includes(term);chapter.hidden=!matches;if(matches)count++;}document.getElementById('resultado').textContent=term?`${count} capítulos encontrados.`:'';document.getElementById('sem-resultados').style.display=count?'none':'block';});document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{search.value='';search.dispatchEvent(new Event('input'));}));
 </script></body></html>

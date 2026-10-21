@@ -40,6 +40,7 @@ from app.identity import (
 )
 from app.integration_settings import router as integration_settings_router
 from app.logos import router as logos_router
+from app.mobile_releases import router as mobile_releases_router
 from app.nexus_users import router as nexus_users_router
 from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
@@ -831,6 +832,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(reservation_imports_router)
     application.include_router(public_sales_router)
     application.include_router(boarding_router)
+    application.include_router(mobile_releases_router)
     application.include_router(logos_router)
     application.include_router(reports_router)
     application.include_router(edits_router)

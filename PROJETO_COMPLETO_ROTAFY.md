@@ -1152,3 +1152,8 @@ O contrato identifica as condições comerciais em quadro personalizado, extraí
 ### Aprovação e ativação da versão contratual r2
 
 O responsável pelo projeto aprovou o contrato r2 em 21/10/2026 após revisar o exemplo personalizado. A atualização da VPS ativa a versão geral cujo hash está fixado na entrega, exigindo e-mail e chave de proteção válidos. A ativação é idempotente, auditada como publicação técnica da versão aprovada, preserva uma versão posterior escolhida no painel e não registra aceite de cliente. Empresas anteriores continuam sem exigência retroativa. Versões futuras permanecem sujeitas a aprovação e publicação explícita.
+
+
+## Identificação nas mensagens e atualização dos aplicativos
+
+As mensagens de reserva identificam separadamente empresa, responsável e passageiros. O bilhete enviado por WhatsApp identifica o passageiro do QR correspondente. O navegador verifica a versão publicada ao abrir ou retornar à janela e oferece atualização confirmada pelo usuário. O Android, a partir da versão 1.7.0, verifica versões superiores do mesmo aplicativo ao iniciar ou retornar ao primeiro plano. O Superadmin completo publica o APK em Configurações, com histórico de compilação e SHA-256; arquivos ficam em volume persistente e os metadados em tabela própria. Consulte `docs/ATUALIZACOES_DO_APP.md` para distribuição e primeira instalação.

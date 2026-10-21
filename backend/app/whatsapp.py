@@ -1,4 +1,4 @@
-"""Notificações transacionais por reserva, sem dados individuais de passageiros."""
+"""Mensagens com empresa, responsável e passageiros identificados explicitamente."""
 
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -101,10 +101,36 @@ async def queue_message(
         "cancelled": "Cancelada",
         "expired": "Expirada",
     }.get(item["status"], item["status"])
-    body = f"Olá, {item['contact_name']}!\n{item['trade_name']}\n\n{label}\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\nPassageiros: {item['passenger_count']}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\nPara dúvidas, fale com a empresa."
+    passenger_rows = (
+        (
+            await db.execute(
+                text(
+                    "SELECT full_name FROM passengers WHERE reservation_id=:id AND company_id=:company ORDER BY full_name,id"
+                ),
+                {"id": reservation_id, "company": company_id},
+            )
+        )
+        .scalars()
+        .all()
+    )
+    names = "\n".join(f"• {name}" for name in passenger_rows[:8])
+    if len(passenger_rows) > 8:
+        names += f"\n… e mais {len(passenger_rows) - 8} passageiro(s). Consulte a reserva para a lista completa."
+    people = f"Passageiros: {len(passenger_rows)}\n{names}"
+    body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\nPara dúvidas, fale com a empresa."
     identifier = uuid4()
     if ticket_link:
-        body = f"{item['trade_name']}\nBilhete de embarque\nViagem/pacote: {item['trip_name']}\n\n{ticket_link}\n\nEste bilhete é individual e vale para todos os trechos contratados do passageiro. Apresente o QR Code ao motorista ou guia."
+        passenger_name = await db.scalar(
+            text("""SELECT p.full_name FROM tickets tk JOIN passengers p ON p.id=tk.passenger_id
+          WHERE tk.company_id=:company AND tk.reservation_id=:reservation AND tk.revoked_at IS NULL
+          AND (tk.token_hash=:hash OR tk.shared_token_hash=:hash) LIMIT 1"""),
+            {"company": company_id, "reservation": reservation_id, "hash": ticket_hash},
+        )
+        if not passenger_name:
+            raise HTTPException(
+                409, "Não foi possível identificar o passageiro deste bilhete."
+            )
+        body = f"Bilhete de embarque\nEmpresa: {item['trade_name']}\nPassageiro: {passenger_name}\nViagem/pacote: {item['trip_name']}\n\n{ticket_link}\n\nEste bilhete é individual e vale para todos os trechos contratados do passageiro. Apresente o QR Code ao motorista ou guia."
     await db.execute(
         text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body)
       VALUES(:id,:company,:reservation,:session,:kind,:key,:phone,:body) ON CONFLICT(company_id,dedupe_key) DO NOTHING"""),
