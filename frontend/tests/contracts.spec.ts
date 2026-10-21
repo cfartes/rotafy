@@ -1,5 +1,40 @@
 import { test, expect } from "@playwright/test";
 
+test("plan addendum is read and email-confirmed separately from the original contract", async ({ page }) => {
+  let signed = false, viewed = false;
+  const company = { id: "a", slug: "empresa", trade_name: "Empresa A", corporate_name: "Empresa A LTDA", cnpj: "52998224725", contact_phone: "+5547999999999", primary_color: "#123456", accent_color: "#abcdef", operational_profile: "tourism", address: "Rua de Teste", address_number: "100", address_complement: "", neighborhood: "Centro", city: "Blumenau", state: "SC", postal_code: "89010000" };
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let body: any = [];
+    if (path === "/auth/me") body = { id: "admin", role: "admin", full_name: "Representante Cliente", email: "cliente@example.com", company_id: "a", is_active: true, contract_pending: false };
+    if (path === "/company") body = company;
+    if (path === "/company/contract") body = { required: true, pending: false, acceptance: { document_id: "original", sha256: "a".repeat(64), accepted_at: "2026-10-21T15:00:00Z", email: "cliente@example.com", email_status: "sent", code: "2026-r2" } };
+    if (path === "/company/contract/plan-changes") body = [{ id: "change", status: signed ? "accepted" : "awaiting", effective_at: "2026-11-20T03:00:00Z", old_plan_name: "Basic", plan_name: "Professional", price_cents: 29900, included_trips: 20, extra_trip_cents: 1500, invitation_status: "sent", document_id: signed ? "addendum" : null, sha256: signed ? "b".repeat(64) : null, email: "cliente@example.com", copy_status: "pending" }];
+    if (path === "/company/contract/plan-changes/change/prepare") body = { id: "addendum", sha256: "b".repeat(64), content: "ADITIVO: Basic para Professional. Mensalidade R$ 299,00. Vigência no próximo ciclo, sem novo setup." };
+    if (path === "/company/contract/viewed") { viewed = true; body = { viewed: true }; }
+    if (path === "/company/contract/code") { expect(viewed).toBe(true); body = { email: "cliente@example.com", status: "queued" }; }
+    if (path === "/company/contract/accept") { expect(route.request().postDataJSON()).toEqual({ document_id: "addendum", sha256: "b".repeat(64), code: "123456", accepted: true }); signed = true; body = { accepted: true }; }
+    await route.fulfill({ json: body });
+  });
+  await page.goto("/?view=contract");
+  await expect(page.getByRole("link", { name: "Baixar contrato aceito", exact: true })).toHaveAttribute("href", "/api/v1/company/contract/documents/original/pdf");
+  await page.getByRole("button", { name: "Conferir e ler aditivo" }).click();
+  await page.getByLabel("CPF do representante", { exact: true }).fill("52998224725");
+  await page.getByLabel("Função do representante", { exact: true }).fill("Administrador");
+  await page.getByRole("checkbox", { name: "Declaro que tenho poderes para representar esta empresa." }).check();
+  await page.getByRole("button", { name: "Conferir dados e preparar aditivo" }).click();
+  await expect(page.getByRole("button", { name: "Confirmar aceite do aditivo" })).toBeDisabled();
+  await page.getByRole("button", { name: "Ler aditivo completo" }).click();
+  await expect(page.getByRole("article", { name: "Texto integral do contrato" })).toContainText("Basic para Professional");
+  await page.getByRole("button", { name: "Voltar para confirmar o aceite" }).click();
+  await page.getByRole("button", { name: "Enviar código de confirmação por e-mail" }).click();
+  await page.getByLabel("Código recebido por e-mail").fill("123456");
+  await page.getByRole("checkbox", { name: "Li e aceito o contrato integral apresentado e declaro poderes para representar a empresa." }).check();
+  await page.getByRole("button", { name: "Confirmar aceite do aditivo" }).click();
+  await expect(page.getByRole("link", { name: "Baixar aditivo aceito" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Baixar contrato aceito", exact: true })).toHaveAttribute("href", "/api/v1/company/contract/documents/original/pdf");
+});
+
 test("client reads and downloads contract before unchecked acceptance and email confirmation", async ({ page }) => {
   let pending = true;
   let viewed = false;

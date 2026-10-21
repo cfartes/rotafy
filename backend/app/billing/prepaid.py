@@ -58,6 +58,8 @@ async def collect_prepaid(db, company_id, settings, now):
             if sub["pending_version_id"] and sub["pending_effective_at"] <= start
             else None
         )
+        if not version and sub.get("freeze_terms") and start >= sub["terms_locked_at"]:
+            version = last["plan_version_id"]
         if not version:
             version = (
                 sub["initial_version_id"]

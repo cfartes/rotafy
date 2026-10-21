@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import text
 
-from app.billing.calendar import local_today, utc_now
+from app.billing.calendar import local_today
 from app.billing.schemas import PlanChange, PlanCreate, PlanTerms, SubscriptionCreate
 from app.billing.service import (
     available_plan,
@@ -15,7 +15,8 @@ from app.billing.service import (
     refresh_company,
     subscription_report,
 )
-from app.identity import Auth, admin, audit, nexus
+from app.identity import Auth, admin, audit, nexus, scope
+from app.plan_addenda import propose
 from app.schemas import ActiveUpdate
 
 router = APIRouter(prefix="/api/v1", tags=["Planos e assinaturas"])
@@ -109,6 +110,7 @@ async def subscriptions(actor: Auth):
 @router.get("/nexus/companies/{company_id}/subscription")
 async def company_subscription(company_id: UUID, actor: Auth):
     nexus(actor)
+    await scope(actor.db, company_id)
     await lock_company(actor.db, company_id)
     await refresh_company(actor.db, company_id)
     return await subscription_report(actor.db, company_id)
@@ -153,54 +155,36 @@ async def subscribe(company_id: UUID, payload: SubscriptionCreate, actor: Auth):
 
 
 @router.patch("/nexus/companies/{company_id}/subscription/plan")
-async def schedule_plan(company_id: UUID, payload: PlanChange, actor: Auth):
+async def schedule_plan(
+    company_id: UUID, payload: PlanChange, actor: Auth, request: Request
+):
     nexus(actor)
-    now = utc_now()
-    sub = await refresh_company(actor.db, company_id, now)
-    if not sub:
-        raise HTTPException(409, "A empresa não possui uma assinatura ativa.")
-    period = (
-        (
-            await actor.db.execute(
-                text(
-                    "SELECT ends_at FROM billing_periods WHERE subscription_id=:id AND starts_at<=:now AND ends_at>:now"
-                ),
-                {"id": sub["id"], "now": now},
-            )
-        )
-        .mappings()
-        .first()
-    )
-    if not period:
-        raise HTTPException(
-            409, "Aguarde o início da assinatura para agendar uma mudança."
-        )
-    plan = await available_plan(actor.db, payload.plan_id)
-    await actor.db.execute(
-        text(
-            "UPDATE subscriptions SET pending_version_id=:version,pending_effective_at=:effective WHERE id=:id"
-        ),
-        {
-            "version": plan["version_id"],
-            "effective": period["ends_at"],
-            "id": sub["id"],
-        },
-    )
-    await audit(
-        actor.db, company_id, actor.user["id"], "subscription.plan_scheduled", sub["id"]
-    )
+    await propose(actor.db, company_id, payload.plan_id, actor, request)
     return await subscription_report(actor.db, company_id)
 
 
 @router.post("/nexus/companies/{company_id}/subscription/cancel", status_code=204)
 async def cancel_subscription(company_id: UUID, actor: Auth):
     nexus(actor)
+    await scope(actor.db, company_id)
     sub = await refresh_company(actor.db, company_id)
     if not sub:
         raise HTTPException(409, "A empresa não possui uma assinatura ativa.")
     await actor.db.execute(
         text("""UPDATE subscriptions SET status='cancelled',cancelled_at=clock_timestamp(),
         pending_version_id=NULL,pending_effective_at=NULL WHERE id=:id"""),
+        {"id": sub["id"]},
+    )
+    await actor.db.execute(
+        text(
+            "UPDATE plan_change_requests SET status='cancelled' WHERE subscription_id=:id AND status='awaiting'"
+        ),
+        {"id": sub["id"]},
+    )
+    await actor.db.execute(
+        text(
+            "UPDATE contract_mail SET status='discarded',payload='' WHERE plan_change_id IN (SELECT id FROM plan_change_requests WHERE subscription_id=:id) AND kind='plan' AND status='pending'"
+        ),
         {"id": sub["id"]},
     )
     await audit(
@@ -212,8 +196,46 @@ async def cancel_subscription(company_id: UUID, actor: Auth):
 async def cancel_plan_change(company_id: UUID, actor: Auth):
     nexus(actor)
     sub = await refresh_company(actor.db, company_id)
-    if not sub or not sub["pending_version_id"]:
+    await scope(actor.db, company_id)
+    if not sub:
         raise HTTPException(409, "Não há alteração de plano pendente.")
+    awaiting = await actor.db.scalar(
+        text(
+            "SELECT id FROM plan_change_requests WHERE subscription_id=:id AND status='awaiting' FOR UPDATE"
+        ),
+        {"id": sub["id"]},
+    )
+    if awaiting:
+        await actor.db.execute(
+            text("UPDATE plan_change_requests SET status='cancelled' WHERE id=:id"),
+            {"id": awaiting},
+        )
+        await actor.db.execute(
+            text(
+                "UPDATE contract_mail SET status='discarded',payload='' WHERE plan_change_id=:id AND kind='plan' AND status='pending'"
+            ),
+            {"id": awaiting},
+        )
+        await audit(
+            actor.db,
+            company_id,
+            actor.user["id"],
+            "subscription.plan_proposal_cancelled",
+            awaiting,
+        )
+        return
+    if not sub["pending_version_id"]:
+        raise HTTPException(409, "Não há alteração de plano pendente.")
+    if await actor.db.scalar(
+        text(
+            "SELECT id FROM plan_change_requests WHERE subscription_id=:id AND status='accepted' AND effective_at=:effective"
+        ),
+        {"id": sub["id"], "effective": sub["pending_effective_at"]},
+    ):
+        raise HTTPException(
+            409,
+            "A alteração já foi aceita. Novas condições exigem outro aditivo após sua vigência.",
+        )
     await actor.db.execute(
         text(
             "UPDATE subscriptions SET pending_version_id=NULL,pending_effective_at=NULL WHERE id=:id"

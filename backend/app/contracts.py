@@ -87,8 +87,8 @@ async def company_snapshot(db, company_id):
     terms = (
         (
             await db.execute(
-                text("""SELECT s.id,s.starts_on,s.billing_mode,s.trial_days,s.setup_cents,
-        v.name AS plan_name,v.price_cents,v.included_trips,v.extra_trip_cents
+                text("""SELECT s.id,s.plan_id,s.starts_on,s.billing_mode,s.trial_days,s.setup_cents,
+        v.id AS plan_version_id,v.name AS plan_name,v.price_cents,v.included_trips,v.extra_trip_cents
         FROM subscriptions s JOIN plan_versions v ON v.id=COALESCE(
           (SELECT plan_version_id FROM billing_periods p WHERE p.subscription_id=s.id AND NOT is_trial
            AND p.starts_at<=now() AND p.ends_at>now() LIMIT 1),s.initial_version_id)
@@ -111,7 +111,7 @@ async def pending(db, company_id):
     return bool(
         await db.scalar(
             text("""SELECT required_contract_version_id IS NOT NULL
-        AND NOT EXISTS(SELECT 1 FROM contract_acceptances a WHERE a.company_id=c.id)
+        AND NOT EXISTS(SELECT 1 FROM contract_acceptances a WHERE a.company_id=c.id AND a.plan_change_id IS NULL)
         FROM companies c WHERE id=:id"""),
             {"id": company_id},
         )
@@ -165,7 +165,7 @@ async def own_contract(actor: Auth):
                 text("""SELECT a.id,a.document_id,a.accepted_at,a.email,d.sha256,v.code,
        (SELECT status FROM contract_mail m WHERE m.document_id=d.id AND m.kind='copy' ORDER BY created_at DESC LIMIT 1) AS email_status
        FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id
-       JOIN contract_versions v ON v.id=d.version_id WHERE a.company_id=:id"""),
+       JOIN contract_versions v ON v.id=d.version_id WHERE a.company_id=:id AND a.plan_change_id IS NULL"""),
                 {"id": actor.company_id},
             )
         )
@@ -276,6 +276,15 @@ async def owned_document(db, actor, data):
         )
     if sha(bytes(row["pdf"])) != row["sha256"]:
         raise HTTPException(503, "Não foi possível conferir a integridade do contrato.")
+    if row["plan_change_id"]:
+        status = await db.scalar(
+            text("SELECT status FROM plan_change_requests WHERE id=:id"),
+            {"id": row["plan_change_id"]},
+        )
+        if status != "awaiting":
+            raise HTTPException(
+                409, "Esta alteração de plano não está mais aguardando aceite."
+            )
     return row
 
 
@@ -368,10 +377,16 @@ async def accept(data: Acceptance, actor: Auth, request: Request):
         current = await company_snapshot(db, actor.company_id)
         document = await owned_document(db, actor, data)
         prior = await db.scalar(
-            text("SELECT id FROM contract_acceptances WHERE company_id=:id"),
+            text(
+                "SELECT id FROM contract_acceptances WHERE company_id=:id AND plan_change_id IS NULL"
+            ),
             {"id": actor.company_id},
         )
-        if prior:
+        if document["plan_change_id"]:
+            from app.plan_addenda import validate_acceptance
+
+            await validate_acceptance(db, actor, document, current)
+        elif prior:
             raise HTTPException(409, "O aceite desta empresa já foi registrado.")
         if (
             any(current[k] != document["snapshot"].get(k) for k in current)
@@ -434,8 +449,8 @@ async def accept(data: Acceptance, actor: Auth, request: Request):
             + evidence,
         )
         await db.execute(
-            text("""INSERT INTO contract_acceptances(id,company_id,document_id,user_id,email,accepted_at,evidence,evidence_sha256,evidence_hmac,receipt_pdf)
-            VALUES(:id,:company,:doc,:user,:email,:now,:evidence,:sha,:hmac,:pdf)"""),
+            text("""INSERT INTO contract_acceptances(id,company_id,document_id,user_id,email,accepted_at,evidence,evidence_sha256,evidence_hmac,receipt_pdf,plan_change_id)
+            VALUES(:id,:company,:doc,:user,:email,:now,:evidence,:sha,:hmac,:pdf,:change)"""),
             {
                 "id": identifier,
                 "company": actor.company_id,
@@ -447,7 +462,18 @@ async def accept(data: Acceptance, actor: Auth, request: Request):
                 "sha": sha(evidence.encode()),
                 "hmac": seal(evidence),
                 "pdf": receipt,
+                "change": document["plan_change_id"],
             },
+        )
+        if document["plan_change_id"]:
+            from app.plan_addenda import schedule_accepted
+
+            await schedule_accepted(db, actor, document)
+        await db.execute(
+            text(
+                "UPDATE subscriptions SET freeze_terms=true WHERE company_id=:id AND status='active'"
+            ),
+            {"id": actor.company_id},
         )
         await db.execute(
             text(
@@ -505,7 +531,9 @@ async def download(document_id: UUID, actor: Auth):
 async def receipt(actor: Auth):
     admin(actor)
     pdf = await actor.db.scalar(
-        text("SELECT receipt_pdf FROM contract_acceptances WHERE company_id=:id"),
+        text(
+            "SELECT receipt_pdf FROM contract_acceptances WHERE company_id=:id AND plan_change_id IS NULL"
+        ),
         {"id": actor.company_id},
     )
     if not pdf:
@@ -530,7 +558,7 @@ async def resend(actor: Auth, request: Request):
             (
                 await db.execute(
                     text(
-                        "SELECT document_id,email FROM contract_acceptances WHERE company_id=:id"
+                        "SELECT document_id,email FROM contract_acceptances WHERE company_id=:id AND plan_change_id IS NULL"
                     ),
                     {"id": actor.company_id},
                 )
@@ -642,7 +670,7 @@ async def company_contract(company_id: UUID, actor: Auth):
         (
             await actor.db.execute(
                 text("""SELECT a.id,a.document_id,a.accepted_at,a.email,a.evidence,a.evidence_sha256,d.sha256,v.code
-        FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id JOIN contract_versions v ON v.id=d.version_id WHERE a.company_id=:id"""),
+        FROM contract_acceptances a JOIN contract_documents d ON d.id=a.document_id JOIN contract_versions v ON v.id=d.version_id WHERE a.company_id=:id AND a.plan_change_id IS NULL"""),
                 {"id": company_id},
             )
         )
@@ -661,7 +689,7 @@ async def company_pdf(company_id: UUID, actor: Auth):
     await scope(actor.db, company_id)
     pdf = await actor.db.scalar(
         text(
-            "SELECT d.pdf FROM contract_documents d JOIN contract_acceptances a ON a.document_id=d.id WHERE a.company_id=:id"
+            "SELECT d.pdf FROM contract_documents d JOIN contract_acceptances a ON a.document_id=d.id WHERE a.company_id=:id AND a.plan_change_id IS NULL"
         ),
         {"id": company_id},
     )
@@ -682,7 +710,9 @@ async def company_receipt(company_id: UUID, actor: Auth):
     nexus(actor)
     await scope(actor.db, company_id)
     pdf = await actor.db.scalar(
-        text("SELECT receipt_pdf FROM contract_acceptances WHERE company_id=:id"),
+        text(
+            "SELECT receipt_pdf FROM contract_acceptances WHERE company_id=:id AND plan_change_id IS NULL"
+        ),
         {"id": company_id},
     )
     if not pdf:

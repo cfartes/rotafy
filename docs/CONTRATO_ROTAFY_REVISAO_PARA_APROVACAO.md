@@ -11,10 +11,11 @@ Fonte: CONTRATO_NEXUS_ROTAFY_SAAS.docx. SHA-256 da fonte: `6391d1018f911e4198cd3
 - Cláusula 7.2.1: retirada da multa sobre parcelas futuras de um contrato de 12 meses. As cláusulas 7.1 e 7.2 passam a acompanhar o cancelamento registrado no app, sem aviso prévio automático de 30 dias.
 - Cláusula 10.4.1: versão preservada e registro do aceite eletrônico.
 - Data final vinculada ao aceite, em vez de data fixa.
+- Cláusulas 3.6 a 3.9: quadro do plano e valores preservados; mudança somente após aceite do aditivo e no próximo ciclo, sem novo setup ou reinício do teste.
 
 **Aprovar o texto comercial e jurídico antes de publicar. Nenhuma dessas condições está ativa apenas por este arquivo existir.**
 
-## Texto integral proposto
+## Texto integral proposto — versão 2026-10-21-r2
 
 CONTRATO DE LICENÇA DE USO DE SOFTWARE DE GERENCIAMENTO DE ROTA – NEXUS ROTAFY
 
@@ -59,6 +60,14 @@ CLÁUSULA TERCEIRA: DO VALOR E CONDIÇÕES DE PAGAMENTO
 3.4. Esta versão não estabelece cobrança automática de multa, juros ou correção monetária pelo sistema. Eventuais encargos ou condições adicionais dependerão de ajuste escrito entre as partes, observadas as normas aplicáveis, e não serão incluídos retroativamente sem informação à CESSIONÁRIA.
 
 3.5. Sem confirmação do pagamento até o prazo da cobrança, o acesso do administrador da CESSIONÁRIA ficará restrito ao Financeiro para consulta e regularização. Novas operações ficarão bloqueadas, preservado o acesso operacional de motoristas e guias às viagens já vendidas. A confirmação do pagamento remove a restrição da respectiva cobrança, desde que não existam outras pendências vencidas. A suspensão administrativa é independente dessa restrição financeira.
+
+3.6. O Quadro de Contratação integra este contrato e identifica a versão do plano escolhido, mensalidade, franquia de viagens, valor por viagem excedente, taxa de setup quando aplicável, prazo de teste e início das condições comerciais. Os dados são obtidos do cadastro de planos do sistema e preservados na cópia aceita. A posterior alteração desse cadastro não modifica as condições registradas neste instrumento.
+
+3.7. A mudança de plano, inclusive alteração de preço ou franquia, exige aditivo com as condições anteriores e novas e a data de vigência. O representante da CESSIONÁRIA poderá ler e baixar o documento antes de confirmar o aceite mediante código enviado ao e-mail do seu acesso. A simples solicitação ou o envio do e-mail não efetiva a alteração.
+
+3.8. Após o aceite, as novas condições entram em vigor no próximo ciclo de cobrança indicado no aditivo, sem cálculo proporcional e sem modificar o ciclo em andamento ou faturas anteriores. Até a vigência permanecem as condições anteriores. Caso a data prevista já tenha passado, será necessário gerar e aceitar nova cópia com a próxima vigência válida.
+
+3.9. A troca de plano não reinicia o período de teste, não cobra novo setup e não estabelece contrato de doze parcelas. A cópia do aditivo e o comprovante de aceite serão enviados ao e-mail confirmado, com SHA-256 próprio e preservação dos documentos anteriores. Permanecem aplicáveis as demais disposições contratuais não alteradas pelo aditivo.
 
 CLÁUSULA QUARTA: DO TREINAMENTO E SUPORTE
 

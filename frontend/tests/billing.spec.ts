@@ -137,20 +137,12 @@ test("planos, assinatura, histórico e consulta da agência em desktop e mobile"
     .getByRole("dialog")
     .getByRole("button", { name: "Fechar", exact: true })
     .click();
-  await page.getByLabel("Plano para o próximo ciclo").selectOption(plan.id);
-  await page.getByRole("button", { name: "Agendar alteração" }).click();
-  await expect(report.getByText(`Próximo plano: ${planName}`)).toBeVisible();
+  // Mudanças exigem aprovação jurídica da minuta e aceite real do representante.
+  // Este cenário não publica contratos no ambiente nem assume aceite pelo cliente.
+  await expect(page.getByRole("button", { name: "Enviar aditivo para aceite" })).toBeVisible();
+  await expect(report.locator(".subscription-value strong")).toContainText("99,90");
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
-    path: "../docs/screenshots/planos-nexus.png",
-    fullPage: true,
-  });
-  await page
-    .getByRole("button", { name: "Cancelar alteração agendada" })
-    .click();
-  await expect(
-    report.getByText(`Próximo plano: ${planName}`),
-  ).not.toBeVisible();
+  await page.screenshot({ path: "../docs/screenshots/planos-nexus.png", fullPage: true });
   await page.getByRole("button", { name: "Sair da conta" }).click();
   await expect(
     page.getByRole("button", { name: "Acessar painel" }),

@@ -131,6 +131,15 @@ def test_plan_version_preserves_period_prices(client, seeded):
     assert updated["current_period"]["included_trips"] == 2
     assert len(client.get(f"/api/v1/nexus/plans/{BASIC}/versions").json()) == 2
     assert configure(client, price_cents=19900, included_trips=20)["version"] == 2
+    end = datetime.fromisoformat(report["current_period"]["ends_at"])
+
+    async def renew_without_addendum(db):
+        await refresh_company(db, seeded["a"], end)
+        return await subscription_report(db, seeded["a"], end)
+
+    renewed = platform_call(renew_without_addendum)
+    assert renewed["current_period"]["price_cents"] == 9900
+    assert renewed["current_period"]["included_trips"] == 2
 
 
 def test_new_plan_validation_and_duplicate_code(client):
@@ -217,43 +226,28 @@ def test_future_subscription_and_archived_plan(client, seeded):
     )
 
 
-def test_scheduled_change_is_next_cycle_and_frozen(client, seeded):
+def test_plan_change_requires_published_contract(client, seeded):
     login(client, email="nexus@example.com", nexus=True)
     configure(client)
-    first = subscribe(client, seeded["a"])
+    subscribe(client, seeded["a"])
     configure(client, PRO, name="Professional", price_cents=29900, included_trips=20)
     change = client.patch(
         f"/api/v1/nexus/companies/{seeded['a']}/subscription/plan",
         json={"plan_id": PRO},
     )
-    assert change.status_code == 200
-    assert change.json()["current_period"]["price_cents"] == 9900
-    assert change.json()["subscription"]["pending_price_cents"] == 29900
-    configure(client, PRO, name="Professional", price_cents=39900, included_trips=30)
-    end = datetime.fromisoformat(first["current_period"]["ends_at"])
-
-    async def scenario(db):
-        await refresh_company(db, seeded["a"], end)
-        next_report = await subscription_report(db, seeded["a"], end)
-        assert next_report["current_period"]["price_cents"] == 29900
-        assert next_report["subscription"]["pending_version_id"] is None
-        end2 = next_report["current_period"]["ends_at"]
-        await refresh_company(db, seeded["a"], end2)
-        return await subscription_report(db, seeded["a"], end2)
-
-    result = platform_call(scenario)
-    assert result["current_period"]["price_cents"] == 39900
-    assert len(result["periods"]) == 3
+    assert change.status_code == 409
+    assert "Publique" in change.text
+    report = client.get(f"/api/v1/nexus/companies/{seeded['a']}/subscription").json()
+    assert report["subscription"]["pending_version_id"] is None
+    assert report["current_period"]["price_cents"] == 9900
 
 
-def test_cancel_scheduled_change(client, seeded):
+def test_cancel_without_proposal_preserves_plan(client, seeded):
     login(client, email="nexus@example.com", nexus=True)
     configure(client)
     subscribe(client, seeded["a"])
-    configure(client, PRO, name="Professional")
     base = f"/api/v1/nexus/companies/{seeded['a']}/subscription"
-    assert client.patch(base + "/plan", json={"plan_id": PRO}).status_code == 200
-    assert client.post(base + "/plan/cancel").status_code == 204
+    assert client.post(base + "/plan/cancel").status_code == 409
     assert client.get(base).json()["subscription"]["pending_version_id"] is None
 
 

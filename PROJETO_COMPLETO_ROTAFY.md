@@ -1142,3 +1142,8 @@ Você receberá por e-mail o PDF aceito e o comprovante. Em **Meu contrato**, co
 O hash identifica a integridade daquela cópia. Alterações cadastrais posteriores não modificam o contrato aceito. O aceite eletrônico não é apresentado como assinatura certificada ICP-Brasil. A equipe Nexus não marca o aceite pelo cliente.
 
 A implementação possui versões publicadas imutáveis, PDFs personalizados preservados no banco, hash SHA-256, evidências de aceite, confirmação por e-mail e fila de envio da cópia. A migração 0034 preserva o banco e não ativa o contrato automaticamente: a minuta deve ser aprovada e publicada pelo administrador Nexus completo. Empresas existentes permanecem fora da exigência retroativa. O teste e a cobrança seguem suas datas existentes; aceitar não reinicia os ciclos. Detalhes operacionais em `docs/CONTRATOS_E_ACEITE.md`.
+
+
+### Aditivos para mudança de plano
+
+O contrato identifica as condições comerciais em quadro personalizado, extraído da versão do plano e preservado com o PDF aceito. A mudança de plano passa a ser proposta pela Nexus, comunicada por e-mail e aceita pelo representante em Meu contrato, com leitura e download prévios e confirmação por código. Somente após o aceite ocorre o agendamento para o próximo ciclo, sem proporcional, novo setup ou reinício do teste. A vigência vencida exige nova cópia e novo aceite. Contrato original, aditivos, comprovantes e SHA-256 próprios permanecem disponíveis. Editar o catálogo não reajusta automaticamente clientes em ciclos futuros; períodos e faturas anteriores são preservados. Migrações aditivas 0035 e 0036, sem recriar o banco. A minuta r2 depende de aprovação e publicação explícita.

@@ -649,3 +649,14 @@ Quando a Nexus publica uma versão aprovada do contrato, os novos cadastros pass
 Você receberá por e-mail o PDF aceito e o comprovante. Em **Meu contrato**, consulte versão, data, hash SHA-256 e situação do envio; baixe os documentos ou solicite reenvio ao e-mail confirmado. Uma falha no e-mail não apaga o registro: o sistema tenta enviar novamente. Confira também o spam.
 
 O hash identifica a integridade daquela cópia. Alterações cadastrais posteriores não modificam o contrato aceito. O aceite eletrônico não é apresentado como assinatura certificada ICP-Brasil. A equipe Nexus não marca o aceite pelo cliente.
+
+
+### Mudança de plano e assinatura do aditivo
+
+Quando a Nexus propuser uma mudança, você receberá um convite por e-mail. Entre como administrador e abra **Meu contrato**. A página apresenta plano anterior, plano novo, mensalidade, franquia, excedente e previsão de vigência.
+
+Use **Conferir e ler aditivo**, confirme os dados do representante e prepare o documento. Leia o aditivo completo ou baixe o PDF antes de solicitar o código por e-mail. Informe o código, marque a declaração de aceite e confirme. A simples solicitação ou o recebimento do e-mail não muda o plano.
+
+A alteração aceita valerá no próximo ciclo indicado no aditivo, sem cobrança proporcional, novo setup ou reinício do teste. Até a vigência, permanece o plano atual. Se a data prevista passar antes da confirmação, gere e leia uma nova cópia com a próxima data válida.
+
+Após o aceite, o PDF e o comprovante serão enviados ao e-mail confirmado. Os aditivos ficam disponíveis em **Meu contrato**, com seus hashes e opção de reenvio. O contrato inicial continua disponível. Alterações posteriores no catálogo não modificam os valores aceitos.

@@ -446,6 +446,7 @@ function SubscriptionDetails({
           Consulte abaixo os ciclos anteriores da empresa.
         </p>
       )}
+      {report.plan_change && <div className="billing-notice"><div><strong>Aguardando aceite: {report.plan_change.plan_name}</strong><p>O aditivo foi encaminhado para envio por e-mail. O plano atual permanece em vigor até o aceite e a próxima vigência. Envio: {report.plan_change.email_status === "sent" ? "aceito pelo provedor" : report.plan_change.email_status === "failed" ? "falhou" : "pendente"}.</p>{isNexus ? <button className="text-button" disabled={pending} onClick={() => mutate("unschedule")}>Cancelar proposta sem aceite</button> : <a className="button secondary" href="/?view=contract">Ler e aceitar aditivo</a>}</div></div>}
       {sub.pending_effective_at && (
         <div className="billing-notice">
           <Clock3 size={20} />
@@ -457,7 +458,8 @@ function SubscriptionDetails({
               {money(sub.pending_price_cents!)} · extra{" "}
               {money(sub.pending_extra_trip_cents!)}
             </p>
-            {isNexus && (
+            {sub.pending_has_acceptance && <p className="muted">Alteração aceita pelo cliente. As condições do aditivo estão preservadas.</p>}
+            {isNexus && !sub.pending_has_acceptance && (
               <button
                 className="text-button"
                 disabled={pending}
@@ -481,6 +483,7 @@ function SubscriptionDetails({
               );
             }}
           >
+            <p className="muted">A mudança só será agendada após o cliente ler e aceitar o aditivo enviado por e-mail.</p>
             <Field label="Plano para o próximo ciclo">
               <select name="plan_id" required defaultValue="">
                 <option value="" disabled>
@@ -497,9 +500,9 @@ function SubscriptionDetails({
             </Field>
             <button
               className="button secondary"
-              disabled={pending || !report.current_period}
+              disabled={pending || !report.current_period || !!report.plan_change || !!sub.pending_effective_at}
             >
-              Agendar alteração
+              Enviar aditivo para aceite
             </button>
           </form>
           <button
