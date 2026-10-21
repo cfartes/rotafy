@@ -224,6 +224,7 @@ function RouteEditor({
             <legend>{index === 0 ? "Ida" : "Volta"}</legend>
             <div className="form-grid">
               <CitySelect
+                searchable={false}
                 label={`origem da ${index === 0 ? "ida" : "volta"}`}
                 cityId={leg.origin_city_id}
                 uf={leg.origin_uf}
@@ -236,6 +237,7 @@ function RouteEditor({
                 }
               />
               <CitySelect
+                searchable={false}
                 label={`destino da ${index === 0 ? "ida" : "volta"}`}
                 cityId={leg.destination_city_id}
                 uf={leg.destination_uf}

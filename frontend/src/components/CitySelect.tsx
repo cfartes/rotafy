@@ -9,11 +9,13 @@ export function CitySelect({
   cityId,
   uf = "",
   onChange,
+  searchable = true,
 }: {
   label: string;
   cityId?: number | null;
   uf?: string | null;
   onChange: (city: City | null, uf: string) => void;
+  searchable?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const states = useQuery({
@@ -47,14 +49,14 @@ export function CitySelect({
           ))}
         </select>
       </Field>
-      <Field label={`Pesquisar cidade de ${label}`}>
+      {searchable && <Field label={`Pesquisar cidade de ${label}`}>
         <input
           value={search}
           disabled={!uf}
           placeholder="Filtrar cidades"
           onChange={(e) => setSearch(e.target.value)}
         />
-      </Field>
+      </Field>}
       <Field label={`Cidade de ${label}`}>
         <select
           aria-label={`Cidade de ${label}`}
@@ -73,7 +75,7 @@ export function CitySelect({
           {cities.data
             ?.filter(
               (c) =>
-                c.id === cityId ||
+                !searchable || c.id === cityId ||
                 c.name
                   .toLocaleLowerCase("pt-BR")
                   .includes(search.toLocaleLowerCase("pt-BR")),
