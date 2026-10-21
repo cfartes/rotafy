@@ -46,6 +46,7 @@ from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
 from app.operational_profiles import capabilities, change_profile
 from app.operations import router as operations_router
+from app.postal_codes import router as postal_codes_router
 from app.public_sales import router as public_sales_router
 from app.reports import router as reports_router
 from app.request_security import RequestBodyLimit
@@ -844,6 +845,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)
+    application.include_router(postal_codes_router)
     application.include_router(email_auth_router)
     return application
 

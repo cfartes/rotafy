@@ -176,7 +176,7 @@ O painel mostra o evento, canal, empresa, situação e motivo de falha de cada c
 
 Em **Configurações → Contrato de utilização**, o administrador Nexus completo consulta a minuta e prepara novas versões em rascunho. Leia o texto integral e revise as condições comerciais e jurídicas antes de marcar a aprovação e usar **Publicar versão aprovada**. A versão r2 aprovada é ativada pelo processo de atualização, após conferir o texto e a configuração de e-mail. Novas versões preparadas no painel continuam dependendo de revisão e publicação explícita.
 
-A publicação exige configuração de e-mail e ativa o aceite apenas para empresas criadas depois dela. Versões publicadas não podem ser alteradas e aceites anteriores não são reescritos por outra publicação. O cadastro passa a incluir endereço, número, complemento opcional, bairro, cidade, UF e CEP.
+A publicação exige configuração de e-mail e ativa o aceite apenas para empresas criadas depois dela. Versões publicadas não podem ser alteradas e aceites anteriores não são reescritos por outra publicação. No endereço do cadastro, comece pelo CEP: ao completar oito dígitos, o sistema consulta e preenche logradouro, bairro, cidade e UF. Confira e informe número e complemento opcional. O preenchimento manual permanece disponível, inclusive quando o CEP não é encontrado.
 
 O representante confirma os dados, lê ou baixa o contrato e aceita no primeiro acesso com código enviado ao próprio e-mail. A equipe comercial não aceita pelo cliente. Enquanto houver pendência exigida, o acesso operacional é restringido; ficam disponíveis os recursos necessários ao aceite e ao Financeiro.
 
