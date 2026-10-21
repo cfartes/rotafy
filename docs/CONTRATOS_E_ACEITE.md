@@ -2,19 +2,18 @@
 
 ## Estado da entrega
 
-A funcionalidade é instalada com uma **minuta em rascunho**, sem publicação e sem exigir aceite de clientes existentes. A minuta revisa o documento fornecido, preservando as regras atuais do aplicativo. A revisão comercial e jurídica da Nexus deve ocorrer antes da publicação. Não foi enviado contrato real nem registrado aceite em nome de cliente nesta implementação.
+A versão **2026-10-21-r2 foi aprovada em 21/10/2026**, após revisão do exemplo personalizado. O texto aprovado está em `CONTRATO_ROTAFY_APROVADO.md` e `CONTRATO_ROTAFY_APROVADO.pdf`. As minutas anteriores permanecem como histórico da revisão.
 
-Arquivos para revisão:
+O script de atualização publica somente o texto com SHA-256 `47e971c9151041c2a7ac79a65b3a56095284e9d44523350577cef0db1872da3d`. A publicação exige e-mail configurado e chave de proteção válida; não envia mensagens nem aceita contrato em nome do cliente. A identidade técnica de auditoria é `00000000-0000-4000-8000-000000000035`, ação `contract.published_approved_release`, sem atribuir a publicação a um usuário que não a executou pelo painel.
 
-- `CONTRATO_ROTAFY_REVISAO_PARA_APROVACAO.md`: mudanças destacadas e texto integral.
-- `CONTRATO_ROTAFY_MINUTA_REVISAO.pdf`: cópia de revisão, identificada como não publicada.
+A rotina é idempotente e preserva uma versão diferente selecionada no painel. Se o texto r2 tiver sido alterado, a publicação automática é recusada. Empresas antigas não são vinculadas retroativamente; novos cadastros passam a exigir o aceite após a ativação.
 
 ## Ativação
 
 1. Atualize a VPS pelo script existente. A migração `0034_contract_acceptance` adiciona endereço, número, complemento, bairro, cidade, UF e CEP, além das tabelas de versões, documentos, desafios, aceites e e-mails. As migrações `0035_plan_addenda` e `0036_preserve_plan_terms` acrescentam propostas de mudança e preservam as condições comerciais em ciclos futuros. Nenhum banco é recriado.
 2. Entre com um administrador Nexus completo em **Configurações → Contrato de utilização**. A equipe Nexus restrita não pode publicar nem consultar evidências financeiras do contrato.
-3. Leia a minuta integral. Se precisar ajustar o texto, salve uma **nova versão em rascunho** com identificação própria.
-4. Somente após a aprovação do texto, marque a declaração de revisão e publique a versão correta. A publicação confere a configuração de e-mail e a chave de proteção antes de ativar o fluxo.
+3. A atualização ativa a r2 aprovada após conferir o hash e os pré-requisitos. Confira a indicação de versão ativa no painel. Para revisões futuras, salve uma **nova versão em rascunho** com identificação própria.
+4. Para versões futuras, somente após a aprovação do texto marque a declaração de revisão e publique a versão correta. A publicação confere a configuração de e-mail e a chave de proteção antes de ativar o fluxo.
 5. Apenas empresas criadas após a publicação ficam vinculadas à versão ativa. Empresas existentes não são inscritas retroativamente; publicar outra versão não invalida aceites anteriores.
 
 ## Primeiro acesso
@@ -52,12 +51,12 @@ git pull --ff-only origin main
 bash scripts/update_vps.sh
 ```
 
-Não exige novo APK. **Atualizar o código não publica nem aprova a minuta.** A ativação ocorre apenas pela publicação explícita da versão aprovada no painel Nexus.
+Não exige novo APK. A aprovação da r2 está registrada nesta entrega; o script de atualização ativa somente esse texto aprovado após verificar o hash, o e-mail e a chave de proteção. Outras versões continuam dependendo de aprovação e publicação explícita no painel. Se faltar configuração, os serviços continuam atualizados e o script informa que o contrato ainda não foi ativado.
 
 
 ## Mudança de plano e aditivo
 
-A minuta `2026-10-21-r2` permanece em rascunho e inclui as cláusulas 3.6 a 3.9. A atualização não publica essa versão nem substitui um contrato aceito. A Nexus deve revisar e publicar uma versão aprovada antes de solicitar mudanças.
+A versão aprovada `2026-10-21-r2` inclui as cláusulas 3.6 a 3.9 e é ativada pela atualização após conferir seus pré-requisitos. A ativação não substitui documentos já aceitos. Mudanças de plano continuam exigindo aceite individual do aditivo.
 
 Em Planos e assinaturas, **Enviar aditivo para aceite** fixa a versão atual do plano escolhido e cria uma proposta. O convite é colocado na fila de e-mails para o administrador ativo, preferindo o e-mail do aceite original. A tela distingue envio pendente, falha e aceitação pelo provedor. A simples solicitação não preenche o novo plano agendado na assinatura.
 
@@ -72,3 +71,12 @@ Uma proposta aguardando aceite pode ser cancelada pela Nexus; seus códigos e co
 Os documentos anteriores, aceites e hashes são preservados. O cliente encontra os aditivos em **Meu contrato**, com download do PDF e comprovante e reenvio da cópia ao e-mail do aceite. O administrador Nexus completo consulta o histórico em **Empresas → Contrato**. A equipe Nexus restrita não recebe esse acesso.
 
 A edição do catálogo de planos não reajusta automaticamente clientes nos ciclos futuros. Novas condições exigem proposta e aceite. O marco `terms_locked_at` preserva a regra histórica no processamento de ciclos anteriores à implantação, sem reescrever períodos ou faturas já materializados. Alterações que já estavam agendadas antes da atualização permanecem preservadas; não se cria assinatura retroativa.
+
+
+Se a atualização concluir os serviços mas informar falha na ativação, corrija o e-mail ou a proteção da instalação e repita somente a publicação, na pasta da VPS:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml exec -T api python -m app.approved_contract
+```
+
+Esse comando não recria o banco e não envia mensagens. Ele publica a versão geral aprovada; somente contratos preparados e aceitos por representantes geram os respectivos e-mails e registros de aceite.

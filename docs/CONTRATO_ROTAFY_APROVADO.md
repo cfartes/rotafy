@@ -1,0 +1,185 @@
+# Contrato de utilização Nexus Rotafy — versão aprovada
+
+Versão: **2026-10-21-r2**. Texto aprovado pelo responsável pelo projeto em **21/10/2026**, após revisão do exemplo personalizado.
+
+SHA-256 do texto contratual: `47e971c9151041c2a7ac79a65b3a56095284e9d44523350577cef0db1872da3d`.
+
+Esta é a versão geral aprovada. O aplicativo acrescenta o Quadro de Contratação com dados da empresa, representante e valores do plano antes de gerar o PDF individual. O hash desse PDF será próprio e diferente do hash do texto geral.
+
+A publicação da versão não representa aceite de cliente. O representante continua responsável por ler/baixar o documento e confirmar o aceite com código enviado ao próprio e-mail. Nenhum aceite retroativo será criado.
+
+## Texto aprovado
+
+CONTRATO DE LICENÇA DE USO DE SOFTWARE DE GERENCIAMENTO DE ROTA – NEXUS ROTAFY
+
+As partes, doravante denominadas como CEDENTE e CESSIONÁRIA, têm por justo e acordado, por livre e espontânea vontade, a concessão temporária de licença do software NEXUS ROTAFY, cujos direitos pertencem à CEDENTE: ANDRADE FARTES TI LTDA, inscrita no CNPJ sob nº 65.186.307/0001-74, com endereço comercial em R JORNALISTA ABDON FOES, 200, anexo 302, Navegantes/SC, CEP: 88.372-822, aos termos que se seguem:
+
+CLÁUSULA PRIMEIRA: DO OBJETO E ESPECIFICAÇÕES DO SOFTWARE
+
+1.1. O presente Contrato tem por objeto a concessão de licença de uso temporária, não exclusiva e intransferível, na modalidade Software as a Service (SaaS), do software denominado NEXUS ROTAFY, voltado à gestão operacional, logística e comercial de transporte de passageiros (turismo, transfers e transporte regular), cuja competência e módulos englobam:
+
+1.1.1. Gestão e Arquitetura Multitenant Segregada: Ambiente em nuvem com isolamento lógico de cadastros, viagens, reservas e dados por empresa contratante, operando sob controle de acesso baseado em perfis (Administrador, Atendente, Motorista e Guia).
+
+1.1.2. Gestão de Rotas, Pacotes e Deslocamentos: Estruturação de rotas reutilizáveis com paradas ordenadas de embarque e desembarque; suporte a pacotes turísticos (formatos bate-e-volta ou sequenciais multi-destinos) e transporte regular; criação de saídas com controle de capacidade, trajetos e paradas.
+
+1.1.3. Gestão de Frota e Equipe: Cadastro de veículos e capacidade de lotação de assentos; alocação operacional de veículos e equipes (motoristas e guias opcionais) por viagem, com verificação de disponibilidade e conflito de horários.
+
+1.1.4. Venda e Reserva Familiar/Grupo: Módulo comercial para emissão de bilhetes com agrupamento por responsável/família, bloqueio temporário de assentos por 15 minutos, importação de passageiros em lote (CSV/XLSX) e registro manual de pagamentos comerciais.
+
+1.1.5. Bilhete Individual e Comunicação: Emissão de bilhete digital único por passageiro com código QR para validação, link privado de acompanhamento, geração de PDF/impressão e canal de disparo de avisos, resumos e links por WhatsApp.
+
+1.1.6. Aplicativo Mobile Operacional (Android): Ferramenta operacional para motoristas e guias com acesso a escalas e manifesto de passageiros, leitura e validação de embarque via QR Code por câmera, funcionamento com sincronização para conexão intermitente e registro de chegada com captura de coordenadas geográficas (GPS).
+
+1.1.7. Painel de Inteligência Operacional e Relatórios: Visão gerencial consolidada com acompanhamento de viagens diárias, taxa de ocupação da frota, faturamento nominal registrado, ticket médio e exportação de relatórios em CSV.
+
+1.2. Das Limitações Técnicas Operacionais: A CESSIONÁRIA declara plena ciência de que o software gerencia a capacidade numérica global de lugares por veículo alocado, não contemplando seleção de poltrona numerada nem mapa gráfico de assentos, bem como que os relatórios e registros de pagamento possuem caráter estritamente gerencial/operacional interno, não constituindo conciliação bancária automatizada ou prestação de serviços fiscais/tributários.
+
+CLÁUSULA SEGUNDA: DA VIGÊNCIA CONTRATUAL
+
+2.1. A contratação inicia-se com a confirmação eletrônica deste instrumento. O período de teste, quando concedido, e as condições comerciais constam do quadro de contratação. Após o teste, a assinatura opera em ciclos sucessivos de 30 (trinta) dias, com continuidade até seu cancelamento conforme a cláusula sétima. O contador X/12 do painel é apenas informativo e não constitui parcelamento, fidelidade ou vigência mínima de 12 meses. Alterações futuras de preço exigem comunicação e observam os ciclos e condições contratados, sem reajuste automático por índice nesta versão.
+
+CLÁUSULA TERCEIRA: DO VALOR E CONDIÇÕES DE PAGAMENTO
+
+3.1. A CESSIONÁRIA pagará a mensalidade do plano e os excedentes efetivamente apurados conforme o quadro de contratação. Nos novos contratos, o período pago começa ao término do teste, quando houver, e cada mensalidade com seus excedentes será cobrada ao final do respectivo ciclo de 30 dias. Não haverá cobrança da primeira mensalidade no encerramento do teste. O prazo para pagamento será o final do segundo dia útil contado a partir do dia seguinte ao fechamento, excluídos sábados, domingos e feriados nacionais. Por exemplo, teste iniciado em 10/10 com sete dias termina em 17/10; o primeiro ciclo pago encerra-se em 16/11. Contratos legados preservam suas condições já formalizadas.
+
+3.2. A taxa única de configuração inicial (setup), quando contratada, terá o valor indicado no quadro de contratação, sem cobrança duplicada. Será cobrada ao término do período de teste, ou na data inicial quando não houver teste, separadamente da primeira mensalidade nos novos contratos. A configuração inicial compreende os serviços abaixo:
+
+3.2.1. Configuração do ambiente;
+
+3.2.2. Treinamento online dos colaboradores.
+
+3.3. Alterações de prazos e condições comerciais serão previamente comunicadas e observarão os ciclos contratados e os direitos aplicáveis. Os valores de cobranças já emitidas não serão reescritos por alteração posterior do plano ou do cadastro.
+
+3.4. Esta versão não estabelece cobrança automática de multa, juros ou correção monetária pelo sistema. Eventuais encargos ou condições adicionais dependerão de ajuste escrito entre as partes, observadas as normas aplicáveis, e não serão incluídos retroativamente sem informação à CESSIONÁRIA.
+
+3.5. Sem confirmação do pagamento até o prazo da cobrança, o acesso do administrador da CESSIONÁRIA ficará restrito ao Financeiro para consulta e regularização. Novas operações ficarão bloqueadas, preservado o acesso operacional de motoristas e guias às viagens já vendidas. A confirmação do pagamento remove a restrição da respectiva cobrança, desde que não existam outras pendências vencidas. A suspensão administrativa é independente dessa restrição financeira.
+
+3.6. O Quadro de Contratação integra este contrato e identifica a versão do plano escolhido, mensalidade, franquia de viagens, valor por viagem excedente, taxa de setup quando aplicável, prazo de teste e início das condições comerciais. Os dados são obtidos do cadastro de planos do sistema e preservados na cópia aceita. A posterior alteração desse cadastro não modifica as condições registradas neste instrumento.
+
+3.7. A mudança de plano, inclusive alteração de preço ou franquia, exige aditivo com as condições anteriores e novas e a data de vigência. O representante da CESSIONÁRIA poderá ler e baixar o documento antes de confirmar o aceite mediante código enviado ao e-mail do seu acesso. A simples solicitação ou o envio do e-mail não efetiva a alteração.
+
+3.8. Após o aceite, as novas condições entram em vigor no próximo ciclo de cobrança indicado no aditivo, sem cálculo proporcional e sem modificar o ciclo em andamento ou faturas anteriores. Até a vigência permanecem as condições anteriores. Caso a data prevista já tenha passado, será necessário gerar e aceitar nova cópia com a próxima vigência válida.
+
+3.9. A troca de plano não reinicia o período de teste, não cobra novo setup e não estabelece contrato de doze parcelas. A cópia do aditivo e o comprovante de aceite serão enviados ao e-mail confirmado, com SHA-256 próprio e preservação dos documentos anteriores. Permanecem aplicáveis as demais disposições contratuais não alteradas pelo aditivo.
+
+CLÁUSULA QUARTA: DO TREINAMENTO E SUPORTE
+
+4.1. Após a contratação, a CEDENTE fornecerá ao(s) preposto(s) escolhido(s) pela CESSIONÁRIA, TREINAMENTO OPERACIONAL do software, em uma única data a ser designada em conjunto pelas partes.
+
+4.2. O treinamento ofertado pela CEDENTE abordará as funcionalidades do software, como utilizá-las e demais informações inerentes ao bom uso do software pela CESSIONÁRIA.
+
+4.3. Enquanto vigente o contrato, a CEDENTE fornecerá à CESSIONÁRIA – de segunda a sexta (exceto feriados) e em horário comercial – suporte técnico e operacional ao software.
+
+4.3.1. O suporte técnico e operacional será fornecido de maneira ONLINE/DIGITAL através dos canais de atendimento da CEDENTE e prezará pela solução/saneamento das dúvidas/problemas existentes em tempo hábil.
+
+CLÁUSULA QUINTA: DAS OBRIGAÇÕES DAS PARTES
+
+5.1. São obrigações da CEDENTE:
+
+I – Conceder à CESSIONÁRIA o direito à utilização do software objeto do presente contrato, pelo prazo estipulado no presente instrumento, garantindo sua funcionalidade pelo tempo em que perdurar a relação jurídica;
+
+II – Realizar manutenções e/ou atualizações no software, quando necessários e imprescindíveis ao funcionamento e continuação do mesmo;
+
+III – Manter sigilo sobre os termos e condições deste contrato e sobre todas as informações reveladas pela CESSIONÁRIA e/ou obtidas em razão deste contrato, incluindo laudos/relatórios finais inerentes ao cumprimento do presente contrato;
+
+IV – Cumprir tudo o que restar disposto no presente instrumento, nos prazos e condições celebrados, resguardando a boa-fé contratual.
+
+5.2. São obrigações da CESSIONÁRIA:
+
+I – Realizar o pagamento de todos os valores previstos no presente instrumento, de forma integral e observando-se os prazos e condições pactuados, arcando com quaisquer tarifas, despesas, impostos ou encargos associados às transações de pagamento;
+
+II – Fornecer as informações e os documentos que forem indispensáveis para o cumprimento do presente contrato, observando-se as disposições deste contrato referente à confidencialidade e à proteção de dados;
+
+III – Manter pessoal treinado ou capacitado para a operação do Software e para a comunicação com a CEDENTE;
+
+IV – Reconhecer e preservar os direitos de propriedade intelectual da CEDENTE relacionados ao software e aos segredos de negócio, processos e demais metodologias utilizadas na presente concessão de utilização do software, os quais não poderão ser compartilhados pela CESSIONÁRIA, devendo estes manterem sigilo, bem como não os compartilhar com terceiros sob pena de a CESSIONÁRIA responder civil e criminalmente pelos eventuais prejuízos causados à CEDENTE pela divulgação ou uso indevido de tais direitos;
+
+V – Responder pelas informações inseridas no Software, pelo cadastramento, permissões, senhas e modo de utilização de seus usuários, vez que a CEDENTE em hipótese alguma será responsável pelo conteúdo inserido no Software (senhas, informações pessoais e gerais etc.), não sendo, portanto, estas informações revisadas em momento algum pela CEDENTE;
+
+VI – Relatar à CEDENTE, por escrito, toda e qualquer irregularidade ou comentários em relação à utilização do software em prazo razoável, permitindo assim que eventuais inconsistências possam ser sanadas em tempo hábil;
+
+VII – Cumprir tudo o que restar disposto no presente instrumento, nos prazos e condições celebrados, resguardando a boa-fé contratual.
+
+CLÁUSULA SEXTA: DA CONFIDENCIALIDADE E SIGILO
+
+6.1. As Partes, por meio de seus sócios, representantes, prepostos, empregados e prestadores de serviços, comprometem-se a manter o mais absoluto sigilo de todas as informações de conteúdo confidencial, cujo conhecimento tiver em decorrência do presente contrato, podendo ser responsabilizadas, civil ou criminalmente, por eventuais danos materiais ou morais decorrentes da não obediência a esta regra.
+
+6.2. Constituem informações confidenciais todas e quaisquer informações, sejam ou não por escrito, as quais a Sociedade não liberou ao público em geral, incluindo, mas não se limitando a: (a) informações corporativas, incluindo planos, estratégias, métodos, políticas, deliberações, negociações ou litígios; (b) informações de marketing, incluindo estratégias, métodos, informações sobre clientes e potenciais clientes, análises ou projeções de mercado; (c) informações financeiras, incluindo dados sobre custos e desempenho, endividamento, capitalização, recebimento e realização de investimentos, dados de compras e vendas e precificação; (d) informações operacionais e tecnológicas, incluindo planos, especificações, manuais, formulários, modelos, técnicas de programação de computador, programas de computador (software), designs, métodos, procedimentos, fórmulas, descobertas, invenções, aperfeiçoamentos, conceitos e ideias; (e) informações sobre recursos humanos, incluindo estrutura organizacional, dados sobre funcionários e colaboradores, estrutura de remuneração, avaliações de desempenho, acordos ou documentos de contratação ou rescisão; e (f) informações sobre clientes e fornecedores, incluindo listas e informações recebidas ou coletadas de clientes ou fornecedores (“Informações Confidenciais”).
+
+6.2.1. Não se aplicam às obrigações de confidencialidade as Informações confidenciais que: (i) sejam comprovadamente de conhecimento da CEDENTE antes de sua revelação pela CESSIONÁRIA; (ii) tenham sido obtidas de boa-fé de terceiro que não tenha violado dever de confidencialidade perante a CESSIONÁRIA ao divulgá-la à CEDENTE; (iii) estejam ou tenham se tornado disponíveis publicamente de forma lícita por terceiro; ou (iv) devam ser divulgadas por força de qualquer disposição legal ou determinação judicial, desde que a CESSIONÁRIA seja informada imediatamente após a CEDENTE tomar conhecimento da obrigatoriedade de divulgação e que a divulgação seja feita da maneira mais limitada possível.
+
+6.3. As Partes e seus Representantes comprometem-se a manter o caráter confidencial de todas as Informações e não revelar, divulgar, disseminar, reproduzir, copiar ou de qualquer outra forma comunicar ou transmitir as Informações a qualquer pessoa; não revelar as Informações, ou os termos e condições ou quaisquer outros fatos relativos à informação fornecida, inclusive, exemplificativamente, o fato de que a CEDENTE e seus Representantes tiveram acesso a tais Informações.
+
+6.4. As Partes não poderão utilizar as Informações Confidenciais para quaisquer fins não relacionados às atividades decorrentes da disponibilização do serviço objeto deste Contrato.
+
+6.5. Caso seja solicitado à CEDENTE, com base em lei ou regulamento aplicável, ou seja, obrigado por processo judicial ou arbitral, ou por ordem de autoridade governamental, a revelar quaisquer Informações, deverá fornecer apenas Informações na medida necessária para cumprir a lei, regra ou decisão em questão; e, se legalmente possível, requerer à respectiva autoridade tratamento confidencial à Informação.
+
+6.6. O compromisso de confidencialidade contraído nesta Cláusula permanecerá vigente por até 05 (cinco) anos após a extinção do presente Contrato, incluindo suas eventuais renovações e prorrogações, contados da data do encerramento da relação contratual entre as Partes.
+
+CLÁUSULA SÉTIMA: DA RESCISÃO DO CONTRATO
+
+7.1. As partes poderão solicitar o encerramento da contratação mediante comunicação escrita pelos canais de atendimento. A Nexus registrará o cancelamento da assinatura, que interrompe a criação de novos ciclos a partir da efetivação. Não há fidelidade mínima ou exigência automática de aviso de 30 dias nesta versão.
+
+7.2. O cancelamento não representa confirmação de pagamento, devolução de valores ou exclusão do histórico. Cobranças já emitidas permanecem sujeitas à conferência e regularização. Eventual acerto adicional deverá ser informado e formalizado entre as partes; não haverá criação automática de parcelas futuras por conta de uma vigência mínima de 12 meses.
+
+7.2.1. Não será cobrada multa sobre um saldo hipotético de 12 parcelas futuras. Permanecem exigíveis os valores já cobrados e efetivamente contratados ou utilizados, observadas as condições de encerramento deste instrumento.
+
+7.3. Considera-se justa causa para a rescisão do presente Contrato, estando a Parte inocente desobrigada do cumprimento dos termos do item 7.1:
+
+I – Se a CESSIONÁRIA atrasar o pagamento de qualquer prestação por prazo superior a 30 (trinta) dias;
+
+II – Se, comprovadamente e com condenação judicial transitada em julgado, houver qualquer prática de ato de corrupção ou qualquer ato que viole as leis anticorrupção brasileira ou de outros países por qualquer das partes;
+
+III – Caso qualquer das partes seja condenada em qualquer processo com repercussão pública potencialmente lesiva ao nome ou à reputação da outra parte;
+
+IV – Caso qualquer das Partes viole o dever de confidencialidade, bem como quanto a eventual negligência em relação aos cuidados no tratamento dos dados fornecidos pela outra parte, em desacordo com a Lei Federal nº 13.709/2018;
+
+V – Por descumprimento de qualquer obrigação contratual por qualquer das partes não sanada no prazo de 05 (cinco) dias.
+
+7.3.1. Nas hipóteses dos incisos I e V, a CESSIONÁRIA – quando esta for culpada – ficará sujeita à multa prevista no subitem 7.2.1.
+
+7.4. Será de responsabilidade da CESSIONÁRIA realizar o download das informações que necessita até a data da rescisão, não tendo nada mais a reclamar sobre a guarda das informações à CEDENTE.
+
+CLÁUSULA OITAVA: DA PROTEÇÃO DE DADOS (LGPD)
+
+8.1. As Partes estão cientes e declaram cumprir fielmente a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados - LGPD), de acordo com as suas definições e conceitos, por si, seus sócios, administradores, colaboradores e prepostos, bem como exigir o seu cumprimento por terceiros por elas contratados.
+
+8.2. As Partes garantem que todos os dados pessoais eventualmente compartilhados no âmbito deste Contrato foram obtidos legalmente de acordo com os requisitos da LGPD e que possuem o direito de tratá-los e de compartilhá-los com a outra Parte.
+
+8.3. A CEDENTE obriga-se a utilizar os melhores padrões de tecnologia existentes quando do armazenamento dos Dados Pessoais, como também se compromete a implementar sistemas de segurança da informação que venham a impedir incidentes (vazamentos ou ataques externos) que possam causar prejuízos à CESSIONÁRIA.
+
+8.4. Em caso de incidentes, como interceptações, compartilhamentos ou vazamentos de dados pessoais, a Parte que verificar o incidente tem o dever de informar a outra, em um prazo máximo de 24 (vinte e quatro) horas, para que todas as medidas de segurança necessárias sejam tomadas.
+
+CLÁUSULA NONA: DA PROPRIEDADE INTELECTUAL
+
+9.1. A CEDENTE é a única titular dos direitos de propriedade intelectual dos Serviços, incluindo textos, imagens, layouts, software, códigos, base de dados, gráficos, artigos, fotografias e demais conteúdos produzidos por ela. O conteúdo é protegido por lei e não pode ser usado ou reproduzido sem o consentimento expresso da CEDENTE. Qualquer uso não autorizado será considerado violação dos direitos autorais e de propriedade intelectual da CEDENTE.
+
+9.2. A titularidade e os direitos relativos à propriedade intelectual desenvolvida durante o período em que as partes mantiverem relação contratual e pertinente ao aplicativo e/ou ao sistema, será da CEDENTE, de forma irretratável, encontrando-se protegidos pelas leis brasileiras e tratados internacionais que versam sobre direitos de propriedade intelectual, como a Lei nº 9.609/98 (Lei de Software) e Lei nº 9.610/98 (Lei de Direitos Autorais). Dessa forma, a CESSIONÁRIA renuncia expressamente a qualquer direito, inclusive autoral patrimonial, em relação a eventuais criações intelectuais feitas pela CEDENTE em seu benefício.
+
+9.3. A CEDENTE permite que a CESSIONÁRIA use os Serviços e as Aplicações apenas para cumprir as obrigações deste contrato, com uma licença temporária e revogável. A CESSIONÁRIA não pode ceder, sublicenciar ou transferir seus direitos e obrigações a terceiros, nem adaptar ou desmontar as aplicações de forma que viole os direitos aqui previstos.
+
+9.4. São proibidas: a exploração, cessão, imitação, cópia, plágio, aplicação de engenharia reversa, tentativa de invasão (hackear), armazenamento, alteração, modificação de características, ampliação, venda, locação, doação, alienação, transferência, reprodução, integral ou parcial, de qualquer conteúdo dos sistemas de qualquer uma das Partes.
+
+9.5. Na hipótese de violação, pela CESSIONÁRIA, dos direitos relativos à propriedade intelectual da CEDENTE, o presente contrato será cessado IMEDIATAMENTE, além de a CESSIONÁRIA ficar sujeita às medidas cabíveis, como ingresso de ação judicial específica e/ou medida extrajudicial pertinente, a fim de se obter a indenização por perdas e danos eventualmente sofridos.
+
+CLÁUSULA DÉCIMA: DAS DISPOSIÇÕES GERAIS
+
+10.1. As Partes reconhecem e declaram que não existe e não será estabelecido qualquer vínculo empregatício entre qualquer delas e os profissionais que a outra utilizar na execução dos Serviços objeto deste Contrato, que, por sua vez, não gera qualquer forma de responsabilidade subsidiária ou solidária entre uma Parte e os profissionais da outra. Cada uma delas é responsável, individualmente, pelo cumprimento das normas da legislação trabalhista, tributária, previdenciária, assistencial e securitária, decorrentes de suas respectivas atividades e contratações.
+
+10.2. Este Contrato não estabelece entre as Partes qualquer forma de sociedade, associação, agência, consórcio ou responsabilidade solidária, assim como qualquer vínculo empregatício com relação aos funcionários e/ou subcontratados da CEDENTE envolvidos na execução do presente Contrato.
+
+10.3. Se alguma das Partes não exigir o cumprimento dos termos e condições deste contrato ou não exercer um direito decorrente dele, isso não significa que essa parte renuncia a esse direito ou altera este contrato e seus termos e cláusulas, tampouco afetará a capacidade dessa parte exercer esse direito no futuro.
+
+10.4. Sendo uma ou mais cláusulas do presente contrato consideradas nulas ou inválidas, estas não afastarão a validade e aplicabilidade das demais cláusulas e dispositivos presentes no contrato.
+
+10.4.1. O instrumento e o quadro de contratação são preservados na versão eletrônica apresentada ao representante antes do aceite. A alteração posterior de dados cadastrais não modifica essa cópia. Modificações contratuais dependerão de documento complementar ou nova versão expressamente aceita pelas partes, de forma física ou eletrônica. O registro contém identificação do representante, confirmação por e-mail, data/hora do servidor e hash SHA-256 do PDF aceito; tais registros documentam a manifestação eletrônica e não equivalem, por si, a certificação ICP-Brasil ou garantia de resultado judicial.
+
+10.5. A CESSIONÁRIA autoriza a CEDENTE a usar seu nome, marcas e logotipos em materiais de marketing, incluindo comunicados, site, catálogos e outros materiais promocionais da CEDENTE, sem qualquer custo ou encargo. No entanto, a CESSIONÁRIA poderá revogar essa autorização a qualquer momento, notificando a CEDENTE por escrito.
+
+CLÁUSULA DÉCIMA PRIMEIRA: DO FORO
+
+11.1. Para qualquer demanda judicial relativa ao presente Contrato, as Partes elegem o foro da Comarca de Blumenau/SC para dirimir quaisquer dúvidas ou conflitos referentes ao presente Contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+
+E por estarem justas e acertadas, os signatários deste Contrato declaram, sob as penas da lei, que se encontram investidos dos competentes poderes de ordem legal e societária para representar e ACEITAR o presente instrumento de forma digital, tendo ciência que a partir do ACEITE, todos os termos do presente instrumento passarão a ter validade imediata, assegurando ainda, em qualquer hipótese e situação, a veracidade da presente contratação.
+
+Local e data: conforme o comprovante eletrônico de aceite.
