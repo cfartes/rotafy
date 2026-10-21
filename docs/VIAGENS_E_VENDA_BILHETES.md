@@ -2,7 +2,7 @@
 
 ## Consulta e filtros
 
-Em **Frota, pacotes e viagens → Viagens**, o filtro **Situação da viagem** oferece Todas, Abertas, Agendadas, Em andamento, Fechadas/concluídas e Canceladas. Abertas inclui agendadas e em andamento; esta seleção não significa que todas aceitam venda. O contador informa quantas viagens correspondem ao filtro.
+Em **Viagens**, o filtro **Situação da viagem** oferece Todas, Abertas, Agendadas, Em andamento, Fechadas/concluídas e Canceladas. Viagens ainda não iniciadas ficam Abertas quando faltam até 48 horas para a saída e Agendadas quando faltam mais de 48 horas. O limite exato de 48 horas já é considerado Aberta. Se o horário passou sem início registrado, a viagem continua Aberta. Em andamento, concluídas e canceladas preservam suas situações próprias. A classificação é atualizada a cada 30 segundos e ao retornar à janela; não altera as regras de venda ou inicia a viagem automaticamente. O contador informa quantas viagens correspondem ao filtro.
 
 ## Detalhes e chegada
 

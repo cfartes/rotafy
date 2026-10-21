@@ -10,6 +10,7 @@ import {
 import { type SavedRoute } from "./RouteCatalog";
 import { CitySelect } from "./components/CitySelect";
 import { VehicleRoute } from "./VehicleRoute";
+import { tripSituation } from "./tripSituation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, post, patch, type User } from "./api";
@@ -107,6 +108,7 @@ type Detail = Trip & {
   }[];
 };
 const status: Record<string, string> = {
+  open: "Aberta",
   scheduled: "Agendada",
   in_progress: "Em andamento",
   completed: "Concluída",
@@ -213,6 +215,13 @@ export function Operations({
   initialTripId?: string | null;
 }) {
   const client = useQueryClient();
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const refreshTime = () => setNow(Date.now());
+    const timer = window.setInterval(refreshTime, 30000);
+    window.addEventListener("focus", refreshTime);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refreshTime); };
+  }, []);
   const tab = initialTab;
   const [editing, setEditing] = useState<Vehicle | Package | "new" | null>(
     null,
@@ -297,9 +306,7 @@ export function Operations({
   const filteredTrips = (trips.data ?? []).filter(
     (t) =>
       tripFilter === "all" ||
-      (tripFilter === "open"
-        ? ["scheduled", "in_progress"].includes(t.status)
-        : t.status === tripFilter),
+      tripSituation(t, now) === tripFilter,
   );
   if (reservationTrip)
     return (
@@ -378,7 +385,7 @@ export function Operations({
             </Field>
             <p className="muted">
               {filteredTrips.length} de {trips.data?.length ?? 0} viagens ·
-              Abertas inclui agendadas e em andamento.
+              Abertas: saída em até 48 horas. Agendadas: saída em mais de 48 horas.
             </p>
           </div>
         )}
@@ -433,7 +440,7 @@ export function Operations({
                       <td>
                         {t.vehicle_count} veículos · {t.capacity} lugares
                       </td>
-                      <td>{status[t.status]}</td>
+                      <td>{status[tripSituation(t, now)]}</td>
                       <td>
                         {manage && action && (
                           <button
@@ -575,7 +582,7 @@ export function Operations({
               <div className="modal-form">
                 <h3>{detail.data.name}</h3>
                 <p>
-                  {status[detail.data.status]} ·{" "}
+                  {status[tripSituation(detail.data, now)]} ·{" "}
                   {money(detail.data.price_cents)} por passageiro
                 </p>
                 <TripCompletion
