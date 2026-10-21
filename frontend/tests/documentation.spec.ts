@@ -36,7 +36,7 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   page,
 }) => {
   await page.goto("/documentacao/manual.html");
-  await expect(page.locator(".chapter")).toHaveCount(27);
+  await expect(page.locator(".chapter")).toHaveCount(28);
   const search = page.locator('input[type="search"]');
   await search.fill("csv/xlsx");
   const matches = await page.locator(".chapter:visible").count();
@@ -45,7 +45,7 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   await search.fill("zzzzinexistente");
   await expect(page.locator(".chapter:visible")).toHaveCount(0);
   await search.fill("");
-  await expect(page.locator(".chapter:visible")).toHaveCount(27);
+  await expect(page.locator(".chapter:visible")).toHaveCount(28);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -89,7 +89,7 @@ test("manuais separados por perfil", async ({ page, request }) => {
     page.getByRole("link", { name: "Ler manual online" }),
   ).toHaveAttribute("href", "/documentacao/manual-superadmin.html");
   await page.goto("/documentacao/manual-superadmin.html");
-  await expect(page.locator(".chapter")).toHaveCount(8);
+  await expect(page.locator(".chapter")).toHaveCount(9);
   await expect(page.locator(".cover")).toContainText(
     "Manual do superadmin Nexus",
   );
