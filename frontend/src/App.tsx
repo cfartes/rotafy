@@ -407,8 +407,8 @@ function CreateCompany({
         <p className="muted">
           Crie o espaço da empresa e seu primeiro administrador. Escolha o plano
           conforme as condições de contratação e teste configuradas. O CPF/CNPJ
-          é obrigatório para cobrança. Todos os campos deste cadastro são
-          obrigatórios.
+          é obrigatório para cobrança. Preencha todos os campos obrigatórios;
+          o complemento do endereço é opcional.
         </p>
         <div className="form-grid">
           <Field label="Nome comercial">
@@ -456,8 +456,8 @@ function CreateCompany({
             </Field>
           </div>
         </div>
-        <h3 className="form-section">Tipo de operação</h3>
         <AddressFields />
+        <h3 className="form-section">Tipo de operação</h3>
         <p className="muted">O representante da empresa poderá ler e baixar o contrato antes de aceitar no primeiro acesso. O aceite não pode ser marcado pela equipe Nexus.</p>
         <ProfileField />
         <h3 className="form-section">Plano da empresa</h3>
