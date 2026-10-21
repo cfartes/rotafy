@@ -25,3 +25,13 @@ Somente o Superadmin completo publica APKs. Arquivos específicos de uma empresa
 Os metadados ficam na tabela `mobile_releases`, criada por migração incremental. Os arquivos ficam no volume persistente `mobile_releases`, montado em `/app/mobile-releases`. Inclua esse volume nos backups; o backup do banco, isoladamente, não contém APKs. A atualização não recria o banco nem exige reinstalação dos demais serviços.
 
 O navegador utiliza `/version.json`, sem cache, emitido junto com a compilação web. O build de produção recebe o identificador `RELEASE` do processo de implantação.
+
+## Publicação por blocos e diagnóstico
+
+A tela envia o APK em blocos de 512 KiB e mostra o percentual confirmado pelo servidor. Uma resposta perdida permite repetir o mesmo bloco sem duplicar bytes. Após o envio, o servidor valida o APK e publica a versão; o download anterior permanece disponível até essa conclusão. A repetição da conclusão também é idempotente.
+
+Isso evita manter uma única requisição de aproximadamente 70 MB aberta durante todo o envio, que pode exceder o limite de leitura do proxy. Não exige mudar o Traefik compartilhado com outros sistemas, nova migração ou novo APK. Atualize backend e frontend e recarregue o navegador antes de reenviar o arquivo.
+
+Os blocos ficam no volume existente de APKs, vinculados ao Superadmin que iniciou o envio. Um envio expira após duas horas; a criação de outro envio remove arquivos temporários expirados. Essa limpeza não remove APKs publicados. A soma dos blocos deve corresponder ao tamanho declarado, limitada a 150 MB, e a publicação mantém a exigência de compilação superior.
+
+Erros informam status HTTP e referência da requisição quando disponível. Falta de espaço ou permissão de gravação apresenta orientação própria. Se persistir, consulte o evento de `/api/v1/nexus/mobile-release/uploads/...` nos logs da API e compare a referência mostrada na tela, sem compartilhar credenciais, cookies ou o conteúdo de arquivos de ambiente.

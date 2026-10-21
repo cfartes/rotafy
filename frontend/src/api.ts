@@ -51,6 +51,7 @@ export type AuditEvent = {
 export class ApiError extends Error {
   status: number;
   code?: string;
+  requestId?: string;
   constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
@@ -160,11 +161,18 @@ export async function api<T>(
   }
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new ApiError(
+    const fallback = response.status === 413
+      ? "O arquivo excedeu o limite aceito pelo servidor."
+      : [408, 502, 504].includes(response.status)
+        ? "O servidor ou proxy interrompeu o envio. Tente novamente; se persistir, informe este código ao suporte."
+        : `Não foi possível concluir a operação (HTTP ${response.status}). Tente novamente.`;
+    const error = new ApiError(
       response.status,
-      validationMessage(payload.detail),
+      payload.detail ? validationMessage(payload.detail) : fallback,
       response.headers.get("X-Rotafy-Error") || undefined,
     );
+    error.requestId = response.headers.get("X-Request-ID") || undefined;
+    throw error;
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }

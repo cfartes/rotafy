@@ -1,23 +1,44 @@
 """Publish a signed APK through Nexus; check versions without requiring login."""
 
+import errno
 import hashlib
 import json
 import os
 import re
 import tempfile
+import time
 import zipfile
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
+from pydantic import Field
 from sqlalchemy import text
 
 from app.identity import Auth, audit, nexus, throttle
+from app.schemas import Input
 
 router = APIRouter(prefix="/api/v1", tags=["Atualizações Android"])
 MAX_APK_BYTES = 150 * 1024 * 1024
 UPLOAD_PATH = "/api/v1/nexus/mobile-release"
+CHUNK_BYTES = 512 * 1024
+UPLOAD_LIFETIME = 2 * 60 * 60
+
+
+class UploadStart(Input):
+    size_bytes: int = Field(gt=0, le=MAX_APK_BYTES, strict=True)
+
+
+def storage_error(error):
+    detail = (
+        "A VPS está sem espaço para armazenar o APK. Libere espaço e tente novamente."
+        if error.errno in {errno.ENOSPC, errno.EDQUOT}
+        else "Não foi possível gravar o APK na VPS. Verifique as permissões e o volume de armazenamento de atualizações."
+    )
+    return HTTPException(
+        507 if error.errno in {errno.ENOSPC, errno.EDQUOT} else 503, detail
+    )
 
 
 def directory():
@@ -103,46 +124,190 @@ async def publish(request: Request, actor: Auth):
                     raise HTTPException(413, "O APK deve ter no máximo 150 MB.")
                 digest.update(chunk)
                 stream.write(chunk)
-        info = metadata(temporary)
-        await actor.db.execute(text("SELECT pg_advisory_xact_lock(70370001)"))
-        old = await actor.db.scalar(
-            text("SELECT max(build) FROM mobile_releases WHERE package_id=:id"),
-            {"id": info["package_id"]},
-        )
-        if old is not None and info["build"] <= old:
-            raise HTTPException(
-                409, "Publique um APK com número de compilação maior que o disponível."
-            )
-        identifier = uuid4()
-        filename = f"{identifier.hex}.apk"
-        row = (
-            (
-                await actor.db.execute(
-                    text("""INSERT INTO mobile_releases(id,package_id,version,build,sha256,filename,size_bytes,published_by)
-          VALUES(:id,:package,:version,:build,:sha,:file,:size,:user) RETURNING *"""),
-                    {
-                        "id": identifier,
-                        "package": info["package_id"],
-                        "version": info["version"],
-                        "build": info["build"],
-                        "sha": digest.hexdigest(),
-                        "file": filename,
-                        "size": size,
-                        "user": actor.user["id"],
-                    },
-                )
-            )
-            .mappings()
-            .one()
-        )
-        await audit(
-            actor.db, None, actor.user["id"], "mobile.release_published", identifier
-        )
-        os.replace(temporary, root / filename)
-        return release_info(row)
+        return await publish_file(actor, temporary, size, digest.hexdigest(), uuid4())
+    except OSError as error:
+        raise storage_error(error) from None
     finally:
         if temporary:
             temporary.unlink(missing_ok=True)
+
+
+async def publish_file(actor, path, size, sha256, identifier):
+    info = metadata(path)
+    await actor.db.execute(text("SELECT pg_advisory_xact_lock(70370001)"))
+    old = await actor.db.scalar(
+        text("SELECT max(build) FROM mobile_releases WHERE package_id=:id"),
+        {"id": info["package_id"]},
+    )
+    if old is not None and info["build"] <= old:
+        raise HTTPException(
+            409, "Publique um APK com número de compilação maior que o disponível."
+        )
+    filename = f"{identifier.hex}.apk"
+    row = (
+        (
+            await actor.db.execute(
+                text("""INSERT INTO mobile_releases(id,package_id,version,build,sha256,filename,size_bytes,published_by)
+      VALUES(:id,:package,:version,:build,:sha,:file,:size,:user) RETURNING *"""),
+                {
+                    "id": identifier,
+                    "package": info["package_id"],
+                    "version": info["version"],
+                    "build": info["build"],
+                    "sha": sha256,
+                    "file": filename,
+                    "size": size,
+                    "user": actor.user["id"],
+                },
+            )
+        )
+        .mappings()
+        .one()
+    )
+    await audit(
+        actor.db, None, actor.user["id"], "mobile.release_published", identifier
+    )
+    os.replace(path, directory() / filename)
+    return release_info(row)
+
+
+def upload_paths(identifier):
+    name = f"upload-{identifier.hex}"
+    return directory() / f"{name}.json", directory() / f"{name}.part"
+
+
+def upload_owner(identifier, actor):
+    meta, part = upload_paths(identifier)
+    try:
+        value = json.loads(meta.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise HTTPException(
+            404, "Envio não encontrado. Selecione o APK novamente."
+        ) from None
+    if value["user_id"] != str(actor.user["id"]):
+        raise HTTPException(403, "Este envio pertence a outro administrador.")
+    if time.time() - value["created_at"] > UPLOAD_LIFETIME:
+        raise HTTPException(410, "O envio expirou. Selecione o APK novamente.")
+    return value, part
+
+
+async def upload_lock(actor, identifier):
+    await actor.db.execute(
+        text("SELECT pg_advisory_xact_lock(hashtextextended(:id,7037))"),
+        {"id": str(identifier)},
+    )
+
+
+@router.post("/nexus/mobile-release/uploads", status_code=201)
+async def start_upload(data: UploadStart, request: Request, actor: Auth):
+    nexus(actor)
+    await throttle(request, f"mobile-upload:{actor.user['id']}", platform=True)
+    try:
+        root = directory()
+        root.mkdir(parents=True, exist_ok=True)
+        # Staging data is private, short-lived and never advertised as a release.
+        for path in list(root.glob("upload-*.json"))[:1000]:
+            if time.time() - path.stat().st_mtime > UPLOAD_LIFETIME:
+                path.with_suffix(".part").unlink(missing_ok=True)
+                path.unlink(missing_ok=True)
+        identifier = uuid4()
+        meta, part = upload_paths(identifier)
+        part.touch(exist_ok=False)
+        meta.write_text(
+            json.dumps(
+                {
+                    "user_id": str(actor.user["id"]),
+                    "size_bytes": data.size_bytes,
+                    "created_at": time.time(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        return {"id": identifier, "chunk_bytes": CHUNK_BYTES}
+    except OSError as error:
+        raise storage_error(error) from None
+
+
+@router.put("/nexus/mobile-release/uploads/{identifier}")
+async def upload_chunk(
+    identifier: UUID, request: Request, actor: Auth, offset: int = Query(ge=0)
+):
+    nexus(actor)
+    await upload_lock(actor, identifier)
+    value, path = upload_owner(identifier, actor)
+    payload = bytearray()
+    async for chunk in request.stream():
+        payload.extend(chunk)
+        if len(payload) > CHUNK_BYTES:
+            raise HTTPException(413, "O bloco do APK excede o limite de 512 KB.")
+    if not payload or offset + len(payload) > value["size_bytes"]:
+        raise HTTPException(
+            422, "O tamanho do bloco não corresponde ao APK selecionado."
+        )
+    try:
+        size = path.stat().st_size
+        if offset < size:
+            # A previous response may have been lost. Accept the exact retry only.
+            with path.open("rb") as stream:
+                stream.seek(offset)
+                equal = stream.read(len(payload)) == payload
+            if not equal:
+                raise HTTPException(
+                    409,
+                    "O bloco reenviado difere do arquivo recebido. Reinicie a publicação.",
+                )
+        elif offset == size:
+            with path.open("ab") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
+            size += len(payload)
+        else:
+            raise HTTPException(409, "Bloco fora de ordem. Reinicie a publicação.")
+        return {"offset": size, "size_bytes": value["size_bytes"]}
+    except FileNotFoundError:
+        raise HTTPException(
+            409, "O arquivo temporário não está disponível. Reinicie a publicação."
+        ) from None
+    except OSError as error:
+        raise storage_error(error) from None
+
+
+@router.post("/nexus/mobile-release/uploads/{identifier}/complete")
+async def complete_upload(identifier: UUID, actor: Auth):
+    nexus(actor)
+    await upload_lock(actor, identifier)
+    value, path = upload_owner(identifier, actor)
+    existing = (
+        (
+            await actor.db.execute(
+                text("SELECT * FROM mobile_releases WHERE id=:id"), {"id": identifier}
+            )
+        )
+        .mappings()
+        .first()
+    )
+    if existing:
+        if not (directory() / existing["filename"]).is_file():
+            raise HTTPException(
+                503, "O APK publicado não está disponível no armazenamento da VPS."
+            )
+        return release_info(existing)
+    # Recover a rename completed just before an interrupted DB transaction.
+    if not path.exists() and (directory() / f"{identifier.hex}.apk").exists():
+        path = directory() / f"{identifier.hex}.apk"
+    try:
+        if path.stat().st_size != value["size_bytes"]:
+            raise HTTPException(409, "O envio do APK ainda não terminou.")
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                digest.update(chunk)
+        return await publish_file(
+            actor, path, value["size_bytes"], digest.hexdigest(), identifier
+        )
+    except OSError as error:
+        raise storage_error(error) from None
 
 
 @router.get("/public/mobile-version")
