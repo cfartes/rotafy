@@ -1,3 +1,4 @@
+import { ticketToken } from "../src/ticketLinks";
 import { testDocument } from "./company-document";
 import { nexusCredentials } from "./support/nexus";
 import { test, expect, type Page } from "@playwright/test";
@@ -193,11 +194,9 @@ test("bilhetes QR, guia e motorista com presença por trecho", async ({
   const link = page.getByRole("textbox", {
     name: "Link do bilhete de Ana QR",
   });
-  await expect(link).toHaveValue(/bilhete#token=bt/);
+  await expect(link).toHaveValue(/\/b\/[a-z0-9]{84}$/);
   const ticketUrl = await link.inputValue();
-  const token = new URLSearchParams(new URL(ticketUrl).hash.slice(1)).get(
-    "token",
-  )!;
+  const token = ticketToken(ticketUrl, new URL(ticketUrl).origin);
   const buyerContext = await page
     .context()
     .browser()!

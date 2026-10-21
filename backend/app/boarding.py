@@ -5,7 +5,6 @@ import json
 import secrets
 from datetime import timedelta
 from typing import Literal
-from urllib.parse import quote
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -20,6 +19,7 @@ from app.operations import detail as trip_detail
 from app.public_sales import Tracking, limited, public_company, token_company
 from app.reservations import reservation_detail
 from app.security import digest
+from app.ticket_links import ticket_url
 from app.whatsapp import queue_message
 
 router = APIRouter(prefix="/api/v1", tags=["Bilhetes e embarque"])
@@ -559,11 +559,7 @@ async def send_ticket(
             "in_progress",
         }:
             raise HTTPException(409, "Bilhete cancelado ou viagem encerrada.")
-        link = (
-            request.app.state.settings.public_base_url.rstrip("/")
-            + "/bilhete#token="
-            + quote(data.token, safe="")
-        )
+        link = ticket_url(request.app.state.settings.public_base_url, data.token)
         message_id = await queue_message(
             db,
             actor.company_id,

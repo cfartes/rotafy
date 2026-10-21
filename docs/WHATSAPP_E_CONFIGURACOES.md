@@ -89,3 +89,12 @@ Antes do POST, o worker consulta `GET /sessions/{id}/contacts/check/{telefone}` 
 Se a consulta falhar, retornar dados incompletos ou um identificador que não seja individual, nenhum POST é realizado: a mensagem aguarda nova consulta (`recipient_lookup_failed`). Um número informado como não registrado encerra o envio com `recipient_not_registered`. Resultados incertos de POSTs anteriores continuam sem reenvio automático. Essa alteração vale para convites, reservas, pagamentos, cancelamentos e bilhetes; não exige migração de banco nem novo APK.
 
 Teste autorizado em produção: o envio direto ao endereço por telefone excedeu 90 segundos; a consulta do destinatário retornou um LID e um novo teste dirigido ao LID recebeu HTTP 201 com messageId em aproximadamente 5 segundos. Aceitação pela API ainda não comprova entrega ao aparelho.
+
+
+## Compatibilidade do link do bilhete no iPhone
+
+Os novos envios e links exibidos na reserva usam `/b/` seguido de um código alfanumérico, sem fragmento `#token=`, pontos, sublinhados ou hífens na credencial. Esse formato evita a divisão do endereço pelo reconhecimento de links em aplicativos de mensagem. A representação é reversível e preserva a mesma credencial de embarque: o QR, as regras de acesso, a revogação e os trechos contratados não mudam. Não exige migração de banco nem novo APK para leitura do QR.
+
+Os links antigos `/bilhete#token=...` continuam aceitos pelo site. Mensagens já recebidas não podem ser alteradas pelo sistema; envie outra mensagem com o formato atualizado. O bilhete continua sendo privado. O Nginx não registra acessos ao caminho `/b/`, e a política de referência permanece `no-referrer`. O código representa uma credencial de acesso, não deve ser publicado ou incluído em logs e chamados.
+
+Validação automatizada: equivalência entre o formato do backend e frontend, abertura de links novos e antigos em Chromium e WebKit, QR único para todos os trechos e descarte do envio após revogação. A validação no WhatsApp nativo de um iPhone depende de conferência no aparelho após a atualização.

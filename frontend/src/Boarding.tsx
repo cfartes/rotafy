@@ -1,3 +1,4 @@
+import { ticketToken } from "./ticketLinks";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { IScannerControls } from "@zxing/browser";
@@ -147,10 +148,7 @@ export function Boarding({
     setError("");
     setSelection(null);
     try {
-      let token = raw.trim();
-      if (token.startsWith(window.location.origin + "/bilhete#"))
-        token =
-          new URLSearchParams(new URL(token).hash.slice(1)).get("token") || "";
+      const token = ticketToken(raw);
       const result = await post<{
         passenger_id: string;
         full_name: string;

@@ -1987,7 +1987,7 @@ export function App() {
   if (window.location.pathname.startsWith("/comprar/"))
     return <PublicBooking />;
   if (window.location.pathname === "/acompanhar") return <TrackingPage />;
-  if (window.location.pathname === "/bilhete") return <TicketPage />;
+  if (window.location.pathname === "/bilhete" || window.location.pathname.startsWith("/b/")) return <TicketPage />;
   if (session.isPending)
     return (
       <div className="app-loading">
