@@ -16,6 +16,8 @@ Versões anteriores precisam receber o APK 1.7.0 manualmente uma primeira vez. A
 2. Entre com Superadmin Nexus de acesso completo, em **Configurações → Atualizações do aplicativo Android**.
 3. Selecione o APK e clique em **Publicar atualização Android**.
 
+Após a publicação, **Ajuda e manuais** apresenta a versão disponível e o botão **Baixar APK Android**, para acesso público sem login. O arquivo é servido pela própria VPS. Antes da primeira publicação, a ajuda informa que o download ainda não está disponível; não oferece um link quebrado.
+
 O APK genérico é gerado por `scripts/build_mobile.ps1 -Release`, que inclui os metadados de versão. O arquivo desta entrega está em `artifacts/mobile/nexus-rotafy-1.7.0.apk`. As próximas versões devem aumentar a compilação e manter o identificador e a chave de assinatura anteriores. A instalação Android verifica a compatibilidade de assinatura; o servidor registra o SHA-256 do arquivo publicado.
 
 Somente o Superadmin completo publica APKs. Arquivos específicos de uma empresa não são aceitos na distribuição geral. Limite: 150 MB. A API disponibiliza consulta e download públicos para funcionar antes do login, sem incluir credenciais de usuários no APK.

@@ -6,6 +6,38 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import "./documentation.css";
+import { useEffect, useState } from "react";
+
+function AndroidDownload({ nexus }: { nexus: boolean }) {
+  const [release, setRelease] = useState<{ version: string; download_url: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/v1/public/mobile-version?package_id=br.com.nexusdataanalytics.rotafy", { cache: "no-store", credentials: "omit", signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error("unavailable");
+        const { android } = await response.json();
+        if (android && typeof android.version === "string" && typeof android.download_url === "string" && android.download_url.startsWith("/api/v1/public/mobile/download?")) setRelease(android);
+      })
+      .catch(() => { if (!controller.signal.aborted) setFailed(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, []);
+  return <section className="documentation-card" aria-labelledby="android-title">
+    <Download size={32} aria-hidden="true" />
+    <p className="eyebrow">APLICATIVO DO MOTORISTA E GUIA</p>
+    <h2 id="android-title">Aplicativo Android</h2>
+    <p>Consulte suas viagens e realize o embarque dos passageiros pelo celular.</p>
+    {release ? <>
+      <p>Versão disponível: <strong>{release.version}</strong></p>
+      <a className="button primary" href={release.download_url} download>Baixar APK Android</a>
+      <p>Após baixar, abra o arquivo e autorize a instalação no Android. Para atualizar, sincronize os registros pendentes e instale por cima, sem desinstalar.</p>
+      <p className="muted">Este arquivo é compatível com Android. Não instala em iPhone ou iPad.</p>
+    </> : <p role="status">{loading ? "Consultando versão disponível…" : failed ? "Não foi possível consultar o download. Confira sua conexão e tente novamente mais tarde." : "O aplicativo estará disponível para download assim que a Nexus publicar a versão."}</p>}
+    {nexus && <p>Para disponibilizar o arquivo, publique o APK em <strong>Configurações → Atualizações do aplicativo Android</strong>.</p>}
+  </section>;
+}
 
 export function Documentation({ nexus = false }: { nexus?: boolean }) {
   const manual = nexus ? "manual-superadmin" : "manual";
@@ -30,6 +62,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
         <span>Edição 2026.10 · Revisão 4 · Atualizado em 15/10/2026</span>
       </header>
       <div className="documentation-grid">
+        <AndroidDownload nexus={nexus} />
         <section className="documentation-card" aria-labelledby="manual-title">
           <BookOpen size={32} aria-hidden="true" />
           <p className="eyebrow">CONSULTA E TREINAMENTO</p>
