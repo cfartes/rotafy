@@ -51,7 +51,7 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
   await expect(
     page.getByRole("button", { name: "Conectar WhatsApp", exact: true }),
   ).toHaveClass(/button primary/);
-  const checkbox = await page.getByRole("checkbox").boundingBox();
+  const checkbox = await page.getByRole("checkbox", { name: /Habilitar envios/ }).boundingBox();
   expect(checkbox!.width).toBeLessThanOrEqual(24);
   expect(checkbox!.height).toBeLessThanOrEqual(24);
   await expect(
@@ -87,7 +87,7 @@ test("company admin connects WhatsApp by QR without knowing session IDs or API k
   await expect(page.getByRole("button", { name: "Desconectar WhatsApp", exact: true })).toBeVisible();
   await expect(page.getByText(/Atualização desta tela em/)).toHaveCount(0);
   await expect(page.getByText(/Solicitação registrada/)).toHaveCount(0);
-  await expect(page.getByRole("checkbox")).toBeDisabled();
+  await expect(page.getByRole("checkbox", { name: /Habilitar envios/ })).toBeDisabled();
   const readsWhenConnected = connectionReads;
   await page.waitForTimeout(5500);
   expect(connectionReads).toBe(readsWhenConnected);

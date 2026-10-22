@@ -491,7 +491,8 @@ async def save_binding(db, company_id, data, actor_id, *, connection_managed=Fal
         and await db.scalar(
             text(
                 """SELECT 1 WHERE EXISTS(SELECT 1 FROM whatsapp_outbox WHERE company_id=:company AND status='sending')
-                   OR EXISTS(SELECT 1 FROM whatsapp_chat_outbox WHERE company_id=:company AND status='sending')"""
+                   OR EXISTS(SELECT 1 FROM whatsapp_chat_outbox WHERE company_id=:company AND status='sending')
+                   OR EXISTS(SELECT 1 FROM whatsapp_automation_outbox WHERE company_id=:company AND status='sending')"""
             ),
             {"company": company_id},
         )

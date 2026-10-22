@@ -182,6 +182,22 @@ export function WhatsAppChat({
     refetchInterval: 10000,
     retry: false,
   });
+  const handoffs = useQuery({
+    queryKey: ["whatsapp-handoffs"],
+    queryFn: () =>
+      api<{ chat_id: string; phone: string | null; handoff_at: string }[]>(
+        "/whatsapp/chat/handoffs",
+      ),
+    refetchInterval: 10000,
+  });
+  async function finishHandoff(chat_id: string) {
+    try {
+      await post("/whatsapp/chat/handoffs/close", { chat_id });
+      await cache.invalidateQueries({ queryKey: ["whatsapp-handoffs"] });
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
   const history = useQuery({
     queryKey: ["whatsapp-messages", selected?.id],
     queryFn: () =>
@@ -350,6 +366,38 @@ export function WhatsAppChat({
           )}
         </div>
       </header>
+      {!!handoffs.data?.length && (
+        <div className="chat-handoffs" role="status">
+          <strong>Solicitações de atendimento</strong>
+          {handoffs.data.map((h) => (
+            <div key={h.chat_id}>
+              <button
+                className="button secondary"
+                onClick={() =>
+                  choose(
+                    chats.data?.chats.find((c) => c.id === h.chat_id) || {
+                      id: h.chat_id,
+                      name: h.phone || "Cliente",
+                      preview: "",
+                      is_group: false,
+                      unread_count: 0,
+                      timestamp: 0,
+                    },
+                  )
+                }
+              >
+                Abrir conversa de {h.phone || "cliente"}
+              </button>
+              <button
+                className="button secondary"
+                onClick={() => void finishHandoff(h.chat_id)}
+              >
+                Concluir atendimento de {h.phone || "cliente"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       {chats.error && <Alert>{errorText(chats.error)}</Alert>}
       <div className="chat-workspace">
         <aside className="chat-sidebar" aria-label="Lista de conversas">

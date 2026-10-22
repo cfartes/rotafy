@@ -868,6 +868,8 @@ const actionNames: Record<string, string> = {
   "whatsapp.disconnected": "WhatsApp desconectado",
   "whatsapp.queued": "Mensagem WhatsApp adicionada à fila",
   "whatsapp.chat_queued": "Mensagem de atendimento WhatsApp adicionada à fila",
+  "whatsapp.automation_updated": "Automações WhatsApp atualizadas",
+  "whatsapp.handoff_closed": "Atendimento humano WhatsApp concluído",
   "whatsapp.nexus_reconnect_requested": "Nexus solicitou reconexão do WhatsApp",
   "whatsapp.nexus_restart_requested": "Nexus solicitou reinício da sessão WhatsApp",
   "whatsapp.nexus_disconnect_requested": "Nexus solicitou desconexão do WhatsApp",

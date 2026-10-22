@@ -73,6 +73,7 @@ from app.service_keys import router as service_keys_router
 from app.tracking import router as tracking_router
 from app.whatsapp import router as whatsapp_router
 from app.whatsapp_admin import router as whatsapp_admin_router
+from app.whatsapp_automation import router as whatsapp_automation_router
 from app.whatsapp_chat import router as whatsapp_chat_router
 from app.whatsapp_connection import invalidate_phone_connection, queue_disconnect
 from app.whatsapp_connection import router as whatsapp_connection_router
@@ -857,6 +858,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(whatsapp_router)
     application.include_router(whatsapp_chat_router)
     application.include_router(whatsapp_admin_router)
+    application.include_router(whatsapp_automation_router)
     application.include_router(tracking_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)

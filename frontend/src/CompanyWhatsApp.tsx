@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field } from "./components/ui";
+import { WhatsAppAutomation } from "./WhatsAppAutomation";
 
 type Connection = {
   phone: string | null;
@@ -153,6 +154,7 @@ export function CompanyWhatsApp() {
     }
   }
   return (
+    <>
     <section className="operation-card modal-form">
       <h2>WhatsApp da empresa</h2>
       <p>
@@ -329,5 +331,7 @@ export function CompanyWhatsApp() {
         </>
       )}
     </section>
+    <WhatsAppAutomation />
+    </>
   );
 }

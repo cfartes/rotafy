@@ -353,3 +353,46 @@
     padding: 10px;
   }
 }
+.chat-handoffs {
+  grid-column: 1 / -1;
+  padding: 12px;
+  border: 1px solid #0f766e;
+  border-radius: 12px;
+  max-height: 180px;
+  overflow: auto;
+}
+.chat-handoffs > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.automation-settings {
+  margin-top: 24px;
+}
+.automation-settings .panel-body {
+  padding: 24px;
+}
+.automation-settings form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.automation-settings .check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.automation-settings .check input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+}
+.automation-settings fieldset {
+  padding: 16px;
+  border: 1px solid #0f766e;
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+}

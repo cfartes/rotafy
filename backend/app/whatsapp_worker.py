@@ -264,12 +264,24 @@ async def main():
                         (await db.execute(text("SELECT id FROM companies"))).scalars()
                     )
                 for company in companies:
+                    Path("/tmp/rotafy-whatsapp-health").touch()
                     from app.tracking import process_alerts
+                    from app.whatsapp_automation import (
+                        process_automation,
+                        schedule_tickets,
+                        sync_webhook,
+                    )
                     from app.whatsapp_chat import process_chat
 
                     await process_alerts(engine, company)
                     await process_company(engine, company)
                     await process_chat(engine, company)
+                    base_url = os.environ.get(
+                        "PUBLIC_BASE_URL", "https://rotafy.nexusdataanalytics.tech"
+                    )
+                    await sync_webhook(engine, company, base_url)
+                    await schedule_tickets(engine, company)
+                    await process_automation(engine, company, base_url)
                 from app.session_discovery import process_discovery
 
                 await process_discovery(engine)
