@@ -14,6 +14,7 @@ import { api, post } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import { PhoneInput } from "./components/PhoneInput";
 import "./whatsapp-chat.css";
+import type { Handoff } from "./WhatsAppHandoffAlert";
 
 type Chat = {
   id: string;
@@ -148,9 +149,11 @@ function MessageMedia({ chat, message }: { chat: string; message: Message }) {
 export function WhatsAppChat({
   canConfigure,
   onConfigure,
+  requestedChat,
 }: {
   canConfigure: boolean;
   onConfigure: () => void;
+  requestedChat?: Handoff | null;
 }) {
   const cache = useQueryClient();
   const [limit, setLimit] = useState(50),
@@ -224,6 +227,16 @@ export function WhatsAppChat({
     setNotice("");
     pinned.current = true;
   }
+  useEffect(() => {
+    if (requestedChat) choose({
+      id: requestedChat.chat_id,
+      name: requestedChat.phone || "Cliente",
+      preview: "",
+      is_group: false,
+      unread_count: 0,
+      timestamp: 0,
+    });
+  }, [requestedChat]);
   const list = useMemo(
     () =>
       chats.data?.chats.filter((c) =>

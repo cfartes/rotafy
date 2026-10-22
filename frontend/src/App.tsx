@@ -7,6 +7,7 @@ import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
 import { WhatsAppChat } from "./WhatsAppChat";
+import { WhatsAppHandoffAlert, type Handoff } from "./WhatsAppHandoffAlert";
 import { NexusWhatsApp } from "./NexusWhatsApp";
 import { BillingUpcoming } from "./BillingUpcoming";
 import { AddressFields, addressPayload } from "./CompanyAddress";
@@ -1000,6 +1001,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const fullNexus = user.role === "nexus";
   const isAdmin = user.role === "admin";
   const financialOnly = isAdmin && !!user.financial_blocked;
+  const [requestedChat, setRequestedChat] = useState<Handoff | null>(null);
   const [operationModule, setOperationModule] = useState("trips");
   const [ticketSalesVisit, setTicketSalesVisit] = useState(0);
   const [reportTripId, setReportTripId] = useState<string | null>(null);
@@ -1470,6 +1472,13 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </Alert>
           )}
           {isAdmin && page !== "collections" && <BillingUpcoming notice />}
+          {!isNexus && !financialOnly && (isAdmin || user.role === "attendant") && hasModule(user, "whatsapp") && (
+            <WhatsAppHandoffAlert onOpen={handoff => {
+              setRequestedChat({ ...handoff });
+              setPage("whatsapp-chat");
+              setMenu(false);
+            }} />
+          )}
           {page === "collections" && (fullNexus || isAdmin) && (
             <Collections nexus={isNexus} />
           )}
@@ -1484,7 +1493,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
           {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
-          {page === "whatsapp-chat" && !isNexus && (isAdmin || user.role === "attendant") && <WhatsAppChat canConfigure={isAdmin} onConfigure={() => setPage("whatsapp")} />}
+          {page === "whatsapp-chat" && !isNexus && (isAdmin || user.role === "attendant") && <WhatsAppChat requestedChat={requestedChat} canConfigure={isAdmin} onConfigure={() => setPage("whatsapp")} />}
           {page === "whatsapp-connections" && fullNexus && <NexusWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing

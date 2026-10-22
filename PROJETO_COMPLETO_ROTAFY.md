@@ -810,6 +810,10 @@ Envie texto ou anexe imagens, PDF, áudio ou vídeo nos formatos aceitos. O limi
 
 O acompanhamento distingue mensagens pendentes, enviando, aceitas, falhas, incertas ou descartadas. Aceitação não comprova entrega nem leitura. Em **Envio incerto**, confira a conversa antes de reenviar para evitar duplicidade.
 
+### Alerta de atendimento no painel
+
+Quando houver atendimento humano pendente, administradores e atendentes veem um aviso nas telas do painel, atualizado a cada dez segundos. Clique em **Atender** ao lado do telefone para abrir diretamente a conversa. O aviso permanece até a equipe usar **Concluir atendimento**. Usuários sem o módulo WhatsApp e administradores restritos ao Financeiro não recebem esse alerta.
+
 ### Assumir e concluir um atendimento
 
 Em **Solicitações de atendimento**, abra a conversa solicitada pelo cliente. A opção **Falar com a equipe** pausa as respostas automáticas. Uma resposta manual enviada pela equipe nesta tela também assume a conversa quando a automação está ativa. Enquanto o atendimento humano estiver aberto, o sistema não reapresenta o menu nem envia despedida por inatividade.
