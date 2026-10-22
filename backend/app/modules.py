@@ -240,6 +240,11 @@ async def update_modules(company_id: UUID, data: ModulesUpdate, actor: Auth):
 
         await queue_disconnect(actor.db, company_id, actor.user["id"])
         await actor.db.execute(
+            text("""UPDATE whatsapp_automation_outbox SET status='discarded',body='',error_code='module_disabled'
+            WHERE company_id=:id AND status='pending'"""),
+            {"id": company_id},
+        )
+        await actor.db.execute(
             text("""UPDATE whatsapp_chat_outbox SET status='discarded',body='',error_code='module_disabled'
             WHERE company_id=:id AND status='pending'"""),
             {"id": company_id},

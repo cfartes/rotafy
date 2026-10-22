@@ -435,6 +435,21 @@ async def new_credential(db, actor, ticket_id):
         ),
         {"id": ticket_id, "hash": digest(token)},
     )
+    from app.ticket_delivery import remember_ticket
+
+    saved = (
+        (
+            await db.execute(
+                text("SELECT passenger_id,reservation_id FROM tickets WHERE id=:id"),
+                {"id": ticket_id},
+            )
+        )
+        .mappings()
+        .one()
+    )
+    await remember_ticket(
+        db, actor.company_id, saved["passenger_id"], saved["reservation_id"], token
+    )
     await audit(db, actor.company_id, actor.user["id"], "ticket.issued", ticket_id)
     return token
 
@@ -492,6 +507,11 @@ async def issue_tickets(reservation_id: UUID, request: Request, actor: Auth):
                         "token": token,
                     }
                 )
+            from app.ticket_delivery import remember_ticket
+
+            await remember_ticket(
+                db, actor.company_id, passenger["id"], reservation_id, token
+            )
         return {"issued": issued}
 
 
@@ -576,6 +596,15 @@ async def send_ticket(
         }:
             raise HTTPException(409, "Bilhete cancelado ou viagem encerrada.")
         link = ticket_url(request.app.state.settings.public_base_url, data.token)
+        from app.ticket_delivery import remember_ticket
+
+        await remember_ticket(
+            db,
+            actor.company_id,
+            ticket["passenger_id"],
+            ticket["reservation_id"],
+            data.token,
+        )
         message_id = await queue_message(
             db,
             actor.company_id,
