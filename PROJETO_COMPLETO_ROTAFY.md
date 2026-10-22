@@ -723,7 +723,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 9. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 10. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -1168,6 +1168,8 @@ Avaliações novas com notas de 0 a 6 geram aviso para administradores e atenden
 
 Pesquisas já enviadas preservam seu fluxo anterior. Convites ainda sem tentativa recebem a nova redação. O acesso Nexus orienta o cliente; a configuração operacional e a consulta aos feedbacks são feitas com as permissões da empresa.
 
+
+O PowerPoint editável fica disponível somente ao Superadmin completo, na ajuda Nexus. O download exige autenticação e o arquivo fica fora da pasta pública; clientes e colaboradores Nexus sem acesso completo não têm acesso ao formato editável.
 
 <a id="recursos-com-menu-oculto"></a>
 ## 5. Recursos implementados com acesso oculto no menu

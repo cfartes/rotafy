@@ -22,6 +22,7 @@ from app.company_welcome import router as company_welcome_router
 from app.config import Settings
 from app.contracts import pending as contract_pending
 from app.contracts import router as contracts_router
+from app.documentation import router as documentation_router
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
 from app.email_auth import router as email_auth_router
@@ -852,6 +853,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(public_sales_router)
     application.include_router(boarding_router)
     application.include_router(mobile_releases_router)
+    application.include_router(documentation_router)
     application.include_router(logos_router)
     application.include_router(reports_router)
     application.include_router(edits_router)

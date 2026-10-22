@@ -11,12 +11,12 @@ test("central pública permite consultar e baixar os materiais sem autenticaçã
   });
   await page.goto("/ajuda");
   await expect(page.getByRole("heading", { name: /Conheça/ })).toBeVisible();
-  await expect(page.getByText("Edição 2026.10 · Revisão 9 · Atualizado em 22/10/2026")).toBeVisible();
+  await expect(page.getByText("Edição 2026.10 · Revisão 10 · Atualizado em 22/10/2026")).toBeVisible();
   expect(authRequests).toBe(0);
+  await expect(page.getByRole("link", { name: /PowerPoint/ })).toHaveCount(0);
   for (const filename of [
     "manual.pdf",
     "apresentacao.pdf",
-    "apresentacao.pptx",
   ]) {
     const response = await request.get(`/documentacao/${filename}`);
     expect(response.ok()).toBeTruthy();
@@ -64,7 +64,7 @@ test("apresentação disponibiliza os vinte e seis slides e downloads", async ({
   await page.goto("/documentacao/apresentacao.html");
   await expect(page.locator(".slide")).toHaveCount(26);
   await expect(page.locator('a[href="apresentacao.pdf"]')).toBeVisible();
-  await expect(page.locator('a[href="apresentacao.pptx"]')).toBeVisible();
+  await expect(page.getByRole("link", { name: /PowerPoint/ })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -92,6 +92,7 @@ test("manuais separados por perfil", async ({ page, request }) => {
   await expect(
     page.getByRole("link", { name: "Ler manual online" }),
   ).toHaveAttribute("href", "/documentacao/manual-superadmin.html");
+  await expect(page.getByRole("link", { name: "Baixar PowerPoint editável" })).toHaveAttribute("href", "/api/v1/nexus/documentation/apresentacao.pptx");
   await page.goto("/documentacao/manual-superadmin.html");
   await expect(page.locator(".chapter")).toHaveCount(14);
   await expect(page.getByRole("heading", { name: "10. Supervisão das conexões WhatsApp" })).toBeVisible();
@@ -112,4 +113,14 @@ test("manuais separados por perfil", async ({ page, request }) => {
     page.getByRole("heading", { name: "Manual da empresa" }),
   ).toBeVisible();
   await expect(page.locator('a[href*="manual-superadmin"]')).toHaveCount(0);
+});
+
+
+test("equipe Nexus sem acesso completo não recebe o PowerPoint", async ({ page }) => {
+  await page.route("**/api/v1/auth/me", route => route.fulfill({ json: {
+    id: "staff", role: "nexus_staff", full_name: "Equipe", company_id: null, is_active: true,
+  }}));
+  await page.goto("/nexus/ajuda");
+  await expect(page.getByRole("heading", { name: "Manual do superadmin Nexus" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /PowerPoint/ })).toHaveCount(0);
 });

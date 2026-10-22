@@ -28,7 +28,7 @@ try {
     await page.emulateMedia({ media: "screen" });
     console.log(`PDF gerado: ${name}.pdf`);
   }
-  const filenames = ["manual.html", "manual.pdf", "manual-superadmin.html", "manual-superadmin.pdf", "apresentacao.html", "apresentacao.pdf", "apresentacao.pptx"];
+  const filenames = ["manual.html", "manual.pdf", "manual-superadmin.html", "manual-superadmin.pdf", "apresentacao.html", "apresentacao.pdf"];
   const files = await Promise.all(filenames.map(async name => ({ name, bytes: (await fs.stat(path.join(directory, name))).size })));
-  await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify({ edition: "2026.10", revision: 9, revised_at: "2026-10-22", files }, null, 2) + "\n");
+  await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify({ edition: "2026.10", revision: 10, revised_at: "2026-10-22", files }, null, 2) + "\n");
 } finally { await browser.close(); }

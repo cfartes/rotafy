@@ -4,7 +4,7 @@ Plataforma SaaS de viagens e embarque. Entregas atuais: fundação multiempresa,
 
 ## Executar localmente com Docker
 
-Apresentação do sistema e manual de utilização estão na central `/ajuda`, acessível pelo login e pelo menu **Ajuda e manuais**. Inclui apresentação HTML/PDF/PowerPoint e manual HTML/PDF, com instruções por perfil e exemplos. Fontes, geração e publicação: [documentação dos materiais](docs/PUBLICACAO_DOCUMENTACAO.md).
+Apresentação do sistema e manual de utilização estão na central `/ajuda`, acessível pelo login e pelo menu **Ajuda e manuais**. Inclui apresentação HTML/PDF, PowerPoint exclusivo do Superadmin completo e manual HTML/PDF, com instruções por perfil e exemplos. Fontes, geração e publicação: [documentação dos materiais](docs/PUBLICACAO_DOCUMENTACAO.md).
 
 Requisitos: Docker Desktop em execução. Node 24 e Python 3.13/3.14 somente para desenvolvimento/testes fora dos containers.
 
@@ -164,7 +164,7 @@ O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os e
 
 ### Documentação revisada em 22/10/2026
 
-A central de ajuda está na revisão 8: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF/PowerPoint. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+A central de ajuda está na revisão 10: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
 
 **Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após dez minutos de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo configurado pela Nexus (padrão: 30 segundos) entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).
 

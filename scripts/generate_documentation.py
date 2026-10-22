@@ -211,7 +211,10 @@ def powerpoint(data):
                 height=Inches(height_image),
             )
         slide.notes_slide.notes_text_frame.text = item["notes"]
-    deck.save(OUTPUT / "apresentacao.pptx")
+    private_output = ROOT / "backend" / "private" / "documentacao"
+    private_output.mkdir(parents=True, exist_ok=True)
+    deck.save(private_output / "apresentacao.pptx")
+    (OUTPUT / "apresentacao.pptx").unlink(missing_ok=True)
 
 
 def main():

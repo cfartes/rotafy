@@ -1,35 +1,31 @@
 {
   "edition": "2026.10",
-  "revision": 9,
+  "revision": 10,
   "revised_at": "2026-10-22",
   "files": [
     {
       "name": "manual.html",
-      "bytes": 623954
+      "bytes": 623957
     },
     {
       "name": "manual.pdf",
-      "bytes": 1014585
+      "bytes": 1014590
     },
     {
       "name": "manual-superadmin.html",
-      "bytes": 40246
+      "bytes": 40634
     },
     {
       "name": "manual-superadmin.pdf",
-      "bytes": 209827
+      "bytes": 211494
     },
     {
       "name": "apresentacao.html",
-      "bytes": 383003
+      "bytes": 382922
     },
     {
       "name": "apresentacao.pdf",
       "bytes": 417928
-    },
-    {
-      "name": "apresentacao.pptx",
-      "bytes": 356123
     }
   ]
 }

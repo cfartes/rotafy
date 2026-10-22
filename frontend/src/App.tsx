@@ -2089,7 +2089,7 @@ export function App() {
     );
   if (window.location.pathname === "/nexus/ajuda")
     return ["nexus", "nexus_staff"].includes(session.data.role) ? (
-      <Documentation nexus />
+      <Documentation nexus editablePresentation={session.data.role === "nexus"} />
     ) : (
       <Documentation />
     );
