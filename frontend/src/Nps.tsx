@@ -121,8 +121,7 @@ function Configuration({
         <p>
           As perguntas pedem uma nota de recomendação de 0 a 10 e um comentário
           opcional. O cliente tem 24 horas para responder e pode enviar PULAR ou
-          ENCERRAR. Os convites respeitam uma fila com intervalo mínimo de três
-          minutos. Ativar não envia pesquisas de atendimentos ou viagens
+          ENCERRAR. Os convites respeitam uma fila com intervalo configurado pela Nexus (padrão: 30 segundos). Ativar não envia pesquisas de atendimentos ou viagens
           concluídos anteriormente.
         </p>
         {error && <Alert>{error}</Alert>}

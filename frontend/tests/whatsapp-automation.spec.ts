@@ -84,7 +84,7 @@ test("admin opts in to commands and paced 24-hour ticket delivery", async ({
   await page
     .getByRole("checkbox", { name: /Enviar bilhetes automaticamente 24 horas/ })
     .check();
-  await expect(page.getByText(/intervalo mínimo de 3 minutos/)).toBeVisible();
+  await expect(page.getByText(/intervalo configurado pela Nexus/)).toBeVisible();
   await page.getByRole("button", { name: "Salvar automações" }).click();
   await expect.poll(() => submitted?.tickets_enabled).toBe(true);
   expect(submitted.commands_enabled).toBe(true);
@@ -158,6 +158,6 @@ test("attendant sees and closes requests for human service", async ({
     .getByRole("button", { name: "Concluir atendimento de +5511999999999" })
     .click();
   await expect.poll(() => closed?.chat_id).toBe("5511999999999@c.us");
-  await expect(page.getByText("Atendimento encerrado. Pesquisa NPS na fila de envio; há um intervalo mínimo de 3 minutos entre convites.")).toBeVisible();
+  await expect(page.getByText("Atendimento encerrado. Pesquisa NPS na fila de envio; o envio respeita o intervalo configurado pela Nexus.")).toBeVisible();
   await expect(page.getByText("Solicitações de atendimento")).toHaveCount(0);
 });

@@ -93,6 +93,7 @@ test("Nexus configures credentials and binds each company without exposing saved
     openwa_key_configured: version > 0,
     resend_key_configured: version > 0,
     email_from: version ? "acesso@example.com" : "",
+    whatsapp_queue_interval_seconds: version ? 15 : 30,
   });
   await page.route("**/api/v1/**", async (route) => {
     const request = route.request(),
@@ -138,6 +139,8 @@ test("Nexus configures credentials and binds each company without exposing saved
   await page
     .getByLabel("E-mail remetente do Resend")
     .fill("acesso@example.com");
+  await expect(page.getByLabel("Intervalo da fila WhatsApp (segundos)")).toHaveValue("30");
+  await page.getByLabel("Intervalo da fila WhatsApp (segundos)").fill("15");
   await page
     .getByRole("button", { name: "Salvar configurações", exact: true })
     .click();
@@ -145,6 +148,8 @@ test("Nexus configures credentials and binds each company without exposing saved
     page.getByText("Configuração salva.", { exact: true }),
   ).toBeVisible();
   expect(submissions[0].expected_version).toBe(0);
+  expect(submissions[0].whatsapp_queue_interval_seconds).toBe(15);
+  await expect(page.getByLabel("Intervalo da fila WhatsApp (segundos)")).toHaveValue("15");
   await expect(
     page.getByLabel("API_KEY do OpenWA", { exact: true }),
   ).toHaveValue("");
@@ -203,9 +208,10 @@ test("company users do not see Nexus integration settings", async ({
   await expect(
     page.getByRole("heading", { name: "Visão geral", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Configurações", exact: true }),
-  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Configurações", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Configurações da empresa", exact: true })).toBeVisible();
+  await expect(page.getByLabel("API_KEY do OpenWA", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Intervalo da fila WhatsApp (segundos)")).toHaveCount(0);
 });
 
 test("phone discovery fills the ID but requires explicit save", async ({

@@ -7,6 +7,7 @@ import { Alert, Field } from "./components/ui";
 
 type Configuration = {
   version: number;
+  whatsapp_queue_interval_seconds: number;
   openwa_base_url: string;
   openwa_key_configured: boolean;
   resend_key_configured: boolean;
@@ -317,6 +318,7 @@ export function IntegrationSettings() {
     enabled: false,
     retry: false,
   });
+  const [queueInterval, setQueueInterval] = useState(30);
   const [openwaKey, setOpenwaKey] = useState("");
   const [resendKey, setResendKey] = useState("");
   const [email, setEmail] = useState("");
@@ -326,11 +328,13 @@ export function IntegrationSettings() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   useEffect(() => {
-    if (config.data)
+    if (config.data) {
+      setQueueInterval(config.data.whatsapp_queue_interval_seconds ?? 30);
       setEmail(
         config.data.email_from.match(/<([^>]+)>/)?.[1] ||
           config.data.email_from,
       );
+    }
   }, [config.data?.version]);
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -343,6 +347,7 @@ export function IntegrationSettings() {
         method: "PUT",
         body: JSON.stringify({
           expected_version: config.data.version,
+          whatsapp_queue_interval_seconds: queueInterval,
           openwa_api_key: openwaKey || undefined,
           resend_api_key: resendKey || undefined,
           email_from: email || undefined,
@@ -374,6 +379,11 @@ export function IntegrationSettings() {
           não são exibidas novamente. Alterações passam a valer sem editar
           arquivos ou reiniciar os serviços.
         </p>
+        <Field label="Intervalo da fila WhatsApp (segundos)">
+          <input type="number" min={5} max={3600} step={1} required value={queueInterval}
+            onChange={(e) => setQueueInterval(e.target.valueAsNumber)} />
+        </Field>
+        <p className="muted">Padrão: 30 segundos. Informe de 5 a 3.600 segundos. Aplica-se a bilhetes automáticos e convites NPS, em filas independentes compartilhadas entre empresas. Respostas do atendimento e envios manuais não aguardam esse intervalo. A alteração vale ao salvar, inclusive para a próxima liberação da fila.</p>
         <h3>WhatsApp · OpenWA</h3>
         <p className="muted">Gateway: {config.data.openwa_base_url}</p>
         <Field label="API_KEY do OpenWA">

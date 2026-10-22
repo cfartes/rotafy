@@ -47,7 +47,7 @@ Após 10 minutos sem nova mensagem do cliente, o servidor coloca na fila a despe
 
 > Oi! Como não nos falamos há um tempinho, estamos fechando essa conversa por agora. Se precisar de mais alguma coisa, é só nos chamar novamente por aqui, tá bom? Tenha um ótimo dia! ✨
 
-O processamento ocorre no worker, normalmente a cada 5 segundos, e depende da disponibilidade da conexão. O timer é persistido no banco; fechar a tela ou reiniciar o processo não perde o controle. Uma nova mensagem reinicia o prazo e invalida uma despedida ainda não enviada. A sessão, a configuração e a transferência para atendimento humano são novamente verificadas antes de enviar. O envio não utiliza a cadência de 3 minutos dos bilhetes.
+O processamento ocorre no worker, normalmente a cada 5 segundos, e depende da disponibilidade da conexão. O timer é persistido no banco; fechar a tela ou reiniciar o processo não perde o controle. Uma nova mensagem reinicia o prazo e invalida uma despedida ainda não enviada. A sessão, a configuração e a transferência para atendimento humano são novamente verificadas antes de enviar. O envio não utiliza a cadência configurada pela Nexus (padrão: 30 segundos) dos bilhetes.
 
 Cada atendimento recebe no máximo uma despedida automática. Um resultado incerto não é repetido. Depois do encerramento, a seleção anterior é removida. Conversas antigas após indisponibilidade prolongada não recebem despedidas tardias; mensagens de despedida pendentes expiram em 2 minutos.
 
@@ -57,7 +57,7 @@ Em embarques em hotéis ou endereços personalizados, a resposta informa o local
 
 Ao habilitar a função, cada passageiro de uma reserva confirmada fica elegível quando faltam até 24 horas para o **primeiro embarque contratado**, considerando o horário da parada quando existir. Reservas feitas dentro desse período também entram na fila. O mesmo bilhete atende todos os trechos contratados; não é criado um envio por trecho.
 
-A fila de bilhetes automáticos é compartilhada entre todas as viagens e empresas. Há um intervalo mínimo de **3 minutos** entre os envios automáticos, inclusive quando existem vários processos do worker. Isso limita a vazão a aproximadamente 20 mensagens por hora. As respostas aos comandos e o botão de envio manual continuam independentes dessa cadência.
+A fila de bilhetes automáticos é compartilhada entre todas as viagens e empresas. O intervalo entre os envios automáticos é configurado pelo Superadmin (padrão: **30 segundos**), inclusive quando existem vários processos do worker. Com o padrão, a capacidade teórica é de até 120 mensagens por hora, antes dos tempos de processamento e de comunicação. As respostas aos comandos e o botão de envio manual continuam independentes dessa cadência.
 
 As 24 horas representam a entrada na fila. Em caso de volume elevado ou indisponibilidade, o envio ocorre posteriormente; bilhetes cujo embarque já passou são descartados. Por isso, acompanhe a fila em operações com muitos passageiros no mesmo horário.
 
@@ -83,3 +83,12 @@ Bilhetes antigos que só possuem o hash, sem cópia recuperável da credencial, 
 - Configuração e acompanhamento exigem administrador; atendimento humano admite administrador e atendente. Chaves de integração de parceiros não liberam esses endpoints internos.
 
 Referências de compatibilidade: [coleção oficial OpenWA v0.24.0](https://github.com/rmyndharis/OpenWA/blob/v0.24.0/docs/07-api-collection.md) e [assinatura oficial dos eventos](https://github.com/rmyndharis/OpenWA/blob/v0.24.0/src/modules/webhook/utils/deliver-once.ts).
+
+
+## Intervalo configurável das filas
+
+O Superadmin define `whatsapp_queue_interval_seconds` em `PUT /api/v1/nexus/integrations`, mantendo `expected_version` e a proteção de concorrência. `GET` devolve o valor salvo. Padrão de 30 segundos; inteiro entre 5 e 3600. Omitir o campo preserva o valor atual. Apenas o Superadmin completo pode alterar.
+
+Os workers leem a configuração persistida a cada reserva de envio. Bilhetes e NPS conservam relógios globais independentes e bloqueios transacionais, sem disparar toda a fila de uma vez. Ao salvar outro intervalo, os relógios pendentes são deslocados pela diferença entre o novo e o antigo, respeitando o instante atual; mudar apenas chaves ou e-mail não altera os relógios. A conclusão de um envio de bilhete também respeita o intervalo vigente.
+
+A migração incremental 0046 adiciona somente a coluna, sua validação e ajusta os relógios do antigo intervalo de 180 segundos para 30 segundos. Não recria banco nem apaga dados. O script normal `scripts/update_vps.sh` aplica a migração. Respostas interativas, envios manuais e mensagens de outras filas não são retardados por essa configuração.

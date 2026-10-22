@@ -270,11 +270,11 @@
       "points": [
         "Reservas confirmadas entram na fila até 24 horas antes.",
         "Um bilhete por passageiro, válido para todos os trechos contratados.",
-        "Intervalo mínimo de três minutos entre os envios automáticos.",
+        "Intervalo configurado pela Nexus (padrão: 30 segundos) entre os envios automáticos.",
         "O envio manual permanece disponível para o atendimento."
       ],
       "footnote": "A entrada na fila não garante o horário exato de entrega; acompanhe os envios.",
-      "notes": "Ative o envio automático antes do primeiro embarque. Reservas confirmadas entram na fila até 24 horas antes. Um bilhete por passageiro, válido para todos os trechos contratados. Intervalo mínimo de três minutos entre os envios automáticos. O envio manual permanece disponível para o atendimento. A entrada na fila não garante o horário exato de entrega; acompanhe os envios."
+      "notes": "Ative o envio automático antes do primeiro embarque. Reservas confirmadas entram na fila até 24 horas antes. Um bilhete por passageiro, válido para todos os trechos contratados. Intervalo configurado pela Nexus (padrão: 30 segundos) entre os envios automáticos. O envio manual permanece disponível para o atendimento. A entrada na fila não garante o horário exato de entrega; acompanhe os envios."
     },
     {
       "eyebrow": "VISIBILIDADE DA OPERAÇÃO",

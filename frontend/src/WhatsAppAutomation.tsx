@@ -241,7 +241,7 @@ function AutomationForm({
       </label>
       <p className="muted">
         Uma fila única considera todas as viagens e envia um bilhete por
-        passageiro, com intervalo mínimo de 3 minutos entre mensagens
+        passageiro, com intervalo configurado pela Nexus (padrão: 30 segundos) entre mensagens
         automáticas. Reservas confirmadas a menos de 24 horas entram na fila. O
         envio pode ocorrer depois quando houver fila ou indisponibilidade. O
         botão manual continua disponível.

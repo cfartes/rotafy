@@ -308,6 +308,13 @@ def test_24h_ticket_window_single_passenger_all_legs_and_global_three_minute_que
     sent = []
     assert run(process_automation, seeded["a"], BASE, transport=provider(sent))
     assert len(sent) == 1 and "todos os trechos" in sent[0]["text"]
+    with owner.connect() as db:
+        remaining = db.scalar(
+            text(
+                "SELECT extract(epoch FROM next_send_at-clock_timestamp()) FROM whatsapp_ticket_dispatch"
+            )
+        )
+        assert 25 <= remaining <= 30
     assert not run(process_automation, seeded["a"], BASE, transport=provider(sent))
     # Both passengers of the trip share the same global dispatch clock.
     with owner.begin() as db:
