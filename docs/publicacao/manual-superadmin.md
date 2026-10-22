@@ -242,3 +242,16 @@ A pesquisa de atendimento é agendada ao concluir um atendimento humano, com lim
 Os convites são espaçados em três minutos. Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
 
 O cliente consulta KPIs, evolução, comentários e relatórios CSV/PDF filtrados por período, tipo, viagem, classificação e situação. O período corresponde à criação das pesquisas no horário de Brasília; indicadores abrangem todo o filtro, sem depender da página da lista. Dados sem resposta não são tratados como nota zero. As respostas e o histórico permanecem no banco após desativar as pesquisas.
+
+
+## 14. Horários e acompanhamento da qualidade {#horarios-qualidade}
+
+O administrador da empresa configura os turnos em **Configurações → Horários de atendimento humano**, também disponível em **WhatsApp**. Há dia da semana, início, término, vários turnos e fuso horário. A configuração começa desabilitada. Turnos podem atravessar a meia-noite e não podem se sobrepor.
+
+Fora do expediente, a escolha de atendimento humano informa os horários e a próxima abertura. A solicitação continua pendente; o colaborador pode responder manualmente. O expediente não limita o menu automático nem os demais envios.
+
+O NPS do atendimento utiliza a mensagem acolhedora aprovada e diferencia o retorno por nota: promotores recebem agradecimento e encerramento; neutros são convidados a sugerir melhorias; detratores recebem pedido de desculpas e espaço para explicar a experiência. A viagem segue uma redação igualmente acolhedora e contextualizada.
+
+Avaliações novas com notas de 0 a 6 geram aviso para administradores e atendentes da própria empresa. Em **NPS e satisfação → Equipe de qualidade**, os usuários consultam o feedback e marcam a análise. Notas e comentários permanecem no histórico. Comentários recebidos depois de uma análise voltam à fila. Não é necessário configurar outro canal de destino.
+
+Pesquisas já enviadas preservam seu fluxo anterior. Convites ainda sem tentativa recebem a nova redação. O acesso Nexus orienta o cliente; a configuração operacional e a consulta aos feedbacks são feitas com as permissões da empresa.

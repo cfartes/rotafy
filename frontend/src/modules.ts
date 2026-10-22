@@ -30,5 +30,6 @@ export const menuModule: Record<string, string> = {
   whatsapp: "whatsapp",
   "whatsapp-chat": "whatsapp",
   nps: "whatsapp",
+  "company-settings": "whatsapp",
   integrations: "integrations",
 };

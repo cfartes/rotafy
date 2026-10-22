@@ -735,36 +735,49 @@ O administrador gerencia credenciais em **Integração com parceiros**, quando h
 
 ## NPS e satisfação dos clientes {#nps}
 
-Administradores e atendentes acessam **NPS e satisfação** para acompanhar as avaliações. Somente o administrador pode habilitar ou desabilitar as pesquisas em **Configurar pesquisas automáticas**, disponível nessa tela e também no menu **WhatsApp**. As duas opções começam desabilitadas e são independentes. A empresa precisa ter WhatsApp conectado, envios habilitados e o módulo disponível.
+Administradores e atendentes acessam **NPS e satisfação** para acompanhar as avaliações. Somente o administrador habilita as pesquisas em **Configurar pesquisas automáticas**, nessa tela ou no menu **WhatsApp**. Atendimento e viagem começam desabilitados e são independentes. A empresa precisa ter WhatsApp conectado e envios habilitados.
 
-### Pesquisa após atendimento humano
+### Atendimento e viagem
 
-Ao usar **Concluir atendimento**, a equipe encerra o atendimento e, se a função estiver habilitada, agenda a pesquisa. É enviada no máximo uma pesquisa de atendimento por telefone a cada sete dias. O cliente responde:
+Ao usar **Concluir atendimento**, a equipe agenda a pesquisa de atendimento, no máximo uma por telefone a cada sete dias. A mensagem começa com **“Sua opinião é fundamental para continuarmos evoluindo! 🚀”** e pergunta **“Em uma escala de 0 a 10, o quanto você recomendaria o nosso atendimento para um amigo ou familiar?”**, explicando que 0 significa não recomendaria e 10 significa com certeza recomendaria. O cliente responde apenas com o número.
 
-1. “De 0 a 10, quanto você recomendaria o atendimento da [Empresa] a um amigo ou familiar?”
-2. “O que podemos melhorar no nosso atendimento?”
+A pesquisa da viagem entra na fila duas horas após a conclusão completa, incluindo retorno e último trecho do pacote. Somente reservas confirmadas com embarque registrado de pelo menos um passageiro são consideradas. O responsável recebe uma mensagem acolhedora, identificando a viagem e perguntando quanto recomendaria viajar com a empresa.
 
-### Pesquisa após a viagem
+### Respostas conforme a nota
 
-A pesquisa entra na fila duas horas após a conclusão da viagem completa. Pacotes e viagens de ida e volta precisam estar integralmente concluídos. O destinatário é o telefone da reserva confirmada, desde que exista embarque registrado de pelo menos um passageiro. Reservas sem embarque não recebem a pesquisa. O cliente responde:
+- **9 e 10 — Promotores:** recebem um agradecimento e a pesquisa é concluída, sem exigir comentário.
+- **7 e 8 — Neutros:** recebem agradecimento e convite para contar o que faria a experiência chegar à nota 10.
+- **0 a 6 — Detratores:** recebem um pedido de desculpas e uma pergunta sobre o que poderia ter sido feito de diferente. A avaliação aparece para a equipe de qualidade no painel.
 
-1. “De 0 a 10, quanto você recomendaria viajar com a [Empresa] a um amigo ou familiar?”
-2. “O que mais marcou sua experiência e o que podemos melhorar?”
+O comentário é opcional e aceita até 2.000 caracteres. O prazo para responder é de **24 horas após a tentativa de envio**. Envie **PULAR** ou **ENCERRAR** para não participar ou pular o comentário. A nota recebida é preservada. Durante a pesquisa, números são notas, sem acionar o menu. Depois do encerramento, uma nova mensagem inicia o atendimento normal.
 
-### Responder ou encerrar
+Uma resposta manual da equipe encerra uma pesquisa em andamento. Convites aguardam quando houver atendimento ativo ou outra pesquisa para o mesmo telefone. Os convites são espaçados em pelo menos três minutos; respostas e agradecimentos não seguem esse intervalo. Mensagens com resultado incerto não são repetidas automaticamente. Ativar a função não envia avaliações de conclusões anteriores à ativação. Convites não enviados em 24 horas na fila são descartados.
 
-A pesquisa aceita respostas por até **24 horas após a tentativa de envio**. Primeiro informe a nota de 0 a 10; depois, um comentário opcional de até 2.000 caracteres. Para não participar, pular o comentário ou encerrar, envie **PULAR** ou **ENCERRAR**. A nota já recebida é preservada mesmo sem comentário. Uma nova mensagem após encerrar pode abrir o menu normal.
+Pesquisas já enviadas com a versão anterior preservam suas perguntas e o fluxo informado ao cliente. Convites antigos ainda sem tentativa utilizam a nova apresentação ao enviar.
 
-Durante a pesquisa, números são interpretados como nota, sem acionar opções do menu. O atendimento humano tem prioridade: uma resposta manual da equipe encerra uma pesquisa em andamento. Convites aguardam quando houver atendimento ativo ou outra pesquisa para o mesmo telefone. O intervalo mínimo entre convites automáticos é de **três minutos**; as perguntas de continuação não seguem esse intervalo. Disponibilidade do serviço e volume podem adiar o envio. Resultados incertos não são reenviados automaticamente.
+### Equipe de qualidade
 
-A ativação considera somente atendimentos encerrados e viagens concluídas depois de habilitar a opção. Pesquisas antigas não são enviadas retroativamente. Convites que não puderem ser enviados dentro de 24 horas da entrada na fila são descartados. Não confunda aceite do envio com entrega ou leitura.
+Administradores e atendentes veem um aviso quando há avaliação com nota de 0 a 6 aguardando análise. Clique em **Ver avaliações de qualidade** para abrir a área correspondente no NPS. Consulte nota, contato e comentário e use **Marcar avaliação como analisada**. O aviso é atualizado automaticamente; a avaliação continua no relatório.
+
+Se a equipe analisar a nota antes de o cliente comentar, o novo comentário recoloca a avaliação na fila de análise. O encaminhamento é realizado dentro do próprio app para os usuários autorizados da empresa; não exige outro número ou e-mail de destino.
 
 ### Indicadores e relatórios
 
-Os cards mostram **NPS**, **taxa de resposta**, **nota média**, **promotores (9–10)**, **neutros (7–8)** e **detratores (0–6)**. O NPS corresponde ao percentual de promotores menos o de detratores e varia de −100 a +100. Sem notas, NPS e média aparecem como “—”; ausência de resposta não vira zero.
+Cards: **NPS**, **taxa de resposta**, **nota média**, **promotores (9–10)**, **neutros (7–8)** e **detratores (0–6)**. NPS = percentual de promotores menos percentual de detratores, de −100 a +100. Sem notas, NPS e média são “—”; ausência de resposta nunca vira zero. A taxa usa notas recebidas sobre pesquisas enviadas, incluindo tentativa incerta quando a resposta comprova o recebimento.
 
-A taxa de resposta considera as notas recebidas em relação às pesquisas cujo envio foi aceito, incluindo uma tentativa incerta quando a própria resposta comprova o recebimento. As contagens de atendimento e viagem podem ser comparadas separadamente. Os indicadores consideram todas as pesquisas do filtro, não apenas a página visível.
+Filtre por período de criação (Brasília), tipo, viagem/pacote, classificação e situação. Consulte a comparação por tipo, evolução mensal, comentários e histórico. O limite é de 366 dias inclusivos e 5.000 pesquisas por filtro. A lista usa cinquenta registros por página. Indicadores, **Exportar CSV** e **Emitir PDF** consideram todo o resultado do filtro aplicado, independentemente da página aberta.
 
-Filtre por período de criação da pesquisa, tipo, viagem/pacote, classificação ou situação. As datas seguem Brasília. A consulta aceita até 366 dias e 5.000 pesquisas por filtro; refine a seleção se ultrapassar o limite. Confira a evolução por mês e os comentários. A lista é paginada em grupos de cinquenta registros. **Exportar CSV** e **Emitir PDF** utilizam o filtro aplicado e incluem todas as pesquisas do resultado, independentemente da página aberta.
+## Horários de atendimento humano {#horarios-atendimento}
 
-Os registros distinguem fila, enviando, enviada, envio incerto, falha, descarte, resposta, desistência e expiração. Sem respostas, confira primeiro a configuração, a conexão e a situação dos envios. As consultas respeitam o espaço da empresa e as restrições de acesso da assinatura.
+O administrador acessa **Configurações → Horários de atendimento humano** ou a mesma seção no menu **WhatsApp**.
+
+1. Ative **Informar quando estivermos fora do horário de atendimento**.
+2. Escolha o fuso do atendimento: Brasília, Manaus, Rio Branco ou Fernando de Noronha.
+3. Selecione dia da semana, início e término. Use **Adicionar horário** para incluir outros dias ou turnos, inclusive intervalos antes e depois do almoço.
+4. Confira e clique em **Salvar horários de atendimento**.
+
+Dias sem horários são fechados. Se o término for anterior ao início, o turno termina no dia seguinte; por exemplo, domingo às 22:00 até segunda às 02:00. O sistema recusa turnos sobrepostos e início igual ao término. Os limites consideram abertura inclusiva e fechamento exclusivo: um horário até 18:00 já está encerrado às 18:00.
+
+Ao escolher **Falar com a equipe** fora do expediente, o cliente recebe a confirmação da solicitação, a relação dos horários e a próxima abertura, no fuso escolhido. A solicitação permanece no painel para resposta. A equipe pode atender manualmente a qualquer momento. Essa configuração não bloqueia o menu automático, pesquisas NPS ou outros envios automáticos.
+
+Sem a opção habilitada, continua a confirmação usual de atendimento, sem restrição de horário. A configuração é semanal; mantenha os turnos atualizados conforme a rotina da empresa.

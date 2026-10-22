@@ -67,8 +67,10 @@ def test_service_questions_score_zero_comment_dedupe_and_bot_isolation(
     handoff(client, seeded, owner, nps)
     sent = []
     assert run(process_nps, seeded["a"], transport=provider(sent))
-    assert "De 0 a 10" in sent[-1]["text"]
-    assert "atendimento da Empresa A" in sent[-1]["text"]
+    assert "Em uma escala de 0 a 10" in sent[-1]["text"]
+    assert (
+        "Sua opinião é fundamental para continuarmos evoluindo! 🚀" in sent[-1]["text"]
+    )
     assert survey(owner)["expires_at"] - survey(owner)["dispatched_at"] == timedelta(
         hours=24
     )
@@ -81,7 +83,7 @@ def test_service_questions_score_zero_comment_dedupe_and_bot_isolation(
     assert survey(owner)["score"] == 0
     assert survey(owner)["stage"] == "comment"
     assert run(process_nps, seeded["a"], transport=provider(sent))
-    assert "O que podemos melhorar" in sent[-1]["text"]
+    assert "o que poderíamos ter feito de diferente hoje?" in sent[-1]["text"]
     assert not run(process_automation, seeded["a"], BASE, transport=provider(sent))
     receive(client, seeded, nps, body="Mais agilidade, por favor.")
     assert survey(owner)["comment"] == "Mais agilidade, por favor."
@@ -220,6 +222,9 @@ def test_trip_only_after_full_completion_two_hours_and_boarding(
     sent = []
     run(process_nps, seeded["a"], transport=provider(sent))
     assert "recomendaria viajar com" in sent[-1]["text"]
+    receive(client, seeded, nps, body="7")
+    run(process_nps, seeded["a"], transport=provider(sent))
+    assert "Queremos que cada viagem seja especial" in sent[-1]["text"]
 
 
 @pytest.mark.parametrize("change", ["module", "settings", "company"])
@@ -391,8 +396,8 @@ def test_answer_arriving_before_provider_ack_is_preserved(client, seeded, owner,
 
     assert run(process_nps, seeded["a"], transport=transport)
     assert survey(owner)["score"] == 10
-    assert survey(owner)["stage"] == "comment"
-    assert survey(owner)["status"] == "sent"
+    assert survey(owner)["stage"] == "closed"
+    assert survey(owner)["status"] == "answered"
 
 
 @pytest.mark.parametrize("sender", ["123456789012345@lid", "551199999999@c.us"])
@@ -453,3 +458,106 @@ def test_private_id_human_chat_defers_survey_invitation(client, seeded, owner, n
     assert not run(process_nps, seeded["a"], transport=transport)
     assert not sent
     assert survey(owner)["status"] == "pending"
+
+
+@pytest.mark.parametrize("score", [0, 6, 7, 8, 9, 10])
+def test_humanized_service_response_matches_nps_category(
+    client, seeded, owner, nps, score
+):
+    from app.nps_copy import DETRACTOR, PASSIVE, PROMOTER
+
+    handoff(client, seeded, owner, nps)
+    sent = []
+    run(process_nps, seeded["a"], transport=provider(sent))
+    assert sent[-1]["text"].startswith(
+        "Sua opinião é fundamental para continuarmos evoluindo! 🚀"
+    )
+    assert (
+        "não recomendaria" in sent[-1]["text"]
+        and "com certeza recomendaria" in sent[-1]["text"]
+    )
+    receive(client, seeded, nps, body=str(score))
+    run(process_nps, seeded["a"], transport=provider(sent))
+    expected = (
+        PROMOTER["service"]
+        if score >= 9
+        else PASSIVE["service"]
+        if score >= 7
+        else DETRACTOR["service"]
+    )
+    assert sent[-1]["text"].startswith(expected)
+    assert survey(owner)["question_comment"] == expected
+    assert survey(owner)["stage"] == ("closed" if score >= 9 else "comment")
+    assert survey(owner)["score"] == score
+
+
+def test_negative_feedback_reaches_quality_inbox_and_review_is_tenant_scoped(
+    client, seeded, owner, nps
+):
+    handoff(client, seeded, owner, nps)
+    run(process_nps, seeded["a"], transport=provider([]))
+    receive(client, seeded, nps, body="4")
+    data = client.get("/api/v1/nps/quality").json()
+    assert data["total"] == 1 and data["rows"][0]["score"] == 4
+    id = data["rows"][0]["id"]
+    login(client, company="empresa-b")
+    assert client.get("/api/v1/nps/quality").json()["total"] == 0
+    assert client.post(f"/api/v1/nps/quality/{id}/review", json={}).status_code == 404
+    login(client)
+    assert client.post(f"/api/v1/nps/quality/{id}/review", json={}).status_code == 204
+    assert client.get("/api/v1/nps/quality").json()["total"] == 0
+    receive(client, seeded, nps, body="A resposta demorou muito.")
+    assert (
+        client.get("/api/v1/nps/quality").json()["rows"][0]["comment"]
+        == "A resposta demorou muito."
+    )
+    assert survey(owner)["score"] == 4
+    assert client.post(f"/api/v1/nps/quality/{id}/review", json={}).status_code == 409
+    payload = {"comment": "A resposta demorou muito."}
+    assert (
+        client.post(f"/api/v1/nps/quality/{id}/review", json=payload).status_code == 204
+    )
+    reviewed = survey(owner)["quality_reviewed_at"]
+    assert (
+        client.post(f"/api/v1/nps/quality/{id}/review", json=payload).status_code == 204
+    )
+    assert survey(owner)["quality_reviewed_at"] == reviewed
+
+
+def test_surveys_already_sent_keep_the_legacy_comment_flow(client, seeded, owner, nps):
+    handoff(client, seeded, owner, nps)
+    run(process_nps, seeded["a"], transport=provider([]))
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE nps_surveys SET template_version=1,question_comment='Pergunta anterior preservada?'"
+            )
+        )
+    receive(client, seeded, nps, body="10")
+    sent = []
+    run(process_nps, seeded["a"], transport=provider(sent))
+    assert sent[-1]["text"].startswith("Pergunta anterior preservada?")
+    assert survey(owner)["stage"] == "comment"
+
+
+def test_unattempted_old_invite_receives_the_new_text_before_sending(
+    client, seeded, owner, nps
+):
+    from app.integration_secrets import encrypt
+
+    handoff(client, seeded, owner, nps)
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE nps_surveys SET template_version=1,question_score='Texto anterior'"
+            )
+        )
+        db.execute(
+            text("UPDATE nps_messages SET body=:body"),
+            {"body": encrypt("Texto anterior")},
+        )
+    sent = []
+    run(process_nps, seeded["a"], transport=provider(sent))
+    assert sent[-1]["text"].startswith("Sua opinião é fundamental")
+    assert survey(owner)["template_version"] == 2
+    assert "Sua opinião é fundamental" in survey(owner)["question_score"]

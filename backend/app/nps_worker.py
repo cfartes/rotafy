@@ -17,6 +17,7 @@ from app.identity import scope
 from app.integration_secrets import decrypt, encrypt
 from app.integration_settings import openwa_key, openwa_request
 from app.nps import COMMENT, SCORE
+from app.nps_copy import feedback, invitation
 from app.security import digest
 from app.whatsapp_chat import bound_session
 
@@ -60,8 +61,8 @@ async def create_survey(
     row = (
         (
             await db.execute(
-                text("""INSERT INTO nps_surveys(id,company_id,kind,source_key,phone,contact_name,scheduled_at,trip_id,reservation_id,operator_id,question_score,question_comment)
-      VALUES(:id,:company,:kind,:source,:phone,:name,:scheduled,:trip,:reservation,:operator,:q1,:q2)
+                text("""INSERT INTO nps_surveys(id,company_id,kind,source_key,phone,contact_name,scheduled_at,trip_id,reservation_id,operator_id,question_score,question_comment,template_version)
+      VALUES(:id,:company,:kind,:source,:phone,:name,:scheduled,:trip,:reservation,:operator,:q1,:q2,2)
       ON CONFLICT DO NOTHING RETURNING *"""),
                 {
                     "id": uuid4(),
@@ -83,20 +84,16 @@ async def create_survey(
         .first()
     )
     if row:
-        context = "após o atendimento" if kind == "service" else "após sua viagem"
-        if trip:
-            trip_name = await db.scalar(
+        trip_name = (
+            await db.scalar(
                 text("SELECT name FROM trips WHERE company_id=:company AND id=:id"),
                 {"company": company, "id": trip},
             )
-            context += f" {trip_name}"
-        await queue(
-            db,
-            row,
-            f"Olá{', ' + name if name else ''}! Queremos ouvir sua opinião {context}.\n\n{row['question_score']}\n\nResponda somente com uma nota de 0 a 10. Você tem 24 horas para responder. Para não participar e voltar ao menu, envie PULAR ou ENCERRAR.",
-            "invite:" + str(row["id"]),
-            invite=True,
+            if trip
+            else None
         )
+        _, body = invitation(kind, brand, trip_name)
+        await queue(db, row, body, "invite:" + str(row["id"]), invite=True)
 
 
 async def service_survey(db, company, chat, operator):
@@ -332,16 +329,32 @@ async def receive_answer(db, company, session, chat, identifier, body, occurred)
         reply = SKIP
     elif survey["stage"] == "score":
         if re.fullmatch(r"(?:[0-9]|10)", value):
+            score = int(value)
+            modern = survey["template_version"] == 2
+            closed = modern and score >= 9
+            response = (
+                feedback(survey["kind"], score)
+                if modern
+                else survey["question_comment"]
+            )
             await db.execute(
-                text(
-                    "UPDATE nps_surveys SET score=:score,answered_at=clock_timestamp(),stage='comment' WHERE id=:id"
-                ),
-                {"score": int(value), "id": survey["id"]},
+                text("""UPDATE nps_surveys SET score=:score,answered_at=clock_timestamp(),stage=:stage,
+              status=CASE WHEN :closed THEN 'answered' ELSE status END,question_comment=:question WHERE id=:id"""),
+                {
+                    "score": score,
+                    "stage": "closed" if closed else "comment",
+                    "closed": closed,
+                    "question": response,
+                    "id": survey["id"],
+                },
             )
             reply = (
-                survey["question_comment"]
+                response
+                if closed
+                else response
                 + "\n\nO comentário é opcional. Responda com seu comentário ou envie PULAR para encerrar."
             )
+
         else:
             reply = "Por favor, responda com uma nota de 0 a 10. Para sair da pesquisa, envie PULAR ou ENCERRAR."
     else:
@@ -352,7 +365,7 @@ async def receive_answer(db, company, session, chat, identifier, body, occurred)
         else:
             await db.execute(
                 text(
-                    "UPDATE nps_surveys SET comment=:comment,status='answered',stage='closed' WHERE id=:id"
+                    "UPDATE nps_surveys SET comment=:comment,status='answered',stage='closed',quality_reviewed_at=NULL,quality_reviewed_by=NULL WHERE id=:id"
                 ),
                 {"comment": value, "id": survey["id"]},
             )
@@ -408,7 +421,7 @@ async def process_nps(engine, company, transport=openwa_request):
         row = (
             (
                 await db.execute(
-                    text("""SELECT m.*,s.kind AS survey_kind,s.phone,s.chat_id,s.session_id,s.stage,s.scheduled_at,s.status AS survey_status,s.reservation_id,s.trip_id
+                    text("""SELECT m.*,s.kind AS survey_kind,s.phone,s.chat_id,s.session_id,s.stage,s.scheduled_at,s.status AS survey_status,s.reservation_id,s.trip_id,s.template_version
           FROM nps_messages m JOIN nps_surveys s ON s.id=m.survey_id
           WHERE m.company_id=:company AND m.status='pending' AND m.next_attempt_at<=now() AND s.scheduled_at<=now()
           ORDER BY CASE WHEN m.kind='reply' THEN 0 ELSE 1 END,m.created_at,m.id LIMIT 1 FOR UPDATE OF m,s SKIP LOCKED"""),
@@ -546,6 +559,37 @@ async def process_nps(engine, company, transport=openwa_request):
                     )
                 return False
             body = decrypt(row["body"])
+            if row["kind"] == "invite" and row["template_version"] == 1:
+                # Upgrade only invitations never attempted; sent surveys keep their snapshots.
+                brand = await db.scalar(
+                    text("SELECT trade_name FROM companies WHERE id=:id"),
+                    {"id": company},
+                )
+                trip_name = (
+                    await db.scalar(
+                        text(
+                            "SELECT name FROM trips WHERE company_id=:company AND id=:id"
+                        ),
+                        {"company": company, "id": row["trip_id"]},
+                    )
+                    if row["trip_id"]
+                    else None
+                )
+                question, body = invitation(row["survey_kind"], brand, trip_name)
+                await db.execute(
+                    text(
+                        "UPDATE nps_surveys SET template_version=2,question_score=:question,question_comment=:comment WHERE id=:id"
+                    ),
+                    {
+                        "question": question,
+                        "comment": COMMENT[row["survey_kind"]],
+                        "id": row["survey_id"],
+                    },
+                )
+                await db.execute(
+                    text("UPDATE nps_messages SET body=:body WHERE id=:id"),
+                    {"body": encrypt(body), "id": row["id"]},
+                )
             if row["kind"] == "invite":
                 await db.execute(
                     text(

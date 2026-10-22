@@ -18,15 +18,12 @@ from sqlalchemy import text
 
 from app.identity import Auth, admin, audit, scope
 from app.integration_secrets import encrypt
+from app.nps_copy import SCORE
 from app.reports import boundaries
 from app.schemas import Input
 from app.whatsapp_chat import chat_access
 
 router = APIRouter(prefix="/api/v1/nps", tags=["NPS"])
-SCORE = {
-    "service": "De 0 a 10, quanto você recomendaria o atendimento da {company} a um amigo ou familiar?",
-    "trip": "De 0 a 10, quanto você recomendaria viajar com a {company} a um amigo ou familiar?",
-}
 COMMENT = {
     "service": "O que podemos melhorar no nosso atendimento?",
     "trip": "O que mais marcou sua experiência e o que podemos melhorar?",
@@ -318,3 +315,69 @@ async def trip_options(actor: Auth):
             )
         ).mappings()
     ]
+
+
+@router.get("/quality")
+async def quality(actor: Auth):
+    chat_access(actor)
+    rows = [
+        dict(r)
+        for r in (
+            await actor.db.execute(
+                text("""SELECT s.id,s.contact_name,s.phone,s.kind,s.score,s.comment,s.answered_at,
+      t.name AS trip_name,count(*) OVER() AS total FROM nps_surveys s LEFT JOIN trips t ON t.id=s.trip_id AND t.company_id=s.company_id
+      WHERE s.company_id=:company AND s.template_version=2 AND s.score<=6 AND s.quality_reviewed_at IS NULL
+      ORDER BY s.answered_at,s.id LIMIT 50"""),
+                {"company": actor.company_id},
+            )
+        ).mappings()
+    ]
+    return {"rows": rows, "total": rows[0]["total"] if rows else 0}
+
+
+class QualityReview(Input):
+    comment: str | None = Field(default=None, max_length=2000)
+
+
+@router.post("/quality/{survey_id}/review", status_code=204)
+async def review_quality(
+    survey_id: UUID, data: QualityReview, request: Request, actor: Auth
+):
+    chat_access(actor)
+    async with request.app.state.platform_engine.begin() as db:
+        await scope(db, actor.company_id)
+        found = await db.scalar(
+            text("""UPDATE nps_surveys SET quality_reviewed_at=now(),quality_reviewed_by=:user
+          WHERE company_id=:company AND id=:id AND score<=6 AND template_version=2
+          AND quality_reviewed_at IS NULL AND comment IS NOT DISTINCT FROM :comment RETURNING id"""),
+            {
+                "company": actor.company_id,
+                "id": survey_id,
+                "user": actor.user["id"],
+                "comment": data.comment,
+            },
+        )
+        if not found:
+            existing = (
+                (
+                    await db.execute(
+                        text(
+                            "SELECT comment FROM nps_surveys WHERE company_id=:company AND id=:id AND score<=6 AND template_version=2"
+                        ),
+                        {"company": actor.company_id, "id": survey_id},
+                    )
+                )
+                .mappings()
+                .first()
+            )
+            if not existing:
+                raise HTTPException(404, "Avaliação não encontrada.")
+            if existing["comment"] != data.comment:
+                raise HTTPException(
+                    409,
+                    "A avaliação recebeu outro comentário. Confira a versão atual antes de concluir a análise.",
+                )
+            return
+        await audit(
+            db, actor.company_id, actor.user["id"], "nps.quality_reviewed", survey_id
+        )

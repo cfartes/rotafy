@@ -153,7 +153,7 @@
         "Confirmação, cancelamento e registro de pagamento por WhatsApp.",
         "Conversas, respostas e anexos diretamente no painel da empresa.",
         "Menu numerado personalizado com reserva, veículo e embarque.",
-        "Atendimento humano com pausa das respostas automáticas."
+        "Atendimento humano com horários informados e pausa da automação."
       ],
       "footnote": "O administrador conecta o número da empresa por QR Code no próprio painel; cada empresa mantém sua sessão exclusiva.",
       "notes": "WhatsApp e e-mail aproximam sua equipe dos clientes. Confirmação, cancelamento e registro de pagamento por WhatsApp. Conversas, respostas e anexos diretamente no painel da empresa. Menu numerado personalizado com reserva, veículo e embarque. Atendimento humano com pausa das respostas automáticas. O administrador conecta o número da empresa por QR Code no próprio painel; cada empresa mantém sua sessão exclusiva."
@@ -321,12 +321,12 @@
       "lead": "NPS integrado ao atendimento e às viagens.",
       "points": [
         "Pesquisa pelo WhatsApp após atendimento humano e viagem concluída.",
-        "Nota de recomendação e comentário opcional, sem abrir links.",
+        "Respostas acolhedoras conforme a nota e espaço para sugestões.",
         "Indicadores de satisfação, promotores, neutros e detratores.",
         "Filtros por período e viagem, com relatórios CSV e PDF."
       ],
       "footnote": "Pesquisas habilitadas pelo administrador; cada avaliação pertence à empresa.",
-      "notes": "O cliente avalia pelo próprio WhatsApp. A equipe consulta indicadores e comentários para orientar melhorias."
+      "notes": "O NPS diferencia o retorno para promotores, neutros e detratores. Avaliações negativas chegam à equipe de qualidade no app; os relatórios preservam as notas e os comentários."
     },
     {
       "eyebrow": "NEXUS ROTAFY",

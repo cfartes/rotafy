@@ -10,23 +10,23 @@ O administrador habilita as pesquisas em **WhatsApp → Configurar pesquisas aut
 
 - Atendimento: após concluir uma solicitação humana aberta, com telefone identificado, no máximo uma pesquisa por telefone da empresa a cada sete dias. Repetir a conclusão não cria outra pesquisa. O registro identifica quem concluiu o atendimento.
 - Viagem: duas horas após a conclusão integral, incluindo todos os veículos/trechos. O término é conferido pela situação da viagem e evento `trip.completed`. Reserva confirmada com pelo menos um evento de embarque; envio ao telefone do responsável, uma pesquisa por reserva. Viagens sem conclusão completa e reservas sem embarque não são elegíveis.
-- O texto das duas perguntas e o nome do destinatário são preservados na criação, junto aos vínculos, para que uma alteração posterior de cadastro não reescreva a avaliação.
+- O texto inicial e o nome do destinatário são preservados com os vínculos; a resposta escolhida conforme a nota também é registrada, sem reescrever avaliações anteriores.
 
 Atendimento:
 
-1. De 0 a 10, quanto você recomendaria o atendimento da [Empresa] a um amigo ou familiar?
-2. O que podemos melhorar no nosso atendimento?
+1. Em uma escala de 0 a 10, o quanto você recomendaria o nosso atendimento para um amigo ou familiar?
+2. Conforme a nota: agradecimento e encerramento para 9–10; convite a sugestões para 7–8; pedido de desculpas e oportunidade de explicar para 0–6.
 
 Viagem:
 
-1. De 0 a 10, quanto você recomendaria viajar com a [Empresa] a um amigo ou familiar?
-2. O que mais marcou sua experiência e o que podemos melhorar?
+1. Em uma escala de 0 a 10, o quanto você recomendaria viajar com a [Empresa] para um amigo ou familiar?
+2. Retorno por categoria com texto específico sobre a experiência na viagem.
 
 ## Fila, mensagens e respostas
 
 `app.whatsapp_worker` executa `schedule_surveys` e `process_nps`. Não exige outro serviço ou APK. A fila persistente de convites NPS tem relógio global próprio, compartilhado entre empresas, com intervalo mínimo de três minutos, independente dos bilhetes automáticos. Perguntas de continuação e agradecimentos não consomem essa cadência. Atendimento ativo ou outra pesquisa para o telefone adia o convite. Convites expiram em 24 horas na fila; a seleção de viagens recupera conclusões elegíveis de até 26 horas atrás (duas horas de espera mais a janela de envio).
 
-As respostas são aceitas por 24 horas contadas da tentativa de envio, antes da interpretação do menu automático. A nota é um inteiro de 0 a 10; depois, comentário opcional de até 2.000 caracteres. `PULAR`, `ENCERRAR`, `SAIR`, `CANCELAR`, `MENU` e `/menu` encerram. Uma nota recebida permanece válida mesmo se o comentário for pulado, expirar ou houver retomada humana. Uma resposta manual da equipe encerra a pesquisa e cancela mensagens ainda pendentes. Depois de encerrar, a próxima mensagem inicia o fluxo normal. A despedida de inatividade do bot não atua durante a pesquisa.
+As respostas são aceitas por 24 horas contadas da tentativa de envio, antes da interpretação do menu automático. A nota é um inteiro de 0 a 10. Promotores encerram com agradecimento; neutros e detratores recebem convite ao comentário opcional de até 2.000 caracteres. `PULAR`, `ENCERRAR`, `SAIR`, `CANCELAR`, `MENU` e `/menu` encerram. Uma nota recebida permanece válida mesmo se o comentário for pulado, expirar ou houver retomada humana. Uma resposta manual da equipe encerra a pesquisa e cancela mensagens ainda pendentes. Depois de encerrar, a próxima mensagem inicia o fluxo normal. A despedida de inatividade do bot não atua durante a pesquisa.
 
 Usa o mesmo webhook assinado HMAC-SHA256 do atendimento. A sincronização do webhook também funciona se apenas o NPS estiver habilitado. Empresa, sessão, telefone/contato e janela temporal são conferidos. Identificadores privados e variantes brasileiras com/sem nono dígito só são associados por vínculo já verificado ou consulta ao serviço que comprove o mesmo contato. Sem prova, não há aproximação por sufixo. As consultas têm timeout e falhas temporárias não são convertidas em uma nota nem em resposta falsa do menu. Mensagens de grupo, do próprio número, eventos antigos e assinaturas inválidas seguem as rejeições existentes. Hashes de identificação deduplicam respostas; não são usados como credenciais. As mensagens pendentes são criptografadas e o corpo é apagado após o resultado.
 
@@ -65,3 +65,19 @@ Atualize com `scripts/update_vps.sh`, que faz backup e aplica migrações sem re
 ## Validação
 
 Testes automatizados usam transportes simulados, sem mensagens reais. Cobrem nota zero, nota inválida, comentário opcional, desistência, prazo, deduplicação, prioridade humana, cooldown, cadência, elegibilidade de viagem, permissões, isolamento, filtros, exportações, neutralização de fórmulas e acesso à tela por perfil. A entrega ao aparelho continua dependendo da conexão WhatsApp em produção.
+
+## Redação acolhedora e qualidade — revisão de 22/10/2026
+
+As perguntas iniciais passam a utilizar `app.nps_copy`, com introdução acolhedora, escala de 0 a 10, explicação dos extremos e solicitação de resposta numérica. A viagem identifica o passeio e usa uma redação equivalente. As regras de elegibilidade, cadência, janela e KPIs permanecem.
+
+- Promotores (9–10): agradecimento correspondente ao tipo e encerramento imediato, sem segunda pergunta.
+- Neutros (7–8): agradecimento e convite para sugerir como chegar à nota 10.
+- Detratores (0–6): pedido de desculpas, pergunta sobre o que poderia ter sido diferente e encaminhamento interno à qualidade.
+
+A redação do atendimento segue o texto aprovado pelo usuário. O comentário de neutros/detratores permanece opcional; a nota é preservada em desistência ou expiração. A resposta escolhida conforme a nota fica preservada em `question_comment`, junto ao texto inicial em `question_score`.
+
+`template_version=2` identifica o novo fluxo. Pesquisas já tentadas/enviadas com a versão 1 mantêm suas perguntas e protocolo anterior. Convites antigos ainda sem tentativa são atualizados na preparação, antes do POST, sem repetir envios ou reescrever respostas anteriores.
+
+Administradores e atendentes recebem um aviso no painel para avaliações novas com nota até 6 e podem analisá-las em **NPS e satisfação → Equipe de qualidade**. O encaminhamento é no próprio app; não envia informações para um destinatário externo adicional. `GET /api/v1/nps/quality` lista até cinquenta pendências e total; `POST /api/v1/nps/quality/{survey_id}/review` registra análise e responsável, enviando o comentário exibido em `{"comment": "texto exibido"}` ou `{"comment": null}`. Se o comentário mudar durante a análise, retorna 409 e pede conferência; repetir a análise da mesma versão é idempotente. Se o cliente comentar após uma análise, o feedback volta à fila. O histórico das notas não é apagado.
+
+Migração aditiva `0045_service_hours_nps_copy`: versão, colunas de análise e agenda semanal da empresa. Consulte [horários de atendimento](HORARIOS_DE_ATENDIMENTO.md). Os horários afetam o aviso do atendimento humano, sem bloquear pesquisas automáticas.
