@@ -3,6 +3,19 @@
   gap: 22px;
   min-width: 0;
 }
+.nps-quality-alert {
+  padding: 18px 24px;
+  border-left: 4px solid #c17716;
+  margin-bottom: 20px;
+}
+.nps-quality-inbox {
+  padding: 24px;
+}
+.nps-quality-inbox article {
+  border-top: 1px solid #d8e4ec;
+  padding: 18px 0;
+  overflow-wrap: anywhere;
+}
 .nps-settings {
   padding: 24px;
 }

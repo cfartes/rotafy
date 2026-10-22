@@ -598,7 +598,13 @@ async def command_reply(
             ),
             {"company": company, "session": session, "chat": chat},
         )
-        return "Sua solicitação foi registrada para a equipe. Aguarde o atendimento por esta conversa."
+        from app.service_hours import configuration as hours_configuration
+        from app.service_hours import outside_message
+
+        return (
+            outside_message(await hours_configuration(db, company))
+            or "Sua solicitação foi registrada para a equipe. Aguarde o atendimento por esta conversa."
+        )
     # Human takeover pauses data commands until the team closes the request.
     if (
         state

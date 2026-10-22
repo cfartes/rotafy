@@ -30,5 +30,5 @@ try {
   }
   const filenames = ["manual.html", "manual.pdf", "manual-superadmin.html", "manual-superadmin.pdf", "apresentacao.html", "apresentacao.pdf", "apresentacao.pptx"];
   const files = await Promise.all(filenames.map(async name => ({ name, bytes: (await fs.stat(path.join(directory, name))).size })));
-  await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify({ edition: "2026.10", revision: 6, revised_at: "2026-10-22", files }, null, 2) + "\n");
+  await fs.writeFile(path.join(directory, "manifest.json"), JSON.stringify({ edition: "2026.10", revision: 7, revised_at: "2026-10-22", files }, null, 2) + "\n");
 } finally { await browser.close(); }

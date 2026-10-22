@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field } from "./components/ui";
 import "./nps.css";
+import { NpsQualityInbox } from "./NpsQuality";
 
 type Settings = { service_enabled: boolean; trip_enabled: boolean };
 type Metrics = {
@@ -225,6 +226,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
   ];
   return (
     <div className="nps-page">
+      <NpsQualityInbox />
       {canConfigure && settings.data && (
         <Configuration
           value={settings.data}
