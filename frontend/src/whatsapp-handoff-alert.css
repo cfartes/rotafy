@@ -1,0 +1,16 @@
+.whatsapp-handoff-alert {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid #b6dcd8;
+  border-left: 4px solid #0c7a76;
+  border-radius: 12px;
+  background: #edf6f5;
+  color: #0b253f;
+}
+.whatsapp-handoff-alert > svg { flex-shrink: 0; color: #0c7a76; }
+.whatsapp-handoff-alert > div { min-width: 0; }
+.whatsapp-handoff-alert p { margin: 0 0 8px; }
+.whatsapp-handoff-alert ul { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
+.whatsapp-handoff-alert button { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
