@@ -24,7 +24,7 @@ Viagem:
 
 ## Fila, mensagens e respostas
 
-`app.whatsapp_worker` executa `schedule_surveys` e `process_nps`. Não exige outro serviço ou APK. A fila persistente de convites NPS tem relógio global próprio, compartilhado entre empresas, com intervalo mínimo de três minutos, independente dos bilhetes automáticos. Perguntas de continuação e agradecimentos não consomem essa cadência. Atendimento ativo ou outra pesquisa para o telefone adia o convite. Convites expiram em 24 horas na fila; a seleção de viagens recupera conclusões elegíveis de até 26 horas atrás (duas horas de espera mais a janela de envio).
+`app.whatsapp_worker` executa `schedule_surveys` e `process_nps`. Não exige outro serviço ou APK. A fila persistente de convites NPS tem relógio global próprio, compartilhado entre empresas, com intervalo configurado pela Nexus (padrão: 30 segundos), independente dos bilhetes automáticos. Perguntas de continuação e agradecimentos não consomem essa cadência. Atendimento ativo ou outra pesquisa para o telefone adia o convite. Convites expiram em 24 horas na fila; a seleção de viagens recupera conclusões elegíveis de até 26 horas atrás (duas horas de espera mais a janela de envio).
 
 As respostas são aceitas por 24 horas contadas da tentativa de envio, antes da interpretação do menu automático. A nota é um inteiro de 0 a 10. Promotores encerram com agradecimento; neutros e detratores recebem convite ao comentário opcional de até 2.000 caracteres. `PULAR`, `ENCERRAR`, `SAIR`, `CANCELAR`, `MENU` e `/menu` encerram. Uma nota recebida permanece válida mesmo se o comentário for pulado, expirar ou houver retomada humana. Uma resposta manual da equipe encerra a pesquisa e cancela mensagens ainda pendentes. Depois de encerrar, a próxima mensagem inicia o fluxo normal. A despedida de inatividade do bot não atua durante a pesquisa.
 
@@ -87,7 +87,7 @@ Migração aditiva `0045_service_hours_nps_copy`: versão, colunas de análise e
 
 A tela informa se a pesquisa entrou na fila, se o NPS está desabilitado ou se já existe pesquisa para o telefone nos últimos sete dias. A elegibilidade considera a data do encerramento, incluindo atendimentos iniciados antes da ativação do NPS. Telefones ausentes são obtidos do identificador telefônico ou do mapeamento de LID na sessão da empresa. Se não for possível identificar o telefone, o encerramento é revertido com uma mensagem explicativa, permitindo tentar novamente.
 
-A fila mantém intervalo mínimo de três minutos entre convites; conversas automáticas ativas por até dez minutos e atendimentos humanos ainda abertos podem adiar o envio. Não há reenvio automático de pesquisas incertas ou retroativo de atendimentos encerrados.
+A fila mantém intervalo configurado pela Nexus (padrão: 30 segundos) entre convites; conversas automáticas ativas por até dez minutos e atendimentos humanos ainda abertos podem adiar o envio. Não há reenvio automático de pesquisas incertas ou retroativo de atendimentos encerrados.
 
 Diagnóstico de leitura, sem mensagens, chaves ou telefones completos:
 

@@ -15,7 +15,7 @@ from sqlalchemy import text
 from app.billing.calendar import utc_now
 from app.identity import scope
 from app.integration_secrets import decrypt, encrypt
-from app.integration_settings import openwa_key, openwa_request
+from app.integration_settings import openwa_key, openwa_request, whatsapp_queue_interval
 from app.nps import COMMENT, SCORE
 from app.nps_copy import feedback, invitation
 from app.security import digest
@@ -641,8 +641,9 @@ async def process_nps(engine, company, transport=openwa_request):
             if row["kind"] == "invite":
                 await db.execute(
                     text(
-                        "UPDATE nps_dispatch SET next_send_at=clock_timestamp()+interval '3 minutes' WHERE id=true"
-                    )
+                        "UPDATE nps_dispatch SET next_send_at=clock_timestamp()+:interval*interval '1 second' WHERE id=true"
+                    ),
+                    {"interval": await whatsapp_queue_interval(db)},
                 )
                 await db.execute(
                     text(

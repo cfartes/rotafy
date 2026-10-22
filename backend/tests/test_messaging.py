@@ -758,3 +758,55 @@ def test_recipient_lookup_failure_never_sends(
     assert item["status"] == (
         "failed" if expected == "recipient_not_registered" else "pending"
     )
+
+
+@pytest.mark.parametrize("value", [4, 3601, 12.5, True, "30"])
+def test_queue_interval_rejects_invalid_values(client, seeded, protected_key, value):
+    login(client, email="nexus@example.com", nexus=True)
+    result = client.put(
+        "/api/v1/nexus/integrations",
+        json={"expected_version": 0, "whatsapp_queue_interval_seconds": value},
+    )
+    assert result.status_code == 422
+
+
+def test_queue_interval_is_superadmin_only_and_reschedules_both_clocks(
+    client, seeded, owner, protected_key
+):
+    configure(client, seeded)
+    assert (
+        client.put(
+            "/api/v1/nexus/integrations",
+            json={"expected_version": 1, "whatsapp_queue_interval_seconds": 15},
+        ).status_code
+        == 403
+    )
+    login(client, email="nexus@example.com", nexus=True)
+    assert (
+        client.get("/api/v1/nexus/integrations").json()[
+            "whatsapp_queue_interval_seconds"
+        ]
+        == 30
+    )
+    with owner.begin() as db:
+        for table in ("nps_dispatch", "whatsapp_ticket_dispatch"):
+            db.execute(
+                text(f"UPDATE {table} SET next_send_at=now()+interval '30 seconds'")
+            )
+    result = client.put(
+        "/api/v1/nexus/integrations",
+        json={"expected_version": 1, "whatsapp_queue_interval_seconds": 15},
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()["whatsapp_queue_interval_seconds"] == 15
+    with owner.connect() as db:
+        for table in ("nps_dispatch", "whatsapp_ticket_dispatch"):
+            remaining = db.scalar(
+                text(
+                    f"SELECT extract(epoch FROM next_send_at-clock_timestamp()) FROM {table}"
+                )
+            )
+            assert 10 <= remaining <= 15
+    # An older client omitting the new field preserves the saved interval.
+    result = client.put("/api/v1/nexus/integrations", json={"expected_version": 2})
+    assert result.json()["whatsapp_queue_interval_seconds"] == 15

@@ -27,6 +27,9 @@ class ConfigInput(Input):
     openwa_api_key: SecretStr | None = None
     resend_api_key: SecretStr | None = None
     email_from: EmailStr | None = None
+    whatsapp_queue_interval_seconds: int | None = Field(
+        default=None, ge=5, le=3600, strict=True
+    )
     clear_openwa_key: bool = False
     clear_resend_key: bool = False
 
@@ -115,6 +118,9 @@ def public_config(row, fallback):
         ),
         "email_from": row["email_from"] if row else fallback.email_from,
         "updated_at": row["updated_at"] if row else None,
+        "whatsapp_queue_interval_seconds": row["whatsapp_queue_interval_seconds"]
+        if row
+        else 30,
     }
 
 
@@ -150,7 +156,11 @@ async def update_config(data: ConfigInput, request: Request, actor: Auth):
         raise HTTPException(
             409, "A configuração mudou. Atualize a tela antes de salvar."
         )
+    previous_interval = row["whatsapp_queue_interval_seconds"] if row else 30
     values = {
+        "interval": data.whatsapp_queue_interval_seconds
+        if data.whatsapp_queue_interval_seconds is not None
+        else previous_interval,
         "openwa_key": row["openwa_key"] if row else "",
         "resend_key": row["resend_key"] if row else "",
         "email_from": str(data.email_from)
@@ -183,18 +193,36 @@ async def update_config(data: ConfigInput, request: Request, actor: Auth):
     updated = (
         (
             await actor.db.execute(
-                text("""INSERT INTO integration_settings(id,openwa_key,resend_key,email_from,updated_by)
-      VALUES(true,:openwa_key,:resend_key,:email_from,:user)
+                text("""INSERT INTO integration_settings(id,openwa_key,resend_key,email_from,updated_by,whatsapp_queue_interval_seconds)
+      VALUES(true,:openwa_key,:resend_key,:email_from,:user,:interval)
       ON CONFLICT(id) DO UPDATE SET openwa_key=EXCLUDED.openwa_key,resend_key=EXCLUDED.resend_key,
-      email_from=EXCLUDED.email_from,updated_by=EXCLUDED.updated_by,updated_at=now(),version=integration_settings.version+1 RETURNING *"""),
+      whatsapp_queue_interval_seconds=EXCLUDED.whatsapp_queue_interval_seconds,email_from=EXCLUDED.email_from,updated_by=EXCLUDED.updated_by,updated_at=now(),version=integration_settings.version+1 RETURNING *"""),
                 values | {"user": actor.user["id"]},
             )
         )
         .mappings()
         .one()
     )
+    if values["interval"] != previous_interval:
+        # Shift existing reservations by the difference; never release a burst.
+        for table in ("whatsapp_ticket_dispatch", "nps_dispatch"):
+            await actor.db.execute(
+                text(
+                    f"UPDATE {table} SET next_send_at=GREATEST(clock_timestamp(),next_send_at+:delta*interval '1 second') WHERE id=true"
+                ),
+                {"delta": values["interval"] - previous_interval},
+            )
     await audit(actor.db, None, actor.user["id"], "integrations.configured", None)
     return public_config(updated, request.app.state.settings)
+
+
+async def whatsapp_queue_interval(db):
+    value = await db.scalar(
+        text(
+            "SELECT whatsapp_queue_interval_seconds FROM integration_settings WHERE id=true"
+        )
+    )
+    return value if value is not None else 30
 
 
 class NoRedirect(HTTPRedirectHandler):

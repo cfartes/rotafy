@@ -23,6 +23,7 @@ async def main(slug):
                 return
             await scope(db, company)
             queries = {
+                "queue_interval": "SELECT whatsapp_queue_interval_seconds FROM integration_settings WHERE id=true",
                 "settings": "SELECT service_enabled,service_since FROM nps_settings WHERE company_id=:company",
                 "connection": "SELECT enabled,session_id IS NOT NULL AS has_session FROM company_whatsapp WHERE company_id=:company",
                 "queue_clock": "SELECT next_send_at FROM nps_dispatch",

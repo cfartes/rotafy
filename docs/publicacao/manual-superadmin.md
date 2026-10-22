@@ -230,7 +230,10 @@ Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bil
 
 A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
 
-Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo mínimo de três minutos compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo configurado pela Nexus (padrão: 30 segundos) compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+
+Em **Configurações → Mensagens e e-mails**, o Superadmin define o **Intervalo da fila WhatsApp (segundos)**. O padrão é **30 segundos**, com valores de 5 a 3.600 segundos. Clique em **Salvar configurações** para aplicar. A configuração vale para todas as empresas, nas filas independentes de bilhetes automáticos e convites NPS, e recalcula a próxima liberação já agendada. Respostas do atendimento, agradecimentos das pesquisas e envios manuais não seguem esse intervalo. A disponibilidade do serviço e o processamento podem aumentar a espera; o intervalo não garante entrega no segundo exato. O prazo de encerramento por inatividade permanece em dez minutos.
+
 
 
 ## 13. Orientar o cliente sobre NPS {#nps}
@@ -239,7 +242,7 @@ O menu **NPS e satisfação**, no acesso da empresa, fica disponível para admin
 
 A pesquisa de atendimento é agendada ao concluir um atendimento humano, com limite de uma por telefone em sete dias. A de viagem é agendada duas horas após a conclusão completa, somente para reservas confirmadas com embarque registrado. Ambas usam nota de 0 a 10 e comentário opcional, com respostas por 24 horas e saída por PULAR ou ENCERRAR.
 
-Os convites são espaçados em três minutos. Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
+Os convites são espaçados conforme a configuração da Nexus (padrão: 30 segundos). Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
 
 O cliente consulta KPIs, evolução, comentários e relatórios CSV/PDF filtrados por período, tipo, viagem, classificação e situação. O período corresponde à criação das pesquisas no horário de Brasília; indicadores abrangem todo o filtro, sem depender da página da lista. Dados sem resposta não são tratados como nota zero. As respostas e o histórico permanecem no banco após desativar as pesquisas.
 

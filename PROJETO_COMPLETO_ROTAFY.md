@@ -723,7 +723,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 8. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 9. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -841,7 +841,7 @@ Em hotéis e endereços personalizados, confirme com a equipe o horário especí
 
 Ative **Enviar bilhetes automaticamente 24 horas antes do primeiro embarque**. Reservas confirmadas entram na fila quando faltam até 24 horas para o primeiro embarque contratado; reservas feitas dentro dessa janela também são consideradas. Cada passageiro recebe um bilhete individual válido para todos os seus trechos. O botão de envio manual continua disponível.
 
-Os envios automáticos respeitam um intervalo mínimo de **três minutos** em uma fila compartilhada entre todas as viagens e empresas. As 24 horas indicam a entrada na fila, não um horário garantido de entrega. Volume elevado e indisponibilidade podem atrasar os envios; acompanhe a situação antes da saída. Respostas do atendimento e envios manuais não seguem esse intervalo.
+Os envios automáticos respeitam um intervalo configurado pela Nexus (padrão: **30 segundos**) em uma fila compartilhada entre todas as viagens e empresas. As 24 horas indicam a entrada na fila, não um horário garantido de entrega. Volume elevado e indisponibilidade podem atrasar os envios; acompanhe a situação antes da saída. Respostas do atendimento e envios manuais não seguem esse intervalo.
 
 Cancelamentos e alterações são conferidos antes do envio. Mensagens aceitas ou incertas não são repetidas automaticamente. Bilhetes antigos sem link recuperável aparecem como **Precisa de atenção**: utilize o envio manual com o link original ou faça uma reemissão consciente na reserva. Reemitir substitui o link anterior; a automação não faz essa troca silenciosamente.
 
@@ -872,7 +872,7 @@ A pesquisa da viagem entra na fila duas horas após a conclusão completa, inclu
 
 O comentário é opcional e aceita até 2.000 caracteres. O prazo para responder é de **24 horas após a tentativa de envio**. Envie **PULAR** ou **ENCERRAR** para não participar ou pular o comentário. A nota recebida é preservada. Durante a pesquisa, números são notas, sem acionar o menu. Depois do encerramento, uma nova mensagem inicia o atendimento normal.
 
-Uma resposta manual da equipe encerra uma pesquisa em andamento. Convites aguardam quando houver atendimento ativo ou outra pesquisa para o mesmo telefone. Os convites são espaçados em pelo menos três minutos; respostas e agradecimentos não seguem esse intervalo. Mensagens com resultado incerto não são repetidas automaticamente. Ativar a função não envia avaliações de conclusões anteriores à ativação. Convites não enviados em 24 horas na fila são descartados.
+Uma resposta manual da equipe encerra uma pesquisa em andamento. Convites aguardam quando houver atendimento ativo ou outra pesquisa para o mesmo telefone. Os convites são espaçados conforme a configuração da Nexus (padrão: 30 segundos); respostas e agradecimentos não seguem esse intervalo. Mensagens com resultado incerto não são repetidas automaticamente. Ativar a função não envia avaliações de conclusões anteriores à ativação. Convites não enviados em 24 horas na fila são descartados.
 
 Pesquisas já enviadas com a versão anterior preservam suas perguntas e o fluxo informado ao cliente. Convites antigos ainda sem tentativa utilizam a nova apresentação ao enviar.
 
@@ -1139,7 +1139,10 @@ Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bil
 
 A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
 
-Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo mínimo de três minutos compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo configurado pela Nexus (padrão: 30 segundos) compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+
+Em **Configurações → Mensagens e e-mails**, o Superadmin define o **Intervalo da fila WhatsApp (segundos)**. O padrão é **30 segundos**, com valores de 5 a 3.600 segundos. Clique em **Salvar configurações** para aplicar. A configuração vale para todas as empresas, nas filas independentes de bilhetes automáticos e convites NPS, e recalcula a próxima liberação já agendada. Respostas do atendimento, agradecimentos das pesquisas e envios manuais não seguem esse intervalo. A disponibilidade do serviço e o processamento podem aumentar a espera; o intervalo não garante entrega no segundo exato. O prazo de encerramento por inatividade permanece em dez minutos.
+
 
 
 ## 13. Orientar o cliente sobre NPS {#nps}
@@ -1148,7 +1151,7 @@ O menu **NPS e satisfação**, no acesso da empresa, fica disponível para admin
 
 A pesquisa de atendimento é agendada ao concluir um atendimento humano, com limite de uma por telefone em sete dias. A de viagem é agendada duas horas após a conclusão completa, somente para reservas confirmadas com embarque registrado. Ambas usam nota de 0 a 10 e comentário opcional, com respostas por 24 horas e saída por PULAR ou ENCERRAR.
 
-Os convites são espaçados em três minutos. Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
+Os convites são espaçados conforme a configuração da Nexus (padrão: 30 segundos). Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
 
 O cliente consulta KPIs, evolução, comentários e relatórios CSV/PDF filtrados por período, tipo, viagem, classificação e situação. O período corresponde à criação das pesquisas no horário de Brasília; indicadores abrangem todo o filtro, sem depender da página da lista. Dados sem resposta não são tratados como nota zero. As respostas e o histórico permanecem no banco após desativar as pesquisas.
 

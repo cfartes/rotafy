@@ -20,7 +20,7 @@ from sqlalchemy import text
 from app.billing.calendar import utc_now
 from app.identity import Auth, admin, audit, scope
 from app.integration_secrets import decrypt, encrypt
-from app.integration_settings import openwa_key, openwa_request
+from app.integration_settings import openwa_key, openwa_request, whatsapp_queue_interval
 from app.modules import enabled
 from app.schemas import Input
 from app.security import digest
@@ -1033,8 +1033,9 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
             if row["kind"] == "ticket":
                 await db.execute(
                     text(
-                        "UPDATE whatsapp_ticket_dispatch SET next_send_at=clock_timestamp()+interval '3 minutes' WHERE id=true"
-                    )
+                        "UPDATE whatsapp_ticket_dispatch SET next_send_at=clock_timestamp()+:interval*interval '1 second' WHERE id=true"
+                    ),
+                    {"interval": await whatsapp_queue_interval(db)},
                 )
             await db.execute(
                 text(
@@ -1078,8 +1079,9 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
         if row["kind"] == "ticket":
             await db.execute(
                 text(
-                    "UPDATE whatsapp_ticket_dispatch SET next_send_at=GREATEST(next_send_at,clock_timestamp()+interval '3 minutes') WHERE id=true"
-                )
+                    "UPDATE whatsapp_ticket_dispatch SET next_send_at=GREATEST(next_send_at,clock_timestamp()+:interval*interval '1 second') WHERE id=true"
+                ),
+                {"interval": await whatsapp_queue_interval(db)},
             )
         await db.execute(
             text("""UPDATE whatsapp_automation_outbox SET status=:status,error_code=:error,provider_id=:provider,body='',

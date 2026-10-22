@@ -609,6 +609,10 @@ def test_handoff_started_before_nps_activation_is_eligible_at_closure(
 def test_two_different_numbers_receive_service_nps_with_pacing(
     client, seeded, owner, nps
 ):
+    with owner.begin() as db:
+        db.execute(
+            text("UPDATE integration_settings SET whatsapp_queue_interval_seconds=17")
+        )
     handoff(client, seeded, owner, nps)
     handoff(client, seeded, owner, nps, chat="5511888888888@c.us")
     sent = []
@@ -619,6 +623,13 @@ def test_two_different_numbers_receive_service_nps_with_pacing(
     assert run(process_nps, seeded["a"], transport=provider(sent))
     assert len(sent) == 2
     assert len({m["chatId"] for m in sent}) == 2
+    with owner.connect() as db:
+        remaining = db.scalar(
+            text(
+                "SELECT extract(epoch FROM next_send_at-clock_timestamp()) FROM nps_dispatch"
+            )
+        )
+        assert 12 <= remaining <= 17
 
 
 def test_unresolved_private_id_keeps_handoff_open_and_reports_error(
