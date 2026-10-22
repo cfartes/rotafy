@@ -59,7 +59,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 5 · Atualizado em 22/10/2026</span>
+        <span>Edição 2026.10 · Revisão 6 · Atualizado em 22/10/2026</span>
       </header>
       <div className="documentation-grid">
         <AndroidDownload nexus={nexus} />
@@ -99,7 +99,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
               <li>Empresa, equipe, frota, Rotas e viagens</li>
               <li>Reservas, bilhete único, conversas e atendimento automático</li>
               <li>Embarque, offline, chegada e relatórios</li>
-              <li>Plano contratado e rotina da empresa</li>
+              <li>NPS, plano contratado e rotina da empresa</li>
             </ul>
           )}
         </section>
@@ -111,7 +111,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
           <p className="eyebrow">VISÃO DO PRODUTO</p>
           <h2 id="presentation-title">Apresentação do sistema</h2>
           <p>
-            25 slides para apresentar a jornada operacional, os módulos e os
+            26 slides para apresentar a jornada operacional, os módulos e os
             recursos disponíveis para Turismo e Transporte regular.
           </p>
           <a className="button primary" href="/documentacao/apresentacao.html">

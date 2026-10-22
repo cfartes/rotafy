@@ -11,7 +11,7 @@ test("central pública permite consultar e baixar os materiais sem autenticaçã
   });
   await page.goto("/ajuda");
   await expect(page.getByRole("heading", { name: /Conheça/ })).toBeVisible();
-  await expect(page.getByText("Edição 2026.10 · Revisão 5 · Atualizado em 22/10/2026")).toBeVisible();
+  await expect(page.getByText("Edição 2026.10 · Revisão 6 · Atualizado em 22/10/2026")).toBeVisible();
   expect(authRequests).toBe(0);
   for (const filename of [
     "manual.pdf",
@@ -37,7 +37,7 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   page,
 }) => {
   await page.goto("/documentacao/manual.html");
-  await expect(page.locator(".chapter")).toHaveCount(32);
+  await expect(page.locator(".chapter")).toHaveCount(33);
   await expect(page.getByRole("heading", { name: "Menu automático e bilhetes antecipados" })).toBeVisible();
   await expect(page.locator("#automacoes-whatsapp").locator("..")).toContainText("três minutos");
   await expect(page.locator("#automacoes-whatsapp").locator("..")).toContainText("um minuto");
@@ -49,7 +49,7 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   await search.fill("zzzzinexistente");
   await expect(page.locator(".chapter:visible")).toHaveCount(0);
   await search.fill("");
-  await expect(page.locator(".chapter:visible")).toHaveCount(32);
+  await expect(page.locator(".chapter:visible")).toHaveCount(33);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -58,11 +58,11 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   ).toBeTruthy();
 });
 
-test("apresentação disponibiliza os vinte e cinco slides e downloads", async ({
+test("apresentação disponibiliza os vinte e seis slides e downloads", async ({
   page,
 }) => {
   await page.goto("/documentacao/apresentacao.html");
-  await expect(page.locator(".slide")).toHaveCount(25);
+  await expect(page.locator(".slide")).toHaveCount(26);
   await expect(page.locator('a[href="apresentacao.pdf"]')).toBeVisible();
   await expect(page.locator('a[href="apresentacao.pptx"]')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -93,7 +93,7 @@ test("manuais separados por perfil", async ({ page, request }) => {
     page.getByRole("link", { name: "Ler manual online" }),
   ).toHaveAttribute("href", "/documentacao/manual-superadmin.html");
   await page.goto("/documentacao/manual-superadmin.html");
-  await expect(page.locator(".chapter")).toHaveCount(12);
+  await expect(page.locator(".chapter")).toHaveCount(13);
   await expect(page.getByRole("heading", { name: "10. Supervisão das conexões WhatsApp" })).toBeVisible();
   await expect(page.locator(".cover")).toContainText(
     "Manual do superadmin Nexus",

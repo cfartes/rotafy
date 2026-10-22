@@ -851,6 +851,43 @@ No modelo integrado, a venda acontece no sistema parceiro; o Rotafy recebe os da
 O administrador gerencia credenciais em **Integração com parceiros**, quando habilitado. Vincule um atendente dedicado, limite permissões e validade e entregue a credencial apenas ao responsável técnico autorizado. A credencial aparece uma única vez. Revogue-a quando não for mais necessária. Suspender ou mudar a função do atendente interrompe as credenciais vinculadas. A integração não concede acesso às configurações globais nem ao financeiro da assinatura.
 
 
+## NPS e satisfação dos clientes {#nps}
+
+Administradores e atendentes acessam **NPS e satisfação** para acompanhar as avaliações. Somente o administrador pode habilitar ou desabilitar as pesquisas em **Configurar pesquisas automáticas**, disponível nessa tela e também no menu **WhatsApp**. As duas opções começam desabilitadas e são independentes. A empresa precisa ter WhatsApp conectado, envios habilitados e o módulo disponível.
+
+### Pesquisa após atendimento humano
+
+Ao usar **Concluir atendimento**, a equipe encerra o atendimento e, se a função estiver habilitada, agenda a pesquisa. É enviada no máximo uma pesquisa de atendimento por telefone a cada sete dias. O cliente responde:
+
+1. “De 0 a 10, quanto você recomendaria o atendimento da [Empresa] a um amigo ou familiar?”
+2. “O que podemos melhorar no nosso atendimento?”
+
+### Pesquisa após a viagem
+
+A pesquisa entra na fila duas horas após a conclusão da viagem completa. Pacotes e viagens de ida e volta precisam estar integralmente concluídos. O destinatário é o telefone da reserva confirmada, desde que exista embarque registrado de pelo menos um passageiro. Reservas sem embarque não recebem a pesquisa. O cliente responde:
+
+1. “De 0 a 10, quanto você recomendaria viajar com a [Empresa] a um amigo ou familiar?”
+2. “O que mais marcou sua experiência e o que podemos melhorar?”
+
+### Responder ou encerrar
+
+A pesquisa aceita respostas por até **24 horas após a tentativa de envio**. Primeiro informe a nota de 0 a 10; depois, um comentário opcional de até 2.000 caracteres. Para não participar, pular o comentário ou encerrar, envie **PULAR** ou **ENCERRAR**. A nota já recebida é preservada mesmo sem comentário. Uma nova mensagem após encerrar pode abrir o menu normal.
+
+Durante a pesquisa, números são interpretados como nota, sem acionar opções do menu. O atendimento humano tem prioridade: uma resposta manual da equipe encerra uma pesquisa em andamento. Convites aguardam quando houver atendimento ativo ou outra pesquisa para o mesmo telefone. O intervalo mínimo entre convites automáticos é de **três minutos**; as perguntas de continuação não seguem esse intervalo. Disponibilidade do serviço e volume podem adiar o envio. Resultados incertos não são reenviados automaticamente.
+
+A ativação considera somente atendimentos encerrados e viagens concluídas depois de habilitar a opção. Pesquisas antigas não são enviadas retroativamente. Convites que não puderem ser enviados dentro de 24 horas da entrada na fila são descartados. Não confunda aceite do envio com entrega ou leitura.
+
+### Indicadores e relatórios
+
+Os cards mostram **NPS**, **taxa de resposta**, **nota média**, **promotores (9–10)**, **neutros (7–8)** e **detratores (0–6)**. O NPS corresponde ao percentual de promotores menos o de detratores e varia de −100 a +100. Sem notas, NPS e média aparecem como “—”; ausência de resposta não vira zero.
+
+A taxa de resposta considera as notas recebidas em relação às pesquisas cujo envio foi aceito, incluindo uma tentativa incerta quando a própria resposta comprova o recebimento. As contagens de atendimento e viagem podem ser comparadas separadamente. Os indicadores consideram todas as pesquisas do filtro, não apenas a página visível.
+
+Filtre por período de criação da pesquisa, tipo, viagem/pacote, classificação ou situação. As datas seguem Brasília. A consulta aceita até 366 dias e 5.000 pesquisas por filtro; refine a seleção se ultrapassar o limite. Confira a evolução por mês e os comentários. A lista é paginada em grupos de cinquenta registros. **Exportar CSV** e **Emitir PDF** utilizam o filtro aplicado e incluem todas as pesquisas do resultado, independentemente da página aberta.
+
+Os registros distinguem fila, enviando, enviada, envio incerto, falha, descarte, resposta, desistência e expiração. Sem respostas, confira primeiro a configuração, a conexão e a situação dos envios. As consultas respeitam o espaço da empresa e as restrições de acesso da assinatura.
+
+
 <a id="manual-nexus"></a>
 ## 4. Manual completo da administração Nexus
 
@@ -1087,6 +1124,17 @@ Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bil
 A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
 
 Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo mínimo de três minutos compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+
+
+## 13. Orientar o cliente sobre NPS {#nps}
+
+O menu **NPS e satisfação**, no acesso da empresa, fica disponível para administradores e atendentes com o módulo WhatsApp. Somente o administrador da empresa habilita as pesquisas. A equipe Nexus pode orientar a configuração sem registrar avaliações em nome dos passageiros.
+
+A pesquisa de atendimento é agendada ao concluir um atendimento humano, com limite de uma por telefone em sete dias. A de viagem é agendada duas horas após a conclusão completa, somente para reservas confirmadas com embarque registrado. Ambas usam nota de 0 a 10 e comentário opcional, com respostas por 24 horas e saída por PULAR ou ENCERRAR.
+
+Os convites são espaçados em três minutos. Não interrompem atendimento ativo nem outra pesquisa para o mesmo telefone. Não há disparos retroativos após ativar. Aceite do envio não comprova leitura; situações incertas não são repetidas automaticamente.
+
+O cliente consulta KPIs, evolução, comentários e relatórios CSV/PDF filtrados por período, tipo, viagem, classificação e situação. O período corresponde à criação das pesquisas no horário de Brasília; indicadores abrangem todo o filtro, sem depender da página da lista. Dados sem resposta não são tratados como nota zero. As respostas e o histórico permanecem no banco após desativar as pesquisas.
 
 
 <a id="recursos-com-menu-oculto"></a>
@@ -1334,3 +1382,8 @@ O administrador da empresa habilita o rastreamento por deslocamento e acompanha 
 ## Comunicação e integração — revisão de 22/10/2026
 
 Os manuais acima contemplam conversas WhatsApp, supervisão Nexus, módulos, menu personalizado, atendimento humano e bilhetes antecipados. Referências técnicas atuais: `docs/CHAT_WHATSAPP_E_SUPERVISAO.md`, `docs/AUTOMACAO_WHATSAPP.md`, `docs/MODULOS_E_INTEGRACAO.md` e `docs/integracao/README.md`. As migrações 0039 a 0043 são incrementais e preservam os dados. O atendimento automático e os bilhetes antecipados começam desativados; precisam de habilitação pelo administrador.
+
+
+## NPS — implementação
+
+Pesquisas, notas, comentários, perguntas utilizadas, vínculos e histórico de entrega ficam em tabelas próprias com isolamento por empresa. A migração incremental 0044_nps preserva o banco. O worker existente agenda e envia os convites. O webhook autenticado recebe as respostas antes do menu automático. Consulte `docs/NPS_E_SATISFACAO.md` para regras e endpoints.

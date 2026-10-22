@@ -422,6 +422,11 @@ async def send(data: Send, request: Request, actor: Auth):
             db, actor.company_id, actor.user["id"], "whatsapp.chat_queued", identifier
         )
         if not data.chat_id.endswith("@g.us"):
+            from app.nps_worker import cancel_active
+
+            await cancel_active(
+                db, actor.company_id, session["session_id"], data.chat_id
+            )
             await db.execute(
                 text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,handoff_at,automatic_open)
               SELECT :company,:session,:chat,clock_timestamp(),false FROM whatsapp_automation WHERE company_id=:company AND commands_enabled

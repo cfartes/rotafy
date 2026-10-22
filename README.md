@@ -164,6 +164,8 @@ O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os e
 
 ### Documentação revisada em 22/10/2026
 
-A central de ajuda está na revisão 5: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 25 slides em HTML/PDF/PowerPoint. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+A central de ajuda está na revisão 6: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF/PowerPoint. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
 
 **Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após um minuto de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo mínimo de três minutos entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).
+
+**NPS e satisfação:** avaliações pelo WhatsApp após concluir atendimento humano ou viagem completa, com nota e comentário opcional. Administradores e atendentes consultam indicadores, filtros, evolução e relatórios CSV/PDF; somente o administrador configura as pesquisas. Veja [NPS e satisfação](docs/NPS_E_SATISFACAO.md).

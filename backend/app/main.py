@@ -44,6 +44,7 @@ from app.mobile_releases import router as mobile_releases_router
 from app.modules import configuration as module_configuration
 from app.modules import router as modules_router
 from app.nexus_users import router as nexus_users_router
+from app.nps import router as nps_router
 from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
 from app.operational_profiles import capabilities, change_profile
@@ -859,6 +860,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(whatsapp_chat_router)
     application.include_router(whatsapp_admin_router)
     application.include_router(whatsapp_automation_router)
+    application.include_router(nps_router)
     application.include_router(tracking_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
