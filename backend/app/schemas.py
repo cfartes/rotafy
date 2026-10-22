@@ -141,6 +141,7 @@ class ResetRedeem(Input):
 
 
 class UserView(BaseModel):
+    enabled_modules: list[str] | None = None
     contract_pending: bool = False
     financial_blocked: bool = False
     contact_phone: str | None = None

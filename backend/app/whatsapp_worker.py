@@ -60,6 +60,16 @@ async def process_company(engine, company_id, transport=openwa_request):
         if not item:
             return False
         item = dict(item)
+        from app.modules import enabled
+
+        if not item["nexus_sender"] and not await enabled(db, company_id, "whatsapp"):
+            await db.execute(
+                text(
+                    "UPDATE whatsapp_outbox SET status='discarded',body='',error_code='module_disabled' WHERE id=:id"
+                ),
+                {"id": item["id"]},
+            )
+            return True
         config = (
             (
                 await db.execute(

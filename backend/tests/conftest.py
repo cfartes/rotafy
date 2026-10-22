@@ -46,6 +46,23 @@ PASSWORD = "Senha de teste 2026!"
 HEADERS = {"Origin": "http://testserver"}
 
 
+@pytest.fixture(autouse=True)
+def worker_event_loop(monkeypatch):
+    """Worker tests call asyncio.run outside TestClient; psycopg needs Selector on Windows."""
+    if sys.platform == "win32":
+        original_run = asyncio.run
+
+        def run(coro, *, debug=None, loop_factory=None):
+            return original_run(
+                coro,
+                debug=debug,
+                loop_factory=loop_factory
+                or (lambda: asyncio.SelectorEventLoop(selectors.SelectSelector())),
+            )
+
+        monkeypatch.setattr(asyncio, "run", run)
+
+
 @pytest.fixture(scope="session")
 def owner():
     engine = create_engine(
@@ -75,9 +92,13 @@ def seeded(owner):
         # Somente o banco dedicado rotafy_test é limpo.
         assert db.scalar(text("SELECT current_database()")) == test_db
         db.execute(
-            text("TRUNCATE companies,platform_users,auth_attempts,plans,mobile_releases CASCADE")
+            text(
+                "TRUNCATE companies,platform_users,auth_attempts,plans,mobile_releases CASCADE"
+            )
         )
-        db.execute(text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true"))
+        db.execute(
+            text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true")
+        )
         db.execute(
             text("""INSERT INTO plans(id,code,name) VALUES
             ('10000000-0000-4000-8000-000000000001','basic','Basic'),

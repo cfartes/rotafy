@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, post, type User } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import { PhoneInput } from "./components/PhoneInput";
+import { useModules } from "./modules";
 
 export function InvitationModal({
   user,
@@ -13,6 +14,7 @@ export function InvitationModal({
   onClose: () => void;
   onSent: () => void;
 }) {
+  const allowed = useModules();
   const [channel, setChannel] = useState("email");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +25,7 @@ export function InvitationModal({
     const data = new FormData(event.currentTarget);
     try {
       await post(`/users/${user.id}/invitation`, {
-        channel,
+        channel: allowed("whatsapp") ? channel : "email",
         contact_phone: String(data.get("contact_phone") || "").trim() || null,
       });
       onSent();
@@ -49,8 +51,8 @@ export function InvitationModal({
             onChange={(event) => setChannel(event.target.value)}
           >
             <option value="email">E-mail</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="both">E-mail e WhatsApp</option>
+            {allowed("whatsapp") && <option value="whatsapp">WhatsApp</option>}
+            {allowed("whatsapp") && <option value="both">E-mail e WhatsApp</option>}
           </select>
         </Field>
         <Field label="Telefone/WhatsApp do colaborador">
@@ -183,9 +185,11 @@ const whatsappReasons: Record<string, string> = {
   http_404: "O serviço não encontrou a sessão ou o destino solicitado.",
 };
 export function EmailDeliveries({ onClose }: { onClose: () => void }) {
+  const allowed = useModules();
   const whatsapp = useQuery({
     queryKey: ["whatsapp-invitations"],
     queryFn: () => api<Delivery[]>("/users/invitations/whatsapp/status"),
+    enabled: allowed("whatsapp"),
     refetchInterval: 5000,
   });
   const result = useQuery({
@@ -207,8 +211,8 @@ export function EmailDeliveries({ onClose }: { onClose: () => void }) {
           spam; a entrega na caixa de entrada depende do destinatário.
         </p>
         {result.error && <Alert>{result.error.message}</Alert>}
-        {whatsapp.error && <Alert>{whatsapp.error.message}</Alert>}
-        {!!whatsapp.data?.length && (
+        {allowed("whatsapp") && whatsapp.error && <Alert>{whatsapp.error.message}</Alert>}
+        {allowed("whatsapp") && !!whatsapp.data?.length && (
           <section>
             <h3>Convites por WhatsApp</h3>
             <p className="muted">

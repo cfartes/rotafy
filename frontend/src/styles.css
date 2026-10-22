@@ -1351,3 +1351,10 @@ dialog.modal-wide {
     margin-top: 0;
   }
 }
+/* Company modules and scoped integration permissions. */
+.modules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+.module-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid var(--border, #d4e2e8); border-radius: 12px; cursor: pointer; }
+.module-option:has(input:checked) { border-color: #0f7773; background: #edf8f7; }
+.module-option input[type="checkbox"] { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 3px; }
+.module-option span { display: grid; gap: 6px; min-width: 0; }
+.module-option small { color: #536b7b; line-height: 1.5; }

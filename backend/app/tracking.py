@@ -455,6 +455,12 @@ async def eligible(db, point, config, kind, now):
 
 
 async def alert_valid(db, item):
+    from app.modules import enabled
+
+    if not await enabled(db, item["company_id"], "tracking") or not await enabled(
+        db, item["company_id"], "whatsapp"
+    ):
+        return False
     config = await settings(db, item["company_id"])
     point = next(
         (
@@ -474,6 +480,8 @@ async def alert_valid(db, item):
 
 
 async def process_alerts(engine, company_id):
+    from app.modules import enabled
+
     async with engine.begin() as db:
         await scope(db, company_id)
         await db.execute(
@@ -494,6 +502,10 @@ async def process_alerts(engine, company_id):
             ),
             {"company": company_id},
         )
+        if not await enabled(db, company_id, "tracking") or not await enabled(
+            db, company_id, "whatsapp"
+        ):
+            return
         config = await settings(db, company_id)
         if not config["departure_enabled"] and not (
             config["enabled"] and config["proximity_enabled"]

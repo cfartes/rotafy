@@ -241,11 +241,17 @@ class _ManifestPageState extends State<ManifestPage> {
           .where((person) => person['status'] == 'waiting')
           .length;
       final journeyStatus = data['journey']?['status'] ?? 'scheduled';
-      final canOperate = data['can_write'] == true && !controller.busy;
+      final canOperate =
+          controller.moduleEnabled('boarding') &&
+          data['can_write'] == true &&
+          !controller.busy;
       final expired = !DateTime.parse(data['expires_at'])
           .isAfter(DateTime.now().toUtc());
       final canWrite =
-          !expired && data['can_write'] == true && !controller.busy;
+          controller.moduleEnabled('boarding') &&
+          !expired &&
+          data['can_write'] == true &&
+          !controller.busy;
       final legs = data['route']?['legs'] as List? ?? [];
       final route = legs.where((l) => l['id'] == data['leg']['id']);
       return Scaffold(
@@ -291,7 +297,8 @@ class _ManifestPageState extends State<ManifestPage> {
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Iniciar viagem'),
                 ),
-              if (journeyStatus == 'in_progress')
+              if (journeyStatus == 'in_progress' &&
+                  controller.moduleEnabled('tracking'))
                 OutlinedButton.icon(
                   onPressed: canOperate ? tracking : null,
                   icon: const Icon(Icons.my_location),

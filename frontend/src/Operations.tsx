@@ -8,6 +8,7 @@ import {
   type PackageSnapshot,
 } from "./PackageItinerary";
 import { type SavedRoute } from "./RouteCatalog";
+import { hasModule, useModules } from "./modules";
 import { CitySelect } from "./components/CitySelect";
 import { VehicleRoute } from "./VehicleRoute";
 import { tripSituation } from "./tripSituation";
@@ -242,7 +243,7 @@ export function Operations({
   const vehicles = useQuery({
     queryKey: ["operations", "vehicles"],
     queryFn: () => api<Vehicle[]>("/vehicles"),
-    enabled: manage,
+    enabled: manage && hasModule(user, "fleet"),
   });
   const packages = useQuery({
     queryKey: ["operations", "packages"],
@@ -252,11 +253,12 @@ export function Operations({
   const crew = useQuery({
     queryKey: ["operations", "crew"],
     queryFn: () => api<Crew[]>("/operations/crew"),
-    enabled: manage,
+    enabled: manage && hasModule(user, "team"),
   });
   const trips = useQuery({
     queryKey: ["operations", "trips"],
     queryFn: () => api<Trip[]>("/trips"),
+    enabled: hasModule(user, "trips"),
   });
   const detail = useQuery({
     queryKey: ["operations", "trip", selected],
@@ -351,7 +353,7 @@ export function Operations({
                     : "Cadastros não consomem a franquia. Arquive para preservar o histórico."}
             </p>
           </div>
-          {manage && (
+          {manage && (tab !== "trips" || hasModule(user, "routes")) && (
             <button
               className="button primary"
               onClick={() =>
@@ -656,7 +658,7 @@ export function Operations({
                           {v.guides.map((g) => g.full_name).join(", ") ||
                             "Sem guia"}
                         </p>
-                        {(manage ||
+                        {hasModule(user, "boarding") && (manage ||
                           (user.role === "driver"
                             ? v.driver_id === user.id ||
                               !!v.drivers?.some((d) => d.id === user.id)
@@ -695,7 +697,7 @@ export function Operations({
                 {error && <Alert>{error}</Alert>}
                 {manage && (
                   <footer className="modal-actions">
-                    {(detail.data.route_snapshot ||
+                    {hasModule(user, "routes") && (detail.data.route_snapshot ||
                       detail.data.package_snapshot) && (
                       <button
                         className="button secondary"
@@ -742,7 +744,7 @@ export function Operations({
                     <button
                       className="button secondary"
                       disabled={
-                        pending || detail.data.mode === "multi_destination"
+                        pending || !hasModule(user, "routes") || detail.data.mode === "multi_destination"
                       }
                       onClick={async () => {
                         setPending(true);
@@ -797,7 +799,7 @@ export function Operations({
                     <button
                       className="button primary"
                       disabled={
-                        pending ||
+                        pending || !hasModule(user, "sales") ||
                         ["completed", "cancelled"].includes(detail.data.status)
                       }
                       onClick={() => {
@@ -1046,9 +1048,11 @@ function TripModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const allowed = useModules();
   const routeList = useQuery({
     queryKey: ["routes"],
     queryFn: () => api<SavedRoute[]>("/routes"),
+    enabled: allowed("routes"),
   });
   const [selectedRoute, setSelectedRoute] = useState<SavedRoute | null>(
     initial?.route_snapshot || null,

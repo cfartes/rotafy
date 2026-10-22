@@ -1,6 +1,7 @@
 export type Role =
   "nexus" | "nexus_staff" | "admin" | "attendant" | "guide" | "driver";
 export type User = {
+  enabled_modules?: string[] | null;
   contract_pending?: boolean;
   financial_blocked?: boolean;
   contact_phone?: string | null;

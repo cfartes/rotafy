@@ -50,16 +50,31 @@ class IntegrationDocsTests(unittest.TestCase):
         )
         self.assertEqual(
             paths["/api/v1/tickets/{ticket_id}/whatsapp"]["post"]["security"],
-            [{"RotafySession": [], "RotafyCSRF": []}],
+            [{"RotafySession": [], "RotafyCSRF": []}, {"OperationalServiceKey": []}],
+        )
+        self.assertEqual(
+            paths["/api/v1/tickets/{ticket_id}/whatsapp"]["post"][
+                "x-required-service-scope"
+            ],
+            "messages:write",
+        )
+        self.assertNotIn(
+            {"OperationalServiceKey": []},
+            paths[
+                "/api/v1"
+                + "/trips/{trip_id}/vehicles/{allocation_id}/legs/{leg_id}/boarding"
+            ]["post"]["security"],
         )
         self.assertEqual(paths["/api/v1/public/mobile-version"]["get"]["security"], [])
 
     def test_payload_examples_validate_against_live_input_models(self):
         from app.boarding import BoardingCommand, JourneyCommand, TicketMessage
+        from app.modules import ModulesUpdate
         from app.operations import Trip, Vehicle
         from app.public_sales import KeyCreate, Paid, Tracking
         from app.reservations import Availability, Reservation, ReservationStatus
         from app.schemas import Login, UserCreate
+        from app.service_keys import KeyCreate as ServiceKeyCreate
         from app.whatsapp import ManualMessage
 
         pairs = {
@@ -79,6 +94,9 @@ class IntegrationDocsTests(unittest.TestCase):
             "paid": Paid,
             "cancel_reservation": ReservationStatus,
             "integration_key": KeyCreate,
+            "create_technical_user": UserCreate,
+            "service_key": ServiceKeyCreate,
+            "company_modules": ModulesUpdate,
         }
         for key, model in pairs.items():
             with self.subTest(example=key):

@@ -366,6 +366,7 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
         "counts": counts,
         "journey": journey,
         "can_write": actor.user["role"] in {"admin", "attendant", "guide", "driver"}
+        and actor.integration_key_id is None
         and trip["status"] in {"scheduled", "in_progress"}
         and journey["status"] != "completed",
     }

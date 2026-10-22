@@ -116,6 +116,32 @@ void main() {
   }
 
   test(
+    'disabled boarding preserves local records and refuses new captures',
+    () async {
+      final data = fixture();
+      final id = await store.prepare('/trips/t/vehicles/v/legs/l', data);
+      await store.enqueue(id, 'p1', 'board', capturedAt: now);
+      final deniedUser = {
+        ...Json.from(data['operator']),
+        'enabled_modules': ['trips', 'tracking'],
+      };
+      final controller = OperationController(
+        FakeApi((m, p, b) async {
+          if (p == '/auth/me') return deniedUser;
+          throw StateError('No boarding command may be sent while disabled.');
+        }),
+        store,
+      )..user = deniedUser;
+      expect(await controller.enqueue(id, 'p1', 'disembark'), false);
+      expect(await controller.synchronize(), false);
+      expect(await store.pendingCount(), 1);
+      expect(controller.error, contains('preservados'));
+      expect(controller.moduleEnabled('boarding'), false);
+      controller.dispose();
+    },
+  );
+
+  test(
     'completed trips hide all cached legs and stay hidden after restart',
     () async {
       final data = fixture();
@@ -123,13 +149,16 @@ void main() {
       await store.prepare('/trips/t/vehicles/v/legs/volta', data);
       final controller = OperationController(
         FakeApi(
-          (m, p, b) async => [
-            {'id': 'trip', 'status': 'completed'},
-            {'id': 'other', 'status': 'scheduled'},
-          ],
+          (m, p, b) async => p == '/auth/me'
+              ? data['operator']
+              : [
+                  {'id': 'trip', 'status': 'completed'},
+                  {'id': 'other', 'status': 'scheduled'},
+                ],
         ),
         store,
       );
+      controller.user = Json.from(data['operator']);
       expect((await controller.trips()).single['id'], 'other');
       expect(controller.prepared, isEmpty);
       final restarted = OperationController(controller.api, store);

@@ -41,6 +41,8 @@ from app.identity import (
 from app.integration_settings import router as integration_settings_router
 from app.logos import router as logos_router
 from app.mobile_releases import router as mobile_releases_router
+from app.modules import configuration as module_configuration
+from app.modules import router as modules_router
 from app.nexus_users import router as nexus_users_router
 from app.observability import Metrics, Telemetry
 from app.onboarding import COMPANY_FIELDS, register_company
@@ -67,6 +69,7 @@ from app.schemas import (
     UserView,
 )
 from app.security import DUMMY_HASH, digest, passwords, verify_password
+from app.service_keys import router as service_keys_router
 from app.tracking import router as tracking_router
 from app.whatsapp import router as whatsapp_router
 from app.whatsapp_connection import invalidate_phone_connection, queue_disconnect
@@ -319,6 +322,9 @@ def create_app(settings: Settings | None = None):
                 result["financial_blocked"] = await financially_blocked(
                     db, company["id"]
                 )
+                result["enabled_modules"] = (
+                    await module_configuration(db, company["id"])
+                )["enabled_modules"]
             return UserView(**result)
 
     @application.post("/api/v1/auth/login", response_model=UserView)
@@ -548,7 +554,11 @@ def create_app(settings: Settings | None = None):
             .mappings()
             .one()
         )
-        return result | {"capabilities": capabilities(result["operational_profile"])}
+        return (
+            result
+            | {"capabilities": capabilities(result["operational_profile"])}
+            | await module_configuration(actor.db, actor.company_id)
+        )
 
     @application.patch("/api/v1/company")
     async def update_branding(payload: BrandingUpdate, actor: Auth, request: Request):
@@ -824,6 +834,8 @@ def create_app(settings: Settings | None = None):
         ]
 
     application.include_router(nexus_users_router)
+    application.include_router(modules_router)
+    application.include_router(service_keys_router)
     application.include_router(company_welcome_router)
     application.include_router(contracts_router)
     application.include_router(billing_router)
