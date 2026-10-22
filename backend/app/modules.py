@@ -118,7 +118,9 @@ def required_modules(path, *, service=False):
         required.add("integrations")
         if path == "/integrations/boarding-events":
             required.add("boarding")
-    elif path.startswith("/company/whatsapp") or path.endswith("/whatsapp"):
+    elif path.startswith(("/company/whatsapp", "/whatsapp/chat")) or path.endswith(
+        "/whatsapp"
+    ):
         required.add("whatsapp")
         if path.startswith("/tickets/"):
             required.add("boarding")
@@ -237,6 +239,11 @@ async def update_modules(company_id: UUID, data: ModulesUpdate, actor: Auth):
         from app.whatsapp_connection import queue_disconnect
 
         await queue_disconnect(actor.db, company_id, actor.user["id"])
+        await actor.db.execute(
+            text("""UPDATE whatsapp_chat_outbox SET status='discarded',body='',error_code='module_disabled'
+            WHERE company_id=:id AND status='pending'"""),
+            {"id": company_id},
+        )
         await actor.db.execute(
             text("""UPDATE whatsapp_outbox SET status='discarded',body='',error_code='module_disabled'
             WHERE company_id=:id AND status='pending' AND NOT nexus_sender"""),

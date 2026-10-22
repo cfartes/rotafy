@@ -265,9 +265,11 @@ async def main():
                     )
                 for company in companies:
                     from app.tracking import process_alerts
+                    from app.whatsapp_chat import process_chat
 
                     await process_alerts(engine, company)
                     await process_company(engine, company)
+                    await process_chat(engine, company)
                 from app.session_discovery import process_discovery
 
                 await process_discovery(engine)

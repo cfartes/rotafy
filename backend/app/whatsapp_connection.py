@@ -72,7 +72,7 @@ async def queue_disconnect(db, company_id, actor_id=None):
     await db.execute(
         text("""UPDATE company_whatsapp_connection q SET
         session_id=COALESCE((SELECT session_id FROM company_whatsapp WHERE company_id=:id),q.session_id),
-        disconnect_requested=true,connect_requested=false,status='disconnecting',
+        disconnect_requested=true,connect_requested=false,restart_requested=false,status='disconnecting',
         version=version+1,error_code=NULL,next_attempt_at=now(),requested_by=:actor
         WHERE company_id=:id"""),
         {"id": company_id, "actor": actor_id},
@@ -639,16 +639,35 @@ async def process_disconnection(engine):
     async with engine.begin() as db:
         await db.execute(text("SELECT pg_advisory_xact_lock(90319002)"))
         await scope(db, job["company_id"])
+        restart = False
+        if not error and job.get("restart_requested"):
+            from app.modules import enabled
+
+            restart = bool(
+                await db.scalar(
+                    text(
+                        "SELECT id FROM companies WHERE id=:id AND is_active AND contact_phone IS NOT NULL"
+                    ),
+                    {"id": job["company_id"]},
+                )
+            )
+            restart = restart and await enabled(db, job["company_id"], "whatsapp")
         updated = await db.scalar(
             text("""UPDATE company_whatsapp_connection SET
             disconnect_requested=:pending,status=:status,error_code=:error,last_checked_at=now(),
-            next_attempt_at=now()+interval '1 minute'
+            next_attempt_at=CASE WHEN :restart THEN now() ELSE now()+interval '1 minute' END,
+            connect_requested=:restart,restart_requested=CASE WHEN :pending THEN restart_requested ELSE false END
             WHERE company_id=:id AND version=:version AND disconnect_requested RETURNING company_id"""),
             {
                 "id": job["company_id"],
                 "version": job["version"],
                 "pending": bool(error),
-                "status": "disconnecting" if error else "disconnected",
+                "status": "disconnecting"
+                if error
+                else "pending"
+                if restart
+                else "disconnected",
+                "restart": restart,
                 "error": error,
             },
         )
