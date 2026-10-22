@@ -81,3 +81,19 @@ A redação do atendimento segue o texto aprovado pelo usuário. O comentário d
 Administradores e atendentes recebem um aviso no painel para avaliações novas com nota até 6 e podem analisá-las em **NPS e satisfação → Equipe de qualidade**. O encaminhamento é no próprio app; não envia informações para um destinatário externo adicional. `GET /api/v1/nps/quality` lista até cinquenta pendências e total; `POST /api/v1/nps/quality/{survey_id}/review` registra análise e responsável, enviando o comentário exibido em `{"comment": "texto exibido"}` ou `{"comment": null}`. Se o comentário mudar durante a análise, retorna 409 e pede conferência; repetir a análise da mesma versão é idempotente. Se o cliente comentar após uma análise, o feedback volta à fila. O histórico das notas não é apagado.
 
 Migração aditiva `0045_service_hours_nps_copy`: versão, colunas de análise e agenda semanal da empresa. Consulte [horários de atendimento](HORARIOS_DE_ATENDIMENTO.md). Os horários afetam o aviso do atendimento humano, sem bloquear pesquisas automáticas.
+
+
+### Diagnóstico ao concluir atendimento
+
+A tela informa se a pesquisa entrou na fila, se o NPS está desabilitado ou se já existe pesquisa para o telefone nos últimos sete dias. A elegibilidade considera a data do encerramento, incluindo atendimentos iniciados antes da ativação do NPS. Telefones ausentes são obtidos do identificador telefônico ou do mapeamento de LID na sessão da empresa. Se não for possível identificar o telefone, o encerramento é revertido com uma mensagem explicativa, permitindo tentar novamente.
+
+A fila mantém intervalo mínimo de três minutos entre convites; conversas automáticas ativas por até dez minutos e atendimentos humanos ainda abertos podem adiar o envio. Não há reenvio automático de pesquisas incertas ou retroativo de atendimentos encerrados.
+
+Diagnóstico de leitura, sem mensagens, chaves ou telefones completos:
+
+```bash
+cd /opt/rotafy-tech
+docker compose --env-file .env.production -f compose.production.yaml exec -T whatsapp python - --company nexus < scripts/diagnose_nps.py
+```
+
+Substitua `nexus` pelo identificador da empresa. Consulte o resultado para identificar o motivo de pesquisas anteriores não enviadas.

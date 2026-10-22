@@ -7,7 +7,7 @@ from sqlalchemy import text
 from app.identity import scope
 from app.security import digest
 
-FAREWELL = "Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar."
+FAREWELL = "Oi! Como não nos falamos há um tempinho, estamos fechando essa conversa por agora. Se precisar de mais alguma coisa, é só nos chamar novamente por aqui, tá bom? Tenha um ótimo dia! ✨"
 
 
 async def schedule_inactivity(engine, company_id):
@@ -26,8 +26,8 @@ async def schedule_inactivity(engine, company_id):
           JOIN company_whatsapp w ON w.company_id=s.company_id AND w.session_id=s.session_id AND w.enabled
           JOIN companies c ON c.id=s.company_id AND c.is_active AND 'whatsapp'=ANY(c.enabled_modules)
           WHERE s.company_id=:company AND s.automatic_open AND s.phone IS NOT NULL
-          AND s.last_activity_at<=clock_timestamp()-interval '1 minute'
-          AND s.last_activity_at>=clock_timestamp()-interval '3 minutes'
+          AND s.last_activity_at<=clock_timestamp()-interval '10 minutes'
+          AND s.last_activity_at>=clock_timestamp()-interval '12 minutes'
           AND (s.handoff_at IS NULL OR s.handoff_closed_at>=s.handoff_at)
           AND NOT EXISTS(SELECT 1 FROM whatsapp_automation_outbox o WHERE o.company_id=s.company_id AND o.session_id=s.session_id
             AND o.chat_id=s.chat_id AND o.kind='command' AND o.status IN ('pending','sending'))
@@ -59,7 +59,7 @@ async def claim_inactivity(db, company, row):
     return await db.scalar(
         text("""UPDATE whatsapp_command_states s SET automatic_open=false,selection=NULL,expires_at=clock_timestamp()
       WHERE s.company_id=:company AND s.session_id=:session AND s.chat_id=:chat AND s.automatic_open
-      AND s.activity_version=:version AND s.last_activity_at<=clock_timestamp()-interval '1 minute'
+      AND s.activity_version=:version AND s.last_activity_at<=clock_timestamp()-interval '10 minutes'
       AND (s.handoff_at IS NULL OR s.handoff_closed_at>=s.handoff_at)
       AND NOT EXISTS(SELECT 1 FROM whatsapp_automation_outbox o WHERE o.company_id=s.company_id AND o.session_id=s.session_id
         AND o.chat_id=s.chat_id AND o.kind='command' AND o.status IN ('pending','sending'))

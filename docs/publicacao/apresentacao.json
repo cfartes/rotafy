@@ -258,10 +258,10 @@
         "Qualquer texto abre um menu com saudação personalizada.",
         "O passageiro consulta seus bilhetes, reserva, veículo e embarque.",
         "A equipe assume a conversa quando necessário.",
-        "O atendimento automático encerra após um minuto de inatividade."
+        "O atendimento automático encerra após dez minutos de inatividade."
       ],
       "footnote": "A consulta utiliza o telefone vinculado à reserva.",
-      "notes": "Informações úteis no próprio WhatsApp. Qualquer texto abre um menu com saudação personalizada. O passageiro consulta seus bilhetes, reserva, veículo e embarque. A equipe assume a conversa quando necessário. O atendimento automático encerra após um minuto de inatividade. A consulta utiliza o telefone vinculado à reserva."
+      "notes": "Informações úteis no próprio WhatsApp. Qualquer texto abre um menu com saudação personalizada. O passageiro consulta seus bilhetes, reserva, veículo e embarque. A equipe assume a conversa quando necessário. O atendimento automático encerra após dez minutos de inatividade. A consulta utiliza o telefone vinculado à reserva."
     },
     {
       "eyebrow": "BILHETE NA HORA DE VIAJAR",

@@ -43,9 +43,9 @@ Uma resposta enviada manualmente pela equipe na tela Conversas WhatsApp também 
 
 ### Encerramento por inatividade
 
-Após 1 minuto sem nova mensagem do cliente, o servidor coloca na fila a despedida:
+Após 10 minutos sem nova mensagem do cliente, o servidor coloca na fila a despedida:
 
-> Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar.
+> Oi! Como não nos falamos há um tempinho, estamos fechando essa conversa por agora. Se precisar de mais alguma coisa, é só nos chamar novamente por aqui, tá bom? Tenha um ótimo dia! ✨
 
 O processamento ocorre no worker, normalmente a cada 5 segundos, e depende da disponibilidade da conexão. O timer é persistido no banco; fechar a tela ou reiniciar o processo não perde o controle. Uma nova mensagem reinicia o prazo e invalida uma despedida ainda não enviada. A sessão, a configuração e a transferência para atendimento humano são novamente verificadas antes de enviar. O envio não utiliza a cadência de 3 minutos dos bilhetes.
 

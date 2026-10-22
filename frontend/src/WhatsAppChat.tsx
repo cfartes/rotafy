@@ -195,7 +195,15 @@ export function WhatsAppChat({
   });
   async function finishHandoff(chat_id: string) {
     try {
-      await post("/whatsapp/chat/handoffs/close", { chat_id });
+      const result = await post<{ nps: string }>("/whatsapp/chat/handoffs/close?include_nps=true", { chat_id });
+      const outcomes: Record<string, string> = {
+        queued: "Atendimento encerrado. Pesquisa NPS na fila de envio; há um intervalo mínimo de 3 minutos entre convites.",
+        cooldown: "Atendimento encerrado. A pesquisa não será repetida: este telefone já possui uma pesquisa criada nos últimos 7 dias.",
+        disabled: "Atendimento encerrado. O NPS de atendimento está desabilitado.",
+        ineligible: "Atendimento encerrado. Esta conversa não é elegível para a pesquisa NPS.",
+        already_closed: "Este atendimento já estava encerrado. Nenhuma pesquisa adicional foi criada.",
+      };
+      setNotice(result ? outcomes[result.nps] || "Atendimento encerrado." : "Atendimento encerrado.");
       await cache.invalidateQueries({ queryKey: ["whatsapp-handoffs"] });
     } catch (e) {
       setError(errorText(e));

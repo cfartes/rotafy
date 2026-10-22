@@ -138,7 +138,7 @@ test("attendant sees and closes requests for human service", async ({
     if (path === "/whatsapp/chat/handoffs/close") {
       closed = route.request().postDataJSON();
       pending = false;
-      await route.fulfill({ status: 204 });
+      await route.fulfill({ json: { nps: "queued" } });
       return;
     }
     await route.fulfill({ json: body });
@@ -158,5 +158,6 @@ test("attendant sees and closes requests for human service", async ({
     .getByRole("button", { name: "Concluir atendimento de +5511999999999" })
     .click();
   await expect.poll(() => closed?.chat_id).toBe("5511999999999@c.us");
+  await expect(page.getByText("Atendimento encerrado. Pesquisa NPS na fila de envio; há um intervalo mínimo de 3 minutos entre convites.")).toBeVisible();
   await expect(page.getByText("Solicitações de atendimento")).toHaveCount(0);
 });

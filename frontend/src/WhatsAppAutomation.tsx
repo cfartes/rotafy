@@ -188,7 +188,7 @@ function AutomationForm({
         passageiro por número.
       </p>
       <p className="muted">
-        Após 1 minuto sem mensagem do cliente, o atendimento automático é
+        Após 10 minutos sem mensagem do cliente, o atendimento automático é
         encerrado com uma despedida. Conversas encaminhadas à equipe não são
         encerradas por esse prazo.
       </p>

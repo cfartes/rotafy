@@ -226,7 +226,7 @@ O administrador da empresa cria as credenciais do parceiro em seu próprio acess
 
 ## 12. Acompanhamento do atendimento e dos bilhetes {#atendimento-bilhetes}
 
-Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bilhetes automáticos**. Atendimento e envio antecipado são independentes e começam desativados. O cliente recebe menu numerado personalizado ao enviar qualquer texto; respostas numéricas selecionam as opções. A despedida ocorre após um minuto sem mensagem, somente no atendimento automático.
+Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bilhetes automáticos**. Atendimento e envio antecipado são independentes e começam desativados. O cliente recebe menu numerado personalizado ao enviar qualquer texto; respostas numéricas selecionam as opções. A despedida ocorre após dez minutos sem mensagem, somente no atendimento automático.
 
 A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
 

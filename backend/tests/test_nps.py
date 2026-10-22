@@ -561,3 +561,121 @@ def test_unattempted_old_invite_receives_the_new_text_before_sending(
     assert sent[-1]["text"].startswith("Sua opinião é fundamental")
     assert survey(owner)["template_version"] == 2
     assert "Sua opinião é fundamental" in survey(owner)["question_score"]
+
+
+@pytest.mark.parametrize("chat", [CHAT, "123456789012345@lid"])
+def test_manual_handoff_missing_phone_is_resolved_and_queued(
+    client, seeded, owner, nps, monkeypatch, chat
+):
+    monkeypatch.setattr(
+        "app.nps_worker.openwa_request", lambda *args: {"phone": CHAT.split("@")[0]}
+    )
+    with owner.begin() as db:
+        db.execute(
+            text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,handoff_at)
+          VALUES(:company,:session,:chat,clock_timestamp())"""),
+            {"company": seeded["a"], "session": nps["session"], "chat": chat},
+        )
+    result = client.post(
+        "/api/v1/whatsapp/chat/handoffs/close?include_nps=true", json={"chat_id": chat}
+    )
+    assert result.status_code == 200, result.text
+    assert result.json() == {"nps": "queued"}
+    assert survey(owner)["phone"] == "+" + CHAT.split("@")[0]
+    assert run(process_nps, seeded["a"], transport=provider([]))
+
+
+def test_handoff_started_before_nps_activation_is_eligible_at_closure(
+    client, seeded, owner, nps
+):
+    with owner.begin() as db:
+        db.execute(
+            text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,phone,handoff_at)
+          VALUES(:company,:session,:chat,:phone,now()-interval '1 day')"""),
+            {
+                "company": seeded["a"],
+                "session": nps["session"],
+                "chat": CHAT,
+                "phone": "+" + CHAT.split("@")[0],
+            },
+        )
+    result = client.post(
+        "/api/v1/whatsapp/chat/handoffs/close?include_nps=true", json={"chat_id": CHAT}
+    )
+    assert result.status_code == 200, result.text
+    assert result.json()["nps"] == "queued"
+
+
+def test_two_different_numbers_receive_service_nps_with_pacing(
+    client, seeded, owner, nps
+):
+    handoff(client, seeded, owner, nps)
+    handoff(client, seeded, owner, nps, chat="5511888888888@c.us")
+    sent = []
+    assert run(process_nps, seeded["a"], transport=provider(sent))
+    assert not run(process_nps, seeded["a"], transport=provider(sent))
+    with owner.begin() as db:
+        db.execute(text("UPDATE nps_dispatch SET next_send_at=now()"))
+    assert run(process_nps, seeded["a"], transport=provider(sent))
+    assert len(sent) == 2
+    assert len({m["chatId"] for m in sent}) == 2
+
+
+def test_unresolved_private_id_keeps_handoff_open_and_reports_error(
+    client, seeded, owner, nps, monkeypatch
+):
+    monkeypatch.setattr("app.nps_worker.openwa_request", lambda *args: {})
+    chat = "123456789012345@lid"
+    with owner.begin() as db:
+        db.execute(
+            text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,handoff_at)
+          VALUES(:company,:session,:chat,clock_timestamp())"""),
+            {"company": seeded["a"], "session": nps["session"], "chat": chat},
+        )
+    result = client.post(
+        "/api/v1/whatsapp/chat/handoffs/close?include_nps=true", json={"chat_id": chat}
+    )
+    assert result.status_code == 503, result.text
+    with owner.connect() as db:
+        assert (
+            db.scalar(
+                text(
+                    "SELECT handoff_closed_at FROM whatsapp_command_states WHERE chat_id=:chat"
+                ),
+                {"chat": chat},
+            )
+            is None
+        )
+        assert db.scalar(text("SELECT count(*) FROM nps_surveys")) == 0
+
+
+def test_read_only_nps_diagnostics_masks_phone(client, seeded, owner, nps, capsys):
+    import asyncio
+    import runpy
+    from pathlib import Path
+
+    handoff(client, seeded, owner, nps)
+    script = runpy.run_path(
+        str(Path(__file__).resolve().parents[2] / "scripts" / "diagnose_nps.py")
+    )
+    asyncio.run(script["main"]("empresa-a"))
+    output = capsys.readouterr().out
+    assert '"check": "closed_handoffs"' in output
+    assert '"survey_exact_match": true' in output
+    assert CHAT.split("@")[0] not in output
+    assert '"phone_hint": "***9999"' in output
+    assert survey(owner)["status"] == "pending"
+
+
+def test_close_explains_cooldown_without_second_invite(client, seeded, owner, nps):
+    handoff(client, seeded, owner, nps)
+    with owner.begin() as db:
+        db.execute(
+            text("UPDATE whatsapp_command_states SET handoff_at=clock_timestamp()")
+        )
+    result = client.post(
+        "/api/v1/whatsapp/chat/handoffs/close?include_nps=true", json={"chat_id": CHAT}
+    )
+    assert result.json() == {"nps": "cooldown"}
+    with owner.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM nps_surveys")) == 1
