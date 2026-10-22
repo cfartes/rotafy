@@ -10,7 +10,7 @@ O recebimento dos comandos é configurado automaticamente no serviço de mensage
 
 | Comando | Resposta |
 | --- | --- |
-| `/menu` | Orientação e comandos habilitados pela empresa |
+| Saudações: “Olá”, “Oi”, “Bom dia”, “Boa tarde”, “Boa noite” e variações | Menu numerado das opções habilitadas |
 | `/qrcode` ou `/bilhete` | Link do bilhete individual, com o QR Code para os trechos contratados |
 | `/onibus` ou `/ônibus` | Veículo, placa e informações de embarque dos trechos reservados |
 | `/dados` | Responsável, passageiros, viagem, valor e situação do pagamento |
@@ -18,6 +18,8 @@ O recebimento dos comandos é configurado automaticamente no serviço de mensage
 | `/atendimento` | Registra solicitação para a equipe na tela Conversas WhatsApp |
 
 Somente reservas confirmadas de viagens ativas vinculadas ao telefone do remetente são consultadas. Nenhum comando recebe um telefone ou código de reserva para consultar outra pessoa. CPF completo e dados de outros clientes não são enviados. Grupos, status, mensagens do próprio número e eventos antigos são ignorados.
+
+As saudações são reconhecidas também dentro de textos maiores, sem diferenciar maiúsculas ou acentos. Cada número do menu aciona o comando apresentado. A correspondência dos números é preservada durante a seleção; opções desabilitadas pelo administrador são recusadas. O atalho `/menu` continua compatível.
 
 Com várias reservas ou passageiros, são apresentadas opções numeradas, válidas por 10 minutos. A escolha é novamente validada contra o telefone e a reserva atual. Volumes grandes são encaminhados para atendimento humano. Se o serviço não conseguir resolver o telefone real de um identificador privado do WhatsApp, os dados não são liberados.
 

@@ -8,7 +8,12 @@ from uuid import uuid4
 import pytest
 from app.billing.calendar import utc_now
 from app.integration_secrets import decrypt
-from app.whatsapp_automation import process_automation, schedule_tickets, sync_webhook
+from app.whatsapp_automation import (
+    parse_command,
+    process_automation,
+    schedule_tickets,
+    sync_webhook,
+)
 from conftest import PLATFORM_URL, login
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -186,7 +191,17 @@ def test_menu_selection_qrcode_preserves_issued_tokens_and_human_handoff(
     issued = issue(client, reservation)
     token = issued[0]["token"]
     sent = []
-    receive(client, seeded, automation, body="/qrcode")
+    receive(
+        client,
+        seeded,
+        automation,
+        body="Olá, bom dia! Gostaria de consultar meu bilhete.",
+    )
+    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    assert "1. Bilhete de embarque" in sent[-1]["text"]
+    assert "5. Falar com a equipe" in sent[-1]["text"]
+    assert "/qrcode" not in sent[-1]["text"]
+    receive(client, seeded, automation, body="1")
     run(process_automation, seeded["a"], BASE, transport=provider(sent))
     assert "Qual passageiro?" in sent[-1]["text"]
     receive(client, seeded, automation, body="1")
@@ -510,3 +525,76 @@ def test_all_companies_share_the_same_ticket_admission_clock(
     assert run(process_automation, seeded["b"], BASE, transport=provider(sent))
     assert len(sent) == 2 and "Passageiro B" in sent[-1]["text"]
     assert sent[-1]["chatId"] == "5511888888888@c.us"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Bom dia",
+        "boa tarde!",
+        "Boa noite, preciso de ajuda",
+        "Olá",
+        "Olaaa 😊",
+        "Oiii",
+        "Oiê, quero meu bilhete",
+        "Opa!",
+        "E aí, tudo bem?",
+        "Gostaria de uma informação. Bom dia a todos!",
+        "BOA TARDE, PESSOAL",
+        "bomdia",
+        "boas noites",
+        "Por favor, olá, me ajudem",
+    ],
+)
+def test_greetings_inside_larger_messages_open_menu(message):
+    assert parse_command(message) == "menu"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "apoio",
+        "Goiânia",
+        "boate",
+        "joia",
+        "ônibus",
+        "Preciso do bilhete",
+        "foi entregue",
+        "123",
+        "reembolso",
+    ],
+)
+def test_unrelated_words_do_not_open_menu(message):
+    assert parse_command(message) is None
+
+
+def test_numbered_menu_keeps_its_mapping_and_rechecks_disabled_options(
+    client, seeded, owner, automation
+):
+    trip = setup(client, seeded)
+    reserve(client, trip, family(name="Maria", size=1))
+    data = automation["data"] | {"commands": ["dados", "atendimento"]}
+    assert (
+        client.put("/api/v1/company/whatsapp/automation", json=data).status_code == 200
+    )
+    sent = []
+    receive(client, seeded, automation, body="Boa tarde! Gostaria de uma informação")
+    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    assert (
+        "1. Minha reserva" in sent[-1]["text"]
+        and "2. Falar com a equipe" in sent[-1]["text"]
+    )
+    receive(client, seeded, automation, body="1")
+    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    assert "Maria Pessoa 0" in sent[-1]["text"]
+    assert (
+        client.put(
+            "/api/v1/company/whatsapp/automation",
+            json=data | {"commands": ["atendimento"]},
+        ).status_code
+        == 200
+    )
+    receive(client, seeded, automation, body="1")
+    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    assert "não está disponível" in sent[-1]["text"]
+    assert client.get("/api/v1/whatsapp/chat/handoffs").json() == []

@@ -6,6 +6,7 @@ import hmac
 import json
 import re
 import secrets
+import unicodedata
 from datetime import datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -191,6 +192,14 @@ def parse_command(value):
     value = value.strip().lower()
     if re.fullmatch(r"[1-9][0-9]?", value):
         return value
+    normalized = "".join(
+        c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c)
+    )
+    if re.search(
+        r"\b(?:bo+m+\s*di+a+|bo+a+s?\s*ta+rde+s?|bo+a+s?\s*no+i+te+s?|o+l+a+|o+i+(?:e+)?|o+pa+|e\s+ai+|tudo\s+b(?:em|om))\b",
+        normalized,
+    ):
+        return "menu"
     if not re.fullmatch(r"/[a-zô]{2,20}", value):
         return None
     name = value[1:]
@@ -454,24 +463,36 @@ async def command_reply(db, company, session, chat, phone, command, config, base
             or state["phone"] != phone
             or not state["selection"]
         ):
-            return "A seleção expirou. Envie /menu para começar novamente."
+            return 'A seleção expirou. Envie "Olá" para começar novamente.'
         selection = state["selection"]
         index = int(command) - 1
         if not 0 <= index < len(selection["options"]):
-            return (
-                "Opção inválida. Responda com um dos números informados ou envie /menu."
-            )
+            return 'Opção inválida. Responda com um dos números informados ou envie "Olá" para abrir o menu.'
         command = selection["command"]
         picked = selection["options"][index]
+        if command == "menu":
+            command = picked["command"]
+            picked = None
     if command == "menu":
-        await set_selection(db, company, session, chat, phone, None)
+        options = [{"command": c} for c in LABELS if c in config["commands"]]
+        await set_selection(
+            db, company, session, chat, phone, {"command": "menu", "options": options}
+        )
         return (
             config["greeting"]
             + "\n\n"
-            + "\n".join(f"/{c} — {LABELS[c]}" for c in config["commands"])
+            + "\n".join(
+                f"{i + 1}. {LABELS[option['command']]}"
+                for i, option in enumerate(options)
+            )
+            + (
+                '\n\nResponda apenas com o número da opção. Para abrir este menu novamente, envie "Olá".'
+                if options
+                else "Nenhuma opção automática está disponível no momento. Fale com a equipe nesta conversa."
+            )
         )
     if command not in config["commands"]:
-        return "Este comando não está disponível. Envie /menu para consultar as opções."
+        return 'Esta opção não está disponível. Envie "Olá" para consultar o menu atualizado.'
     if command == "atendimento":
         await set_selection(db, company, session, chat, phone, None)
         await db.execute(

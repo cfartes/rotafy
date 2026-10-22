@@ -176,9 +176,11 @@ function AutomationForm({
         Habilitar comandos automáticos no WhatsApp
       </label>
       <p className="muted">
-        O passageiro envia /menu para ver as opções. As consultas usam o
-        telefone da reserva; quando necessário, ele escolhe a reserva ou
-        passageiro por número.
+        Saudações como “Olá”, “Oi”, “Bom dia”, “Boa tarde” e “Boa noite”,
+        inclusive dentro de mensagens maiores, abrem um menu numerado. O
+        passageiro responde com o número da opção. As consultas usam o telefone
+        da reserva; quando necessário, ele escolhe a reserva ou passageiro por
+        número.
       </p>
       {value.commands_enabled && (
         <>
