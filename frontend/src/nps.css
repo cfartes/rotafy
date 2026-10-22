@@ -1,0 +1,112 @@
+.nps-page {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+.nps-settings {
+  padding: 24px;
+}
+.nps-settings summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.nps-settings form {
+  margin-top: 20px;
+}
+.nps-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nps-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.nps-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 24px;
+}
+.nps-filters .button {
+  align-self: end;
+}
+.nps-explanation {
+  padding: 0 24px 18px;
+}
+.nps-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.nps-card {
+  background: white;
+  border: 1px solid #d8e4ec;
+  border-top: 4px solid #0c7a76;
+  border-radius: 14px;
+  padding: 24px;
+}
+.nps-card h3 {
+  font-size: 15px;
+  margin: 0 0 14px;
+}
+.nps-card strong {
+  font-size: 32px;
+  color: #0c7a76;
+}
+.nps-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.nps-comparison article {
+  padding: 20px;
+}
+.nps-table {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.nps-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+.nps-table th,
+.nps-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 16px;
+  border-bottom: 1px solid #d8e4ec;
+}
+.nps-table td {
+  max-width: 320px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.nps-actions,
+.nps-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.nps-pagination {
+  padding: 20px;
+}
+@media (max-width: 800px) {
+  .nps-filters,
+  .nps-cards,
+  .nps-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .nps-filters,
+  .nps-comparison {
+    grid-template-columns: 1fr;
+  }
+  .nps-card {
+    padding: 16px;
+  }
+}

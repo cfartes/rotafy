@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field } from "./components/ui";
 import { WhatsAppAutomation } from "./WhatsAppAutomation";
+import { NpsSettings } from "./Nps";
 
 type Connection = {
   phone: string | null;
@@ -332,6 +333,7 @@ export function CompanyWhatsApp() {
       )}
     </section>
     <WhatsAppAutomation />
+    <NpsSettings />
     </>
   );
 }

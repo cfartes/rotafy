@@ -174,10 +174,19 @@ async def close_handoff(data: CloseHandoff, request: Request, actor: Auth):
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
         await db.execute(
+            text("SELECT id FROM companies WHERE id=:id FOR UPDATE"),
+            {"id": actor.company_id},
+        )
+        closed = await db.execute(
             text("""UPDATE whatsapp_command_states SET handoff_closed_at=now(),automatic_open=false,selection=NULL WHERE company_id=:company
-          AND chat_id=:chat AND session_id=(SELECT session_id FROM company_whatsapp WHERE company_id=:company)"""),
+          AND chat_id=:chat AND session_id=(SELECT session_id FROM company_whatsapp WHERE company_id=:company)
+          AND handoff_at IS NOT NULL AND (handoff_closed_at IS NULL OR handoff_closed_at<handoff_at) RETURNING chat_id"""),
             {"company": actor.company_id, "chat": data.chat_id},
         )
+        from app.nps_worker import service_survey
+
+        if closed.scalar_one_or_none():
+            await service_survey(db, actor.company_id, data.chat_id, actor.user["id"])
         await audit(
             db,
             actor.company_id,
@@ -235,7 +244,15 @@ async def webhook(company_id: UUID, request: Request):
         if (
             not isinstance(event, dict)
             or event.get("event") != "message.received"
-            or not config["commands_enabled"]
+            or not (
+                config["commands_enabled"]
+                or await db.scalar(
+                    text(
+                        "SELECT 1 FROM nps_settings WHERE company_id=:id AND (service_enabled OR trip_enabled)"
+                    ),
+                    {"id": company_id},
+                )
+            )
         ):
             return {"received": True}
         try:
@@ -298,6 +315,18 @@ async def webhook(company_id: UUID, request: Request):
         if not await db.scalar(
             text("SELECT id FROM companies WHERE id=:id AND is_active FOR KEY SHARE"),
             {"id": company_id},
+        ):
+            return {"received": True}
+        from app.nps_worker import receive_answer
+
+        if await receive_answer(
+            db,
+            company_id,
+            session["session_id"],
+            chat,
+            identifier,
+            data["body"],
+            occurred,
         ):
             return {"received": True}
         if not await db.scalar(
@@ -383,7 +412,7 @@ async def sync_webhook(engine, company_id, base_url, transport=openwa_request):
             (
                 await db.execute(
                     text(
-                        "SELECT * FROM whatsapp_automation WHERE company_id=:company AND commands_enabled AND (next_sync_at<=now() OR webhook_session IS DISTINCT FROM (SELECT session_id FROM company_whatsapp WHERE company_id=:company)) FOR UPDATE"
+                        "SELECT * FROM whatsapp_automation WHERE company_id=:company AND (commands_enabled OR EXISTS(SELECT 1 FROM nps_settings WHERE company_id=:company AND (service_enabled OR trip_enabled))) AND (next_sync_at<=now() OR webhook_session IS DISTINCT FROM (SELECT session_id FROM company_whatsapp WHERE company_id=:company)) FOR UPDATE"
                     ),
                     {"company": company_id},
                 )

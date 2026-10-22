@@ -118,9 +118,9 @@ def required_modules(path, *, service=False):
         required.add("integrations")
         if path == "/integrations/boarding-events":
             required.add("boarding")
-    elif path.startswith(("/company/whatsapp", "/whatsapp/chat")) or path.endswith(
-        "/whatsapp"
-    ):
+    elif path.startswith(
+        ("/company/whatsapp", "/whatsapp/chat", "/nps/")
+    ) or path.endswith("/whatsapp"):
         required.add("whatsapp")
         if path.startswith("/tickets/"):
             required.add("boarding")

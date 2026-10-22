@@ -316,6 +316,19 @@
       "notes": "Módulos adequados ao que a empresa precisa. WhatsApp e bilhetes podem complementar um sistema de vendas parceiro. Dados sincronizados apoiam a comunicação e a operação da viagem. Motorista e guia registram embarque e desembarque no Android. Permissões por empresa e credenciais de integração controladas. O conjunto de módulos depende da configuração da empresa."
     },
     {
+      "eyebrow": "A VOZ DO CLIENTE",
+      "title": "Ouça. Meça.\nMelhore a experiência.",
+      "lead": "NPS integrado ao atendimento e às viagens.",
+      "points": [
+        "Pesquisa pelo WhatsApp após atendimento humano e viagem concluída.",
+        "Nota de recomendação e comentário opcional, sem abrir links.",
+        "Indicadores de satisfação, promotores, neutros e detratores.",
+        "Filtros por período e viagem, com relatórios CSV e PDF."
+      ],
+      "footnote": "Pesquisas habilitadas pelo administrador; cada avaliação pertence à empresa.",
+      "notes": "O cliente avalia pelo próprio WhatsApp. A equipe consulta indicadores e comentários para orientar melhorias."
+    },
+    {
       "eyebrow": "NEXUS ROTAFY",
       "title": "Uma operação mais tranquila,\na cada viagem.",
       "lead": "Planejamento, atendimento e equipe conectados.",

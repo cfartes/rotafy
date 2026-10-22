@@ -265,6 +265,7 @@ async def main():
                     )
                 for company in companies:
                     Path("/tmp/rotafy-whatsapp-health").touch()
+                    from app.nps_worker import process_nps, schedule_surveys
                     from app.tracking import process_alerts
                     from app.whatsapp_automation import (
                         process_automation,
@@ -284,6 +285,8 @@ async def main():
                     await schedule_tickets(engine, company)
                     await schedule_inactivity(engine, company)
                     await process_automation(engine, company, base_url)
+                    await schedule_surveys(engine, company)
+                    await process_nps(engine, company)
                 from app.session_discovery import process_discovery
 
                 await process_discovery(engine)
