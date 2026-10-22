@@ -844,6 +844,14 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
                     )
                     return True
                 phone = "+" + digits
+                from app.whatsapp_identity import reservation_phone
+
+                async def lookup(path):
+                    return await provider_call(transport, key, path)
+
+                phone = await reservation_phone(
+                    db, company_id, row["session_id"], row["chat_id"], phone, lookup
+                )
                 body = await command_reply(
                     db,
                     company_id,

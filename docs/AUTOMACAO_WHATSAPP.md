@@ -19,6 +19,18 @@ O recebimento dos comandos é configurado automaticamente no serviço de mensage
 
 Somente reservas confirmadas de viagens ativas vinculadas ao telefone do remetente são consultadas. Nenhum comando recebe um telefone ou código de reserva para consultar outra pessoa. CPF completo e dados de outros clientes não são enviados. Grupos, status, mensagens do próprio número e eventos antigos são ignorados.
 
+A busca prioriza o telefone exato. Para celulares brasileiros apresentados com ou sem o nono dígito, a variante cadastrada só é utilizada após confirmação de que os identificadores retornados pelo OpenWA representam o mesmo contato. Não há busca por sufixo, aproximação ou telefone de outra empresa. Falhas nessa confirmação adiam a consulta, sem enviar uma resposta falsa de reserva inexistente.
+
+Para diagnosticar uma consulta que não encontra a reserva, após atualizar a VPS, execute na pasta da instalação, substituindo `IDENTIFICADOR` e `TELEFONE_COM_DDI`:
+
+```bash
+docker compose --env-file .env.production -f compose.production.yaml exec -T whatsapp \
+  python - --company IDENTIFICADOR --phone TELEFONE_COM_DDI \
+  < scripts/diagnose_whatsapp_commands.py
+```
+
+O diagnóstico usa apenas consultas ao banco e GETs no serviço, sem enviar mensagens. Mostra se há reserva ativa, se o telefone recebido coincide com o cadastrado, se há uma variante brasileira confirmada e se a sessão pertence à empresa atual. Os números são mascarados; chaves, links e mensagens não são exibidos.
+
 As saudações são reconhecidas também dentro de textos maiores, sem diferenciar maiúsculas ou acentos. Cada número do menu aciona o comando apresentado. A correspondência dos números é preservada durante a seleção; opções desabilitadas pelo administrador são recusadas. O atalho `/menu` continua compatível.
 
 Com várias reservas ou passageiros, são apresentadas opções numeradas, válidas por 10 minutos. A escolha é novamente validada contra o telefone e a reserva atual. Volumes grandes são encaminhados para atendimento humano. Se o serviço não conseguir resolver o telefone real de um identificador privado do WhatsApp, os dados não são liberados.
