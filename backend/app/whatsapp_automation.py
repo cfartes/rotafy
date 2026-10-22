@@ -6,7 +6,6 @@ import hmac
 import json
 import re
 import secrets
-import unicodedata
 from datetime import datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -37,14 +36,13 @@ LABELS = {
     "embarque": "Local e horário de embarque",
     "atendimento": "Falar com a equipe",
 }
-ALIASES = {"bilhete": "qrcode", "ônibus": "onibus"}
 
 
 class Configuration(Input):
     commands_enabled: bool = Field(strict=True)
     tickets_enabled: bool = Field(strict=True)
     commands: list[str] = Field(max_length=5)
-    greeting: str = Field(min_length=1, max_length=500)
+    greeting: str = Field(max_length=500)
 
 
 async def configuration(db, company_id):
@@ -59,18 +57,21 @@ async def configuration(db, company_id):
         .mappings()
         .first()
     )
-    return (
+    result = (
         dict(found)
         if found
         else {
             "commands_enabled": False,
             "tickets_enabled": False,
             "commands": sorted(COMMANDS),
-            "greeting": "Como podemos ajudar? Escolha um dos comandos abaixo.",
+            "greeting": "",
             "webhook_status": "not_started",
             "webhook_error": None,
         }
     )
+    if result["greeting"] == "Como podemos ajudar? Escolha um dos comandos abaixo.":
+        result["greeting"] = ""
+    return result
 
 
 @router.get("/company/whatsapp/automation")
@@ -113,7 +114,7 @@ async def save_configuration(data: Configuration, request: Request, actor: Auth)
         await db.execute(
             text("""UPDATE whatsapp_automation_outbox SET status='discarded',body='',error_code='automation_disabled'
           WHERE company_id=:company AND status='pending' AND
-          ((kind='command' AND NOT :commands) OR (kind='ticket' AND NOT :tickets))"""),
+          ((kind IN ('command','inactivity') AND NOT :commands) OR (kind='ticket' AND NOT :tickets))"""),
             {
                 "company": actor.company_id,
                 "commands": data.commands_enabled,
@@ -123,7 +124,7 @@ async def save_configuration(data: Configuration, request: Request, actor: Auth)
         if not data.commands_enabled:
             await db.execute(
                 text(
-                    "UPDATE whatsapp_command_states SET selection=NULL,expires_at=now() WHERE company_id=:company"
+                    "UPDATE whatsapp_command_states SET selection=NULL,expires_at=now(),automatic_open=false WHERE company_id=:company"
                 ),
                 {"company": actor.company_id},
             )
@@ -173,7 +174,7 @@ async def close_handoff(data: CloseHandoff, request: Request, actor: Auth):
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
         await db.execute(
-            text("""UPDATE whatsapp_command_states SET handoff_closed_at=now() WHERE company_id=:company
+            text("""UPDATE whatsapp_command_states SET handoff_closed_at=now(),automatic_open=false,selection=NULL WHERE company_id=:company
           AND chat_id=:chat AND session_id=(SELECT session_id FROM company_whatsapp WHERE company_id=:company)"""),
             {"company": actor.company_id, "chat": data.chat_id},
         )
@@ -190,20 +191,11 @@ def parse_command(value):
     if not isinstance(value, str):
         return None
     value = value.strip().lower()
+    if not value:
+        return None
     if re.fullmatch(r"[1-9][0-9]?", value):
         return value
-    normalized = "".join(
-        c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c)
-    )
-    if re.search(
-        r"\b(?:bo+m+\s*di+a+|bo+a+s?\s*ta+rde+s?|bo+a+s?\s*no+i+te+s?|o+l+a+|o+i+(?:e+)?|o+pa+|e\s+ai+|tudo\s+b(?:em|om))\b",
-        normalized,
-    ):
-        return "menu"
-    if not re.fullmatch(r"/[a-zô]{2,20}", value):
-        return None
-    name = value[1:]
-    return ALIASES.get(name, name)
+    return "menu"
 
 
 @router.post("/webhooks/openwa/{company_id}")
@@ -301,6 +293,44 @@ async def webhook(company_id: UUID, request: Request):
             {"company": company_id, "session": session["session_id"], "key": dedupe},
         ):
             return {"received": True}
+        # Take the company lock before conversation rows, matching operator actions.
+        # KEY SHARE permits the worker's readiness read and prevents FK/state deadlocks.
+        if not await db.scalar(
+            text("SELECT id FROM companies WHERE id=:id AND is_active FOR KEY SHARE"),
+            {"id": company_id},
+        ):
+            return {"received": True}
+        if not await db.scalar(
+            text(
+                "SELECT commands_enabled FROM whatsapp_automation WHERE company_id=:id"
+            ),
+            {"id": company_id},
+        ):
+            return {"received": True}
+        state = (
+            (
+                await db.execute(
+                    text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,last_activity_at,activity_version,automatic_open)
+          VALUES(:company,:session,:chat,clock_timestamp(),1,true)
+          ON CONFLICT(company_id,session_id,chat_id) DO UPDATE SET
+          selection=CASE WHEN NOT whatsapp_command_states.automatic_open OR whatsapp_command_states.last_activity_at<clock_timestamp()-interval '1 minute' THEN NULL ELSE whatsapp_command_states.selection END,
+          last_activity_at=clock_timestamp(),activity_version=whatsapp_command_states.activity_version+1,
+          automatic_open=NOT (whatsapp_command_states.handoff_at IS NOT NULL AND (whatsapp_command_states.handoff_closed_at IS NULL OR whatsapp_command_states.handoff_closed_at<whatsapp_command_states.handoff_at))
+          RETURNING activity_version,selection,automatic_open"""),
+                    {
+                        "company": company_id,
+                        "session": session["session_id"],
+                        "chat": chat,
+                    },
+                )
+            )
+            .mappings()
+            .one()
+        )
+        if not state["automatic_open"]:
+            return {"received": True}
+        if command.isdecimal() and not state["selection"]:
+            command = "menu"
         if not await db.scalar(
             text("SELECT allow_auth_attempt(:key,10,60)"),
             {"key": digest(f"bot:{company_id}:{chat}")},
@@ -312,8 +342,8 @@ async def webhook(company_id: UUID, request: Request):
         ):
             return {"received": True}
         await db.execute(
-            text("""INSERT INTO whatsapp_automation_outbox(id,company_id,session_id,dedupe_key,kind,chat_id,command,expires_at)
-          VALUES(:id,:company,:session,:key,'command',:chat,:command,now()+interval '30 minutes') ON CONFLICT DO NOTHING"""),
+            text("""INSERT INTO whatsapp_automation_outbox(id,company_id,session_id,dedupe_key,kind,chat_id,command,expires_at,activity_version)
+          VALUES(:id,:company,:session,:key,'command',:chat,:command,now()+interval '30 minutes',:version) ON CONFLICT DO NOTHING"""),
             {
                 "id": uuid4(),
                 "company": company_id,
@@ -321,6 +351,7 @@ async def webhook(company_id: UUID, request: Request):
                 "key": dedupe,
                 "chat": chat,
                 "command": command,
+                "version": state["activity_version"],
             },
         )
     return {"received": True}
@@ -442,7 +473,9 @@ async def set_selection(db, company, session, chat, phone, value):
     )
 
 
-async def command_reply(db, company, session, chat, phone, command, config, base_url):
+async def command_reply(
+    db, company, session, chat, phone, command, config, base_url, profile_lookup=None
+):
     state = (
         (
             await db.execute(
@@ -456,6 +489,15 @@ async def command_reply(db, company, session, chat, phone, command, config, base
         .first()
     )
     picked = None
+    if (
+        state
+        and state["handoff_at"]
+        and (
+            not state["handoff_closed_at"]
+            or state["handoff_closed_at"] < state["handoff_at"]
+        )
+    ):
+        return None
     if command.isdecimal():
         if (
             not state
@@ -463,30 +505,56 @@ async def command_reply(db, company, session, chat, phone, command, config, base
             or state["phone"] != phone
             or not state["selection"]
         ):
-            return 'A seleção expirou. Envie "Olá" para começar novamente.'
-        selection = state["selection"]
-        index = int(command) - 1
-        if not 0 <= index < len(selection["options"]):
-            return 'Opção inválida. Responda com um dos números informados ou envie "Olá" para abrir o menu.'
-        command = selection["command"]
-        picked = selection["options"][index]
-        if command == "menu":
-            command = picked["command"]
-            picked = None
+            command = "menu"
+        else:
+            selection = state["selection"]
+            index = int(command) - 1
+            if not 0 <= index < len(selection["options"]):
+                return "Opção inválida. Responda com um dos números informados ou envie qualquer texto para abrir o menu."
+            command = selection["command"]
+            picked = selection["options"][index]
+            if command == "menu":
+                command = picked["command"]
+                picked = None
     if command == "menu":
+        name = await db.scalar(
+            text("""SELECT r.contact_name FROM reservations r JOIN trips t ON t.id=r.trip_id
+          WHERE r.company_id=:company AND r.phone=:phone AND r.status='confirmed' AND t.status IN ('scheduled','in_progress')
+          ORDER BY t.starts_at,r.created_at,r.id LIMIT 1"""),
+            {"company": company, "phone": phone},
+        )
+        if not name and profile_lookup:
+            try:
+                profile = await profile_lookup()
+                name = profile.get("pushName") if isinstance(profile, dict) else None
+            except (HTTPException, HTTPError, URLError, OSError, ValueError):
+                name = None
+        name = (
+            re.sub(r"[\r\n\t*_~`]+", " ", name).strip()[:100]
+            if isinstance(name, str)
+            else ""
+        )
+        greeting = (
+            f"Olá, {name}, em que podemos ajudar?"
+            if name
+            else "Olá, em que podemos ajudar?"
+        )
+        extra = config["greeting"].strip()
+        if extra and extra != "Como podemos ajudar? Escolha um dos comandos abaixo.":
+            greeting += "\n" + extra
         options = [{"command": c} for c in LABELS if c in config["commands"]]
         await set_selection(
             db, company, session, chat, phone, {"command": "menu", "options": options}
         )
         return (
-            config["greeting"]
+            greeting
             + "\n\n"
             + "\n".join(
                 f"{i + 1}. {LABELS[option['command']]}"
                 for i, option in enumerate(options)
             )
             + (
-                '\n\nResponda apenas com o número da opção. Para abrir este menu novamente, envie "Olá".'
+                "\n\nResponda apenas com o número da opção. Qualquer outro texto abre este menu novamente."
                 if options
                 else "Nenhuma opção automática está disponível no momento. Fale com a equipe nesta conversa."
             )
@@ -497,7 +565,7 @@ async def command_reply(db, company, session, chat, phone, command, config, base
         await set_selection(db, company, session, chat, phone, None)
         await db.execute(
             text(
-                """UPDATE whatsapp_command_states SET handoff_at=now() WHERE company_id=:company AND session_id=:session AND chat_id=:chat"""
+                """UPDATE whatsapp_command_states SET handoff_at=now(),automatic_open=false WHERE company_id=:company AND session_id=:session AND chat_id=:chat"""
             ),
             {"company": company, "session": session, "chat": chat},
         )
@@ -734,13 +802,14 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
             {"company": company_id},
         )
         await db.execute(
-            text("SELECT id FROM companies WHERE id=:id FOR UPDATE"), {"id": company_id}
+            text("SELECT id FROM companies WHERE id=:id FOR NO KEY UPDATE"),
+            {"id": company_id},
         )
         row = (
             (
                 await db.execute(
                     text("""SELECT * FROM whatsapp_automation_outbox WHERE company_id=:company AND status='pending' AND next_attempt_at<=now()
-          ORDER BY CASE WHEN kind='command' THEN 0 ELSE 1 END,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED"""),
+          ORDER BY CASE WHEN kind='command' THEN 0 WHEN kind='inactivity' THEN 1 ELSE 2 END,created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED"""),
                     {"company": company_id},
                 )
             )
@@ -764,7 +833,7 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
         valid = (
             valid
             and config[
-                "commands_enabled" if row["kind"] == "command" else "tickets_enabled"
+                "commands_enabled" if row["kind"] != "ticket" else "tickets_enabled"
             ]
         )
         if row["kind"] == "ticket":
@@ -861,7 +930,33 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
                     row["command"],
                     config,
                     base_url,
+                    profile_lookup=lambda: provider_call(
+                        transport,
+                        key,
+                        f"/sessions/{row['session_id']}/contacts/{quote(row['chat_id'], safe='')}",
+                    ),
                 )
+                if body is None:
+                    await db.execute(
+                        text(
+                            "UPDATE whatsapp_automation_outbox SET status='discarded',error_code='human_handoff',body='' WHERE id=:id"
+                        ),
+                        {"id": row["id"]},
+                    )
+                    return True
+                recipient = row["chat_id"]
+            elif row["kind"] == "inactivity":
+                from app.whatsapp_conversations import FAREWELL, claim_inactivity
+
+                if not await claim_inactivity(db, company_id, row):
+                    await db.execute(
+                        text(
+                            "UPDATE whatsapp_automation_outbox SET status='discarded',error_code='activity_resumed',body='' WHERE id=:id"
+                        ),
+                        {"id": row["id"]},
+                    )
+                    return True
+                body = FAREWELL
                 recipient = row["chat_id"]
             else:
                 contact = await provider_call(

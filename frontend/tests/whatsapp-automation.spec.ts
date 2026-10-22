@@ -54,6 +54,14 @@ test("admin opts in to commands and paced 24-hour ticket delivery", async ({
           status: "attention",
           error_code: "ticket_requires_reissue",
         },
+        {
+          id: "farewell",
+          kind: "inactivity",
+          passenger_name: null,
+          trip_name: null,
+          status: "sent",
+          error_code: null,
+        },
       ];
     await route.fulfill({ json: body });
   });
@@ -63,11 +71,16 @@ test("admin opts in to commands and paced 24-hour ticket delivery", async ({
     name: "Habilitar comandos automáticos no WhatsApp",
   });
   await expect(commands).not.toBeChecked();
+  await expect(
+    page.getByText("Encerramento por inatividade", { exact: true }),
+  ).toBeVisible();
   await commands.check();
   await page
     .getByRole("textbox", { name: "Mensagem do menu" })
     .fill("Olá! Como podemos ajudar?");
-  await page.getByRole("checkbox", { name: /^\/dados/ }).uncheck();
+  await page
+    .getByRole("checkbox", { name: "Minha reserva", exact: true })
+    .uncheck();
   await page
     .getByRole("checkbox", { name: /Enviar bilhetes automaticamente 24 horas/ })
     .check();

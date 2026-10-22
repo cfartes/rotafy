@@ -8,6 +8,7 @@ from test_whatsapp_automation import (
     BASE,
     provider,
     receive,
+    request_option,
     run,
 )
 from test_whatsapp_automation import (
@@ -92,8 +93,7 @@ def test_unverified_alias_cannot_expose_a_reservation(
             }
         return fallback(key, path, body)
 
-    receive(client, seeded, automation, body="/dados", sender=chat)
-    run(process_automation, seeded["a"], BASE, transport=transport)
+    request_option(client, seeded, automation, sent, sender=chat, transport=transport)
     assert "Não encontramos" in sent[-1]["text"]
     assert "PRIVATE_PASSENGER" not in sent[-1]["text"]
 
@@ -116,8 +116,14 @@ def test_phone_lookup_failure_defers_without_claiming_reservation_missing(
             raise TimeoutError("mock unavailable")
         return fallback(key, path, body)
 
-    receive(client, seeded, automation, body="/dados", sender="554799999999@c.us")
-    run(process_automation, seeded["a"], BASE, transport=transport)
+    request_option(
+        client,
+        seeded,
+        automation,
+        sent,
+        sender="554799999999@c.us",
+        transport=transport,
+    )
     assert not sent
     with owner.connect() as db:
         assert (
@@ -152,7 +158,13 @@ def test_exact_phone_is_preferred_without_merging_distinct_reservations(
         assert "/contacts/check/" not in path
         return fallback(key, path, body)
 
-    receive(client, seeded, automation, body="/dados", sender="554799999999@c.us")
-    run(process_automation, seeded["a"], BASE, transport=transport)
+    request_option(
+        client,
+        seeded,
+        automation,
+        sent,
+        sender="554799999999@c.us",
+        transport=transport,
+    )
     assert "Original Pessoa 0" in sent[-1]["text"]
     assert "OTHER_PRIVATE_RESERVATION" not in sent[-1]["text"]

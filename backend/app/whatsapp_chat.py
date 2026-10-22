@@ -421,6 +421,26 @@ async def send(data: Send, request: Request, actor: Auth):
         await audit(
             db, actor.company_id, actor.user["id"], "whatsapp.chat_queued", identifier
         )
+        if not data.chat_id.endswith("@g.us"):
+            await db.execute(
+                text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,handoff_at,automatic_open)
+              SELECT :company,:session,:chat,clock_timestamp(),false FROM whatsapp_automation WHERE company_id=:company AND commands_enabled
+              ON CONFLICT(company_id,session_id,chat_id) DO UPDATE SET handoff_at=clock_timestamp(),automatic_open=false,selection=NULL"""),
+                {
+                    "company": actor.company_id,
+                    "session": session["session_id"],
+                    "chat": data.chat_id,
+                },
+            )
+            await db.execute(
+                text("""UPDATE whatsapp_automation_outbox SET status='discarded',body='',error_code='human_handoff'
+              WHERE company_id=:company AND session_id=:session AND chat_id=:chat AND kind IN ('command','inactivity') AND status='pending'"""),
+                {
+                    "company": actor.company_id,
+                    "session": session["session_id"],
+                    "chat": data.chat_id,
+                },
+            )
         return dict(
             (
                 await db.execute(
