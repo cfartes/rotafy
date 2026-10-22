@@ -25,6 +25,7 @@ os.environ.setdefault(
     "PLATFORM_DATABASE_URL", "postgresql+psycopg://unused:unused@127.0.0.1:1/unused"
 )
 from app.main import create_app
+from app.service_keys import required_scope
 
 OUTPUT = ROOT / "docs" / "integracao"
 ORIGIN = "https://rotafy.nexusdataanalytics.tech"
@@ -40,6 +41,10 @@ PATHS = [
     "/locations/cities/{uf}",
     "/vehicles",
     "/vehicles/{item_id}",
+    "/routes",
+    "/routes/{route_id}",
+    "/packages",
+    "/packages/{item_id}",
     "/trips",
     "/trips/{trip_id}",
     "/trips/{trip_id}/status",
@@ -80,6 +85,13 @@ PATHS = [
     "/integrations/keys/{key_id}/revoke",
     "/external/reservations",
     "/external/reservations/{reservation_id}",
+    "/nexus/modules",
+    "/nexus/companies/{company_id}/modules",
+    "/company/modules",
+    "/integrations/service-keys",
+    "/integrations/service-keys/scopes",
+    "/integrations/service-keys/{key_id}/revoke",
+    "/integrations/boarding-events",
 ]
 
 
@@ -106,6 +118,11 @@ def generate_openapi():
             public = path.startswith(("/public/", "/locations/"))
             login = path == "/auth/login"
             writing = method not in {"get", "head"}
+            service_scope = required_scope(
+                method.upper(),
+                "/api/v1"
+                + re.sub(r"\{[^}]+\}", "00000001-0000-4000-8000-000000000001", path),
+            )
             # GET/HEAD share one handler in the app; clients require unique IDs.
             operation["operationId"] = method + "_" + operation["operationId"]
             operation["security"] = (
@@ -115,15 +132,18 @@ def generate_openapi():
                 if public or login
                 else [{"RotafySession": [], **({"RotafyCSRF": []} if writing else {})}]
             )
+            if service_scope:
+                operation["security"].append({"OperationalServiceKey": []})
+                operation["x-required-service-scope"] = service_scope
             if writing and not external:
                 operation.setdefault("parameters", []).append(
                     {
                         "in": "header",
                         "name": "Origin",
-                        "required": True,
+                        "required": not bool(service_scope),
                         "schema": {"type": "string"},
                         "example": ORIGIN,
-                        "description": "Origem permitida na implantação. A integração operacional usa sessão e CSRF.",
+                        "description": "Obrigatório com cookies/CSRF ou no login; dispensado com chave operacional ri autorizada para esta rota.",
                     }
                 )
     all_schemas = source["components"]["schemas"]
@@ -148,8 +168,8 @@ def generate_openapi():
         "openapi": source["openapi"],
         "info": {
             "title": "Rotafy — Comunicação e embarque: API existente",
-            "version": "2026-10-21.1",
-            "description": "Consultar README.md. Cookie/CSRF no fluxo operacional. Bearer rk somente em /external/reservations. Não declara endpoints novos, webhooks operacionais ou configuração modular implementada. Respostas sem modelo tipado no backend permanecem sem esquema detalhado.",
+            "version": "2026-10-21.2",
+            "description": "Consultar README.md. Sessão/CSRF para usuários; Bearer ri para operações autorizadas por escopo e módulo. Bearer rk legado somente para reservas externas temporárias. Inclui configuração de módulos e feed paginado de embarques. Respostas sem modelo tipado permanecem sem esquema detalhado.",
         },
         "servers": [
             {
@@ -161,6 +181,11 @@ def generate_openapi():
         "components": {
             "schemas": selected,
             "securitySchemes": {
+                "OperationalServiceKey": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "description": "Chave ri da empresa; exige o escopo x-required-service-scope e módulos habilitados. Sem acesso financeiro ou comandos de embarque.",
+                },
                 "RotafySession": {
                     "type": "apiKey",
                     "in": "cookie",
@@ -427,6 +452,56 @@ def generate_postman(examples):
             ],
         },
     ]
+    folders[0]["item"].append(
+        request(
+            "Criar atendente técnico dedicado",
+            "POST",
+            "/users",
+            examples["create_technical_user"] | {"password": "{{technical_password}}"},
+            capture("technical_user_id"),
+        )
+    )
+    folders[0]["item"].append(
+        request(
+            "Emitir chave operacional ri (copiar uma vez)",
+            "POST",
+            "/integrations/service-keys",
+            examples["service_key"],
+            "if(pm.response.code===201) pm.collectionVariables.set('service_key',pm.response.json().token);",
+        )
+    )
+    partner_items = []
+    for folder in folders[1:3]:
+        for item in folder["item"]:
+            clone = copy.deepcopy(item)
+            if clone["request"]["url"].endswith(("/auth/login", "/auth/me")):
+                continue
+            clone["request"]["header"] = [
+                {"key": "Content-Type", "value": "application/json"}
+            ]
+            clone["request"]["auth"] = {
+                "type": "bearer",
+                "bearer": [
+                    {"key": "token", "value": "{{service_key}}", "type": "string"}
+                ],
+            }
+            partner_items.append(clone)
+    feed = request(
+        "Consultar embarques/desembarques por cursor",
+        "GET",
+        "/integrations/boarding-events?after={boarding_cursor}&limit=100",
+    )
+    feed["request"]["auth"] = {
+        "type": "bearer",
+        "bearer": [{"key": "token", "value": "{{service_key}}", "type": "string"}],
+    }
+    partner_items.append(feed)
+    folders.append(
+        {
+            "name": "06 — Alternativa servidor parceiro (chave ri; sem cookies)",
+            "item": partner_items,
+        }
+    )
     # Presence versions must be JSON numbers after Postman variable interpolation.
     for folder in folders:
         for item in folder["item"]:
@@ -448,6 +523,10 @@ def generate_postman(examples):
         "operator_password": "",
         "ticket_token": "",
         "presence_version": "0",
+        "technical_user_id": "",
+        "technical_password": "",
+        "service_key": "",
+        "boarding_cursor": "0",
     }
     values.update(
         {
@@ -496,8 +575,13 @@ def generate_html():
     source = (OUTPUT / "README.md").read_text(encoding="utf-8")
     engine = markdown.Markdown(extensions=["tables", "fenced_code", "toc"])
     content = engine.convert(source)
-    diagram = '''<figure><svg viewBox="0 0 1020 250" role="img" aria-label="Sistema parceiro integrado ao Rotafy por adaptador; o Rotafy envia WhatsApp e recebe presença do APK" style="width:100%;height:auto"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8" fill="#0c7a76"/></marker></defs><g fill="#edf6f4" stroke="#0c7a76" stroke-width="2"><rect x="10" y="90" width="180" height="65" rx="10"/><rect x="270" y="90" width="180" height="65" rx="10"/><rect x="530" y="90" width="180" height="65" rx="10"/><rect x="820" y="15" width="180" height="65" rx="10"/><rect x="820" y="170" width="180" height="65" rx="10"/></g><g fill="#17324b" font-family="Arial" font-size="19" text-anchor="middle"><text x="100" y="129">Sistema parceiro</text><text x="360" y="129">Adaptador backend</text><text x="620" y="129">API Rotafy</text><text x="910" y="54">WhatsApp</text><text x="910" y="210">APK motorista/guia</text></g><g stroke="#0c7a76" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M190,122 L270,122"/><path d="M450,122 L530,122" marker-start="url(#arrow)"/><path d="M710,110 L820,48"/><path d="M710,140 L820,202" marker-start="url(#arrow)"/></g></svg><figcaption>O parceiro sincroniza dados pelo adaptador. O Rotafy processa as mensagens e recebe os eventos do APK; o adaptador consulta os resultados.</figcaption></figure>'''
-    content = re.sub(r'<pre><code class="language-mermaid">.*?</code></pre>', diagram, content, flags=re.DOTALL)
+    diagram = """<figure><svg viewBox="0 0 1020 250" role="img" aria-label="Sistema parceiro integrado ao Rotafy por adaptador; o Rotafy envia WhatsApp e recebe presença do APK" style="width:100%;height:auto"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8" fill="#0c7a76"/></marker></defs><g fill="#edf6f4" stroke="#0c7a76" stroke-width="2"><rect x="10" y="90" width="180" height="65" rx="10"/><rect x="270" y="90" width="180" height="65" rx="10"/><rect x="530" y="90" width="180" height="65" rx="10"/><rect x="820" y="15" width="180" height="65" rx="10"/><rect x="820" y="170" width="180" height="65" rx="10"/></g><g fill="#17324b" font-family="Arial" font-size="19" text-anchor="middle"><text x="100" y="129">Sistema parceiro</text><text x="360" y="129">Adaptador backend</text><text x="620" y="129">API Rotafy</text><text x="910" y="54">WhatsApp</text><text x="910" y="210">APK motorista/guia</text></g><g stroke="#0c7a76" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M190,122 L270,122"/><path d="M450,122 L530,122" marker-start="url(#arrow)"/><path d="M710,110 L820,48"/><path d="M710,140 L820,202" marker-start="url(#arrow)"/></g></svg><figcaption>O parceiro sincroniza dados pelo adaptador. O Rotafy processa as mensagens e recebe os eventos do APK; o adaptador consulta os resultados.</figcaption></figure>"""
+    content = re.sub(
+        r'<pre><code class="language-mermaid">.*?</code></pre>',
+        diagram,
+        content,
+        flags=re.DOTALL,
+    )
     title = "Rotafy — Guia de integração"
     style = """body{font:15px/1.6 Arial,sans-serif;color:#17324b;margin:auto;padding:32px;max-width:1080px}h1,h2,h3{color:#0c7a76;line-height:1.25;break-after:avoid}h2{border-bottom:1px solid #bad8d4;padding-bottom:8px;margin-top:36px}a{color:#0c7a76}table{border-collapse:collapse;width:100%;font-size:13px;margin:16px 0}td,th{border:1px solid #d4e0e7;padding:8px;vertical-align:top}th{background:#edf6f4;text-align:left}pre{background:#f1f5f7;border:1px solid #d4e0e7;border-radius:6px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}code{overflow-wrap:anywhere}nav{background:#edf6f4;padding:16px}tr{break-inside:avoid}@page{size:A4;margin:16mm 14mm 20mm}@media print{body{padding:0;font-size:10px;max-width:none}table{font-size:9px}pre{font-size:9px}nav{display:none}}"""
     (OUTPUT / "guia.html").write_text(

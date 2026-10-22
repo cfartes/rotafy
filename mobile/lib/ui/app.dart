@@ -516,7 +516,9 @@ class _TripCardState extends State<TripCard> {
                           '${leg['origin']} → ${leg['destination']}',
                         ),
                         trailing: FilledButton(
-                          onPressed: widget.controller.busy
+                          onPressed:
+                              widget.controller.busy ||
+                                  !widget.controller.moduleEnabled('boarding')
                               ? null
                               : () async {
                                   if (await widget.controller.prepare(

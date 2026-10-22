@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useModules } from "./modules";
 import { useQuery } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { ticketToken, ticketUrl } from "./ticketLinks";
@@ -24,6 +25,7 @@ export function TicketManager({
   confirmed: boolean;
   legs: { id: string; origin: string; destination: string }[];
 }) {
+  const allowed = useModules();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [issued, setIssued] = useState<Issued[]>([]);
@@ -32,6 +34,7 @@ export function TicketManager({
   const tickets = useQuery({
     queryKey: ["tickets", reservationId],
     queryFn: () => api<Ticket[]>(`/reservations/${reservationId}/tickets`),
+    enabled: allowed("boarding"),
   });
   async function issue() {
     setPending(true);
@@ -170,13 +173,13 @@ export function TicketManager({
                   >
                     Abrir bilhete
                   </a>
-                  <button
+                  {allowed("whatsapp") && <button
                     className="button"
                     disabled={pending || !confirmed}
                     onClick={() => send(t, credential.token)}
                   >
                     Enviar bilhete pelo WhatsApp
-                  </button>
+                  </button>}
                 </>
               )}
               <button

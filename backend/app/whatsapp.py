@@ -30,6 +30,10 @@ async def queue_message(
     ticket_link=None,
     ticket_hash=None,
 ):
+    from app.modules import enabled
+
+    if not await enabled(db, company_id, "whatsapp"):
+        return None
     if not await db.scalar(
         text("SELECT 1 FROM integration_settings WHERE id=true AND openwa_key<>''")
     ):

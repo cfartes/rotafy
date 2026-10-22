@@ -101,6 +101,9 @@ async def public_company(db, slug):
     )
     if not found:
         raise HTTPException(404, "Página indisponível.")
+    from app.modules import require
+
+    await require(db, found[0]["id"], "sales")
     return found[0]
 
 
@@ -603,6 +606,10 @@ async def external_context(db, request):
         raise HTTPException(401, "Chave inválida.") from None
     await scope(db, company_id)
     await lock_company(db, company_id, require_active=True)
+    from app.modules import require
+
+    await require(db, company_id, "integrations")
+    await require(db, company_id, "sales")
     key = await db.scalar(
         text(
             "SELECT id FROM integration_keys WHERE token_hash=:hash AND is_active AND expires_at>clock_timestamp()"

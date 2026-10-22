@@ -119,6 +119,10 @@ async def queue_reset(
             "Após definir a senha, entre usando o identificador da empresa e seu e-mail.\nEquipe Nexus Rotafy"
         )
     if channel in {"whatsapp", "both"}:
+        from app.modules import require
+
+        if not nexus_sender:
+            await require(db, company_id, "whatsapp")
         config = (
             (
                 await db.execute(

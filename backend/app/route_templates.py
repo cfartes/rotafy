@@ -131,6 +131,12 @@ async def route_for_trip(db, data: Trip, old=None):
     if old and old.get("route_snapshot") and data.route_id == old.get("route_id"):
         snapshot = old["route_snapshot"]
     elif data.route_id:
+        from app.modules import require
+
+        company_id = await db.scalar(
+            text("SELECT nullif(current_setting('app.company_id',true),'')::uuid")
+        )
+        await require(db, company_id, "routes")
         result = await db.execute(
             text("SELECT * FROM route_templates WHERE id=:id AND is_active FOR SHARE"),
             {"id": data.route_id},

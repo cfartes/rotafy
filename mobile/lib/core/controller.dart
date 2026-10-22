@@ -17,6 +17,21 @@ class OperationController extends ChangeNotifier {
   bool biometricEnabled = false;
   String? biometricNotice;
   Json? user;
+  bool moduleEnabled(String module) {
+    final modules = user?['enabled_modules'];
+    return modules == null || (modules is List && modules.contains(module));
+  }
+
+  Future<void> refreshModules() async {
+    final current = Json.from(await api.request('GET', '/auth/me'));
+    if (user == null || store.owner(current) != store.owner(user!)) {
+      throw StateError('Entre com o usuário responsável por esta operação.');
+    }
+    user = current;
+    await store.setMeta('user', current);
+    if (!moduleEnabled('tracking')) await VehicleTracking.stop();
+  }
+
   List<Json> prepared = [];
   List<Json> records = [];
   bool busy = false;
@@ -236,6 +251,8 @@ class OperationController extends ChangeNotifier {
   });
 
   Future<List<Json>> trips() async {
+    await refreshModules();
+    if (!moduleEnabled('trips')) return [];
     final result = await api.request('GET', '/trips');
     for (final trip in result as List) {
       if (trip['status'] == 'completed') {
@@ -253,6 +270,12 @@ class OperationController extends ChangeNotifier {
   Future<Json> trip(String id) async =>
       Json.from(await api.request('GET', '/trips/$id'));
   Future<bool> prepare(Json trip, Json vehicle, Json leg) => run(() async {
+    await refreshModules();
+    if (!moduleEnabled('boarding')) {
+      throw StateError(
+        'O módulo de embarque não está habilitado para esta empresa.',
+      );
+    }
     final endpoint =
         '/trips/${trip['id']}/vehicles/${vehicle['id']}/legs/${leg['id']}';
     final data = Json.from(
@@ -270,8 +293,20 @@ class OperationController extends ChangeNotifier {
     String passenger,
     String action, {
     String? token,
-  }) => run(() => store.enqueue(manifest, passenger, action, token: token));
+  }) => run(() async {
+    if (!moduleEnabled('boarding')) {
+      throw StateError(
+        'O módulo de embarque não está habilitado para esta empresa.',
+      );
+    }
+    await store.enqueue(manifest, passenger, action, token: token);
+  });
   Future<bool> disembarkAll(String manifest) => run(() async {
+    if (!moduleEnabled('boarding')) {
+      throw StateError(
+        'O módulo de embarque não está habilitado para esta empresa.',
+      );
+    }
     await store.disembarkAll(manifest);
   });
 
@@ -282,10 +317,7 @@ class OperationController extends ChangeNotifier {
         'Sincronize ou revise os registros deste trecho antes de iniciar ou fechar.',
       );
     }
-    final current = Json.from(await api.request('GET', '/auth/me'));
-    if (user == null || store.owner(current) != store.owner(user!)) {
-      throw StateError('Entre com o usuário que preparou este trecho.');
-    }
+    await refreshModules();
     final response = Json.from(
       await api.request('PATCH', '${snapshot['endpoint']}/journey', {
         'status': status,
@@ -303,9 +335,11 @@ class OperationController extends ChangeNotifier {
     }
   });
   Future<bool> synchronize() => run(() async {
-    final current = Json.from(await api.request('GET', '/auth/me'));
-    if (user == null || store.owner(current) != store.owner(user!)) {
-      throw StateError('Entre com o usuário que preparou os manifestos.');
+    await refreshModules();
+    if (!moduleEnabled('boarding')) {
+      throw StateError(
+        'O módulo de embarque foi desabilitado. Os registros pendentes foram preservados; contate o administrador.',
+      );
     }
     final blocked = <String>{};
     for (final record in await store.queue()) {

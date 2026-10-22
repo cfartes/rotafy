@@ -1,4 +1,7 @@
 import { MobileRelease } from "./MobileRelease";
+import { CompanyModules } from "./CompanyModules";
+import { PartnerIntegration } from "./PartnerIntegration";
+import { hasModule, menuModule } from "./modules";
 import { Tracking } from "./Tracking";
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
@@ -871,6 +874,9 @@ const actionNames: Record<string, string> = {
   "availability.acknowledged": "Alerta de disponibilidade visto",
   "integration.key_created": "Chave de integração criada",
   "integration.key_revoked": "Chave de integração revogada",
+  "integration.service_key_created": "Chave operacional de integração criada",
+  "integration.service_key_revoked": "Chave operacional de integração revogada",
+  "company.modules_updated": "Módulos da empresa atualizados",
   "company.logo_updated": "Logo enviado",
   "company.logo_removed": "Logo removido",
   "ticket.issued": "Bilhete individual emitido ou reemitido",
@@ -1001,6 +1007,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "ticket-sales"
     | "reports"
     | "integrations"
+    | "modules"
     | "collections"
     | "nexus-team"
     | "whatsapp"
@@ -1032,7 +1039,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const team = useQuery({
     queryKey: ["users"],
     queryFn: () => api<User[]>("/users"),
-    enabled: isAdmin && !financialOnly,
+    enabled: isAdmin && !financialOnly && hasModule(user, "team"),
   });
   const company = useQuery({
     queryKey: ["company"],
@@ -1050,10 +1057,17 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const loading = isNexus
     ? companies.isPending
     : isAdmin
-      ? team.isPending
+      ? hasModule(user, "team") && team.isPending
       : company.isPending;
   const queryError =
-    companies.error || (!financialOnly && team.error) || company.error || (!financialOnly && audit.error);
+    companies.error || (!financialOnly && hasModule(user, "team") && team.error) || company.error || (!financialOnly && audit.error);
+  useEffect(() => {
+    if (!isNexus) {
+      const id = page === "operations" && operationModule !== "trips" ? operationModule : page;
+      if (menuModule[id] && !hasModule(user, menuModule[id])) setPage("overview");
+      if (!hasModule(user, "team")) { setCreating(false); setEditingCollaborator(null); }
+    }
+  }, [isNexus, page, operationModule, user.enabled_modules]);
   useEffect(() => {
     if (financialOnly) {
       setPage("collections");
@@ -1119,14 +1133,14 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
+    page === "modules" ? "Módulos por empresa" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
         : page === "collections"
           ? "Financeiro e cobranças"
           : page === "integrations"
-            ? "Configurações"
+            ? isNexus ? "Configurações" : "Integração com parceiros"
             : page === "routes"
               ? "Rotas"
               : page === "ticket-sales"
@@ -1179,6 +1193,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "collections",
     "billing",
     "whatsapp",
+    "integrations",
     "contract",
     "audit",
   ];
@@ -1286,6 +1301,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             ...(fullNexus
               ? [{ id: "integrations", label: "Configurações", icon: KeyRound }]
               : []),
+            ...(fullNexus ? [{ id: "modules", label: "Módulos por empresa", icon: Building2 }] : []),
+            ...(isAdmin ? [{ id: "integrations", label: "Integração com parceiros", icon: KeyRound }] : []),
             ...(fullNexus
               ? [{ id: "nexus-team", label: "Equipe Nexus", icon: Users }]
               : []),
@@ -1309,6 +1326,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 ]
               : []),
           ]
+            .filter((item) => isNexus || !menuModule[item.id] || hasModule(user, menuModule[item.id]))
             .filter((item) => !financialOnly || item.id === "collections")
             .sort((a, b) =>
               isNexus
@@ -1418,7 +1436,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                           : `Olá, ${user.full_name.split(" ")[0]}. Seu acesso à empresa está ativo.`}
               </p>
             </div>
-            {canManage && (page === "overview" || page === "directory") && (
+            {canManage && (isNexus || hasModule(user, "team")) && (page === "overview" || page === "directory") && (
               <button
                 className="button primary"
                 onClick={() => setCreating(true)}
@@ -1448,6 +1466,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "integrations" && fullNexus && <IntegrationSettings />}
           {page === "integrations" && fullNexus && <NexusContracts />}
           {page === "integrations" && fullNexus && <MobileRelease />}
+          {page === "modules" && fullNexus && <CompanyModules companies={companies.data || []} />}
+          {page === "integrations" && isAdmin && <PartnerIntegration />}
           {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
           {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
@@ -1500,7 +1520,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   : undefined
               }
               manage={isAdmin || user.role === "attendant"}
-              allowPackages={companyCapabilities(company.data).packages}
+              allowPackages={companyCapabilities(company.data).packages && hasModule(user, "packages")}
               user={user}
               onLogout={onLogout}
             />
@@ -1597,7 +1617,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </section>
             </>
           )}
-          {canManage && (page === "overview" || page === "directory") && (
+          {canManage && (isNexus || hasModule(user, "team")) && (page === "overview" || page === "directory") && (
             <section className="panel">
               <header className="panel-header">
                 <div>

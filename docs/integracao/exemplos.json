@@ -152,6 +152,42 @@
     "leg_volta": "00000007-0000-4000-8000-000000000007",
     "reservation": "00000008-0000-4000-8000-000000000008",
     "passenger": "00000009-0000-4000-8000-000000000009",
-    "ticket": "0000000a-0000-4000-8000-00000000000a"
+    "ticket": "0000000a-0000-4000-8000-00000000000a",
+    "technical_user": "0000000b-0000-4000-8000-000000000001"
+  },
+  "create_technical_user": {
+    "full_name": "Integração parceiro",
+    "email": "integracao@example.com",
+    "password": "SenhaExemplo!2026",
+    "role": "attendant"
+  },
+  "service_key": {
+    "name": "Sistema parceiro",
+    "user_id": "0000000b-0000-4000-8000-000000000001",
+    "valid_days": 90,
+    "scopes": [
+      "catalog:read",
+      "catalog:write",
+      "trips:read",
+      "trips:write",
+      "reservations:read",
+      "reservations:write",
+      "tickets:read",
+      "tickets:write",
+      "messages:read",
+      "messages:write",
+      "boarding:read"
+    ]
+  },
+  "company_modules": {
+    "expected_version": 1,
+    "enabled_modules": [
+      "team",
+      "fleet",
+      "trips",
+      "whatsapp",
+      "boarding",
+      "integrations"
+    ]
   }
 }

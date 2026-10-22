@@ -21,6 +21,7 @@ class Actor:
     user: dict
     session_id: UUID
     platform: bool
+    integration_key_id: UUID | None = None
 
     @property
     def company_id(self):
@@ -79,12 +80,18 @@ async def throttle(request: Request, identity: str, platform: bool = False):
 
 
 async def authenticate(request: Request):
-    token = request.cookies.get(SESSION_COOKIE, "")
+    authorization = request.headers.get("authorization", "")
+    service = bool(authorization)
+    token = (
+        authorization.removeprefix("Bearer ")
+        if service
+        else request.cookies.get(SESSION_COOKIE, "")
+    )
     parts = token.split(".")
     platform = len(parts) == 2 and parts[0] == "p"
     company_id = None
     if not platform:
-        if len(parts) != 3 or parts[0] != "t":
+        if len(parts) != 3 or parts[0] != ("ri" if service else "t"):
             raise HTTPException(401, "Entre novamente para continuar.")
         try:
             company_id = UUID(parts[1])
@@ -104,9 +111,18 @@ async def authenticate(request: Request):
                        FROM sessions s JOIN users u ON u.id=s.user_id AND u.company_id=s.company_id
                        JOIN companies c ON c.id=u.company_id
                        WHERE s.token_hash=:hash AND s.expires_at>now() AND u.is_active AND c.is_active"""
-        row = (
-            (await db.execute(text(query), {"hash": digest(token)})).mappings().first()
-        )
+        if service:
+            if platform or not authorization.startswith("Bearer "):
+                raise HTTPException(401, "Chave de integração inválida.")
+            from app.service_keys import authenticate_service
+
+            row = await authenticate_service(db, request, token)
+        else:
+            row = (
+                (await db.execute(text(query), {"hash": digest(token)}))
+                .mappings()
+                .first()
+            )
         if not row:
             raise HTTPException(401, "Sessão expirada ou acesso suspenso.")
         if platform and row["role"] == "nexus_staff":
@@ -123,7 +139,7 @@ async def authenticate(request: Request):
                 raise HTTPException(
                     403, "Seu perfil Nexus não permite acessar esta área."
                 )
-        if request.method not in ("GET", "HEAD", "OPTIONS"):
+        if not service and request.method not in ("GET", "HEAD", "OPTIONS"):
             check_origin(request)
             csrf = request.headers.get("x-csrf-token", "")
             if not csrf or not secrets.compare_digest(digest(csrf), row["csrf_hash"]):
@@ -132,9 +148,18 @@ async def authenticate(request: Request):
                 )
         blocked = False
         contract_required = False
+        modules = None
         if not platform:
             from app.billing.collections import financially_blocked
             from app.contracts import pending
+            from app.modules import configuration, enforce_path
+
+            modules = (await configuration(db, company_id))["enabled_modules"]
+            if service and "integrations" not in modules:
+                raise HTTPException(
+                    403, "Integrações não habilitadas para esta empresa."
+                )
+            enforce_path(request.url.path, modules, service=service)
 
             contract_required = await pending(db, company_id)
             contract_path = request.url.path.startswith("/api/v1/company/contract")
@@ -227,11 +252,18 @@ async def authenticate(request: Request):
         user = {
             key: value
             for key, value in dict(row).items()
-            if key not in ("session_id", "csrf_hash")
+            if key not in ("session_id", "csrf_hash", "scopes")
         }
         user["financial_blocked"] = blocked
         user["contract_pending"] = contract_required
-        yield Actor(db, user, row["session_id"], platform)
+        user["enabled_modules"] = modules
+        yield Actor(
+            db,
+            user,
+            row["session_id"],
+            platform,
+            row["session_id"] if service else None,
+        )
 
 
 # Finalizar a transação antes de enviar a resposta, inclusive em cadastros.

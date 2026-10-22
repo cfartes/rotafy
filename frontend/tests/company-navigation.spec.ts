@@ -76,7 +76,7 @@ test("separate registrations and edit collaborator role", async ({ page }) => {
   await expect(nav.getByRole("button").first()).toHaveText("Visão geral");
   await expect
     .poll(async () =>
-      (await nav.getByRole("button").allTextContents()).slice(1, 7),
+      (await nav.getByRole("button").allTextContents()).filter(label => ["Equipe", "Veículos", "Rotas", "Pacotes", "Viagens", "Vender bilhete"].includes(label)),
     )
     .toEqual(["Equipe", "Veículos", "Rotas", "Pacotes", "Viagens", "Vender bilhete"]);
   await expect(

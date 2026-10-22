@@ -55,12 +55,19 @@
 <li><a href="#12-chave-bearer-de-reservas-externas-escopo-limitado">12. Chave Bearer de reservas externas — escopo limitado</a></li>
 <li><a href="#13-respostas-e-tratamento-de-falhas">13. Respostas e tratamento de falhas</a></li>
 <li><a href="#14-homologacao-do-parceiro">14. Homologação do parceiro</a></li>
+<li><a href="#15-modulos-e-integracao-operacional-por-chave">15. Módulos e integração operacional por chave</a><ul>
+<li><a href="#151-configurar-a-empresa">15.1 Configurar a empresa</a></li>
+<li><a href="#152-emitir-uma-credencial-operacional">15.2 Emitir uma credencial operacional</a></li>
+<li><a href="#153-retorno-confiavel-de-embarque-e-desembarque">15.3 Retorno confiável de embarque e desembarque</a></li>
+<li><a href="#154-implantacao-e-validacao">15.4 Implantação e validação</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
 </nav><h1 id="rotafy-integracao-de-whatsapp-bilhetes-e-embarque">Rotafy — Integração de WhatsApp, bilhetes e embarque</h1>
-<p><strong>Versão do guia:</strong> 1.0 · <strong>Revisão:</strong> 21/10/2026</p>
+<p><strong>Versão do guia:</strong> 1.1 · <strong>Revisão:</strong> 21/10/2026</p>
 <p>Este guia descreve endpoints existentes no Rotafy para integrar um sistema que já vende viagens e pacotes à comunicação por WhatsApp e ao controle de embarque/desembarque pelo APK. A empresa parceira mantém seu sistema de vendas como origem dos dados; um adaptador sincroniza os registros operacionais necessários no Rotafy.</p>
 <p><strong>Base de produção:</strong> <code>https://rotafy.nexusdataanalytics.tech/api/v1</code>. Os caminhos abaixo são relativos a essa base. O ambiente de homologação deve ser informado pela Nexus; este guia não presume que exista um domínio de testes publicado.</p>
 <p>Arquivos de apoio:</p>
@@ -72,10 +79,10 @@
 </ul>
 <p>Na coleção Postman, preencher <code>base_url</code>, <code>origin</code>, <code>company</code> e as credenciais locais de cada perfil. A pasta de preparação exige administrador; a sincronização usa a conta técnica; a reprodução do APK usa motorista/guia atribuído. Manter o cookie jar habilitado. Os testes da coleção guardam IDs, CSRF e credenciais emitidas nas variáveis da sessão de trabalho: não compartilhar uma exportação preenchida. As UUIDs <code>operation_key_*</code> de exemplo devem ser renovadas para um novo comando de negócio e preservadas em uma repetição do mesmo comando.</p>
 <h2 id="1-escopo-e-condicoes-de-uso">1. Escopo e condições de uso</h2>
-<p>O fluxo completo usa a API operacional autenticada por sessão. Existe também uma chave Bearer para <strong>criar e consultar reservas externas</strong>, mas ela não autoriza emissão de bilhete, WhatsApp ou comandos de embarque. São mecanismos distintos, detalhados na seção 12.</p>
+<p>O fluxo servidor a servidor pode usar uma chave operacional Bearer <code>ri</code>, com permissões por operação, empresa e validade. Usuários e o APK continuam usando sessão com cookies e CSRF. A chave Bearer legada <code>rk</code> atende somente reservas externas temporárias; não deve ser confundida com a chave operacional. Consulte a seção 15 para configurar módulos, emitir a chave <code>ri</code> e sincronizar os eventos de embarque.</p>
 <p>O contrato descrito não cria um usuário de passageiro nem exige que ele instale aplicativo: o passageiro recebe o link do bilhete e apresenta seu QR Code. Motorista e guia utilizam o APK Rotafy, com suas próprias credenciais e alocação na viagem.</p>
 <p>Os endpoints não recebem um pacote arbitrário de dados para “mandar uma mensagem”. Mensagens e bilhetes são derivados de viagem, reserva e passageiro registrados no Rotafy. O adaptador cria esses registros automaticamente, evitando cadastro manual duplicado.</p>
-<p>Este documento não ativa a configuração de módulos por empresa. A autenticação, as regras de assinatura/franquia, capacidade, perfil operacional e permissões hoje existentes continuam valendo. Uma viagem criada pela integração não fica automaticamente isenta de consumo ou cobrança por ter vindo de outro sistema.</p>
+<p>A configuração de módulos por empresa está disponível ao Superadmin em <strong>Módulos por empresa</strong>. O perfil <strong>WhatsApp e embarque integrado</strong> mantém Equipe, Veículos, Viagens, WhatsApp, Bilhetes/embarque e Integrações; as vendas permanecem no parceiro. A autenticação, as regras de assinatura/franquia, capacidade, perfil operacional e permissões continuam valendo. A integração não cria isenção de consumo ou cobrança.</p>
 <h3 id="responsabilidade-por-dados">Responsabilidade por dados</h3>
 <table>
 <thead>
@@ -107,7 +114,7 @@
 </tr>
 </tbody>
 </table>
-<p>Não há webhook de embarque/desembarque ou de mensagens neste contrato. O webhook de pagamentos existente no produto não serve para esses eventos.</p>
+<p>O retorno de embarques/desembarques está disponível por consulta ao feed paginado com cursor, descrito na seção 15. Não há webhook desses eventos ou de mensagens. O webhook de pagamentos não serve para esses eventos.</p>
 <h2 id="2-preparacao-pela-nexus-e-pelo-administrador-da-empresa">2. Preparação pela Nexus e pelo administrador da empresa</h2>
 <ol>
 <li>Provisionar uma empresa ativa no Rotafy, com identificador de acesso, perfil operacional, assinatura e capacidade operacional compatíveis.</li>
@@ -154,7 +161,7 @@
 </tr>
 </tbody>
 </table>
-<p>Guardar cookies em um cookie jar seguro. A validade é configurável na implantação; o padrão do código é oito horas. <code>GET /auth/me</code> valida a sessão e informa o usuário, empresa, perfil e eventuais bloqueios. <code>POST /auth/logout</code> encerra a sessão e retorna <code>204</code>.</p>
+<p>Para autenticação por sessão, guardar cookies em um cookie jar seguro. A validade é configurável na implantação; o padrão do código é oito horas. <code>GET /auth/me</code> valida a sessão e informa o usuário, empresa, perfil e eventuais bloqueios. <code>POST /auth/logout</code> encerra a sessão e retorna <code>204</code>.</p>
 <p>A integração deve ocorrer <strong>do backend do parceiro para o backend Rotafy</strong>. Não embutir a senha técnica em JavaScript público ou no APK do parceiro. Não assumir que um navegador em outro domínio poderá reutilizar esses cookies; CORS e SameSite não constituem uma API pública entre sites.</p>
 <p>Em <code>401</code>, autenticar novamente e repetir a mesma operação com a mesma chave de idempotência. Não repetir login a cada chamada. Em <code>402</code>, <code>403</code> ou <code>423</code>, tratar a restrição; um novo login não a remove.</p>
 <h3 id="32-exemplo-de-transporte">3.2 Exemplo de transporte</h3>
@@ -531,7 +538,7 @@ X-CSRF-Token: VALOR_CSRF
 </ul>
 <p><code>created_at</code> é o registro recebido no servidor. <code>client_recorded_at</code> é o horário informado pelo aparelho quando presente. Conservar ambos; um evento offline pode chegar depois de sua captura.</p>
 <h3 id="102-sincronizacao-recomendada">10.2 Sincronização recomendada</h3>
-<p>Consultar os trechos ativos a cada 15–30 segundos, sem abrir uma sessão por chamada. Relacionar cada <code>passenger_id</code> à reserva/pessoa do parceiro e aplicar o maior <code>version</code> confirmado para o contexto passageiro/trecho. Preservar o <code>id</code> do evento como chave de deduplicação.</p>
+<p>Para sincronização completa, prefira o feed paginado da seção 15.3. A alternativa limitada é consultar os trechos ativos a cada 15–30 segundos, sem abrir uma sessão por chamada. Relacionar cada <code>passenger_id</code> à reserva/pessoa do parceiro e aplicar o maior <code>version</code> confirmado para o contexto passageiro/trecho. Preservar o <code>id</code> do evento como chave de deduplicação.</p>
 <p>O histórico vem em ordem decrescente. Para aplicar uma sequência de transições, reordenar por versão por passageiro/trecho, não simplesmente processar a ordem recebida. Uma reversão é outro evento e não deve ser descartada apenas porque já houve embarque anterior.</p>
 <p>O endpoint de histórico não possui cursor, filtro <code>since</code> ou paginação. Se mais de 200 eventos ocorrerem entre consultas, não é possível garantir a cópia de todo o histórico por ele. Reconciliar a situação atual pelo manifesto; não prometer ao parceiro uma trilha de eventos completa baseada apenas nessa janela limitada. O mesmo cuidado vale para a janela de 30 mensagens por reserva.</p>
 <h2 id="11-alteracoes-cancelamento-e-idempotencia">11. Alterações, cancelamento e idempotência</h2>
@@ -658,4 +665,175 @@ X-CSRF-Token: VALOR_CSRF
 <li>Consultar manifesto/histórico no adaptador e reconciliar a situação no sistema parceiro.</li>
 <li>Testar cancelamento, troca de veículo, falha/resultado incerto de WhatsApp e bloqueios de acesso aplicáveis.</li>
 </ol>
-<p>Os corpos exemplificativos são de homologação e contêm IDs fictícios. A criação de uma reserva confirmada em uma empresa com WhatsApp habilitado pode enfileirar comunicação real; configurar os destinatários de teste antes de executar o fluxo.</p></body></html>
+<p>Os corpos exemplificativos são de homologação e contêm IDs fictícios. A criação de uma reserva confirmada em uma empresa com WhatsApp habilitado pode enfileirar comunicação real; configurar os destinatários de teste antes de executar o fluxo.</p>
+<h2 id="15-modulos-e-integracao-operacional-por-chave">15. Módulos e integração operacional por chave</h2>
+<h3 id="151-configurar-a-empresa">15.1 Configurar a empresa</h3>
+<p>O Superadmin completo abre <strong>Módulos por empresa</strong>, escolhe a empresa e aplica <strong>Sistema completo</strong>, <strong>WhatsApp e embarque integrado</strong> ou uma seleção personalizada. Colaboradores Nexus sem acesso a configurações não podem alterar módulos.</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Acesso</th>
+<th>Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /nexus/modules</code></td>
+<td>Superadmin completo</td>
+<td>Catálogo, dependências e perfis prontos</td>
+</tr>
+<tr>
+<td><code>GET /nexus/companies/{company_id}/modules</code></td>
+<td>Superadmin completo</td>
+<td>Seleção e versão da empresa</td>
+</tr>
+<tr>
+<td><code>PUT /nexus/companies/{company_id}/modules</code></td>
+<td>Superadmin completo</td>
+<td>Atualizar seleção com controle de concorrência</td>
+</tr>
+<tr>
+<td><code>GET /company/modules</code></td>
+<td>Usuário da empresa</td>
+<td>Consultar sua seleção</td>
+</tr>
+</tbody>
+</table>
+<p>Exemplo de atualização do perfil integrado:</p>
+<pre><code class="language-json">{&quot;expected_version&quot;:1,&quot;enabled_modules&quot;:[&quot;team&quot;,&quot;fleet&quot;,&quot;trips&quot;,&quot;whatsapp&quot;,&quot;boarding&quot;,&quot;integrations&quot;]}
+</code></pre>
+<p>Os módulos são aplicados no backend, nos menus e no APK atualizado. As empresas existentes recebem todos os módulos habilitados para manter seu funcionamento. O perfil Turismo/Regular e as permissões por função continuam limitando cada operação. Financeiro da assinatura, contratos, autenticação e ajuda são recursos básicos e não podem ser retirados por essa configuração. Cadastro de pacotes continua exclusivo do perfil Turismo.</p>
+<p>Dependências: Viagens exige Equipe e Veículos; Pacotes exige Rotas e Viagens; Vendas, Bilhetes/embarque e Relatórios exigem Viagens; Rastreamento exige Bilhetes/embarque; Integrações exige Equipe. O backend rejeita seleções inválidas com <code>422</code>; a tela ajusta as dependências automaticamente. <code>expected_version</code> desatualizada produz <code>409</code>.</p>
+<p>Desabilitar WhatsApp solicita a desconexão, desativa a descoberta automática e descarta mensagens operacionais ainda pendentes; comunicações da Nexus sobre a assinatura continuam independentes. Desabilitar Rastreamento encerra as sessões de localização e desativa a coleta no servidor. Desabilitar Viagens ou Embarque é impedido enquanto houver trecho em andamento. Histórico e cadastros são preservados. Reabilitar WhatsApp exige reconexão e nova autorização de envio.</p>
+<p>O APK verifica as permissões nas consultas online e antes de preparar/iniciar/sincronizar operações. Um aparelho sem internet usa a autorização e o prazo do manifesto já preparado; alterações remotas não podem alcançar esse aparelho até a próxima conexão. Registros locais pendentes são preservados para revisão/sincronização, nunca descartados silenciosamente.</p>
+<h3 id="152-emitir-uma-credencial-operacional">15.2 Emitir uma credencial operacional</h3>
+<p>No acesso de administrador da empresa: <strong>Equipe</strong> → criar uma conta dedicada com função <strong>Atendente</strong>; depois <strong>Integração com parceiros</strong> → selecionar essa conta, validade e permissões → <strong>Criar chave</strong>. O segredo aparece uma única vez. O Superadmin precisa ter habilitado o módulo Integrações.</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Acesso</th>
+<th>Finalidade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /integrations/service-keys/scopes</code></td>
+<td>Administrador da empresa</td>
+<td>Permissões disponíveis</td>
+</tr>
+<tr>
+<td><code>GET /integrations/service-keys</code></td>
+<td>Administrador da empresa</td>
+<td>Metadados das chaves, sem segredo</td>
+</tr>
+<tr>
+<td><code>POST /integrations/service-keys</code></td>
+<td>Administrador da empresa</td>
+<td>Emitir chave válida por 1–365 dias</td>
+</tr>
+<tr>
+<td><code>POST /integrations/service-keys/{key_id}/revoke</code></td>
+<td>Administrador da empresa</td>
+<td>Revogar imediatamente para novas requisições</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-json">{
+  &quot;name&quot;:&quot;Sistema parceiro&quot;,
+  &quot;user_id&quot;:&quot;0000000b-0000-4000-8000-000000000001&quot;,
+  &quot;valid_days&quot;:90,
+  &quot;scopes&quot;:[&quot;catalog:read&quot;,&quot;catalog:write&quot;,&quot;trips:read&quot;,&quot;trips:write&quot;,&quot;reservations:read&quot;,&quot;reservations:write&quot;,&quot;tickets:read&quot;,&quot;tickets:write&quot;,&quot;messages:read&quot;,&quot;messages:write&quot;,&quot;boarding:read&quot;]
+}
+</code></pre>
+<p>Resposta <code>201</code>: <code>{"id":"UUID_DA_CHAVE","token":"ri.UUID_DA_EMPRESA.SEGREDO"}</code>. Apenas o hash do segredo é armazenado. A chave fica vinculada à empresa e ao atendente ativo. Suspender a empresa/usuário, alterar a função do atendente, revogar a chave, atingir a validade ou desabilitar Integrações impede novos acessos. Substitua a chave antes de expirar; não a envie a passageiros nem a grave em código público, URLs ou aplicativos distribuídos.</p>
+<p>Chamadas usam <code>Authorization: Bearer ri...</code>. Para as rotas expressamente autorizadas por chave, não enviar cookies nem CSRF; <code>Origin</code> é dispensado. Não usar <code>ri</code> no login ou nos endpoints legados <code>/external/reservations</code>. O limite é 300 requisições/minuto por chave válida, além de limites específicos de mensagens. Em <code>429</code>, respeitar <code>Retry-After</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Escopo</th>
+<th>Operações</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>catalog:read</code></td>
+<td>Consultar veículos, rotas, pacotes e equipe operacional de motorista/guia</td>
+</tr>
+<tr>
+<td><code>catalog:write</code></td>
+<td>Criar/atualizar veículos, rotas e pacotes</td>
+</tr>
+<tr>
+<td><code>trips:read</code></td>
+<td>Listar e consultar viagens</td>
+</tr>
+<tr>
+<td><code>trips:write</code></td>
+<td>Criar/editar viagem e alterar situação</td>
+</tr>
+<tr>
+<td><code>reservations:read</code></td>
+<td>Disponibilidade, reservas e locais de embarque</td>
+</tr>
+<tr>
+<td><code>reservations:write</code></td>
+<td>Criar/editar reserva, cancelar, realocar e marcar pagamento</td>
+</tr>
+<tr>
+<td><code>tickets:read</code></td>
+<td>Consultar metadados de bilhetes</td>
+</tr>
+<tr>
+<td><code>tickets:write</code></td>
+<td>Emitir, reemitir e revogar bilhetes</td>
+</tr>
+<tr>
+<td><code>messages:read</code></td>
+<td>Histórico da fila de WhatsApp</td>
+</tr>
+<tr>
+<td><code>messages:write</code></td>
+<td>Enviar resumo de reserva ou link de bilhete</td>
+</tr>
+<tr>
+<td><code>boarding:read</code></td>
+<td>Manifesto, histórico por trecho e feed paginado de eventos</td>
+</tr>
+</tbody>
+</table>
+<p>A OpenAPI identifica o escopo exato em <code>x-required-service-scope</code>. Nenhuma chave autoriza gestão de usuários, configuração global, financeiro da assinatura, contratos, comandos de embarque/desembarque, início/fechamento de trecho ou preparação offline: essas ações exigem as contas humanas adequadas. Chaves operacionais não são uma forma de contornar bloqueio financeiro ou aceite contratual.</p>
+<p>As rotas operacionais das seções anteriores mantêm os mesmos payloads e respostas. Com perfil integrado, a chave pode sincronizar reservas mesmo sem o módulo de vendas manuais, desde que Integrações e Viagens estejam habilitados. Bilhetes exigem Embarque; mensagens exigem WhatsApp; veículos exigem Veículos. Para importar pacotes multidestino, habilite também Pacotes e Rotas no perfil personalizado, com empresa Turismo, e sincronize os modelos pelos endpoints de catálogo antes de criar a viagem. A chave operacional pode consultar/criar/atualizar Rotas e Pacotes conforme <code>catalog:read</code>/<code>catalog:write</code>; os esquemas completos constam na OpenAPI. A confirmação de reserva pode gerar a mensagem automática; não enviar outro resumo manual indiscriminadamente.</p>
+<h3 id="153-retorno-confiavel-de-embarque-e-desembarque">15.3 Retorno confiável de embarque e desembarque</h3>
+<p><code>GET /integrations/boarding-events</code> — sessão administrativa/atendente ou chave <code>ri</code> com <code>boarding:read</code>; exige Integrações e Embarque.</p>
+<p>Parâmetros: <code>after</code> (cursor numérico; inicialmente <code>0</code>) e <code>limit</code> (1–500; padrão 100). Exemplo: <code>?after=123&amp;limit=100</code>.</p>
+<pre><code class="language-json">{
+  &quot;events&quot;:[{
+    &quot;sequence&quot;:124,
+    &quot;id&quot;:&quot;UUID_DO_EVENTO&quot;,
+    &quot;trip_id&quot;:&quot;UUID_DA_VIAGEM&quot;,
+    &quot;reservation_id&quot;:&quot;UUID_DA_RESERVA&quot;,
+    &quot;passenger_id&quot;:&quot;UUID_DO_PASSAGEIRO&quot;,
+    &quot;leg_id&quot;:&quot;UUID_DO_TRECHO&quot;,
+    &quot;allocation_id&quot;:&quot;UUID_DA_ALOCACAO&quot;,
+    &quot;action&quot;:&quot;disembark&quot;,
+    &quot;previous_status&quot;:&quot;onboard&quot;,
+    &quot;status&quot;:&quot;alighted&quot;,
+    &quot;version&quot;:2,
+    &quot;source&quot;:&quot;qr&quot;,
+    &quot;created_at&quot;:&quot;2026-10-21T16:00:00Z&quot;,
+    &quot;client_recorded_at&quot;:&quot;2026-10-21T15:58:00Z&quot;,
+    &quot;is_offline&quot;:true,
+    &quot;actor_id&quot;:&quot;UUID_DO_COLABORADOR&quot;,
+    &quot;full_name&quot;:&quot;Passageiro de exemplo&quot;
+  }],
+  &quot;next_cursor&quot;:124,
+  &quot;has_more&quot;:false
+}
+</code></pre>
+<p>A sequência é monotônica, não necessariamente contínua; lacunas são normais. O feed é isolado por empresa. Consulte a cada 15–30 segundos, processe a página de forma idempotente pelo <code>id</code>, atualize a presença por passageiro/trecho e <code>version</code> e só então grave <code>next_cursor</code> junto com o processamento concluído. Se <code>has_more=true</code>, busque a próxima página sem esperar o próximo intervalo. Em falha, repita o mesmo <code>after</code>. Uma página vazia mantém o cursor. Não altere o cursor usando horário do aparelho.</p>
+<p>O registro offline aparece somente após a sincronização aceita pelo servidor. <code>client_recorded_at</code> representa a captura no celular; <code>created_at</code> representa o registro no backend. <code>reverse</code> também é um evento e precisa ser aplicado pelo parceiro. O histórico por trecho continua limitado aos 200 últimos eventos; use o feed paginado para sincronização completa. O parceiro precisa persistir a associação entre seus IDs e os IDs Rotafy.</p>
+<h3 id="154-implantacao-e-validacao">15.4 Implantação e validação</h3>
+<p>A atualização padrão <code>scripts/update_vps.sh</code> aplica as migrações incrementais <code>0039_company_modules</code> e <code>0040_integration_boarding_cursor</code>; não recria nem limpa o banco. Publique o APK atualizado para adequar os botões às permissões. Atualizar o servidor continua protegendo as operações mesmo em versões antigas do aplicativo.</p>
+<p>Em homologação: configurar perfil integrado, emitir chave mínima, sincronizar uma viagem e reserva confirmada, emitir um QR por passageiro e enviar seu link uma vez. No APK, entrar como motorista/guia alocado, iniciar trecho, ler QR e confirmar embarque/desembarque. Consumir o feed, repetir página/operation_key, testar offline e volta. Verificar negação de acesso de outra empresa, chave revogada/expirada, escopo insuficiente, módulo desabilitado e bloqueio financeiro. Nenhuma cobrança ou mensagem real é disparada pelos arquivos de documentação.</p></body></html>

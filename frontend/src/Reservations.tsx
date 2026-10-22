@@ -1,4 +1,5 @@
 import { ReservationWhatsApp } from "./ReservationWhatsApp";
+import { useModules } from "./modules";
 import {
   PassengerExceptions,
   type PassengerDocuments,
@@ -786,6 +787,7 @@ function ReservationDetail({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const allowed = useModules();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [allocation, setAllocation] = useState("");
@@ -870,7 +872,7 @@ function ReservationDetail({
           detail.data && (
             <>
               <h3>{detail.data.contact_name}</h3>
-              <ReservationWhatsApp reservationId={reservationId} />
+              {allowed("whatsapp") && <ReservationWhatsApp reservationId={reservationId} />}
               {active &&
                 ["scheduled", "in_progress"].includes(trip.status) &&
                 !(
@@ -940,14 +942,14 @@ function ReservationDetail({
                   </span>
                 </p>
               ))}
-              <TicketManager
+              {allowed("boarding") && <TicketManager
                 reservationId={reservationId}
                 confirmed={
                   detail.data.status === "confirmed" &&
                   ["scheduled", "in_progress"].includes(trip.status)
                 }
                 legs={trip.legs}
-              />
+              />}
               {detail.data.journeys.map((j) => {
                 const leg = trip.legs.find((l) => l.id === j.leg_id)!;
                 const points = [

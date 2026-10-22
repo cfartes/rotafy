@@ -17,6 +17,12 @@ def capabilities(profile):
 
 
 async def require_tourism(db, company_id=None):
+    from app.modules import require
+
+    tenant_id = company_id or await db.scalar(
+        text("SELECT nullif(current_setting('app.company_id',true),'')::uuid")
+    )
+    await require(db, tenant_id, "packages")
     profile = await db.scalar(
         text(
             "SELECT operational_profile FROM companies WHERE id=COALESCE(:company, nullif(current_setting('app.company_id',true),'')::uuid)"
