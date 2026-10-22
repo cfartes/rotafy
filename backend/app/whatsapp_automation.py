@@ -222,9 +222,10 @@ async def webhook(company_id: UUID, request: Request):
                 decrypt(config["secret"]).encode(), raw, hashlib.sha256
             ).hexdigest()
         )
-        if not hmac.compare_digest(
-            expected, request.headers.get("x-openwa-signature", "")
-        ):
+        signature = request.headers.get("x-openwa-signature", "")
+        if not re.fullmatch(
+            r"sha256=[0-9a-f]{64}", signature
+        ) or not hmac.compare_digest(expected, signature):
             raise HTTPException(403, "Evento não autorizado.")
         try:
             event = json.loads(raw)

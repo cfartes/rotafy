@@ -120,6 +120,14 @@ def test_opt_in_permissions_signed_inbound_and_deduplication(
         client.post(f"/api/v1/webhooks/openwa/{seeded['a']}", json={}).status_code
         == 403
     )
+    assert (
+        client.post(
+            f"/api/v1/webhooks/openwa/{seeded['a']}",
+            content=b"{}",
+            headers={"X-OpenWA-Signature": b"sha256=\xff"},
+        ).status_code
+        == 403
+    )
     for change in (
         {"sessionId": str(uuid4())},
         {"timestamp": (utc_now() - timedelta(hours=1)).isoformat()},
