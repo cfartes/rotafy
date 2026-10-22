@@ -1,6 +1,6 @@
 # Apresentação e manual do Nexus Rotafy
 
-Edição 2026.10, revisada em 09/10/2026. Os materiais públicos apresentam somente funcionalidades disponíveis. A apresentação tem foco comercial e o manual explica o uso, sem nomes de fornecedores de comunicação, detalhes de infraestrutura ou funcionalidades planejadas.
+Edição 2026.10, revisão 5, revisada em 22/10/2026. Os materiais públicos apresentam somente funcionalidades disponíveis. A apresentação tem foco comercial e o manual explica o uso, sem nomes de fornecedores de comunicação, detalhes de infraestrutura ou funcionalidades planejadas.
 
 ## Acesso no aplicativo
 
@@ -8,6 +8,7 @@ A central pública fica em `/ajuda`, com links na tela de login e no menu **Ajud
 
 Arquivos publicados em `frontend/public/documentacao/`:
 
+- `manual-superadmin.html` e `manual-superadmin.pdf`: orientações exclusivas do perfil Nexus, acessíveis pela ajuda desse perfil.
 - `manual.html`: manual pesquisável, responsivo e independente de serviços externos.
 - `manual.pdf`: manual para impressão e download.
 - `apresentacao.html`: apresentação com navegação entre slides.
@@ -19,7 +20,7 @@ Os arquivos são copiados pelo build do frontend. Atualizar o serviço web publi
 
 ## Manutenção
 
-Fontes revisáveis: `docs/publicacao/manual.md`, `apresentacao.json` e os dois templates HTML na mesma pasta. Atualize também a data e edição da central em `frontend/src/Documentation.tsx` quando publicar uma nova revisão.
+Fontes revisáveis: `docs/publicacao/manual.md`, `manual-superadmin.md`, `apresentacao.json` e os dois templates HTML na mesma pasta. Atualize também a data e edição da central em `frontend/src/Documentation.tsx` quando publicar uma nova revisão.
 
 Na raiz do projeto, usando o ambiente Python local e as dependências já instaladas do frontend:
 

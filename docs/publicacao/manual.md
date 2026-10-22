@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **21/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **22/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -682,3 +682,48 @@ No Android, a partir de 1.8.0, inicie o trecho e use **Assumir rastreamento dest
 O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.
 
 Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, embarque confirmado no mapa e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.
+
+
+## Conversas WhatsApp e atendimento da equipe {#conversas-whatsapp}
+
+Administradores e atendentes encontram **Conversas WhatsApp** quando o módulo está habilitado. A tela utiliza somente o número conectado da própria empresa. Pesquise uma conversa, consulte o histórico, responda a uma mensagem específica ou inicie uma conversa informando o telefone com DDI. No celular, use voltar para retornar à lista.
+
+Envie texto ou anexe imagens, PDF, áudio ou vídeo nos formatos aceitos. O limite de envio é **2 MB por arquivo**. Mensagens antigas e mídias dependem do histórico disponível; um anexo indisponível não significa que a conversa foi apagada. A lista e a conversa aberta são atualizadas automaticamente.
+
+O acompanhamento distingue mensagens pendentes, enviando, aceitas, falhas, incertas ou descartadas. Aceitação não comprova entrega nem leitura. Em **Envio incerto**, confira a conversa antes de reenviar para evitar duplicidade.
+
+### Assumir e concluir um atendimento
+
+Em **Solicitações de atendimento**, abra a conversa solicitada pelo cliente. A opção **Falar com a equipe** pausa as respostas automáticas. Uma resposta manual enviada pela equipe nesta tela também assume a conversa quando a automação está ativa. Enquanto o atendimento humano estiver aberto, o sistema não reapresenta o menu nem envia despedida por inatividade.
+
+Ao finalizar, use **Concluir atendimento**. A próxima mensagem do cliente poderá iniciar um novo atendimento automático.
+
+## Menu automático e bilhetes antecipados {#automacoes-whatsapp}
+
+Em **WhatsApp → Atendimento e bilhetes automáticos**, o administrador habilita separadamente o atendimento automático e o envio de bilhetes. Ambos começam desabilitados. Confira a conexão e os envios, escolha as opções, acrescente uma mensagem complementar se desejar e clique em **Salvar automações**.
+
+### Como o passageiro conversa
+
+Qualquer mensagem de texto não vazia inicia o atendimento. O sistema apresenta **“Olá, Nome, em que podemos ajudar?”**, priorizando o nome do responsável pela reserva confirmada de viagem ativa associada ao telefone. Sem esse nome, utiliza o nome público do perfil do WhatsApp; sem nome disponível, apresenta apenas **“Olá, em que podemos ajudar?”**.
+
+As opções habilitadas aparecem numeradas: **Bilhete de embarque**, **Meu veículo**, **Minha reserva**, **Local e horário de embarque** e **Falar com a equipe**. O passageiro responde com o número mostrado. Durante a conversa, outro texto reapresenta o menu. Quando houver várias reservas ou passageiros, o sistema solicita a seleção correspondente. As consultas utilizam o telefone da reserva e não permitem consultar dados de terceiros.
+
+Após **um minuto sem nova mensagem do cliente**, o atendimento automático envia: “Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar.” Uma nova mensagem reinicia o prazo. O envio depende da conexão; o prazo não representa garantia de recebimento no segundo exato. A regra não encerra atendimentos humanos. Após encerrar, qualquer novo texto inicia outro menu.
+
+Em hotéis e endereços personalizados, confirme com a equipe o horário específico da coleta. O horário geral de saída não equivale ao horário exato de chegada ao hotel.
+
+### Bilhetes automaticamente antes do embarque
+
+Ative **Enviar bilhetes automaticamente 24 horas antes do primeiro embarque**. Reservas confirmadas entram na fila quando faltam até 24 horas para o primeiro embarque contratado; reservas feitas dentro dessa janela também são consideradas. Cada passageiro recebe um bilhete individual válido para todos os seus trechos. O botão de envio manual continua disponível.
+
+Os envios automáticos respeitam um intervalo mínimo de **três minutos** em uma fila compartilhada entre todas as viagens e empresas. As 24 horas indicam a entrada na fila, não um horário garantido de entrega. Volume elevado e indisponibilidade podem atrasar os envios; acompanhe a situação antes da saída. Respostas do atendimento e envios manuais não seguem esse intervalo.
+
+Cancelamentos e alterações são conferidos antes do envio. Mensagens aceitas ou incertas não são repetidas automaticamente. Bilhetes antigos sem link recuperável aparecem como **Precisa de atenção**: utilize o envio manual com o link original ou faça uma reemissão consciente na reserva. Reemitir substitui o link anterior; a automação não faz essa troca silenciosamente.
+
+## Módulos e integração com outro sistema {#modulos-integracao}
+
+Os menus disponíveis dependem do perfil, dos módulos contratados e da situação da empresa. A Nexus pode disponibilizar o sistema completo ou somente os módulos necessários à operação integrada. O Financeiro da assinatura, o contrato, o acesso e a ajuda continuam como recursos básicos.
+
+No modelo integrado, a venda acontece no sistema parceiro; o Rotafy recebe os dados autorizados para comunicação, bilhetes e operação de embarque/desembarque. O motorista ou guia usa sua própria conta no Android, prepara as viagens com conexão e sincroniza os registros realizados offline.
+
+O administrador gerencia credenciais em **Integração com parceiros**, quando habilitado. Vincule um atendente dedicado, limite permissões e validade e entregue a credencial apenas ao responsável técnico autorizado. A credencial aparece uma única vez. Revogue-a quando não for mais necessária. Suspender ou mudar a função do atendente interrompe as credenciais vinculadas. A integração não concede acesso às configurações globais nem ao financeiro da assinatura.

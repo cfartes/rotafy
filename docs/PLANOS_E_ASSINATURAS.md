@@ -1,6 +1,6 @@
 # Planos, assinaturas e franquia mensal
 
-Implementação da etapa 2 em 2026-10-05.
+Revisado em 22/10/2026. Regras atuais de contratação, consumo e cobrança da assinatura; condições históricas permanecem preservadas.
 
 ## Operação no painel
 
@@ -12,21 +12,21 @@ Valores monetários são enviados à API como inteiros em centavos. A interface 
 
 ## Ciclos e histórico
 
-- Ciclo mensal calculado pelo aniversário da data original, à meia-noite de America/Sao_Paulo; intervalos incluem o início e excluem o fim.
-- Exemplo: início em 31/01 -> 28/02 ou 29/02 -> 31/03. Não há deslocamento permanente para o dia 28.
+- Novas contratações seguem teste configurável e ciclos pagos fixos de 30 dias após o teste. O setup é separado e cobrado somente no fim do teste; mensalidade e excedentes, no fim de cada ciclo.
+- Exemplo: contratação em 10/10 com sete dias de teste → setup em 17/10 → primeira mensalidade em 16/11. Assinaturas históricas preservam seu calendário registrado; os intervalos incluem o início e excluem o fim.
 - Sem acumulação de franquia. Assinatura futura tem primeiro período reservado, mas não autoriza consumo antes do início.
 - Condições de cada período apontam para uma versão imutável do plano. Publicar condições novas não altera períodos já criados.
-- Renovação usual usa a versão publicada antes do começo de cada ciclo. O serviço recupera ciclos perdidos sem aplicar preços atuais retroativamente a todos os meses.
-- Uma troca agendada fixa a versão selecionada para o próximo ciclo; pode ser desmarcada antes de entrar em vigor. Nos ciclos posteriores, aplica-se o catálogo vigente na virada.
+- A renovação preserva as condições contratadas. Editar o catálogo não reajusta automaticamente clientes. Períodos históricos não recebem preços atuais retroativamente.
+- Uma mudança de plano exige proposta e aditivo aceito pelo representante, com confirmação por e-mail, antes de agendar o próximo ciclo. Não há novo setup nem proporcional. Propostas ainda não aceitas podem ser canceladas; um agendamento aceito não é removido pelo cancelamento de proposta.
 - Arquivar um plano impede novas contratações e novas escolhas; assinaturas existentes mantêm sua renovação.
 - Encerrar assinatura bloqueia novos consumos e novas renovações, preservando ciclos e lançamentos. Contratar novamente cria outro registro; não apaga o contrato anterior.
-- Sem pró-rata, reembolso financeiro automático ou emissão de cobrança/fatura. O demonstrativo é administrado manualmente pela Nexus.
+- Há emissão de cobranças, avisos e links de pagamento quando habilitados. Não há pró-rata nem reembolso automático. Consulte [cobranças mensais](COBRANCAS_MENSAIS.md), [pagamentos e teste](INFINITEPAY_E_TESTE.md) e [contratos](CONTRATOS_E_ACEITE.md).
 
 ## Consumo e estorno
 
 O serviço interno de consumo está ligado à criação e ao cancelamento de viagens comerciais, na mesma transação. Falhas revertem tanto a operação comercial quanto seu lançamento. Não há edição manual do livro de consumo. Regras operacionais em [FROTA_E_VIAGENS.md](FROTA_E_VIAGENS.md).
 
-Cada viagem comercial consome uma unidade, independente dos veículos/trechos. A mesma operação pode ser repetida sem duplicar o lançamento. Outro consumo da mesma viagem é recusado enquanto não houver estorno; reativação após estorno exige nova operação.
+Viagem simples consome uma unidade, independentemente dos veículos/trechos; pacotes consomem uma unidade por destino comercial, com retorno incluído. A mesma operação pode ser repetida sem duplicar o lançamento. Outro consumo da mesma viagem é recusado enquanto não houver estorno; reativação após estorno exige nova operação.
 
 Cancelamento gera um evento negativo no período original. Não transfere crédito para o ciclo atual. O banco valida a relação entre estorno, empresa, viagem e período e impede estornar o mesmo consumo duas vezes.
 
@@ -42,4 +42,4 @@ Demonstrativo: viagens extras = máximo(consumo líquido - franquia, 0); total =
 - Marcador de saúde do worker detecta rodadas sem sucesso; logs não expõem parâmetros de conexão ou dados pessoais.
 - A atualização Docker aplica a migração 0003_billing sem substituir dados das empresas existentes.
 
-Não há integração com sistemas de pagamento. O futuro marcador **PAGO** é da reserva do comprador e será implementado no módulo de reservas, separado destes demonstrativos SaaS.
+A integração de pagamento da assinatura é separada da reserva do passageiro. **PAGO** já permite registrar manualmente o pagamento da reserva; não representa baixa da assinatura da empresa.

@@ -1,6 +1,6 @@
 {
   "edition": "2026.10",
-  "date": "09/10/2026",
+  "date": "22/10/2026",
   "slides": [
     {
       "eyebrow": "NEXUS · GESTÃO DE TRANSPORTE",
@@ -11,8 +11,8 @@
         "Android para motorista e guia",
         "Bilhete individual para o passageiro"
       ],
-      "footnote": "Apresentação do sistema · Edição 2026.10 · 09/10/2026",
-      "notes": "Nexus Rotafy Painel web para gestão e atendimento Android para motorista e guia Bilhete individual para o passageiro"
+      "footnote": "Apresentação do sistema · Edição 2026.10 · 22/10/2026",
+      "notes": "Nexus Rotafy Painel web para gestão e atendimento Android para motorista e guia Bilhete individual para o passageiro Apresentação do sistema · Edição 2026.10 · 22/10/2026"
     },
     {
       "eyebrow": "DA VENDA À CHEGADA",
@@ -25,7 +25,7 @@
         "Chegadas e relatórios dão visibilidade ao gestor."
       ],
       "footnote": "A operação é validada por empresa, usuário, veículo e trecho.",
-      "notes": "Planejar → vender → embarcar → concluir → analisar Rotas e pacotes reutilizáveis reduzem o recadastro. Reservas conectam famílias, lugares e deslocamentos. QR e manifestos ligam o atendimento à equipe na estrada. Chegadas e relatórios dão visibilidade ao gestor."
+      "notes": "Planejar → vender → embarcar → concluir → analisar Rotas e pacotes reutilizáveis reduzem o recadastro. Reservas conectam famílias, lugares e deslocamentos. QR e manifestos ligam o atendimento à equipe na estrada. Chegadas e relatórios dão visibilidade ao gestor. A operação é validada por empresa, usuário, veículo e trecho."
     },
     {
       "eyebrow": "SAAS MULTIEMPRESA",
@@ -38,7 +38,7 @@
         "Nexus administra empresas, planos e configurações da plataforma."
       ],
       "footnote": "Guias e motoristas acessam somente os deslocamentos atribuídos.",
-      "notes": "Uma plataforma compartilhada, com operação segregada. Cadastros, viagens, reservas e históricos pertencem à empresa. Acesso definido pelo identificador da empresa e pelo perfil do usuário. Um profissional de várias empresas possui um cadastro em cada uma. Nexus administra empresas, planos e configurações da plataforma."
+      "notes": "Uma plataforma compartilhada, com operação segregada. Cadastros, viagens, reservas e históricos pertencem à empresa. Acesso definido pelo identificador da empresa e pelo perfil do usuário. Um profissional de várias empresas possui um cadastro em cada uma. Nexus administra empresas, planos e configurações da plataforma. Guias e motoristas acessam somente os deslocamentos atribuídos."
     },
     {
       "eyebrow": "DOIS PERFIS OPERACIONAIS",
@@ -51,7 +51,7 @@
         "Perfil operacional e plano comercial são escolhas independentes."
       ],
       "footnote": "Uma experiência organizada para cada tipo de operação.",
-      "notes": "O cadastro inicial orienta a experiência da empresa. Turismo: viagens simples, transfers e pacotes com vários destinos. Regular: viagens simples, Rotas, frota, reservas e embarque. Os menus turísticos ficam ocultos no perfil Regular. Perfil operacional e plano comercial são escolhas independentes."
+      "notes": "O cadastro inicial orienta a experiência da empresa. Turismo: viagens simples, transfers e pacotes com vários destinos. Regular: viagens simples, Rotas, frota, reservas e embarque. Os menus turísticos ficam ocultos no perfil Regular. Perfil operacional e plano comercial são escolhas independentes. Uma experiência organizada para cada tipo de operação."
     },
     {
       "eyebrow": "EQUIPE E ACESSO",
@@ -64,7 +64,7 @@
         "Recuperação de acesso e registro de atividades."
       ],
       "footnote": "Motorista e guia compartilham os recursos operacionais; o guia é opcional.",
-      "notes": "Administrador, atendente, motorista e guia. Cadastro, ativação e suspensão de colaboradores. Convite por e-mail, WhatsApp ou pelos dois canais. Link de 24 horas para definir a própria senha. Recuperação de acesso e registro de atividades."
+      "notes": "Administrador, atendente, motorista e guia. Cadastro, ativação e suspensão de colaboradores. Convite por e-mail, WhatsApp ou pelos dois canais. Link de 24 horas para definir a própria senha. Recuperação de acesso e registro de atividades. Motorista e guia compartilham os recursos operacionais; o guia é opcional."
     },
     {
       "eyebrow": "FROTA",
@@ -73,11 +73,11 @@
       "points": [
         "Cadastro de veículo, placa e quantidade de lugares.",
         "Vários veículos na mesma viagem ou deslocamento.",
-        "Motorista e guias definidos em cada alocação.",
+        "Mais de um motorista e guia podem acompanhar o mesmo veículo.",
         "Conflitos de horários e capacidade verificados ao salvar."
       ],
       "footnote": "A distribuição considera quantidade de lugares; não há escolha de poltrona numerada.",
-      "notes": "Capacidade e equipe conectadas ao planejamento. Cadastro de veículo, placa e quantidade de lugares. Vários veículos na mesma viagem ou deslocamento. Motorista e guias definidos em cada alocação. Conflitos de horários e capacidade verificados ao salvar."
+      "notes": "Capacidade e equipe conectadas ao planejamento. Cadastro de veículo, placa e quantidade de lugares. Vários veículos na mesma viagem ou deslocamento. Mais de um motorista e guia podem acompanhar o mesmo veículo. Conflitos de horários e capacidade verificados ao salvar. A distribuição considera quantidade de lugares; não há escolha de poltrona numerada."
     },
     {
       "eyebrow": "ROTAS REUTILIZÁVEIS",
@@ -91,7 +91,7 @@
       ],
       "image": "rotas-catalogo-desktop.png",
       "footnote": "Duração manual. Atualizar uma Rota não altera automaticamente viagens já criadas.",
-      "notes": "Cidades, endereços, paradas e duração estimada. UF e cidade para origem e destino. Paradas ordenadas de embarque, desembarque ou ambos. Somente ida ou ida e volta, com sugestão de retorno invertido. Navegação abre o Google Maps externo."
+      "notes": "Cidades, endereços, paradas e duração estimada. UF e cidade para origem e destino. Paradas ordenadas de embarque, desembarque ou ambos. Somente ida ou ida e volta, com sugestão de retorno invertido. Navegação abre o Google Maps externo. Duração manual. Atualizar uma Rota não altera automaticamente viagens já criadas."
     },
     {
       "eyebrow": "PACOTES TURÍSTICOS",
@@ -104,7 +104,7 @@
         "Venda do pacote completo, com retorno incluído."
       ],
       "footnote": "Exemplos: Maceió ↔ Maragogi / Gunga; ou Maceió → Fortaleza → Natal → Maceió.",
-      "notes": "Dois formatos para simplificar o roteiro. Passeios: cada dia retorna à mesma cidade-base. Sequência: várias cidades, com permanência e dias livres. Modelo com dias relativos; datas reais são definidas na saída. Venda do pacote completo, com retorno incluído."
+      "notes": "Dois formatos para simplificar o roteiro. Passeios: cada dia retorna à mesma cidade-base. Sequência: várias cidades, com permanência e dias livres. Modelo com dias relativos; datas reais são definidas na saída. Venda do pacote completo, com retorno incluído. Exemplos: Maceió ↔ Maragogi / Gunga; ou Maceió → Fortaleza → Natal → Maceió."
     },
     {
       "eyebrow": "SAÍDAS E ALOCAÇÕES",
@@ -117,7 +117,7 @@
         "Filtros de situação, edição protegida, duplicação e cancelamento."
       ],
       "footnote": "A saída preserva sua versão de percurso, preço e capacidade.",
-      "notes": "Rota ou pacote + data + horários + veículos + equipe. Viagem simples com trecho único ou ida e volta. Saída de pacote com todas as etapas e chegadas previstas. Troca de veículo e equipe entre deslocamentos do roteiro. Filtros de situação, edição protegida, duplicação e cancelamento."
+      "notes": "Rota ou pacote + data + horários + veículos + equipe. Viagem simples com trecho único ou ida e volta. Saída de pacote com todas as etapas e chegadas previstas. Troca de veículo e equipe entre deslocamentos do roteiro. Filtros de situação, edição protegida, duplicação e cancelamento. A saída preserva sua versão de percurso, preço e capacidade."
     },
     {
       "eyebrow": "VENDA E RESERVA FAMILIAR",
@@ -127,10 +127,10 @@
         "Menu Vender bilhete, sem abrir o cadastro da viagem.",
         "Disponibilidade por segmento e sugestão de veículo para o grupo.",
         "Bloqueios de 15 minutos, confirmação, cancelamento e realocação.",
-        "Importação CSV/XLSX com prévia e validação do lote."
+        "Hotel ou endereço de embarque disponível para motorista e guia."
       ],
       "footnote": "CPF conforme roteiro e exceções; recebimento registrado manualmente como PAGO.",
-      "notes": "Um responsável, um telefone e vários passageiros. Menu Vender bilhete, sem abrir o cadastro da viagem. Disponibilidade por segmento e sugestão de veículo para o grupo. Bloqueios de 15 minutos, confirmação, cancelamento e realocação. Importação CSV/XLSX com prévia e validação do lote."
+      "notes": "Um responsável, um telefone e vários passageiros. Menu Vender bilhete, sem abrir o cadastro da viagem. Disponibilidade por segmento e sugestão de veículo para o grupo. Bloqueios de 15 minutos, confirmação, cancelamento e realocação. Hotel ou endereço de embarque disponível para motorista e guia. CPF conforme roteiro e exceções; recebimento registrado manualmente como PAGO."
     },
     {
       "eyebrow": "BILHETE INDIVIDUAL",
@@ -143,7 +143,7 @@
         "Reemissão e revogação para todos os trechos do passageiro."
       ],
       "footnote": "A leitura identifica o passageiro; o operador confirma o embarque.",
-      "notes": "O mesmo bilhete em todos os trechos contratados. Página privada com etapas, pontos, horários e veículos. Impressão/PDF, download do QR e compartilhamento do link. Envio do link pelo WhatsApp ao telefone da reserva. Reemissão e revogação para todos os trechos do passageiro."
+      "notes": "O mesmo bilhete em todos os trechos contratados. Página privada com etapas, pontos, horários e veículos. Impressão/PDF, download do QR e compartilhamento do link. Envio do link pelo WhatsApp ao telefone da reserva. Reemissão e revogação para todos os trechos do passageiro. A leitura identifica o passageiro; o operador confirma o embarque."
     },
     {
       "eyebrow": "COMUNICAÇÃO",
@@ -151,12 +151,12 @@
       "lead": "WhatsApp e e-mail aproximam sua equipe dos clientes.",
       "points": [
         "Confirmação, cancelamento e registro de pagamento por WhatsApp.",
-        "Resumo da reserva e link do bilhete enviados pelo atendimento.",
-        "Convites da equipe por WhatsApp, e-mail ou ambos.",
-        "Histórico de mensagens para acompanhar o atendimento."
+        "Conversas, respostas e anexos diretamente no painel da empresa.",
+        "Menu numerado personalizado com reserva, veículo e embarque.",
+        "Atendimento humano com pausa das respostas automáticas."
       ],
       "footnote": "O administrador conecta o número da empresa por QR Code no próprio painel; cada empresa mantém sua sessão exclusiva.",
-      "notes": "WhatsApp e e-mail aproximam sua equipe dos clientes. Confirmação, cancelamento e registro de pagamento por WhatsApp. Resumo da reserva e link do bilhete enviados pelo atendimento. Convites da equipe por WhatsApp, e-mail ou ambos. Histórico de mensagens para acompanhar o atendimento."
+      "notes": "WhatsApp e e-mail aproximam sua equipe dos clientes. Confirmação, cancelamento e registro de pagamento por WhatsApp. Conversas, respostas e anexos diretamente no painel da empresa. Menu numerado personalizado com reserva, veículo e embarque. Atendimento humano com pausa das respostas automáticas. O administrador conecta o número da empresa por QR Code no próprio painel; cada empresa mantém sua sessão exclusiva."
     },
     {
       "eyebrow": "ANDROID OPERACIONAL",
@@ -169,7 +169,7 @@
         "Login biométrico opcional em aparelhos compatíveis."
       ],
       "footnote": "APK por empresa; no perfil operacional, guia não é obrigatório.",
-      "notes": "A viagem na mão de quem executa a operação. Viagens atribuídas e agenda dos próximos sete dias. QR pela câmera, lista e filtros de passageiros. Iniciar viagem, desembarcar todos e registrar chegada. Login biométrico opcional em aparelhos compatíveis."
+      "notes": "A viagem na mão de quem executa a operação. Viagens atribuídas e agenda dos próximos sete dias. QR pela câmera, lista e filtros de passageiros. Iniciar viagem, desembarcar todos e registrar chegada. Login biométrico opcional em aparelhos compatíveis. APK por empresa; no perfil operacional, guia não é obrigatório."
     },
     {
       "eyebrow": "OPERAÇÃO COM CONEXÃO INTERMITENTE",
@@ -182,7 +182,7 @@
         "Inicie e finalize o deslocamento com conexão disponível."
       ],
       "footnote": "Dados locais pendentes não equivalem a confirmação no sistema.",
-      "notes": "Lista de passageiros disponível durante o percurso. Prepare a lista do veículo antes de sair. Registre embarques e desembarques mesmo sem conexão. Sincronize os registros ao recuperar a internet. Inicie e finalize o deslocamento com conexão disponível."
+      "notes": "Lista de passageiros disponível durante o percurso. Prepare a lista do veículo antes de sair. Registre embarques e desembarques mesmo sem conexão. Sincronize os registros ao recuperar a internet. Inicie e finalize o deslocamento com conexão disponível. Dados locais pendentes não equivalem a confirmação no sistema."
     },
     {
       "eyebrow": "CHEGADA E HISTÓRICO",
@@ -195,7 +195,7 @@
         "Conclusão geral após todos os veículos e etapas previstos."
       ],
       "footnote": "O registro da chegada fica disponível nos detalhes da viagem.",
-      "notes": "Finalização consultável por veículo e trecho. Saída, chegada, responsável e horários registrados. GPS pontual: coordenadas, precisão e horário da captura. Link para consultar o ponto da chegada no Maps. Conclusão geral após todos os veículos e etapas previstos."
+      "notes": "Finalização consultável por veículo e trecho. Saída, chegada, responsável e horários registrados. GPS pontual: coordenadas, precisão e horário da captura. Link para consultar o ponto da chegada no Maps. Conclusão geral após todos os veículos e etapas previstos. O registro da chegada fica disponível nos detalhes da viagem."
     },
     {
       "eyebrow": "VISÃO GERENCIAL",
@@ -209,7 +209,7 @@
       ],
       "image": "visao-gerencial-desktop.png",
       "footnote": "Valores nominais e marcação manual; não representam conciliação bancária, fluxo de caixa ou lucro.",
-      "notes": "Período, situação, veículo e viagem em uma visão integrada. Deslocamentos diários e viagens comerciais iniciadas. Ocupação máxima confirmada por veículo/deslocamento. Valores confirmados, PAGO, ticket médio e produtos vendidos. Baixa ocupação, presença, franquia e exportação CSV."
+      "notes": "Período, situação, veículo e viagem em uma visão integrada. Deslocamentos diários e viagens comerciais iniciadas. Ocupação máxima confirmada por veículo/deslocamento. Valores confirmados, PAGO, ticket médio e produtos vendidos. Baixa ocupação, presença, franquia e exportação CSV. Valores nominais e marcação manual; não representam conciliação bancária, fluxo de caixa ou lucro."
     },
     {
       "eyebrow": "ADMINISTRAÇÃO DA PLATAFORMA",
@@ -222,7 +222,7 @@
         "Cancelamento estorna o consumo no ciclo original."
       ],
       "footnote": "Quatro destinos = quatro unidades, sem acréscimo por retorno, paradas ou quantidade de veículos.",
-      "notes": "Empresas, planos e assinaturas em um só painel. Basic, Professional, Enterprise e planos adicionais configuráveis. Franquia mensal, mensalidade e valor da unidade extra. Uma viagem simples = uma unidade; pacote = destinos comerciais. Cancelamento estorna o consumo no ciclo original."
+      "notes": "Empresas, planos e assinaturas em um só painel. Basic, Professional, Enterprise e planos adicionais configuráveis. Teste inicial, setup separado e mensalidade após cada ciclo de 30 dias, com confirmação automática por link. Uma viagem simples = uma unidade; pacote = destinos comerciais. Cancelamento estorna o consumo no ciclo original. Quatro destinos = quatro unidades, sem acréscimo por retorno, paradas ou quantidade de veículos."
     },
     {
       "eyebrow": "PRIMEIRA OPERAÇÃO",
@@ -235,7 +235,7 @@
         "4 · Manifesto preparado, embarque realizado e chegada registrada."
       ],
       "footnote": "O manual traz instruções por perfil, exemplos, checklists e solução de problemas.",
-      "notes": "Um roteiro simples para colocar a equipe em funcionamento. 1 · Empresa, plano, equipe e veículo cadastrados. 2 · Rota criada e viagem agendada com equipe atribuída. 3 · Reserva confirmada, PAGO conferido e bilhete enviado. 4 · Manifesto preparado, embarque realizado e chegada registrada."
+      "notes": "Um roteiro simples para colocar a equipe em funcionamento. 1 · Empresa, plano, equipe e veículo cadastrados. 2 · Rota criada e viagem agendada com equipe atribuída. 3 · Reserva confirmada, PAGO conferido e bilhete enviado. 4 · Manifesto preparado, embarque realizado e chegada registrada. O manual traz instruções por perfil, exemplos, checklists e solução de problemas."
     },
     {
       "eyebrow": "VALOR PARA SUA EMPRESA",
@@ -248,7 +248,72 @@
         "Acompanhe ocupação, vendas e execução das viagens."
       ],
       "footnote": "Uma visão compartilhada para tomar decisões com mais clareza.",
-      "notes": "Da preparação do roteiro à análise dos resultados. Reutilize rotas e pacotes para organizar novas saídas. Centralize passageiros, reservas e disponibilidade de lugares. Conecte atendimento, motorista e guia na mesma operação. Acompanhe ocupação, vendas e execução das viagens."
+      "notes": "Da preparação do roteiro à análise dos resultados. Reutilize rotas e pacotes para organizar novas saídas. Centralize passageiros, reservas e disponibilidade de lugares. Conecte atendimento, motorista e guia na mesma operação. Acompanhe ocupação, vendas e execução das viagens. Uma visão compartilhada para tomar decisões com mais clareza."
+    },
+    {
+      "eyebrow": "ATENDIMENTO MAIS ÁGIL",
+      "title": "O passageiro pergunta.\nA empresa acompanha.",
+      "lead": "Informações úteis no próprio WhatsApp.",
+      "points": [
+        "Qualquer texto abre um menu com saudação personalizada.",
+        "O passageiro consulta seus bilhetes, reserva, veículo e embarque.",
+        "A equipe assume a conversa quando necessário.",
+        "O atendimento automático encerra após um minuto de inatividade."
+      ],
+      "footnote": "A consulta utiliza o telefone vinculado à reserva.",
+      "notes": "Informações úteis no próprio WhatsApp. Qualquer texto abre um menu com saudação personalizada. O passageiro consulta seus bilhetes, reserva, veículo e embarque. A equipe assume a conversa quando necessário. O atendimento automático encerra após um minuto de inatividade. A consulta utiliza o telefone vinculado à reserva."
+    },
+    {
+      "eyebrow": "BILHETE NA HORA DE VIAJAR",
+      "title": "Envio antecipado,\ncom acompanhamento.",
+      "lead": "Ative o envio automático antes do primeiro embarque.",
+      "points": [
+        "Reservas confirmadas entram na fila até 24 horas antes.",
+        "Um bilhete por passageiro, válido para todos os trechos contratados.",
+        "Intervalo mínimo de três minutos entre os envios automáticos.",
+        "O envio manual permanece disponível para o atendimento."
+      ],
+      "footnote": "A entrada na fila não garante o horário exato de entrega; acompanhe os envios.",
+      "notes": "Ative o envio automático antes do primeiro embarque. Reservas confirmadas entram na fila até 24 horas antes. Um bilhete por passageiro, válido para todos os trechos contratados. Intervalo mínimo de três minutos entre os envios automáticos. O envio manual permanece disponível para o atendimento. A entrada na fila não garante o horário exato de entrega; acompanhe os envios."
+    },
+    {
+      "eyebrow": "VISIBILIDADE DA OPERAÇÃO",
+      "title": "Acompanhe o veículo.\nOriente o passageiro.",
+      "lead": "Rastreamento e avisos configuráveis pela empresa.",
+      "points": [
+        "Posições do celular responsável coletadas a cada cinco minutos.",
+        "Mapa com última posição e trilha das amostras durante o trecho.",
+        "Aviso de proximidade para embarques confirmados no mapa.",
+        "Lembrete de saída na ida e na volta pelo WhatsApp."
+      ],
+      "footnote": "Localização aproximada; depende de conexão, GPS e permissões.",
+      "notes": "Rastreamento e avisos configuráveis pela empresa. Posições do celular responsável coletadas a cada cinco minutos. Mapa com última posição e trilha das amostras durante o trecho. Aviso de proximidade para embarques confirmados no mapa. Lembrete de saída na ida e na volta pelo WhatsApp. Localização aproximada; depende de conexão, GPS e permissões."
+    },
+    {
+      "eyebrow": "GESTÃO DA ASSINATURA",
+      "title": "Condições claras,\npagamento acompanhado.",
+      "lead": "Contrato, valores e vencimentos no mesmo ambiente.",
+      "points": [
+        "Leitura e download do contrato antes do aceite por confirmação de e-mail.",
+        "Plano e valores preservados no documento; mudanças exigem novo aceite.",
+        "Financeiro com valor previsto, próximo vencimento e situação.",
+        "Link de pagamento e confirmação automática após aprovação."
+      ],
+      "footnote": "O setup é separado; a mensalidade é cobrada ao final do ciclo de 30 dias.",
+      "notes": "Contrato, valores e vencimentos no mesmo ambiente. Leitura e download do contrato antes do aceite por confirmação de e-mail. Plano e valores preservados no documento; mudanças exigem novo aceite. Financeiro com valor previsto, próximo vencimento e situação. Link de pagamento e confirmação automática após aprovação. O setup é separado; a mensalidade é cobrada ao final do ciclo de 30 dias."
+    },
+    {
+      "eyebrow": "COMPATÍVEL COM SUA OPERAÇÃO",
+      "title": "Use o sistema completo\nou integre ao seu app.",
+      "lead": "Módulos adequados ao que a empresa precisa.",
+      "points": [
+        "WhatsApp e bilhetes podem complementar um sistema de vendas parceiro.",
+        "Dados sincronizados apoiam a comunicação e a operação da viagem.",
+        "Motorista e guia registram embarque e desembarque no Android.",
+        "Permissões por empresa e credenciais de integração controladas."
+      ],
+      "footnote": "O conjunto de módulos depende da configuração da empresa.",
+      "notes": "Módulos adequados ao que a empresa precisa. WhatsApp e bilhetes podem complementar um sistema de vendas parceiro. Dados sincronizados apoiam a comunicação e a operação da viagem. Motorista e guia registram embarque e desembarque no Android. Permissões por empresa e credenciais de integração controladas. O conjunto de módulos depende da configuração da empresa."
     },
     {
       "eyebrow": "NEXUS ROTAFY",
@@ -260,7 +325,7 @@
         "Central com HTML, PDF e apresentação editável"
       ],
       "footnote": "Nexus Data Analytics · Edição 2026.10",
-      "notes": "Planejamento, atendimento e equipe conectados. Conheça o sistema: rotafy.nexusdataanalytics.tech Manual e downloads: /ajuda Central com HTML, PDF e apresentação editável"
+      "notes": "Planejamento, atendimento e equipe conectados. Conheça o sistema: rotafy.nexusdataanalytics.tech Manual e downloads: /ajuda Central com HTML, PDF e apresentação editável Nexus Data Analytics · Edição 2026.10"
     }
   ]
 }

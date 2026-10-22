@@ -51,7 +51,7 @@ Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A
 ## 3. Cadastro de empresas {#empresas}
 
 1. Abra **Empresas** e **Cadastrar empresa**.
-2. Preencha nome comercial, razão social, telefone/WhatsApp, CPF/CNPJ válido e identificador de acesso.
+2. Preencha nome comercial, razão social, telefone/WhatsApp, CPF/CNPJ válido e identificador de acesso. Informe primeiro o CEP para preencher endereço, bairro, cidade e UF; confira os dados e acrescente número e complemento, se houver. Se a consulta falhar, preencha manualmente.
 3. O identificador aceita somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhados, hífens ou outros caracteres especiais.
 4. Escolha **Turismo e transfers** ou **Transporte regular**.
 5. Escolha o plano e informe nome, e-mail e senha do primeiro administrador. Todos os campos são obrigatórios.
@@ -199,3 +199,35 @@ A edição do catálogo não reajusta automaticamente os clientes nos ciclos fut
 Em **Configurações → Atualizações do aplicativo Android**, selecione o APK e clique em **Publicar atualização Android**. A tela informa versão, compilação, data, SHA-256 e download. Utilize uma compilação superior, com o mesmo aplicativo e chave de assinatura.
 
 A partir de 1.7.0, o Android consulta atualizações ao abrir e oferece o botão para baixar uma versão mais nova. Versões anteriores precisam receber essa primeira atualização manualmente. O cliente instala por cima, sem desinstalar, e deve sincronizar os registros pendentes antes.
+
+
+## 10. Supervisão das conexões WhatsApp {#supervisao-whatsapp}
+
+O menu **Conexões WhatsApp** é exclusivo do administrador Nexus completo. Pesquise a empresa ou filtre conexões com problemas. Confira número cadastrado, estado da conexão e última verificação. A lista é atualizada automaticamente e permite atualização manual.
+
+- **Retomar conexão:** solicita recuperação e prepara um QR Code quando necessário.
+- **Reiniciar sessão:** desconecta a sessão da empresa e solicita nova conexão; poderá exigir leitura de outro QR Code.
+- **Desconectar:** interrompe a conexão e suspende os envios.
+- **QR Code:** acompanha a autenticação pendente da empresa.
+
+Os envios só são liberados após conferir o número conectado. Empresas suspensas ou sem o módulo WhatsApp não podem ser reconectadas. A desativação cancela retomadas pendentes e solicita desconexão. Reativar a empresa não equivale a autorizar novamente a conta do WhatsApp.
+
+Se o serviço estiver indisponível para todas as empresas, encaminhe ao suporte de infraestrutura. As ações do painel tratam as conexões individuais. As solicitações ficam registradas nas atividades; o perfil restrito Equipe Nexus não acessa essa supervisão.
+
+## 11. Módulos por empresa e integração {#modulos}
+
+Em **Módulos por empresa**, selecione o cliente e escolha **Sistema completo**, **WhatsApp e embarque integrado** ou ajuste os módulos individualmente. Confira as dependências selecionadas e clique em **Salvar módulos**. O perfil integrado mantém a base de equipe, veículos e viagens, comunicação, bilhetes/embarque e integração. Pacotes com vários destinos também exigem Rotas, Pacotes e perfil Turismo.
+
+Financeiro da assinatura, contrato, acesso e ajuda permanecem disponíveis conforme as regras do cadastro. Os módulos não substituem o plano nem alteram suas condições comerciais. As empresas já existentes preservam os módulos habilitados na atualização.
+
+Desabilitar WhatsApp solicita desconexão e descarta mensagens operacionais pendentes. Desabilitar Rastreamento encerra a coleta. Para retirar Viagens ou Embarque, finalize primeiro os trechos em andamento. Os dados históricos são preservados. Oriente operadores offline a sincronizar os registros pendentes; alterações de permissão só alcançam aparelhos offline quando se conectam.
+
+O administrador da empresa cria as credenciais do parceiro em seu próprio acesso, com atendente dedicado, validade e permissões limitadas. O guia técnico de integração fica separado dos materiais comerciais e descreve os dados e operações autorizados.
+
+## 12. Acompanhamento do atendimento e dos bilhetes {#atendimento-bilhetes}
+
+Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bilhetes automáticos**. Atendimento e envio antecipado são independentes e começam desativados. O cliente recebe menu numerado personalizado ao enviar qualquer texto; respostas numéricas selecionam as opções. A despedida ocorre após um minuto sem mensagem, somente no atendimento automático.
+
+A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
+
+Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo mínimo de três minutos compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
