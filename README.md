@@ -154,6 +154,8 @@ Detalhes e endpoints em [cadastro SaaS](docs/CADASTRO_SAAS.md).
 Instalador Hostinger/Traefik: [guia e comandos](docs/INSTALACAO_VPS.md).
 ## Integração com sistemas parceiros
 
+Atendimento e supervisão: [Conversas WhatsApp e conexões das empresas](docs/CHAT_WHATSAPP_E_SUPERVISAO.md).
+
 Consulte também [Módulos por empresa e operação integrada](docs/MODULOS_E_INTEGRACAO.md) para configurar o acesso do cliente e emitir as credenciais operacionais.
 
 O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os endpoints existentes, dados necessários, autenticação, exemplos, OpenAPI e coleção Postman para integrar um sistema externo à comunicação e à operação pelo APK.

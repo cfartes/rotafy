@@ -6,6 +6,8 @@ import { Tracking } from "./Tracking";
 import { EditCollaborator } from "./EditCollaborator";
 import { CompanyAccess } from "./CompanyAccess";
 import { CompanyWhatsApp } from "./CompanyWhatsApp";
+import { WhatsAppChat } from "./WhatsAppChat";
+import { NexusWhatsApp } from "./NexusWhatsApp";
 import { BillingUpcoming } from "./BillingUpcoming";
 import { AddressFields, addressPayload } from "./CompanyAddress";
 import { CompanyContract, PlanChangeNotice, ContractGate, NexusContracts, NexusCompanyContract } from "./Contracts";
@@ -865,6 +867,10 @@ const actionNames: Record<string, string> = {
   "whatsapp.disconnect_requested": "Desconexão do WhatsApp solicitada",
   "whatsapp.disconnected": "WhatsApp desconectado",
   "whatsapp.queued": "Mensagem WhatsApp adicionada à fila",
+  "whatsapp.chat_queued": "Mensagem de atendimento WhatsApp adicionada à fila",
+  "whatsapp.nexus_reconnect_requested": "Nexus solicitou reconexão do WhatsApp",
+  "whatsapp.nexus_restart_requested": "Nexus solicitou reinício da sessão WhatsApp",
+  "whatsapp.nexus_disconnect_requested": "Nexus solicitou desconexão do WhatsApp",
   "trip.unpublished": "Viagem retirada da página pública",
   "reservation.paid": "Reserva marcada PAGO",
   "reservation.unpaid": "Marcação PAGO removida",
@@ -1011,6 +1017,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "collections"
     | "nexus-team"
     | "whatsapp"
+    | "whatsapp-chat"
+    | "whatsapp-connections"
     | "contract"
   >(financialOnly ? "collections" : isAdmin && new URLSearchParams(window.location.search).get("view") === "contract" ? "contract" : "overview");
   const [menu, setMenu] = useState(false);
@@ -1133,7 +1141,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
-    page === "modules" ? "Módulos por empresa" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
+    page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
@@ -1193,6 +1201,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "collections",
     "billing",
     "whatsapp",
+    "whatsapp-chat",
     "integrations",
     "contract",
     "audit",
@@ -1249,6 +1258,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         <nav>
           {[
             { id: "overview", label: "Visão geral", icon: LayoutDashboard },
+            ...(!isNexus && (isAdmin || user.role === "attendant") ? [{ id: "whatsapp-chat", label: "Conversas WhatsApp", icon: Phone }] : []),
+            ...(fullNexus ? [{ id: "whatsapp-connections", label: "Conexões WhatsApp", icon: Phone }] : []),
             ...(isAdmin
               ? [{ id: "whatsapp", label: "WhatsApp", icon: Phone }, { id: "contract", label: "Meu contrato", icon: BookOpen }]
               : []),
@@ -1471,6 +1482,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
           {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
+          {page === "whatsapp-chat" && !isNexus && (isAdmin || user.role === "attendant") && <WhatsAppChat canConfigure={isAdmin} onConfigure={() => setPage("whatsapp")} />}
+          {page === "whatsapp-connections" && fullNexus && <NexusWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
               isNexus={isNexus}

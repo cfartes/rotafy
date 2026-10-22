@@ -28,5 +28,6 @@ export const menuModule: Record<string, string> = {
   sales: "sales",
   reports: "reports",
   whatsapp: "whatsapp",
+  "whatsapp-chat": "whatsapp",
   integrations: "integrations",
 };
