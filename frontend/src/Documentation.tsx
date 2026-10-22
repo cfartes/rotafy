@@ -39,7 +39,7 @@ function AndroidDownload({ nexus }: { nexus: boolean }) {
   </section>;
 }
 
-export function Documentation({ nexus = false }: { nexus?: boolean }) {
+export function Documentation({ nexus = false, editablePresentation = false }: { nexus?: boolean; editablePresentation?: boolean }) {
   const manual = nexus ? "manual-superadmin" : "manual";
   const title = nexus ? "Manual do superadmin Nexus" : "Manual da empresa";
   return (
@@ -59,7 +59,7 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 9 · Atualizado em 22/10/2026</span>
+        <span>Edição 2026.10 · Revisão 10 · Atualizado em 22/10/2026</span>
       </header>
       <div className="documentation-grid">
         <AndroidDownload nexus={nexus} />
@@ -125,13 +125,13 @@ export function Documentation({ nexus = false }: { nexus?: boolean }) {
               <Download size={16} aria-hidden="true" />
               Baixar apresentação PDF
             </a>
-            <a
-              href="/documentacao/apresentacao.pptx"
+            {editablePresentation && <a
+              href="/api/v1/nexus/documentation/apresentacao.pptx"
               download="apresentacao.pptx"
             >
               <Presentation size={16} aria-hidden="true" />
               Baixar PowerPoint editável
-            </a>
+            </a>}
             <a
               href="/documentacao/apresentacao.html"
               download="apresentacao.html"

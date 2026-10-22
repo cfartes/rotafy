@@ -1,6 +1,6 @@
 # Apresentação e manual do Nexus Rotafy
 
-Edição 2026.10, revisão 9, revisada em 22/10/2026. Os materiais públicos apresentam somente funcionalidades disponíveis. A apresentação tem foco comercial e o manual explica o uso, sem nomes de fornecedores de comunicação, detalhes de infraestrutura ou funcionalidades planejadas.
+Edição 2026.10, revisão 10, revisada em 22/10/2026. Os materiais públicos apresentam somente funcionalidades disponíveis. A apresentação tem foco comercial e o manual explica o uso, sem nomes de fornecedores de comunicação, detalhes de infraestrutura ou funcionalidades planejadas.
 
 ## Acesso no aplicativo
 
@@ -13,10 +13,10 @@ Arquivos publicados em `frontend/public/documentacao/`:
 - `manual.pdf`: manual para impressão e download.
 - `apresentacao.html`: apresentação com navegação entre slides.
 - `apresentacao.pdf`: apresentação para compartilhamento.
-- `apresentacao.pptx`: apresentação editável, incluindo notas do apresentador.
+- O PowerPoint editável é gerado em `backend/private/documentacao/apresentacao.pptx`, fora dos arquivos públicos. Somente o Superadmin completo pode baixá-lo, por `GET /api/v1/nexus/documentation/apresentacao.pptx`, na ajuda Nexus. Clientes, equipe Nexus sem acesso completo e visitantes não têm permissão. O endpoint exige autenticação e responde com `Cache-Control: no-store`; o endereço público antigo retorna 404 no Nginx.
 - `manifest.json`: edição, revisão e tamanho dos arquivos.
 
-Os arquivos são copiados pelo build do frontend. Atualizar o serviço web publica a central e os materiais; não requer migração do banco. O service worker não armazena esses documentos grandes no precache nem intercepta suas URLs como páginas do aplicativo.
+Os materiais públicos são copiados pelo build do frontend. O PowerPoint é incluído somente na imagem da API. Atualize os serviços web e API para publicar esta restrição; não requer migração do banco. O service worker não armazena esses documentos grandes no precache nem intercepta suas URLs como páginas do aplicativo.
 
 ## Manutenção
 

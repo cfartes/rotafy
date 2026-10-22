@@ -258,3 +258,6 @@ O NPS do atendimento utiliza a mensagem acolhedora aprovada e diferencia o retor
 Avaliações novas com notas de 0 a 6 geram aviso para administradores e atendentes da própria empresa. Em **NPS e satisfação → Equipe de qualidade**, os usuários consultam o feedback e marcam a análise. Notas e comentários permanecem no histórico. Comentários recebidos depois de uma análise voltam à fila. Não é necessário configurar outro canal de destino.
 
 Pesquisas já enviadas preservam seu fluxo anterior. Convites ainda sem tentativa recebem a nova redação. O acesso Nexus orienta o cliente; a configuração operacional e a consulta aos feedbacks são feitas com as permissões da empresa.
+
+
+O **PowerPoint editável** da apresentação fica disponível somente para o Superadmin completo em **Ajuda e manuais → Apresentação do sistema → Baixar PowerPoint editável**. Clientes e colaboradores Nexus sem acesso completo não podem baixar esse formato. A apresentação em HTML e PDF continua disponível para consulta e compartilhamento.
