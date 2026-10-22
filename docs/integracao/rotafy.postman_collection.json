@@ -71,6 +71,26 @@
       "type": "string"
     },
     {
+      "key": "technical_user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "technical_password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "service_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "boarding_cursor",
+      "value": "0",
+      "type": "string"
+    },
+    {
       "key": "company_id",
       "value": "",
       "type": "string"
@@ -273,6 +293,88 @@
                 "type": "text/javascript",
                 "exec": [
                   "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('vehicle_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar atendente técnico dedicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Integração parceiro\",\n  \"email\": \"integracao@example.com\",\n  \"password\": \"{{technical_password}}\",\n  \"role\": \"attendant\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('technical_user_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Emitir chave operacional ri (copiar uma vez)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              }
+            ],
+            "url": "{{base_url}}/integrations/service-keys",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sistema parceiro\",\n  \"user_id\": \"{{technical_user_id}}\",\n  \"valid_days\": 90,\n  \"scopes\": [\n    \"catalog:read\",\n    \"catalog:write\",\n    \"trips:read\",\n    \"trips:write\",\n    \"reservations:read\",\n    \"reservations:write\",\n    \"tickets:read\",\n    \"tickets:write\",\n    \"messages:read\",\n    \"messages:write\",\n    \"boarding:read\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code===201) pm.collectionVariables.set('service_key',pm.response.json().token);"
                 ]
               }
             }
@@ -875,6 +977,333 @@
               }
             ],
             "url": "{{base_url}}/public/mobile-version?package_id=br.com.nexusdataanalytics.rotafy"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 — Alternativa servidor parceiro (chave ri; sem cookies)",
+      "item": [
+        {
+          "name": "Criar viagem ida e volta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_trip}}\",\n  \"name\": \"Passeio Blumenau e Navegantes\",\n  \"destination\": \"Navegantes\",\n  \"mode\": \"round_trip\",\n  \"price_cents\": 12000,\n  \"legs\": [\n    {\n      \"origin\": \"Blumenau\",\n      \"destination\": \"Navegantes\",\n      \"origin_city_id\": 4202404,\n      \"destination_city_id\": 4211306,\n      \"origin_uf\": \"SC\",\n      \"destination_uf\": \"SC\",\n      \"origin_address\": \"Endereco do embarque em Blumenau\",\n      \"destination_address\": \"Endereco da chegada em Navegantes\",\n      \"starts_at\": \"2026-12-10T08:00:00-03:00\",\n      \"ends_at\": \"2026-12-10T09:30:00-03:00\",\n      \"stops\": []\n    },\n    {\n      \"origin\": \"Navegantes\",\n      \"destination\": \"Blumenau\",\n      \"origin_city_id\": 4211306,\n      \"destination_city_id\": 4202404,\n      \"origin_uf\": \"SC\",\n      \"destination_uf\": \"SC\",\n      \"origin_address\": \"Endereco do retorno em Navegantes\",\n      \"destination_address\": \"Endereco da chegada em Blumenau\",\n      \"starts_at\": \"2026-12-10T17:00:00-03:00\",\n      \"ends_at\": \"2026-12-10T18:30:00-03:00\",\n      \"stops\": []\n    }\n  ],\n  \"vehicles\": [\n    {\n      \"vehicle_id\": \"{{vehicle_id}}\",\n      \"driver_ids\": [\n        \"{{driver_id}}\"\n      ],\n      \"guide_ids\": []\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) {",
+                  " const trip=pm.response.json(); pm.collectionVariables.set('trip_id',trip.id);",
+                  " const legs=[...trip.legs].sort((a,b)=>a.position-b.position);",
+                  " pm.collectionVariables.set('leg_id',legs[0].id); pm.collectionVariables.set('return_leg_id',legs[1].id);",
+                  " pm.collectionVariables.set('allocation_id',trip.vehicles[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar disponibilidade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/availability",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_size\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar reserva confirmada (pode gerar mensagem)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/trips/{{trip_id}}/reservations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_reservation}}\",\n  \"contact_name\": \"Responsavel Exemplo\",\n  \"phone\": \"+5511999999999\",\n  \"status\": \"confirmed\",\n  \"allocation_id\": \"{{allocation_id}}\",\n  \"passengers\": [\n    {\n      \"full_name\": \"Passageiro Exemplo\",\n      \"is_foreign\": false,\n      \"under_five\": false\n    }\n  ],\n  \"journeys\": [\n    {\n      \"leg_id\": \"{{leg_id}}\",\n      \"boarding_position\": 0,\n      \"dropoff_position\": 1,\n      \"boarding_location\": {\n        \"name\": \"Hotel Exemplo\",\n        \"address\": \"Endereco completo do hotel em Blumenau\",\n        \"complement\": \"Recepcao\",\n        \"order\": 1\n      }\n    },\n    {\n      \"leg_id\": \"{{return_leg_id}}\",\n      \"boarding_position\": 0,\n      \"dropoff_position\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200,201].includes(pm.response.code)) pm.collectionVariables.set('reservation_id',pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalhes da reserva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Histórico de WhatsApp",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/whatsapp",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Emitir bilhetes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/tickets",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  " const issued=pm.response.json().issued;",
+                  " const ticket=issued.find(t=>t.leg_id===pm.collectionVariables.get('leg_id')) || issued[0];",
+                  " if (ticket) { pm.collectionVariables.set('ticket_id',ticket.id); pm.collectionVariables.set('ticket_token',ticket.token); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Relacionar ticket_id ao passenger_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/tickets",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code===200) {",
+                  " const ticket=pm.response.json().find(t=>t.id===pm.collectionVariables.get('ticket_id'));",
+                  " if(ticket) pm.collectionVariables.set('passenger_id',ticket.passenger_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enviar link do bilhete por WhatsApp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tickets/{{ticket_id}}/whatsapp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation_key\": \"{{operation_key_ticket}}\",\n  \"token\": \"{{ticket_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar fila de mensagens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/reservations/{{reservation_id}}/whatsapp",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Consultar embarques/desembarques por cursor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/integrations/boarding-events?after={{boarding_cursor}}&limit=100",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{service_key}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         }
       ]
