@@ -101,15 +101,15 @@ Abra **Planos e assinaturas** na Nexus para configurar valores e vincular empres
 
 O container `billing` renova ciclos e processa expiração de bloqueios de lugares a cada 60 segundos. Criação e cancelamento de viagens já estão ligados ao consumo e estorno, na mesma transação, com proteção contra requisições repetidas.
 
-Cadastre percursos reutilizáveis em **Rotas** e selecione-os ao agendar uma **Viagem**, com duração manual e chegada prevista calculada. Abra **Frota, pacotes e viagens** para cadastrar veículos, pacotes e viagens com múltiplos veículos, ida/volta ou trecho único e equipe. Pacotes com vários destinos possuem roteiro por dia, retorno incluído e venda completa; cada destino comercial consome uma unidade da franquia. Motoristas e guias consultam somente suas viagens em **Minhas viagens**. Guias em [docs/PACOTES_MULTIDESTINOS.md](docs/PACOTES_MULTIDESTINOS.md), [docs/ROTAS_REUTILIZAVEIS.md](docs/ROTAS_REUTILIZAVEIS.md) e [docs/FROTA_E_VIAGENS.md](docs/FROTA_E_VIAGENS.md).
+Cadastre percursos reutilizáveis em **Rotas** e selecione-os ao agendar uma **Viagem**, com duração manual e chegada prevista calculada. Use os menus **Equipe → Veículos → Rotas → Pacotes → Viagens → Vender bilhete** para preparar a operação. Cadastre viagens com múltiplos veículos, ida/volta ou trecho único e equipe. Pacotes com vários destinos possuem roteiro por dia, retorno incluído e venda completa; cada destino comercial consome uma unidade da franquia. Motoristas e guias consultam somente suas viagens em **Minhas viagens**. Guias em [docs/PACOTES_MULTIDESTINOS.md](docs/PACOTES_MULTIDESTINOS.md), [docs/ROTAS_REUTILIZAVEIS.md](docs/ROTAS_REUTILIZAVEIS.md) e [docs/FROTA_E_VIAGENS.md](docs/FROTA_E_VIAGENS.md).
 
 No cadastro da empresa, escolha **Turismo e transfers** ou **Transporte regular**, independentemente do plano comercial. Regular oferece Rotas, viagens avulsas e bilhetes, sem novos pacotes. Empresas anteriores recebem Turismo automaticamente. A Nexus altera o perfil em **Empresas → Editar dados**, com bloqueio para pacotes ativos e auditoria. Linhas recorrentes e venda independente por trecho continuam em etapa futura. Consulte [docs/PLANO_PERFIS_OPERACIONAIS.md](docs/PLANO_PERFIS_OPERACIONAIS.md).
 
 Em **Detalhes → Reservas e lugares**, administradores e atendentes cadastram famílias com um único telefone, passageiros, pontos por trecho, sugestão de veículo e bloqueios de 15 minutos. CPF segue a regra interestadual e suas exceções. Podem confirmar, cancelar, realocar e importar CSV/XLSX com prévia e conferência de lotação. Regras em [docs/RESERVAS_E_DISPONIBILIDADE.md](docs/RESERVAS_E_DISPONIBILIDADE.md).
 
-Página pública, logo e integrações de reservas disponíveis. A agência publica viagens em **Página pública e integrações**; compradores acessam `/comprar/{slug}` e recebem um link privado. Veja [o contrato das integrações](docs/PAGINA_PUBLICA_E_INTEGRACOES.md).
+O menu antigo **Página pública e integrações** permanece oculto; seu código está preservado. A integração atual com parceiros é habilitada por módulos e possui guia e endpoints próprios: [módulos](docs/MODULOS_E_INTEGRACAO.md) e [integração](docs/integracao/README.md).
 
-Bilhetes individuais por trecho são emitidos em **Detalhes da reserva** após confirmação. O passageiro abre `/bilhete#token=...`, imprime/salva PDF ou compartilha seu link. Guias e motoristas operam **Abrir embarque · Ida/Volta** nos veículos atribuídos; guia é opcional. Veja [bilhetes e embarque](docs/BILHETES_E_EMBARQUE.md).
+Bilhetes individuais, válidos para todos os trechos contratados do passageiro, são emitidos em **Detalhes da reserva** após confirmação. O passageiro abre o link privado do bilhete, imprime/salva PDF ou compartilha seu link. Guias e motoristas operam **Abrir embarque · Ida/Volta** nos veículos atribuídos; guia é opcional. Veja [bilhetes e embarque](docs/BILHETES_E_EMBARQUE.md).
 
 Na tela de embarque, **Preparar para uso offline** guarda o manifesto por veículo/trecho e abre `/offline`. A PWA permite leitura QR e presença sem rede, com fila persistente, sincronização idempotente e revisão de conflitos. Veja [uso e limites do offline](docs/OFFLINE_E_SINCRONIZACAO.md). Validação em iPhone/Android físicos pendente.
 
@@ -119,7 +119,7 @@ Em **Nexus → Configurações**, cadastre as chaves OpenWA/Resend, o e-mail rem
 
 Logs JSON e métricas autenticadas da Nexus disponíveis. Configuração de produção independente, HTTPS/Traefik existente e serviço de backup externo criptografado preparados em `compose.production.yaml`. Restauração ensaiada em container isolado; carga local medida com duas empresas, 20 veículos e 800 passageiros. Consulte [implantação e operação](docs/IMPLANTACAO_E_OPERACAO.md) e [pendências de homologação](docs/HOMOLOGACAO.md). A VPS e o envio de backups externos ainda não foram configurados.
 
-Não há integração financeira. Em **Detalhes da reserva**, **Marcar PAGO** registra manualmente o pagamento; a confirmação da reserva é uma ação separada. Rastreamento, WhatsApp e aplicativos por empresa são posteriores.
+A assinatura da empresa possui cobrança de setup ao fim do teste e mensalidade ao fim de ciclos de 30 dias, com links de pagamento e confirmação automática quando configurados. Veja [cobranças](docs/COBRANCAS_MENSAIS.md) e [pagamentos e teste](docs/INFINITEPAY_E_TESTE.md). O pagamento do passageiro continua sendo registrado manualmente por **Marcar PAGO**, separado da confirmação da reserva. O APK já oferece rastreamento a cada cinco minutos, com avisos configuráveis: [rastreamento](docs/RASTREAMENTO_E_AVISOS.md).
 
 Edição de viagens/reservas, realocação após desembarque/reversão e convites/recuperação por Resend foram acrescentados. Configure chave e remetente verificado para ativar os e-mails; a integração foi testada com transporte simulado. Consulte [edição e e-mails de acesso](docs/EDICAO_E_EMAILS.md).
 
@@ -161,3 +161,9 @@ Automação: [Comandos para passageiros e fila de bilhetes 24 horas antes](docs/
 Consulte também [Módulos por empresa e operação integrada](docs/MODULOS_E_INTEGRACAO.md) para configurar o acesso do cliente e emitir as credenciais operacionais.
 
 O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os endpoints existentes, dados necessários, autenticação, exemplos, OpenAPI e coleção Postman para integrar um sistema externo à comunicação e à operação pelo APK.
+
+### Documentação revisada em 22/10/2026
+
+A central de ajuda está na revisão 5: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 25 slides em HTML/PDF/PowerPoint. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+
+**Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após um minuto de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo mínimo de três minutos entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).

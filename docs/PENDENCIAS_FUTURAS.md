@@ -1,6 +1,6 @@
 # Pendências para próximas etapas
 
-Atualizado em 09/10/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
+Revisado em 22/10/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
 
 ## App Android do passageiro
 
@@ -34,9 +34,9 @@ Atualizado em 09/10/2026. Este arquivo registra trabalho futuro; não representa
 ## Integrações e recursos adiados
 
 - Consulta de duração/rota pela API Google; atualmente a duração é manual e a navegação abre o Google Maps externo.
-- Rastreamento contínuo por dispositivo OBD2/GPS ou celular, incluindo captura em segundo plano com tela desligada. O registro pontual de coordenadas de chegada já existe.
-- Homologar o OpenWA em produção após cadastrar chaves e sessões no painel Nexus. Confirmação, cancelamento, PAGO e resumo manual já estão implementados; faltam lembretes, anexos/QR, comunicações operacionais adicionais e fluxos de acesso do passageiro. Veja [WHATSAPP_E_CONFIGURACOES.md](WHATSAPP_E_CONFIGURACOES.md).
-- Integração com meios de pagamento permanece fora do escopo atual; hoje existe marcação manual PAGO.
+- Avaliar dispositivos OBD2/GPS dedicados. O rastreamento pelo APK a cada cinco minutos e os avisos operacionais já estão implementados; veja [RASTREAMENTO_E_AVISOS.md](RASTREAMENTO_E_AVISOS.md).
+- Os fluxos de acesso de um eventual aplicativo exclusivo do passageiro continuam sujeitos a definição. Conversas, anexos, atendimento automático, bilhetes antecipados e avisos operacionais já estão implementados; veja [AUTOMACAO_WHATSAPP.md](AUTOMACAO_WHATSAPP.md) e [CHAT_WHATSAPP_E_SUPERVISAO.md](CHAT_WHATSAPP_E_SUPERVISAO.md).
+- A assinatura da empresa já permite link e confirmação automática de pagamento. As vendas de passagens ao passageiro permanecem com marcação manual PAGO; uma integração para essas vendas exigiria definição própria.
 
 ## Decisões preservadas
 

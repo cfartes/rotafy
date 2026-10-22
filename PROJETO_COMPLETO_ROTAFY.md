@@ -1,6 +1,6 @@
 # Nexus Rotafy — documentação consolidada do projeto
 
-**Data da consolidação:** 21/10/2026.\
+**Data da consolidação:** 22/10/2026.\
 **Produto:** Nexus Rotafy.  
 **Responsável pela plataforma:** Nexus.  
 **Painel:** https://rotafy.nexusdataanalytics.tech  
@@ -116,17 +116,15 @@ A aplicação web atende várias empresas no mesmo banco, com separação de dad
 <a id="manual-da-empresa"></a>
 ## 3. Manual completo da empresa
 
-As subseções abaixo detalham os recursos disponíveis à empresa e à equipe operacional. Os títulos preservam a numeração do manual de utilização para facilitar a consulta.
-
-### 1. Conheça o Nexus Rotafy
+## 1. Conheça o Nexus Rotafy {#visao-geral}
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **17/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **22/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
-#### O fluxo de trabalho
+### O fluxo de trabalho
 
 1. Cadastre a empresa, escolha seu perfil operacional e o plano.
 2. Cadastre a equipe e os veículos.
@@ -137,9 +135,9 @@ Este manual descreve a implementação disponível em **17/10/2026**. As imagens
 7. Prepare os manifestos, realize os embarques e registre a chegada.
 8. Consulte a finalização, a ocupação, as vendas e o consumo do plano.
 
-> **Três conceitos diferentes.** Rota é o percurso reutilizável. Pacote é o produto turístico e seu roteiro. Viagem é a saída agendada, com datas, horários, equipe e veículos. Cadastrar uma Rota ou um modelo de pacote não agenda uma saída nem consome a franquia.
+<aside class="note"><strong>Três conceitos diferentes.</strong> Rota é o percurso reutilizável. Pacote é o produto turístico e seu roteiro. Viagem é a saída agendada, com datas, horários, equipe e veículos. Cadastrar uma Rota ou um modelo de pacote não agenda uma saída nem consome a franquia.</aside>
 
-### 2. Perfis e permissões
+## 2. Perfis e permissões {#perfis}
 
 Cada empresa tem seu espaço e seus usuários. Um profissional que atende duas empresas deve possuir um cadastro em cada uma. No painel web, o identificador de acesso da empresa define em qual espaço ele entra.
 
@@ -151,7 +149,7 @@ Cada empresa tem seu espaço e seus usuários. Um profissional que atende duas e
 | Guia | Mesmos recursos operacionais do motorista, nos deslocamentos atribuídos. Guia é opcional. |
 | Passageiro | Consulta do bilhete privado pelo link recebido; não acessa o painel administrativo. |
 
-#### Turismo e transporte regular
+### Turismo e transporte regular
 
 **Turismo e transfers:** permite viagens simples e pacotes com vários destinos, incluindo passeios diários com retorno à base e circuitos com permanência entre cidades.
 
@@ -159,7 +157,7 @@ Cada empresa tem seu espaço e seus usuários. Um profissional que atende duas e
 
 O perfil operacional não é o plano contratado. Basic, Professional e Enterprise são planos comerciais configurados pela Nexus. A troca do tipo de empresa é controlada pela Nexus e pode ser bloqueada enquanto houver viagens turísticas abertas.
 
-### 3. Primeiro acesso e cadastro da empresa
+## 3. Primeiro acesso e cadastro da empresa {#primeiro-acesso}
 
 1. Entre em contato com a equipe comercial Nexus para definir o plano e informar os dados da empresa e do administrador.
 2. A Nexus cadastra a empresa e define o perfil **Turismo e transfers** ou **Transporte regular**, conforme a operação.
@@ -174,19 +172,19 @@ O cliente não realiza cadastro público. Se o convite expirar, solicite um novo
 
 O administrador pode editar o cadastro clicando no bloco com o logo e o nome da empresa no menu lateral. O formulário permite atualizar nome comercial, razão social, CPF/CNPJ, telefone/WhatsApp e cores. O identificador de acesso aparece somente para consulta. A alteração do telefone suspende os envios pelo número anterior; confira a conexão no menu **WhatsApp**.
 
-### 4. Login, senhas e recuperação
+## 4. Login, senhas e recuperação {#acesso}
 
-#### Entrar no painel web
+### Entrar no painel web
 
 1. Abra o endereço do sistema em um navegador atualizado.
 2. Informe o identificador da empresa, o e-mail cadastrado e a senha.
 3. Clique em **Acessar painel**. Os menus apresentados correspondem ao perfil do usuário.
 
-#### Definir a senha pelo convite
+### Definir a senha pelo convite
 
 Abra o link recebido por e-mail ou WhatsApp, escolha a nova senha e confirme. O convite vale **24 horas** e só pode ser usado uma vez. Depois, entre com o e-mail cadastrado; o número de WhatsApp não substitui o e-mail de login.
 
-#### Esqueci minha senha
+### Esqueci minha senha
 
 Use **Esqueci minha senha** no login. Informe e-mail e identificador da empresa. O link por e-mail vale **uma hora**. Por privacidade, a resposta pública não confirma se a conta existe.
 
@@ -194,11 +192,11 @@ O administrador também pode gerar um link manual de recuperação para um colab
 
 Se receber erro de credenciais, confira a empresa, o e-mail, o perfil ativo e a senha. Muitas tentativas podem gerar bloqueio temporário. Uma conta suspensa não consegue entrar.
 
-### 5. Colaboradores e convites
+## 5. Colaboradores e convites {#equipe}
 
 **Acesso:** administrador da empresa → **Equipe**.
 
-#### Adicionar uma pessoa
+### Adicionar uma pessoa
 
 1. Clique em **Adicionar pessoa**.
 2. Preencha nome, e-mail, perfil e telefone/WhatsApp do colaborador.
@@ -209,7 +207,7 @@ Se receber erro de credenciais, confira a empresa, o e-mail, o perfil ativo e a 
 
 O número pode ser nacional com DDD ou internacional com `+` e código do país. O sistema valida e normaliza o telefone.
 
-#### Reenviar, suspender e consultar
+### Reenviar, suspender e consultar
 
 Utilize **Editar colaborador** para alterar nome, e-mail de acesso, telefone/WhatsApp e função (Administrador, Atendente, Motorista ou Guia). Alterar o e-mail ou a função encerra as sessões anteriores. A troca de e-mail invalida os links antigos de recuperação. O sistema impede remover seu próprio acesso administrativo ou o último administrador ativo.
 
@@ -219,7 +217,7 @@ Utilize **Suspender/Ativar** para controlar o acesso. O sistema preserva pelo me
 
 Abra **E-mails de acesso** para consultar a fila de e-mails e a seção **Convites por WhatsApp**. A aceitação do envio não comprova entrega ou leitura. Um envio incerto precisa ser conferido antes do reenvio.
 
-### 6. Veículos e capacidade
+## 6. Veículos e capacidade {#veiculos}
 
 **Acesso:** administrador ou atendente → menu **Veículos**.
 
@@ -232,7 +230,7 @@ A capacidade é de **1 a 200 lugares**. O sistema distribui quantidade de passag
 
 A capacidade atribuída é preservada na viagem. Alterar a frota depois não recalcula a capacidade histórica de saídas já criadas. O mesmo veículo pode operar em diferentes horários, desde que não haja conflito de agenda.
 
-### 7. Rotas reutilizáveis e Google Maps
+## 7. Rotas reutilizáveis e Google Maps {#rotas}
 
 **Acesso:** administrador ou atendente → **Rotas**.
 
@@ -248,25 +246,27 @@ As paradas adicionais da Rota não exigem data nem horário individual. Exemplo:
 
 As ações **Editar Rota**, **Duplicar Rota** e desativar permitem manter o catálogo. Desativar impede novas escolhas, preservando o histórico das viagens que já utilizam o percurso.
 
-#### Abrir a navegação
+*Consulte a captura demonstrativa correspondente no manual HTML/PDF.*
+
+### Abrir a navegação
 
 Na viagem atribuída, o motorista ou guia abre a rota ou um ponto específico no **Google Maps externo**. Confira os pontos e a ordem programada. A navegação e suas condições dependem do aplicativo Maps e da conectividade do aparelho.
 
-#### A Rota mudou depois de agendar?
+### A Rota mudou depois de agendar?
 
 A viagem guarda uma cópia do percurso. Editar o catálogo não muda automaticamente uma saída já criada. Em **Detalhes**, use **Atualizar com a versão atual da Rota**, confirme e confira as chegadas recalculadas.
 
 A atualização é permitida para viagens agendadas sem eventos de embarque. Com reservas, preserva a posição, quantidade e finalidade das paradas utilizadas. Mudanças incompatíveis são bloqueadas. Prepare novamente os manifestos offline após uma atualização. Para outro percurso ou composição incompatível, crie uma nova viagem.
 
-### 8. Pacotes turísticos: modelos e formatos
+## 8. Pacotes turísticos: modelos e formatos {#pacotes}
 
 **Acesso:** empresa de Turismo → menu **Pacotes**. Um pacote é um modelo reutilizável, sem data fixa. A data real é definida ao criar a viagem no menu **Viagens**. Os cadastros de veículos e rotas possuem seus próprios menus.
 
-#### Pacote simples
+### Pacote simples
 
 Cadastre nome, informações comerciais e valor por passageiro. Ao criar uma saída, selecione o pacote, a Rota e os horários. O modelo não consome franquia: o consumo ocorre no agendamento da viagem.
 
-#### Passeios com ida e volta
+### Passeios com ida e volta
 
 Use este formato quando cada passeio retorna à mesma cidade-base no próprio dia.
 
@@ -278,7 +278,7 @@ Use este formato quando cada passeio retorna à mesma cidade-base no próprio di
 
 **Exemplo:** dia 1, Maceió → Maragogi → Maceió; dia 3, Maceió → Praia do Gunga → Maceió. São dois destinos comerciais e quatro deslocamentos. A saída desse pacote consome **duas unidades** da franquia.
 
-#### Viagem com destinos em sequência
+### Viagem com destinos em sequência
 
 Use este formato quando os passageiros seguem para outra cidade e permanecem nela antes de continuar.
 
@@ -291,15 +291,15 @@ Use este formato quando os passageiros seguem para outra cidade e permanecem nel
 
 **Exemplo:** Maceió → Fortaleza no dia 1; Fortaleza → Natal no dia 3; Natal → Maceió no dia 6. A franquia considera os destinos comerciais Fortaleza e Natal: **duas unidades**.
 
-> **Venda completa.** O pacote inclui o roteiro inteiro e o retorno. Não existe venda de um destino isolado dentro do pacote; crie outro pacote para esse produto. Paradas, atividades, retorno e transferências sem nova chegada comercial não acrescentam unidades à franquia.
+<aside class="note"><strong>Venda completa.</strong> O pacote inclui o roteiro inteiro e o retorno. Não existe venda de um destino isolado dentro do pacote; crie outro pacote para esse produto. Paradas, atividades, retorno e transferências sem nova chegada comercial não acrescentam unidades à franquia.</aside>
 
 O modelo admite até 20 destinos, 60 deslocamentos, 60 dias relativos e 120 atividades. As caixas com borda verde petróleo separam os itens do roteiro. CEP e datas fixas não fazem parte do modelo.
 
-### 9. Criar e alocar uma viagem
+## 9. Criar e alocar uma viagem {#viagens}
 
 **Acesso:** administrador ou atendente → **Viagens** ou a aba de viagens no módulo de frota.
 
-#### Saída simples
+### Saída simples
 
 1. Clique em **Nova viagem**.
 2. Escolha a Rota; vincule um pacote simples se aplicável.
@@ -309,7 +309,7 @@ O modelo admite até 20 destinos, 60 deslocamentos, 60 dias relativos e 120 ativ
 6. Inclua os veículos e escolha o motorista principal de cada alocação. Marque os motoristas adicionais que acompanharão o mesmo veículo. Selecione nenhum, um ou vários guias, conforme a operação.
 7. Revise as paradas atendidas por cada veículo, a capacidade e os conflitos de agenda; salve.
 
-#### Saída de pacote com roteiro
+### Saída de pacote com roteiro
 
 Selecione o pacote e informe a **Data inicial do pacote**. Os dias relativos se transformam em datas reais. Confira cada deslocamento e seus horários, sem sobreposição. Atribua equipe e veículo aos deslocamentos correspondentes.
 
@@ -317,7 +317,7 @@ Cada veículo pode ter até 20 motoristas e 20 guias. Todos os motoristas e guia
 
 Vários veículos podem atender o mesmo deslocamento. Um pacote também pode trocar de veículo, motorista ou guia entre etapas. Cada família permanece inteira no veículo escolhido para cada deslocamento. O cadastro verifica conflitos e impede duplicar o mesmo recurso na mesma etapa.
 
-#### Consulta, edição e duplicação
+### Consulta, edição e duplicação
 
 Utilize o filtro **Situação da viagem**: Todas, Abertas, Agendadas, Em andamento, Fechadas/concluídas e Canceladas. Abertas reúne agendadas e em andamento; isso não significa que todas ainda permitam novas vendas.
 
@@ -325,7 +325,7 @@ Em **Detalhes**, confira roteiro, equipe, capacidade, reservas e finalização. 
 
 **Duplicar viagem** cria uma nova saída; confirme as datas e a equipe antes de salvar. Ao cancelar a viagem, reservas ativas são canceladas, lugares são liberados e o consumo é estornado no ciclo original. Não há reembolso bancário automático.
 
-### 10. Vender bilhetes e cadastrar uma família
+## 10. Vender bilhetes e cadastrar uma família {#vendas}
 
 **Acesso:** administrador ou atendente → **Vender bilhete**. Também é possível abrir **Detalhes da viagem → Reservas e lugares**.
 
@@ -340,7 +340,7 @@ Em **Detalhes**, confira roteiro, equipe, capacidade, reservas e finalização. 
 
 Uma reserva pode ter de 1 a 200 passageiros com um único telefone compartilhado. O valor nominal é o preço por passageiro da saída multiplicado pelo total de passageiros e fica preservado na reserva.
 
-#### Embarque em hotel ou outro endereço
+### Embarque em hotel ou outro endereço
 
 Em **Local de embarque**, digite somente o nome do hotel ou o endereço. O mesmo campo oferece os pontos da viagem e locais já utilizados como sugestões. Não é necessário preencher nome e endereço separadamente.
 
@@ -352,13 +352,13 @@ Veículo e situação inicial ficam em **Opções da reserva**. O padrão é con
 
 Esses locais pertencem à reserva e ao veículo de cada saída. A Rota cadastrada permanece disponível para reutilização. Motoristas e guias consultam os endereços, complementos e passageiros previstos no roteiro e abrem a navegação. Após alterações, sincronize ou prepare novamente o trecho no Android antes de operar sem internet.
 
-#### Ocupação por segmento
+### Ocupação por segmento
 
 A capacidade é conferida entre cada par de pontos consecutivos. Quem desembarca antes do destino libera o lugar para outro passageiro que embarque depois. A sugestão procura um veículo que comporte toda a família e deixe menos lugares livres no percurso reservado.
 
 Somar vagas de ônibus diferentes não garante lugar para uma família no mesmo ônibus. Se nenhum veículo comportar todos os integrantes nos trechos necessários, o sistema informa indisponibilidade e não divide a família automaticamente. Em pacotes, a combinação deve atender todos os deslocamentos; o veículo pode mudar entre eles.
 
-#### Situações da reserva
+### Situações da reserva
 
 | Situação | Efeito |
 | --- | --- |
@@ -369,7 +369,7 @@ Somar vagas de ônibus diferentes não garante lugar para uma família no mesmo 
 
 Consultas não garantem as vagas: o sistema valida a capacidade novamente ao salvar. A confirmação da reserva e a marcação **PAGO** são ações diferentes.
 
-### 11. CPF, estrangeiros e menores
+## 11. CPF, estrangeiros e menores {#documentos}
 
 Quando o roteiro cruza UFs, o sistema exige CPF dos passageiros, com as exceções cadastrais abaixo. A regra considera o roteiro completo do pacote, não apenas a primeira etapa.
 
@@ -382,27 +382,27 @@ Quando o roteiro cruza UFs, o sistema exige CPF dos passageiros, com as exceçõ
 
 CPFs não podem repetir entre passageiros de reservas ativas da mesma viagem. Corrija erros de digitação antes de concluir. Estas são regras cadastrais do sistema; a empresa continua responsável por conferir os documentos e os requisitos da sua operação.
 
-### 12. Pagamento, edição e realocação
+## 12. Pagamento, edição e realocação {#atendimento}
 
 Em **Reservas e lugares → Ver reserva**, consulte a família, os passageiros, os pontos, o veículo de cada etapa e o valor.
 
-#### Marcar PAGO
+### Marcar PAGO
 
 Marque **PAGO** somente depois de conferir o recebimento pela empresa. O Rotafy não consulta banco, cartão ou PIX. Desmarcar PAGO corrige o registro interno; não realiza devolução financeira. Quando habilitado, o WhatsApp envia uma mensagem ao mudar para PAGO, não ao salvar repetidamente o mesmo estado.
 
-#### Editar a reserva
+### Editar a reserva
 
 Utilize **Editar reserva** para corrigir responsável, telefone, nomes, CPF e pontos permitidos. O editor preserva quantidade de passageiros, valor, bilhetes e marcação PAGO. Incluir ou remover pessoas e mudar a composição de trechos exige outro cadastro compatível com a operação.
 
 Pontos de um trecho com eventos de embarque são protegidos. Reservas expiradas/canceladas e viagens encerradas não permitem edição operacional.
 
-#### Realocar a família
+### Realocar a família
 
 Escolha um veículo com capacidade para todos os integrantes nos segmentos reservados. A realocação mantém a família inteira e exige que ninguém esteja a bordo. Histórico já realizado permanece associado ao veículo original. Em pacotes iniciados, a realocação completa é bloqueada para preservar as etapas executadas.
 
 Depois de alterações, os operadores precisam atualizar os manifestos. Aparelhos sem conexão ainda podem mostrar a informação antiga até sincronizar.
 
-### 13. Importar passageiros por CSV/XLSX
+## 13. Importar passageiros por CSV/XLSX {#importacao}
 
 **Acesso:** atendimento da viagem → **Importar CSV/XLSX**.
 
@@ -420,7 +420,7 @@ Limites: 2 MB, 500 linhas e 200 passageiros por família. A prévia vale 30 minu
 
 A importação cria reservas confirmadas para o percurso completo. Para pontos intermediários específicos, utilize o cadastro manual. Repetir um arquivo aplicado não cria as mesmas famílias novamente.
 
-### 14. Bilhete único, QR Code e envio
+## 14. Bilhete único, QR Code e envio {#bilhetes}
 
 **Acesso:** **Ver reserva → Bilhetes individuais**.
 
@@ -432,7 +432,7 @@ A importação cria reservas confirmadas para o percurso completo. Para pontos i
 
 O mesmo QR é apresentado na ida, na volta e nas etapas do pacote. O controle de embarque permanece separado por veículo e trecho. O passageiro não precisa de aplicativo próprio para abrir o bilhete no navegador.
 
-#### Reemitir e revogar
+### Reemitir e revogar
 
 **Reemitir bilhete** cria uma nova credencial para todos os trechos daquele passageiro e invalida as anteriores. **Revogar bilhete** impede usar o QR em todos esses trechos. Não apaga o histórico de embarque.
 
@@ -440,9 +440,9 @@ O link aparece na emissão/reemissão. Ao fechar a tela, reemita se precisar obt
 
 Nas reservas antigas com bilhetes por trecho, use **Emitir bilhetes** para converter. Links anteriores são invalidados pela conversão. Prepare novamente os manifestos depois.
 
-> **Link individual e privado.** Compartilhe com o passageiro ou responsável correto. O cancelamento da reserva, a revogação e o encerramento da viagem impedem o embarque. Um link já enviado pelo WhatsApp não pode ser retirado da conversa, mas pode deixar de autorizar o uso no sistema.
+<aside class="note"><strong>Link individual e privado.</strong> Compartilhe com o passageiro ou responsável correto. O cancelamento da reserva, a revogação e o encerramento da viagem impedem o embarque. Um link já enviado pelo WhatsApp não pode ser retirado da conversa, mas pode deixar de autorizar o uso no sistema.</aside>
 
-### 15. Mensagens de WhatsApp e e-mail
+## 15. Mensagens de WhatsApp e e-mail {#mensagens}
 
 Cada empresa utiliza seu próprio número de WhatsApp. O administrador consulta os envios da sua empresa. Os e-mails de acesso utilizam o remetente configurado para a plataforma.
 
@@ -456,7 +456,7 @@ Cada empresa utiliza seu próprio número de WhatsApp. O administrador consulta 
 | Convite do colaborador | Pelo cadastro/reenvio de convite, no canal escolhido. |
 | Recuperação por e-mail | Pela solicitação de recuperação de acesso. |
 
-#### Entenda o histórico
+### Entenda o histórico
 
 **Na fila/aguardando:** ainda não enviado. **Enviando:** processamento em curso. **Aceito pelo provedor:** o provedor aceitou a solicitação, sem confirmação de leitura. **Falhou:** rejeição ou esgotamento de tentativas. **Descartado:** registro obsoleto, vencido, substituído ou incompatível. **Incerto:** a resposta não permite afirmar se o envio foi aceito.
 
@@ -464,7 +464,7 @@ Sessões WhatsApp desconectadas mantêm os envios aguardando. Mensagens automát
 
 Se o resultado estiver incerto, confira o recebimento com o destinatário antes de reenviar. Para um convite com falha definitiva, solicite um novo envio pelo cadastro do colaborador.
 
-### 16. App Android: acesso e agenda
+## 16. App Android: acesso e agenda {#android}
 
 O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação.
 
@@ -478,13 +478,13 @@ Utilize o aplicativo fornecido pela empresa e mantenha-o atualizado.
 
 Viagens concluídas deixam de estar disponíveis para operação. Conclusões feitas por outro usuário aparecem após atualizar ou sincronizar. Registros pendentes continuam acessíveis para revisão, sem reabrir a viagem.
 
-#### Biometria opcional
+### Biometria opcional
 
 Durante o login, marque **Usar biometria nos próximos acessos** e conclua a autenticação inicial. No próximo acesso, utilize **Entrar com biometria**. A disponibilidade depende de biometria forte e de um aparelho compatível; a proteção do cofre biométrico exige Android 9 ou superior.
 
 Cancelar a biometria não abre o painel. A senha continua como alternativa. No menu, é possível desativar o recurso; **Sair** também remove o acesso biométrico salvo. Mudança de senha pode exigir entrar novamente de forma manual.
 
-### 17. Preparar e realizar o embarque
+## 17. Preparar e realizar o embarque {#embarque}
 
 Prepare cada **veículo e trecho** enquanto houver conexão. Preparar a ida não prepara automaticamente a volta, e uma etapa não prepara todas as etapas do pacote.
 
@@ -498,7 +498,7 @@ Prepare cada **veículo e trecho** enquanto houver conexão. Preparar a ida não
 
 O sistema valida reserva, credencial, empresa, viagem, trecho, veículo e situação. Um QR de outro passageiro ou uma reserva inválida não autoriza o embarque. O bilhete unificado funciona em cada trecho contratado, respeitando sua alocação.
 
-#### Lista e filtros
+### Lista e filtros
 
 Use **Todos**, **Não embarcados** e **Embarcados**. Desembarcados aparecem em Todos. É possível recolher/expandir a lista sem perder o resumo. Os filtros do Android consideram também as ações locais pendentes.
 
@@ -506,7 +506,7 @@ Use **Todos**, **Não embarcados** e **Embarcados**. Desembarcados aparecem em T
 
 O painel web também oferece operação por lista, leitura pela câmera e leitura de QR por imagem. As ações dependem das permissões e da viagem atribuída.
 
-### 18. Sem internet: preparação e sincronização
+## 18. Sem internet: preparação e sincronização {#offline}
 
 O app Android e a operação web preparada podem manter registros locais durante uma interrupção. Para novos registros offline, o manifesto precisa ter sido preparado antes e ainda estar válido. A preparação tem validade limitada, de até **oito horas**, respeitando também a sessão.
 
@@ -518,19 +518,19 @@ O app Android e a operação web preparada podem manter registros locais durante
 
 Outra pessoa pode cancelar uma reserva, editar pontos, realocar passageiros ou reemitir o bilhete enquanto seu aparelho está offline. Essas mudanças não aparecem instantaneamente no dispositivo, mas são verificadas pelo sistema ao sincronizar.
 
-> **Preserve a fila.** Não limpe dados, desinstale o app ou troque de operador para tentar resolver pendências. Antes de iniciar a operação, confirme que o dispositivo é do usuário correto. Depois de alteração de Rota, reserva ou bilhete, prepare novamente os manifestos. O sistema não confirma automaticamente uma ação incompatível com o estado atual.
+<aside class="note"><strong>Preserve a fila.</strong> Não limpe dados, desinstale o app ou troque de operador para tentar resolver pendências. Antes de iniciar a operação, confirme que o dispositivo é do usuário correto. Depois de alteração de Rota, reserva ou bilhete, prepare novamente os manifestos. O sistema não confirma automaticamente uma ação incompatível com o estado atual.</aside>
 
 Iniciar a viagem e registrar chegada exigem conexão. A fila local permite operar presenças preparadas; os registros são conferidos pelo sistema ao sincronizar.
 
-### 19. Iniciar, chegar e consultar a finalização
+## 19. Iniciar, chegar e consultar a finalização {#chegada}
 
 O início e a chegada pertencem ao **veículo e trecho** selecionados. Iniciar um ônibus não inicia os demais. Registrar chegada da ida não encerra a volta.
 
-#### Iniciar viagem
+### Iniciar viagem
 
 Com conexão, selecione a etapa correta, toque em **Iniciar viagem** e confirme. A primeira saída coloca a viagem geral em andamento. Etapas seguintes respeitam a conclusão das anteriores.
 
-#### Fechar viagem na chegada
+### Fechar viagem na chegada
 
 1. Desembarque quem ainda está a bordo, individualmente ou por **Desembarcar todos**.
 2. Sincronize e resolva todas as pendências do trecho.
@@ -540,21 +540,23 @@ Com conexão, selecione a etapa correta, toque em **Iniciar viagem** e confirme.
 
 O sistema impede fechar com passageiros a bordo. A viagem comercial é concluída quando todos os veículos encerram todos os deslocamentos previstos, incluindo retorno. Em uma saída com vários ônibus, a chegada de um deles não conclui os outros.
 
-#### GPS pontual
+### GPS pontual
 
 A captura registra latitude, longitude, precisão e horário do dispositivo. Se não houver permissão, sinal ou posição válida, o fechamento pode continuar com o motivo da ausência.
 
-#### Consultar no painel
+### Consultar no painel
 
 Abra **Viagens → Detalhes → Finalização e chegadas**. Consulte saída/chegada por veículo e trecho, responsável, coordenadas, precisão, horário de captura e o link para o local no Maps. Quando faltarem dados, o sistema informa a ausência.
 
 O encerramento administrativo tem seu próprio registro e não é apresentado como uma chegada física quando não houve captura. Em viagens concluídas ou canceladas, navegação operacional, embarque e **Reservas e lugares** ficam desabilitados; o histórico de finalização permanece consultável.
 
-### 20. Relatórios e visão gerencial
+*Consulte a captura demonstrativa correspondente no manual HTML/PDF.*
+
+## 20. Relatórios e visão gerencial {#relatorios}
 
 **Acesso:** administrador ou atendente → **Relatórios**. Cada empresa consulta seus dados. Motoristas e guias não recebem relatórios financeiros/administrativos.
 
-#### Visão gerencial
+### Visão gerencial
 
 Escolha período, situação, veículo ou viagem e aplique os filtros. O mês atual inclui o mês completo; o atalho de 30 dias termina hoje. Datas usam o fuso de São Paulo e o intervalo máximo é de 366 dias.
 
@@ -572,7 +574,9 @@ Escolha período, situação, veículo ou viagem e aplique os filtros. O mês at
 
 Clique no gráfico diário para consultar os valores do dia. Bloqueios temporários aparecem separados da ocupação confirmada. Ausência de dados não deve ser interpretada como uma operação com 0% de ocupação.
 
-#### Relatórios detalhados e CSV
+*Consulte a captura demonstrativa correspondente no manual HTML/PDF.*
+
+### Relatórios detalhados e CSV
 
 As abas oferecem **Ocupação**, **Reservas e pagamentos**, **Presença** e, para o administrador, **Consumo da franquia**. Ocupação detalhada considera os segmentos entre paradas. Presença utiliza os registros aceitos pelo servidor, não as ações offline ainda pendentes.
 
@@ -582,7 +586,7 @@ Os valores não representam lucro, fluxo de caixa, confirmação de PIX ou extra
 
 Se a consulta atingir o limite, reduza o período ou escolha uma viagem. O sistema solicita ajuste em vez de mostrar totais parciais sem avisar.
 
-### 21. Meu plano e consumo mensal
+## 21. Meu plano e consumo mensal {#meu-plano}
 
 **Acesso:** administrador da empresa → **Meu plano**.
 
@@ -599,13 +603,13 @@ Consulte plano, ciclo, mensalidade, franquia, uso líquido, unidades restantes, 
 
 **Estimativa do ciclo:** mensalidade + máximo(uso líquido − franquia, 0) × valor da viagem extra. Cancelar uma viagem de um ciclo anterior não transfere crédito para o ciclo atual.
 
-A cobrança da assinatura e os links de pagamento estão detalhados na seção Financeiro da empresa e pagamento da assinatura. Contratos e cobranças manuais preservam suas condições.
+A cobrança automática registra o demonstrativo e disponibiliza o link de pagamento quando a integração está ativa. A confirmação ocorre após a verificação do pagamento. Contratos manuais preservam a baixa pela Nexus. Não há pró-rata ou reembolso automático neste fluxo.
 
-### 22. Comunicação da empresa
+## 22. Comunicação da empresa {#configuracoes}
 
 A empresa utiliza seu próprio número de WhatsApp para comunicar reservas e bilhetes. A Nexus orienta a ativação dos canais e do remetente dos e-mails de acesso.
 
-#### Conectar o WhatsApp no painel da empresa
+### Conectar o WhatsApp no painel da empresa
 
 O administrador encontra o menu **WhatsApp**. A sessão da nova empresa é preparada automaticamente em segundo plano; não é necessário conhecer um ID ou acessar as configurações da Nexus. Empresas já cadastradas podem iniciar a conexão pelo mesmo menu.
 
@@ -624,7 +628,7 @@ Se aparecer **Número conectado diferente do informado**, os envios ficam suspen
 
 Apenas o administrador da empresa acessa essa tela. Não compartilhe o QR: ele autoriza uma conexão ao WhatsApp. Abra o painel em outro aparelho ou computador para escanear com o celular. A autorização no aparelho é indispensável; informar o telefone não conecta a conta sozinho.
 
-#### Conferir os canais
+### Conferir os canais
 
 1. Confirme com a Nexus o número da empresa e o e-mail remetente.
 2. Envie um convite para um colaborador autorizado.
@@ -632,65 +636,65 @@ Apenas o administrador da empresa acessa essa tela. Não compartilhe o QR: ele a
 4. Consulte o histórico de mensagens no painel.
 5. Solicite suporte caso haja falha persistente.
 
-#### Boas práticas
+### Boas práticas
 
 Confira o telefone do responsável antes de enviar o bilhete. Consulte o histórico antes de reenviar uma comunicação. Compartilhe cada link somente com a pessoa correta.
 
-### 23. Rotina por perfil
+## 23. Rotina por perfil {#rotina}
 
-#### Administrador da empresa
+### Administrador da empresa
 
 Organize equipe, frota e rotas. Cadastre viagens, acompanhe reservas, confira o plano contratado e analise os relatórios. Oriente os colaboradores sobre os procedimentos da empresa.
 
-#### Atendente
+### Atendente
 
 Selecione a viagem no menu **Vender bilhete**, cadastre os passageiros, confira disponibilidade, confirme a reserva e marque **PAGO** após verificar o recebimento. Envie os bilhetes e acompanhe as mensagens.
 
-#### Motorista e guia
+### Motorista e guia
 
 Consulte a agenda, confira veículo e deslocamento, prepare a lista de passageiros e registre os embarques. No destino, registre os desembarques, sincronize as ações e finalize o trecho.
 
-### 24. Dúvidas frequentes e solução de problemas
+## 24. Dúvidas frequentes e solução de problemas {#duvidas}
 
-#### Não vejo um menu
+### Não vejo um menu
 
 Confira o perfil do usuário e o tipo da empresa. Atendente não administra equipe/plano; motorista e guia veem somente sua operação. Pacotes aparecem para Turismo.
 
-#### A família não cabe, mas a soma de vagas parece suficiente
+### A família não cabe, mas a soma de vagas parece suficiente
 
 A família precisa caber inteira em um veículo por deslocamento. Verifique os pontos, todos os segmentos e todos os dias do pacote; bloqueios temporários válidos também ocupam capacidade.
 
-#### Alterei uma Rota e a viagem continua com o endereço antigo
+### Alterei uma Rota e a viagem continua com o endereço antigo
 
 A saída guarda uma cópia. Utilize a atualização explícita da Rota nos detalhes, quando permitida, e depois atualize os manifestos. Se houver incompatibilidade ou operação iniciada, faça uma nova saída conforme o atendimento.
 
-#### Não consigo salvar o roteiro do pacote
+### Não consigo salvar o roteiro do pacote
 
 Confira o formato escolhido, destinos comerciais na ordem, chegada associada uma vez por destino, dia 1 na primeira saída e retorno final. Para passeios diários com volta à base, prefira **Passeios com ida e volta**.
 
-#### O QR não funciona
+### O QR não funciona
 
 Confira reserva confirmada, viagem ativa, passageiro, trecho e veículo selecionados. Verifique se houve reemissão/revogação e se o manifesto está atualizado. O bilhete único exige dados preparados novamente após a conversão dos bilhetes antigos.
 
-#### O celular mostra “Sem conexão”
+### O celular mostra “Sem conexão”
 
 Os registros locais podem estar preservados. Confira a conexão com a internet, mantenha o mesmo usuário e sincronize quando reconectar. Não limpe os dados para resolver uma pendência. Utilize o aplicativo fornecido pela empresa.
 
-#### Não consigo fechar o trecho
+### Não consigo fechar o trecho
 
 Desembarque todos que estão a bordo e sincronize/revise as pendências. O fechamento exige conexão e as etapas anteriores precisam estar concluídas. A falta de GPS pode ser registrada como motivo.
 
-#### O convite ou mensagem falhou
+### O convite ou mensagem falhou
 
 Consulte o histórico de mensagens. Confira telefone, e-mail do destinatário e canal selecionado. Falha definitiva exige novo convite; em resultado incerto, verifique o recebimento antes de reenviar. Solicite suporte se a falha persistir.
 
-#### Como pedir suporte
+### Como pedir suporte
 
 Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. Use o identificador da solicitação se a tela o fornecer. Não envie senhas ou links privados de passageiros. O manual não substitui a análise de uma ocorrência real pela equipe responsável.
 
-### 25. Checklist diário e glossário
+## 25. Checklist diário e glossário {#checklist}
 
-#### Antes da saída
+### Antes da saída
 
 - Conferir data, horário, Rota, equipe, veículos e capacidade.
 - Conferir reservas, pontos, nomes, documentos e PAGO manual.
@@ -698,7 +702,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 - Preparar os manifestos de cada veículo/trecho online e testar o acesso operacional.
 - Conferir câmera, bateria, internet e permissões necessárias.
 
-#### Durante e depois
+### Durante e depois
 
 - Selecionar o veículo/trecho correto e confirmar os embarques.
 - Revisar pendências de sincronização antes de fechar.
@@ -719,7 +723,10 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-### 26. Financeiro da empresa e pagamento da assinatura
+**Documento de uso:** edição 2026.10, revisão 4. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+
+
+## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
 
 O administrador encontra as cobranças da assinatura em **Meu plano** e no menu **Financeiro e cobranças**. Cada demonstrativo apresenta período, plano, utilização, excedentes, setup quando aplicável, total e prazo para pagamento.
 
@@ -747,16 +754,109 @@ Sem confirmação no prazo, o administrador passa a acessar somente o Financeiro
 Os avisos são enviados por e-mail aos administradores ativos e por WhatsApp ao telefone de contato da empresa. Mantenha seus dados atualizados.
 
 
+## 27. Contrato de utilização e aceite no primeiro acesso {#contrato}
+
+Quando a Nexus publica uma versão aprovada do contrato, os novos cadastros passam a exigir o aceite do representante da empresa. Cadastros anteriores à ativação não recebem aceite retroativo.
+
+1. Entre com o administrador da empresa e confira seus dados. Comece pelo CEP: ao completar oito dígitos, o sistema preenche endereço, bairro, cidade e UF. Confira os dados e informe número e complemento, se houver. Todos os campos podem ser corrigidos manualmente; se a consulta falhar, preencha o endereço diretamente.
+2. Informe nome, CPF e função do representante e declare os poderes para representar a empresa.
+3. Clique em **Conferir dados e preparar contrato**. Use **Ler contrato completo** e **Baixar PDF antes de aceitar** para consultar a cópia personalizada.
+4. Após abrir o texto integral, solicite o código pelo e-mail do seu acesso. O código vale por dez minutos e permite até cinco tentativas. Se os dados estiverem errados, solicite a correção ou gere outra cópia antes de aceitar.
+5. Informe o código, marque a declaração de leitura e aceite e clique em **Confirmar aceite do contrato**. A caixa não vem marcada.
+
+Você receberá por e-mail o PDF aceito e o comprovante. Em **Meu contrato**, consulte versão, data, hash SHA-256 e situação do envio; baixe os documentos ou solicite reenvio ao e-mail confirmado. Uma falha no e-mail não apaga o registro: o sistema tenta enviar novamente. Confira também o spam.
+
+O hash identifica a integridade daquela cópia. Alterações cadastrais posteriores não modificam o contrato aceito. O aceite eletrônico não é apresentado como assinatura certificada ICP-Brasil. A equipe Nexus não marca o aceite pelo cliente.
+
+
+### Mudança de plano e assinatura do aditivo
+
+Quando a Nexus propuser uma mudança, você receberá um convite por e-mail. Entre como administrador e abra **Meu contrato**. A página apresenta plano anterior, plano novo, mensalidade, franquia, excedente e previsão de vigência.
+
+Use **Conferir e ler aditivo**, confirme os dados do representante e prepare o documento. Leia o aditivo completo ou baixe o PDF antes de solicitar o código por e-mail. Informe o código, marque a declaração de aceite e confirme. A simples solicitação ou o recebimento do e-mail não muda o plano.
+
+A alteração aceita valerá no próximo ciclo indicado no aditivo, sem cobrança proporcional, novo setup ou reinício do teste. Até a vigência, permanece o plano atual. Se a data prevista passar antes da confirmação, gere e leia uma nova cópia com a próxima data válida.
+
+Após o aceite, o PDF e o comprovante serão enviados ao e-mail confirmado. Os aditivos ficam disponíveis em **Meu contrato**, com seus hashes e opção de reenvio. O contrato inicial continua disponível. Alterações posteriores no catálogo não modificam os valores aceitos.
+
+
+## Atualização do aplicativo {#atualizacao}
+
+O sistema verifica a versão ao abrir e ao retornar à tela. Quando houver atualização no navegador, salve o cadastro em andamento e clique em **Atualizar aplicativo**. A atualização pede confirmação antes de recarregar.
+
+No Android, a partir da versão 1.7.0, o botão abre o download de uma versão mais nova disponibilizada pela Nexus. Sincronize os registros pendentes e instale por cima do aplicativo atual, sem desinstalar. Versões anteriores precisam receber a primeira atualização manualmente. Sem conexão, o trabalho offline permanece disponível.
+
+Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distinguem os nomes; os passageiros aparecem na lista. Cada mensagem de bilhete identifica o passageiro do QR correspondente.
+
+
+## Rastreamento e avisos de embarque {#rastreamento}
+
+O administrador acessa **Rastreamento** para ativar a coleta durante as viagens, ajustar o raio de proximidade (inicialmente cinco quilômetros) e habilitar o lembrete de saída. Os controles são independentes: o lembrete pode funcionar sem GPS.
+
+Em **Locais de embarque para avisos**, selecione a viagem e confirme cada local no mapa, incluindo hotéis. Sem coordenadas confirmadas, não há aviso de proximidade. Alterar o endereço exige nova confirmação. É possível clicar no mapa ou colar coordenadas explícitas de um link completo do Google Maps.
+
+No Android, a partir de 1.8.0, inicie o trecho e use **Assumir rastreamento deste veículo**. Autorize a localização e mantenha o celular no veículo. Uma notificação acompanha a coleta a cada cinco minutos. Outro motorista ou guia atribuído pode confirmar a transferência. O rastreamento termina na chegada; cada retorno ou próximo trecho exige nova ativação. **Interromper rastreamento neste celular** permite parar o compartilhamento.
+
+O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.
+
+Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, embarque confirmado no mapa e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.
+
+
+## Conversas WhatsApp e atendimento da equipe {#conversas-whatsapp}
+
+Administradores e atendentes encontram **Conversas WhatsApp** quando o módulo está habilitado. A tela utiliza somente o número conectado da própria empresa. Pesquise uma conversa, consulte o histórico, responda a uma mensagem específica ou inicie uma conversa informando o telefone com DDI. No celular, use voltar para retornar à lista.
+
+Envie texto ou anexe imagens, PDF, áudio ou vídeo nos formatos aceitos. O limite de envio é **2 MB por arquivo**. Mensagens antigas e mídias dependem do histórico disponível; um anexo indisponível não significa que a conversa foi apagada. A lista e a conversa aberta são atualizadas automaticamente.
+
+O acompanhamento distingue mensagens pendentes, enviando, aceitas, falhas, incertas ou descartadas. Aceitação não comprova entrega nem leitura. Em **Envio incerto**, confira a conversa antes de reenviar para evitar duplicidade.
+
+### Assumir e concluir um atendimento
+
+Em **Solicitações de atendimento**, abra a conversa solicitada pelo cliente. A opção **Falar com a equipe** pausa as respostas automáticas. Uma resposta manual enviada pela equipe nesta tela também assume a conversa quando a automação está ativa. Enquanto o atendimento humano estiver aberto, o sistema não reapresenta o menu nem envia despedida por inatividade.
+
+Ao finalizar, use **Concluir atendimento**. A próxima mensagem do cliente poderá iniciar um novo atendimento automático.
+
+## Menu automático e bilhetes antecipados {#automacoes-whatsapp}
+
+Em **WhatsApp → Atendimento e bilhetes automáticos**, o administrador habilita separadamente o atendimento automático e o envio de bilhetes. Ambos começam desabilitados. Confira a conexão e os envios, escolha as opções, acrescente uma mensagem complementar se desejar e clique em **Salvar automações**.
+
+### Como o passageiro conversa
+
+Qualquer mensagem de texto não vazia inicia o atendimento. O sistema apresenta **“Olá, Nome, em que podemos ajudar?”**, priorizando o nome do responsável pela reserva confirmada de viagem ativa associada ao telefone. Sem esse nome, utiliza o nome público do perfil do WhatsApp; sem nome disponível, apresenta apenas **“Olá, em que podemos ajudar?”**.
+
+As opções habilitadas aparecem numeradas: **Bilhete de embarque**, **Meu veículo**, **Minha reserva**, **Local e horário de embarque** e **Falar com a equipe**. O passageiro responde com o número mostrado. Durante a conversa, outro texto reapresenta o menu. Quando houver várias reservas ou passageiros, o sistema solicita a seleção correspondente. As consultas utilizam o telefone da reserva e não permitem consultar dados de terceiros.
+
+Após **um minuto sem nova mensagem do cliente**, o atendimento automático envia: “Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar.” Uma nova mensagem reinicia o prazo. O envio depende da conexão; o prazo não representa garantia de recebimento no segundo exato. A regra não encerra atendimentos humanos. Após encerrar, qualquer novo texto inicia outro menu.
+
+Em hotéis e endereços personalizados, confirme com a equipe o horário específico da coleta. O horário geral de saída não equivale ao horário exato de chegada ao hotel.
+
+### Bilhetes automaticamente antes do embarque
+
+Ative **Enviar bilhetes automaticamente 24 horas antes do primeiro embarque**. Reservas confirmadas entram na fila quando faltam até 24 horas para o primeiro embarque contratado; reservas feitas dentro dessa janela também são consideradas. Cada passageiro recebe um bilhete individual válido para todos os seus trechos. O botão de envio manual continua disponível.
+
+Os envios automáticos respeitam um intervalo mínimo de **três minutos** em uma fila compartilhada entre todas as viagens e empresas. As 24 horas indicam a entrada na fila, não um horário garantido de entrega. Volume elevado e indisponibilidade podem atrasar os envios; acompanhe a situação antes da saída. Respostas do atendimento e envios manuais não seguem esse intervalo.
+
+Cancelamentos e alterações são conferidos antes do envio. Mensagens aceitas ou incertas não são repetidas automaticamente. Bilhetes antigos sem link recuperável aparecem como **Precisa de atenção**: utilize o envio manual com o link original ou faça uma reemissão consciente na reserva. Reemitir substitui o link anterior; a automação não faz essa troca silenciosamente.
+
+## Módulos e integração com outro sistema {#modulos-integracao}
+
+Os menus disponíveis dependem do perfil, dos módulos contratados e da situação da empresa. A Nexus pode disponibilizar o sistema completo ou somente os módulos necessários à operação integrada. O Financeiro da assinatura, o contrato, o acesso e a ajuda continuam como recursos básicos.
+
+No modelo integrado, a venda acontece no sistema parceiro; o Rotafy recebe os dados autorizados para comunicação, bilhetes e operação de embarque/desembarque. O motorista ou guia usa sua própria conta no Android, prepara as viagens com conexão e sincroniza os registros realizados offline.
+
+O administrador gerencia credenciais em **Integração com parceiros**, quando habilitado. Vincule um atendente dedicado, limite permissões e validade e entregue a credencial apenas ao responsável técnico autorizado. A credencial aparece uma única vez. Revogue-a quando não for mais necessária. Suspender ou mudar a função do atendente interrompe as credenciais vinculadas. A integração não concede acesso às configurações globais nem ao financeiro da assinatura.
+
+
 <a id="manual-nexus"></a>
 ## 4. Manual completo da administração Nexus
 
-### 1. Acesso à plataforma
+## 1. Acesso à plataforma {#acesso}
 
 Manual exclusivo da equipe Nexus. Acesse <https://rotafy.nexusdataanalytics.tech/nexus> com seu e-mail e senha de superadmin. Esse perfil não possui empresa operacional padrão. Para operar viagens, utilize uma conta cadastrada na empresa.
 
 A senha exige pelo menos 8 caracteres, uma letra maiúscula e um caractere especial. Utilize **Esqueci minha senha** no acesso Nexus quando necessário. Não compartilhe credenciais.
 
-#### Perfis da equipe Nexus
+### Perfis da equipe Nexus
 
 O **Administrador Nexus completo** mantém acesso a todas as áreas. O perfil **Equipe Nexus** acessa empresas e o histórico das ações de cadastro, edição, ativação e suspensão. Esse perfil não acessa configurações, financeiro, planos e assinaturas, relatórios financeiros ou a gestão dos usuários internos. Na criação de uma empresa, pode escolher um plano do catálogo público; alterações posteriores de assinatura cabem ao administrador completo.
 
@@ -764,15 +864,15 @@ Para cadastrar uma pessoa da Nexus, entre com um administrador completo, abra **
 
 Na mesma tela, altere o perfil ou suspenda/ative o acesso. Suspensões e mudanças de perfil encerram as sessões existentes. O sistema exige pelo menos um administrador completo ativo. Os administradores existentes mantêm acesso completo após a atualização.
 
-#### Log de acesso da equipe
+### Log de acesso da equipe
 
 Em **Equipe Nexus**, o administrador completo consulta **Log de acesso dos colaboradores Nexus**. Filtre por colaborador, entrada/saída e período. Os horários seguem Brasília e são exibidos até 200 registros por consulta. O histórico reúne entradas autenticadas e saídas pelo botão **Sair**, incluindo os registros anteriores disponíveis. Fechar o navegador ou expirar a sessão não registra uma saída. Tentativas de senha inválida não fazem parte dessa consulta.
 
-### 2. Empresas, planos e assinaturas
+## 2. Empresas, planos e assinaturas {#nexus}
 
 **Exclusivo do superadmin.** Entre em `/nexus`. Esta seção descreve os menus, sem divulgar credenciais da plataforma.
 
-#### Empresas
+### Empresas
 
 Cadastre ou edite dados comerciais, contato e perfil operacional. O CPF/CNPJ é obrigatório e validado. Crie o primeiro administrador e selecione o plano. Utilize suspender/ativar conforme o contrato, preservando os dados históricos.
 
@@ -784,7 +884,7 @@ O WhatsApp utiliza a sessão da Nexus definida para comunicação/cobrança, sem
 
 Na ação de gerenciamento do plano da empresa, confira a empresa selecionada e sua assinatura; não confunda o catálogo global de planos com o vínculo daquela empresa.
 
-#### Planos e assinaturas
+### Planos e assinaturas
 
 1. Abra **Planos e assinaturas**.
 2. Configure Basic, Professional, Enterprise ou um plano adicional.
@@ -795,14 +895,15 @@ Na ação de gerenciamento do plano da empresa, confira a empresa selecionada e 
 
 Alterar o catálogo não reescreve os valores históricos. Uma mudança agendada fixa a versão escolhida para o próximo ciclo. Arquivar um plano impede novas escolhas; contratos existentes preservam sua continuidade conforme as regras da assinatura.
 
-#### Atividades
+### Atividades
 
 Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.
 
-### 3. Cadastro de empresas
+
+## 3. Cadastro de empresas {#empresas}
 
 1. Abra **Empresas** e **Cadastrar empresa**.
-2. Preencha nome comercial, razão social, telefone/WhatsApp, CPF/CNPJ válido e identificador de acesso.
+2. Preencha nome comercial, razão social, telefone/WhatsApp, CPF/CNPJ válido e identificador de acesso. Informe primeiro o CEP para preencher endereço, bairro, cidade e UF; confira os dados e acrescente número e complemento, se houver. Se a consulta falhar, preencha manualmente.
 3. O identificador aceita somente letras minúsculas sem acentos e números, de 2 a 50 caracteres. Não utilize espaços, sublinhados, hífens ou outros caracteres especiais.
 4. Escolha **Turismo e transfers** ou **Transporte regular**.
 5. Escolha o plano e informe nome, e-mail e senha do primeiro administrador. Todos os campos são obrigatórios.
@@ -810,13 +911,13 @@ Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A
 
 O perfil operacional determina os módulos; o plano determina as condições comerciais. Viagens turísticas abertas podem impedir a troca do perfil. Suspender uma empresa preserva seus registros.
 
-### 4. Configurações de comunicação
+## 4. Configurações de comunicação {#comunicacao}
 
 Abra **Configurações** no painel Nexus. Informe as credenciais dos serviços de mensagens e e-mail, configure o e-mail remetente autorizado e salve. Um campo de chave vazio preserva a chave existente. Utilize a opção de remover somente quando desejar desativar a credencial correspondente.
 
 Mantenha as chaves restritas à equipe autorizada. Não inclua credenciais em capturas ou chamados. Confira a autorização do remetente junto ao serviço de e-mail.
 
-#### WhatsApp de cada empresa
+### WhatsApp de cada empresa
 
 Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agendam a criação da sessão automaticamente. O administrador da empresa encontra o menu **WhatsApp**, confere o telefone do cadastro da empresa e escaneia o QR Code no próprio Rotafy. O sistema confere o número antes de liberar os envios. A criação da empresa não aguarda a disponibilidade do serviço de mensagens.
 
@@ -828,7 +929,7 @@ Cada empresa utiliza seu número e uma sessão exclusiva. Novos cadastros agenda
 
 O pareamento no celular continua necessário. A identificação automática por telefone descrita acima é uma alternativa de suporte Nexus; a empresa também pode usar o QR no próprio Rotafy. Alterações manuais da Nexus prevalecem sobre a conexão automática até nova solicitação explícita do administrador da empresa. Duplicidades e sessões vinculadas a outra empresa impedem a associação automática. Empresas suspensas não são consultadas. Os vínculos existentes são preservados até a ativação do modo automático. Para configuração manual, desmarque a identificação automática e informe o ID conferido no serviço.
 
-#### Conferir envios
+### Conferir envios
 
 Em **Configurações → Cobrança mensal**, utilize **Testar envio de cobrança**. Salve primeiro o remetente e a sessão WhatsApp de cobrança. Informe seu e-mail ou telefone de teste e clique no botão do canal desejado. O teste utiliza a configuração salva e funciona mesmo com a cobrança automática desativada. A mensagem é identificada como teste e não cria fatura, altera assinatura ou solicita pagamento.
 
@@ -840,7 +941,7 @@ Envie um convite a um colaborador autorizado e confira o recebimento. Consulte o
 
 Confirmações, cancelamentos, marcação PAGO, bilhetes e convites utilizam os canais configurados conforme a ação executada. Confira os destinatários antes de enviar.
 
-### 5. Rotina do superadmin
+## 5. Rotina do superadmin {#rotina}
 
 - Confira novas empresas, perfil operacional e plano.
 - Acompanhe ciclos mensais, franquias, excedentes e demonstrativos.
@@ -848,27 +949,28 @@ Confirmações, cancelamentos, marcação PAGO, bilhetes e convites utilizam os 
 - Revise a associação da sessão quando uma empresa trocar de número.
 - Apoie os administradores sem compartilhar sua conta Nexus.
 
-### 6. Dúvidas frequentes
+## 6. Dúvidas frequentes {#duvidas}
 
-#### Como definir o plano de uma empresa?
+### Como definir o plano de uma empresa?
 
 Utilize o gerenciamento da assinatura da empresa. O catálogo cadastra as condições comerciais; a assinatura vincula o plano à empresa.
 
-#### A sessão não foi encontrada?
+### A sessão não foi encontrada?
 
 Confira o telefone e o pareamento. A busca depende do telefone informado pelo serviço. Se necessário, confira e selecione o ID manualmente. A busca não cria nem conecta sessões.
 
-#### O e-mail falhou?
+### O e-mail falhou?
 
 Confira remetente autorizado, credenciais e destinatário. Consulte o histórico antes de reenviar o convite. Não exponha chaves ao solicitar suporte.
 
-#### Onde fica o manual da empresa?
+### Onde fica o manual da empresa?
 
 Acesse `/ajuda` para o manual da equipe e a apresentação comercial. A ajuda do painel Nexus fica em `/nexus/ajuda`.
 
-### 7. Setup, teste e cobranças da assinatura
 
-#### Configurar e ativar
+## 7. Setup, teste e cobranças da assinatura {#cobrancas}
+
+### Configurar e ativar
 
 1. Entre em **Configurações**, na seção **Cobrança e período de teste**.
 2. Marque **Usar InfinitePay nas novas cobranças**, informe **Identificador InfinitePay (InfiniteTag)**, sem `$`, **Taxa de setup (R$)** e **Prazo de teste (dias)**. O identificador deve pertencer à conta da Nexus que receberá os pagamentos.
@@ -880,7 +982,7 @@ A configuração começa desativada. Configure e ative antes de cadastrar client
 
 Os dados de **Pix manual** ficam em uma seção separada. Utilize essa configuração para cobranças manuais: chave, favorecido e, opcionalmente, Pix Copia e Cola sem valor definido. Cobranças antigas preservam o meio de pagamento que receberam quando foram emitidas.
 
-#### Novos clientes e período de teste
+### Novos clientes e período de teste
 
 No cadastro, a empresa recebe a franquia do plano durante o teste, sem cobrança de setup, mensalidade ou excedentes. A criação de viagens além dessa franquia é impedida durante o teste.
 
@@ -890,7 +992,7 @@ Cada renovação cobra a mensalidade e os excedentes do período de 30 dias que 
 
 Clientes anteriores à ativação mantêm seus ciclos e não recebem setup ou teste retroativos. Novas cobranças definitivas desses contratos podem utilizar o link automático quando a integração estiver habilitada.
 
-#### Calendário e mensagens automáticas
+### Calendário e mensagens automáticas
 
 Um dia antes da cobrança, a empresa recebe um aviso parcial, sujeito a alteração e sem link para pagamento. Na data prevista, o sistema consolida os valores, preserva a cobrança no financeiro e disponibiliza o link de pagamento. Se houver falha na geração do link, a cobrança permanece registrada e o sistema tenta novamente. O envio definitivo aguarda a disponibilidade do link.
 
@@ -898,7 +1000,7 @@ O prazo termina ao fim do segundo dia útil contado a partir do dia seguinte ao 
 
 Os e-mails são enviados aos administradores ativos da empresa. O WhatsApp utiliza o telefone de contato cadastrado na empresa. Mantenha esses contatos atualizados.
 
-#### Acompanhar e dar baixa
+### Acompanhar e dar baixa
 
 Abra **Financeiro e cobranças**. Utilize o filtro de situação para consultar avisos parciais, cobranças abertas, vencidas, pagas e canceladas. Cada cobrança apresenta ciclo, plano, franquia, utilização, excedentes, valor total, prazo e referência.
 
@@ -910,7 +1012,7 @@ Se a geração do link for recusada, confira a InfiniteTag e use **Tentar gerar 
 
 Para um recebimento conferido fora desse fluxo, use **Baixa manual excepcional**; nas cobranças antigas, **Confirmar recebimento do Pix**. Informe data/hora e referência. O usuário da baixa fica registrado. Não é possível dar baixa em aviso parcial ou informar uma data futura.
 
-#### Bloqueio e liberação
+### Bloqueio e liberação
 
 Se não houver confirmação até o prazo, a empresa recebe aviso por e-mail e WhatsApp. O administrador fica restrito ao Financeiro, onde pode solicitar o link da cobrança pendente e pagar. Motorista e guia preservam o acesso às viagens já vendidas. O resumo financeiro mostra valor a vencer, contador de ciclos X/12, mensalidade, vencimento e situação. O aviso de cinco dias pode ser desabilitado individualmente, sem alterar as mensagens de cobrança.
 
@@ -918,14 +1020,75 @@ A baixa retira a restrição daquela cobrança. Se houver outras cobranças venc
 
 A ação **Cancelar cobrança** preserva o histórico e retira aquela cobrança da apuração de bloqueio. Não representa devolução de dinheiro nem cancela um link externo já emitido. Um pagamento posterior será sinalizado para conferência. Não cancele uma cobrança para registrar um recebimento; utilize a baixa correspondente.
 
-#### Histórico dos envios financeiros
+### Histórico dos envios financeiros
 
 O painel mostra o evento, canal, empresa, situação e motivo de falha de cada comunicação. Aceitação pelo serviço não significa entrega ou leitura. Um WhatsApp com resultado incerto não é repetido automaticamente. Confira o recebimento antes de qualquer nova comunicação. Falhas de comunicação não desfazem uma baixa registrada.
+
+## 8. Contratos e aceitação pelo cliente {#contratos}
+
+Em **Configurações → Contrato de utilização**, o administrador Nexus completo consulta a minuta e prepara novas versões em rascunho. Leia o texto integral e revise as condições comerciais e jurídicas antes de marcar a aprovação e usar **Publicar versão aprovada**. A versão r2 aprovada é ativada pelo processo de atualização, após conferir o texto e a configuração de e-mail. Novas versões preparadas no painel continuam dependendo de revisão e publicação explícita.
+
+A publicação exige configuração de e-mail e ativa o aceite apenas para empresas criadas depois dela. Versões publicadas não podem ser alteradas e aceites anteriores não são reescritos por outra publicação. No endereço do cadastro, comece pelo CEP: ao completar oito dígitos, o sistema consulta e preenche logradouro, bairro, cidade e UF. Confira e informe número e complemento opcional. O preenchimento manual permanece disponível, inclusive quando o CEP não é encontrado.
+
+O representante confirma os dados, lê ou baixa o contrato e aceita no primeiro acesso com código enviado ao próprio e-mail. A equipe comercial não aceita pelo cliente. Enquanto houver pendência exigida, o acesso operacional é restringido; ficam disponíveis os recursos necessários ao aceite e ao Financeiro.
+
+Em **Empresas → Contrato**, consulte a situação, versão, data, e-mail, hash e evidências, e baixe a cópia preservada e seu comprovante. Este acesso é exclusivo do administrador Nexus completo. O registro eletrônico não equivale a certificação ICP-Brasil ou garantia de resultado judicial.
+
+
+### Propor mudança de plano
+
+Em **Planos e assinaturas**, abra a assinatura da empresa, escolha **Plano para o próximo ciclo** e utilize **Enviar aditivo para aceite**. É necessário ter uma versão aprovada do contrato publicada, envio de e-mail configurado e ciclo pago em andamento. A empresa deve concluir eventual aceite inicial pendente antes de receber uma mudança.
+
+A proposta fixa as condições do plano escolhido e envia um convite por e-mail ao administrador da empresa. O painel mostra **Aguardando aceite** e a situação do envio. O plano atual permanece. Uma proposta ainda sem aceite pode ser cancelada pela Nexus; outra proposta só pode ser criada após esse cancelamento.
+
+O representante lê, baixa e aceita o aditivo no próprio acesso, com confirmação por e-mail. Somente então a mudança fica agendada para o próximo ciclo, sem novo setup, reinício do teste ou cobrança proporcional. Caso a data prevista passe, o cliente prepara outra cópia com vigência atualizada. O botão de cancelamento de proposta não remove uma alteração já aceita.
+
+A edição do catálogo não reajusta automaticamente os clientes nos ciclos futuros. Para alterar as condições de uma empresa, proponha um aditivo. Em **Empresas → Contrato**, consulte o histórico e baixe os aditivos aceitos e seus comprovantes. O contrato inicial e os documentos anteriores são preservados.
+
+
+## 9. Publicar atualização Android {#atualizacao-android}
+
+Em **Configurações → Atualizações do aplicativo Android**, selecione o APK e clique em **Publicar atualização Android**. A tela informa versão, compilação, data, SHA-256 e download. Utilize uma compilação superior, com o mesmo aplicativo e chave de assinatura.
+
+A partir de 1.7.0, o Android consulta atualizações ao abrir e oferece o botão para baixar uma versão mais nova. Versões anteriores precisam receber essa primeira atualização manualmente. O cliente instala por cima, sem desinstalar, e deve sincronizar os registros pendentes antes.
+
+
+## 10. Supervisão das conexões WhatsApp {#supervisao-whatsapp}
+
+O menu **Conexões WhatsApp** é exclusivo do administrador Nexus completo. Pesquise a empresa ou filtre conexões com problemas. Confira número cadastrado, estado da conexão e última verificação. A lista é atualizada automaticamente e permite atualização manual.
+
+- **Retomar conexão:** solicita recuperação e prepara um QR Code quando necessário.
+- **Reiniciar sessão:** desconecta a sessão da empresa e solicita nova conexão; poderá exigir leitura de outro QR Code.
+- **Desconectar:** interrompe a conexão e suspende os envios.
+- **QR Code:** acompanha a autenticação pendente da empresa.
+
+Os envios só são liberados após conferir o número conectado. Empresas suspensas ou sem o módulo WhatsApp não podem ser reconectadas. A desativação cancela retomadas pendentes e solicita desconexão. Reativar a empresa não equivale a autorizar novamente a conta do WhatsApp.
+
+Se o serviço estiver indisponível para todas as empresas, encaminhe ao suporte de infraestrutura. As ações do painel tratam as conexões individuais. As solicitações ficam registradas nas atividades; o perfil restrito Equipe Nexus não acessa essa supervisão.
+
+## 11. Módulos por empresa e integração {#modulos}
+
+Em **Módulos por empresa**, selecione o cliente e escolha **Sistema completo**, **WhatsApp e embarque integrado** ou ajuste os módulos individualmente. Confira as dependências selecionadas e clique em **Salvar módulos**. O perfil integrado mantém a base de equipe, veículos e viagens, comunicação, bilhetes/embarque e integração. Pacotes com vários destinos também exigem Rotas, Pacotes e perfil Turismo.
+
+Financeiro da assinatura, contrato, acesso e ajuda permanecem disponíveis conforme as regras do cadastro. Os módulos não substituem o plano nem alteram suas condições comerciais. As empresas já existentes preservam os módulos habilitados na atualização.
+
+Desabilitar WhatsApp solicita desconexão e descarta mensagens operacionais pendentes. Desabilitar Rastreamento encerra a coleta. Para retirar Viagens ou Embarque, finalize primeiro os trechos em andamento. Os dados históricos são preservados. Oriente operadores offline a sincronizar os registros pendentes; alterações de permissão só alcançam aparelhos offline quando se conectam.
+
+O administrador da empresa cria as credenciais do parceiro em seu próprio acesso, com atendente dedicado, validade e permissões limitadas. O guia técnico de integração fica separado dos materiais comerciais e descreve os dados e operações autorizados.
+
+## 12. Acompanhamento do atendimento e dos bilhetes {#atendimento-bilhetes}
+
+Oriente o administrador da empresa a configurar **WhatsApp → Atendimento e bilhetes automáticos**. Atendimento e envio antecipado são independentes e começam desativados. O cliente recebe menu numerado personalizado ao enviar qualquer texto; respostas numéricas selecionam as opções. A despedida ocorre após um minuto sem mensagem, somente no atendimento automático.
+
+A equipe responde em **Conversas WhatsApp** e usa **Concluir atendimento** para liberar novamente o fluxo automático. Não oriente o cliente a usar uma palavra específica para abrir o menu.
+
+Os bilhetes entram na fila até 24 horas antes do primeiro embarque contratado e são enviados individualmente, com intervalo mínimo de três minutos compartilhado entre todas as viagens e empresas. Grandes volumes exigem acompanhamento antecipado. O mesmo bilhete vale para todos os trechos contratados. Mensagens aceitas ou incertas não são repetidas automaticamente. Consulte o histórico antes de solicitar reenvio; **Precisa de atenção** exige tratar o bilhete na reserva.
+
 
 <a id="recursos-com-menu-oculto"></a>
 ## 5. Recursos implementados com acesso oculto no menu
 
-O menu **Página pública e integrações** está oculto por configuração da interface. O código das páginas e endpoints permanece no projeto. Ocultar o menu não desativa as rotas públicas nem substitui uma restrição de acesso no backend.
+O menu antigo **Página pública e integrações** está oculto por configuração da interface. A integração atual fica em **Integração com parceiros**, quando habilitada, e está descrita nos manuais acima e em `docs/integracao/README.md`. O código das páginas e endpoints permanece no projeto. Ocultar o menu não desativa as rotas públicas nem substitui uma restrição de acesso no backend.
 
 ### Página da empresa e solicitações públicas
 
@@ -940,7 +1103,7 @@ O menu **Página pública e integrações** está oculto por configuração da i
 - Sinalização à agência quando não há disponibilidade, com agrupamento de alertas repetidos.
 - Não há recebimento automático do pagamento do passageiro neste módulo; a marcação PAGO continua manual.
 
-### Integrações de reservas com sites externos
+### Integrações de reservas com sites externos — recurso anterior
 
 Existem endpoints de integração e chaves por empresa, com identificação, validade e possibilidade de revogação. As solicitações externas usam as regras de disponibilidade, documentação e reserva do sistema. Credenciais de integração não equivalem a uma sessão administrativa e não devem ser expostas em uma página pública ou no código do navegador.
 
@@ -1162,3 +1325,8 @@ As mensagens de reserva identificam separadamente empresa, responsável e passag
 ## Rastreamento por APK e alertas de embarque
 
 O administrador da empresa habilita o rastreamento por deslocamento e acompanha a trilha de posições coletadas a cada cinco minutos. O APK 1.8.0 permite que um motorista/guia atribuído assuma o celular responsável pelo veículo, com transferência, serviço Android visível e encerramento na chegada. A empresa pode desligar a coleta e configurar o raio de proximidade, inicialmente cinco quilômetros. Pontos de embarque são confirmados no mapa, sem API paga. A fila WhatsApp envia proximidade e lembretes nos quinze minutos anteriores à saída de cada trecho, ida e volta, uma vez por família/veículo/deslocamento. Alertas vencidos e passageiros embarcados são revalidados antes do envio. Posições ficam retidas por noventa dias. Consulte `docs/RASTREAMENTO_E_AVISOS.md` para operação, limites e homologação.
+
+
+## Comunicação e integração — revisão de 22/10/2026
+
+Os manuais acima contemplam conversas WhatsApp, supervisão Nexus, módulos, menu personalizado, atendimento humano e bilhetes antecipados. Referências técnicas atuais: `docs/CHAT_WHATSAPP_E_SUPERVISAO.md`, `docs/AUTOMACAO_WHATSAPP.md`, `docs/MODULOS_E_INTEGRACAO.md` e `docs/integracao/README.md`. As migrações 0039 a 0043 são incrementais e preservam os dados. O atendimento automático e os bilhetes antecipados começam desativados; precisam de habilitação pelo administrador.
