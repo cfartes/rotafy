@@ -2,20 +2,22 @@
 
 ## Configuração pelo administrador
 
-Em **WhatsApp → Atendimento e bilhetes automáticos**, o administrador pode ativar separadamente os comandos e o envio antecipado de bilhetes. Ambos começam desabilitados. Escolha os comandos disponíveis, personalize a mensagem do menu e clique em **Salvar automações**.
+Em **WhatsApp → Atendimento e bilhetes automáticos**, o administrador pode ativar separadamente o atendimento automático e o envio antecipado de bilhetes. Ambos começam desabilitados. Escolha as opções disponíveis, preencha uma mensagem complementar opcional e clique em **Salvar automações**.
 
 O recebimento dos comandos é configurado automaticamente no serviço de mensagens, sem copiar URLs ou chaves. A conexão da empresa precisa estar válida e com envios habilitados. A chave OpenWA configurada pela Nexus precisa permitir leitura e criação de webhooks. O endereço público do Rotafy deve usar HTTPS e ser alcançável pelo OpenWA. A tela mostra se o recebimento está configurado, pendente ou indisponível.
 
-## Comandos para o passageiro
+## Atendimento para o passageiro
 
-| Comando | Resposta |
+| Entrada ou opção | Resposta |
 | --- | --- |
-| Saudações: “Olá”, “Oi”, “Bom dia”, “Boa tarde”, “Boa noite” e variações | Menu numerado das opções habilitadas |
-| `/qrcode` ou `/bilhete` | Link do bilhete individual, com o QR Code para os trechos contratados |
-| `/onibus` ou `/ônibus` | Veículo, placa e informações de embarque dos trechos reservados |
-| `/dados` | Responsável, passageiros, viagem, valor e situação do pagamento |
-| `/embarque` | Local e horário previsto de embarque |
-| `/atendimento` | Registra solicitação para a equipe na tela Conversas WhatsApp |
+| Qualquer texto não vazio | Abre o atendimento ou reapresenta o menu numerado |
+| Número de **Bilhete de embarque** | Link do bilhete individual, com o QR Code para os trechos contratados |
+| Número de **Meu veículo** | Veículo, placa e informações de embarque dos trechos reservados |
+| Número de **Minha reserva** | Responsável, passageiros, viagem, valor e situação do pagamento |
+| Número de **Local e horário de embarque** | Local e horário previsto de embarque |
+| Número de **Falar com a equipe** | Registra solicitação para a equipe na tela Conversas WhatsApp |
+
+A saudação é **“Olá, Nome do cliente, em que podemos ajudar?”**, usando o responsável pela reserva confirmada de viagem ativa vinculada ao telefone. Sem esse nome, consulta o nome público do perfil no WhatsApp. Sem nome disponível, utiliza **“Olá, em que podemos ajudar?”**. A mensagem complementar configurada pelo administrador é exibida em seguida, antes das opções. A mensagem padrão antiga é substituída pela saudação automática.
 
 Somente reservas confirmadas de viagens ativas vinculadas ao telefone do remetente são consultadas. Nenhum comando recebe um telefone ou código de reserva para consultar outra pessoa. CPF completo e dados de outros clientes não são enviados. Grupos, status, mensagens do próprio número e eventos antigos são ignorados.
 
@@ -31,11 +33,23 @@ docker compose --env-file .env.production -f compose.production.yaml exec -T wha
 
 O diagnóstico usa apenas consultas ao banco e GETs no serviço, sem enviar mensagens. Mostra se há reserva ativa, se o telefone recebido coincide com o cadastrado, se há uma variante brasileira confirmada e se a sessão pertence à empresa atual. Os números são mascarados; chaves, links e mensagens não são exibidos.
 
-As saudações são reconhecidas também dentro de textos maiores, sem diferenciar maiúsculas ou acentos. Cada número do menu aciona o comando apresentado. A correspondência dos números é preservada durante a seleção; opções desabilitadas pelo administrador são recusadas. O atalho `/menu` continua compatível.
+Não é necessário utilizar palavras específicas. Durante o atendimento, cada número aciona a opção apresentada. A correspondência dos números é preservada durante a seleção; opções desabilitadas pelo administrador são recusadas. Fora de um atendimento ativo, até uma mensagem numérica inicia um novo menu, sem executar a seleção anterior.
 
-Com várias reservas ou passageiros, são apresentadas opções numeradas, válidas por 10 minutos. A escolha é novamente validada contra o telefone e a reserva atual. Volumes grandes são encaminhados para atendimento humano. Se o serviço não conseguir resolver o telefone real de um identificador privado do WhatsApp, os dados não são liberados.
+Com várias reservas ou passageiros, são apresentadas opções numeradas durante o atendimento. A escolha é novamente validada contra o telefone e a reserva atual. Volumes grandes são encaminhados para atendimento humano. Se o serviço não conseguir resolver o telefone real de um identificador privado do WhatsApp, os dados não são liberados.
 
-Solicitações humanas aparecem em **Conversas WhatsApp → Solicitações de atendimento**. Abra a conversa para responder e use **Concluir atendimento** ao finalizar. Enquanto a solicitação estiver aberta, os comandos de consulta de dados ficam pausados. O menu continua disponível.
+Solicitações humanas aparecem em **Conversas WhatsApp → Solicitações de atendimento**. Abra a conversa para responder e use **Concluir atendimento** ao finalizar. Enquanto a solicitação estiver aberta, o atendimento automático fica pausado, sem reapresentar o menu ou enviar despedidas. Depois da conclusão pela equipe, a próxima mensagem do cliente pode iniciar novo atendimento automático.
+
+Uma resposta enviada manualmente pela equipe na tela Conversas WhatsApp também assume o atendimento, quando a automação está habilitada, cancelando respostas automáticas e despedidas ainda pendentes daquela conversa. Use **Concluir atendimento** para liberar a automação novamente.
+
+### Encerramento por inatividade
+
+Após 1 minuto sem nova mensagem do cliente, o servidor coloca na fila a despedida:
+
+> Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar.
+
+O processamento ocorre no worker, normalmente a cada 5 segundos, e depende da disponibilidade da conexão. O timer é persistido no banco; fechar a tela ou reiniciar o processo não perde o controle. Uma nova mensagem reinicia o prazo e invalida uma despedida ainda não enviada. A sessão, a configuração e a transferência para atendimento humano são novamente verificadas antes de enviar. O envio não utiliza a cadência de 3 minutos dos bilhetes.
+
+Cada atendimento recebe no máximo uma despedida automática. Um resultado incerto não é repetido. Depois do encerramento, a seleção anterior é removida. Conversas antigas após indisponibilidade prolongada não recebem despedidas tardias; mensagens de despedida pendentes expiram em 2 minutos.
 
 Em embarques em hotéis ou endereços personalizados, a resposta informa o local e pede confirmação do horário específico à equipe; o horário geral de saída do trecho não é apresentado como horário exato da coleta no hotel.
 
@@ -59,7 +73,7 @@ Bilhetes antigos que só possuem o hash, sem cópia recuperável da credencial, 
 
 ## Operação técnica
 
-- Migração incremental: `0042_whatsapp_automation`. Nenhum banco é recriado.
+- Migrações incrementais: `0042_whatsapp_automation` e `0043_whatsapp_conversations`. Nenhum banco é recriado.
 - Worker existente: `python -m app.whatsapp_worker`, com `PUBLIC_BASE_URL` do ambiente.
 - Eventos: `POST /api/v1/webhooks/openwa/{company_id}`, autenticados por HMAC-SHA256 no corpo bruto com `X-OpenWA-Signature`. Não usa a sessão do navegador.
 - A associação da empresa e sessão é conferida no servidor. Há deduplicação por sessão/mensagem, limites de frequência e expiração dos comandos pendentes em 30 minutos.

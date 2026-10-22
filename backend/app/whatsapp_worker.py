@@ -272,6 +272,7 @@ async def main():
                         sync_webhook,
                     )
                     from app.whatsapp_chat import process_chat
+                    from app.whatsapp_conversations import schedule_inactivity
 
                     await process_alerts(engine, company)
                     await process_company(engine, company)
@@ -281,6 +282,7 @@ async def main():
                     )
                     await sync_webhook(engine, company, base_url)
                     await schedule_tickets(engine, company)
+                    await schedule_inactivity(engine, company)
                     await process_automation(engine, company, base_url)
                 from app.session_discovery import process_discovery
 

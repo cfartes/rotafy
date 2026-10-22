@@ -12,11 +12,11 @@ type Settings = {
   webhook_error: string | null;
 };
 const commands: Record<string, string> = {
-  qrcode: "/qrcode ou /bilhete — Bilhete de embarque",
-  onibus: "/onibus — Veículo e embarque",
-  dados: "/dados — Resumo da reserva",
-  embarque: "/embarque — Local e horário",
-  atendimento: "/atendimento — Solicitar atendimento humano",
+  qrcode: "Bilhete de embarque",
+  onibus: "Meu veículo",
+  dados: "Minha reserva",
+  embarque: "Local e horário de embarque",
+  atendimento: "Falar com a equipe",
 };
 const states: Record<string, string> = {
   pending: "Na fila",
@@ -91,7 +91,11 @@ export function WhatsAppAutomation() {
               {history.data?.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    {row.kind === "ticket" ? "Bilhete" : "Comando"}
+                    {row.kind === "ticket"
+                      ? "Bilhete"
+                      : row.kind === "inactivity"
+                        ? "Encerramento por inatividade"
+                        : "Atendimento"}
                     {row.passenger_name && (
                       <>
                         <br />
@@ -176,24 +180,29 @@ function AutomationForm({
         Habilitar comandos automáticos no WhatsApp
       </label>
       <p className="muted">
-        Saudações como “Olá”, “Oi”, “Bom dia”, “Boa tarde” e “Boa noite”,
-        inclusive dentro de mensagens maiores, abrem um menu numerado. O
-        passageiro responde com o número da opção. As consultas usam o telefone
-        da reserva; quando necessário, ele escolhe a reserva ou passageiro por
-        número.
+        Qualquer texto inicia o atendimento e abre um menu numerado, com uma
+        saudação personalizada pelo nome do responsável pela reserva ou, na
+        ausência dele, pelo nome do perfil do WhatsApp. O passageiro responde
+        com o número da opção. Outros textos reapresentam o menu. As consultas
+        usam o telefone da reserva; quando necessário, ele escolhe a reserva ou
+        passageiro por número.
+      </p>
+      <p className="muted">
+        Após 1 minuto sem mensagem do cliente, o atendimento automático é
+        encerrado com uma despedida. Conversas encaminhadas à equipe não são
+        encerradas por esse prazo.
       </p>
       {value.commands_enabled && (
         <>
-          <Field label="Mensagem do menu">
+          <Field label="Mensagem do menu (complemento opcional)">
             <textarea
               maxLength={500}
-              required
               value={value.greeting}
               onChange={(e) => change({ greeting: e.target.value })}
             />
           </Field>
           <fieldset>
-            <legend>Comandos disponíveis</legend>
+            <legend>Opções do menu</legend>
             {Object.entries(commands).map(([id, label]) => (
               <label className="check" key={id}>
                 <input

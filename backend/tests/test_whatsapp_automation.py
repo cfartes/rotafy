@@ -97,6 +97,21 @@ def run(function, *args, **kwargs):
     return asyncio.run(work())
 
 
+def request_option(
+    client,
+    seeded,
+    automation,
+    sent,
+    option="3",
+    sender="5511999999999@c.us",
+    transport=None,
+):
+    transport = transport or provider(sent)
+    for message in ["Preciso de uma informação", option]:
+        receive(client, seeded, automation, body=message, sender=sender)
+        run(process_automation, seeded["a"], BASE, transport=transport)
+
+
 def provider(sent, *, fail=False):
     def call(key, path, body=None):
         if path.endswith("/phone"):
@@ -173,12 +188,10 @@ def test_private_reservation_details_lid_resolution_and_no_unknown_phone_disclos
     trip = setup(client, seeded)
     reservation = reserve(client, trip, family(name="Maria", size=1))
     sent = []
-    receive(client, seeded, automation, sender="19000000000001@lid")
-    assert run(process_automation, seeded["a"], BASE, transport=provider(sent))
-    assert "Maria Pessoa 0" in sent[0]["text"] and "Pagamento:" in sent[0]["text"]
-    assert "cpf" not in sent[0]["text"].lower()
-    receive(client, seeded, automation, sender="5511888888888@c.us")
-    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    request_option(client, seeded, automation, sent, sender="19000000000001@lid")
+    assert "Maria Pessoa 0" in sent[-1]["text"] and "Pagamento:" in sent[-1]["text"]
+    assert "cpf" not in sent[-1]["text"].lower()
+    request_option(client, seeded, automation, sent, sender="5511888888888@c.us")
     assert "Não encontramos" in sent[-1]["text"] and "Maria" not in sent[-1]["text"]
     assert reservation["phone"] == "+5511999999999"
 
@@ -210,13 +223,12 @@ def test_menu_selection_qrcode_preserves_issued_tokens_and_human_handoff(
     assert client.post("/api/v1/public/ticket", json={"token": token}).json()[
         "is_valid"
     ]
-    receive(client, seeded, automation, body="/atendimento")
-    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    request_option(client, seeded, automation, sent, option="5")
     requests = client.get("/api/v1/whatsapp/chat/handoffs").json()
     assert len(requests) == 1
     receive(client, seeded, automation, body="/dados")
     run(process_automation, seeded["a"], BASE, transport=provider(sent))
-    assert "A equipe está" in sent[-1]["text"]
+    assert "Sua solicitação foi registrada" in sent[-1]["text"]
     assert (
         client.post(
             "/api/v1/whatsapp/chat/handoffs/close",
@@ -235,8 +247,7 @@ def test_multiple_reservations_and_selection_revalidates_owner(
     second = first
     reserve(client, second, family(name="Segunda", size=1))
     sent = []
-    receive(client, seeded, automation)
-    run(process_automation, seeded["a"], BASE, transport=provider(sent))
+    request_option(client, seeded, automation, sent)
     assert "Qual reserva" in sent[-1]["text"]
     with owner.begin() as db:
         selected = db.scalar(text("SELECT selection FROM whatsapp_command_states"))[
@@ -564,8 +575,8 @@ def test_greetings_inside_larger_messages_open_menu(message):
         "reembolso",
     ],
 )
-def test_unrelated_words_do_not_open_menu(message):
-    assert parse_command(message) is None
+def test_arbitrary_text_opens_menu_without_required_keywords(message):
+    assert parse_command(message) == "menu"
 
 
 def test_numbered_menu_keeps_its_mapping_and_rechecks_disabled_options(
