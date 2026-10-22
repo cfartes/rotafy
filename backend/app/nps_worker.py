@@ -111,43 +111,91 @@ async def service_survey(db, company, chat, operator):
         .first()
     )
     if not config:
-        return
+        return "disabled"
     state = (
         (
             await db.execute(
                 text("""SELECT s.* FROM whatsapp_command_states s JOIN company_whatsapp w ON w.company_id=s.company_id AND w.session_id=s.session_id
-      WHERE s.company_id=:company AND s.chat_id=:chat AND s.handoff_at>=:since AND s.handoff_closed_at>=s.handoff_at"""),
+      WHERE s.company_id=:company AND s.chat_id=:chat AND s.handoff_closed_at>=:since AND s.handoff_closed_at>=s.handoff_at"""),
                 {"company": company, "chat": chat, "since": config["service_since"]},
             )
         )
         .mappings()
         .first()
     )
-    if not state or not state["phone"]:
-        return
+    if not state:
+        return "ineligible"
+    phone = state["phone"]
+    if not phone:
+        # Privacy LIDs are opaque: only the provider may map one to a phone.
+        if re.fullmatch(r"[1-9][0-9]{7,14}@c\.us", chat):
+            phone = "+" + chat.split("@")[0]
+        elif chat.endswith("@lid"):
+            try:
+                key = await openwa_key(db)
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        openwa_request,
+                        key,
+                        f"/sessions/{state['session_id']}/contacts/{quote(chat, safe='')}/phone",
+                    ),
+                    timeout=4,
+                )
+                raw = result.get("phone") if isinstance(result, dict) else None
+                if isinstance(raw, str) and re.fullmatch(r"\+?[1-9][0-9]{7,14}", raw):
+                    phone = "+" + raw.lstrip("+")
+            except (
+                HTTPException,
+                HTTPError,
+                URLError,
+                OSError,
+                TimeoutError,
+                ValueError,
+                InvalidToken,
+            ):
+                pass
+        if not phone:
+            # Roll back closure rather than silently losing the invitation.
+            raise HTTPException(
+                503,
+                "Não foi possível identificar o telefone para a pesquisa NPS. O atendimento continua aberto. Tente encerrar novamente.",
+            )
+        await db.execute(
+            text(
+                "UPDATE whatsapp_command_states SET phone=:phone WHERE company_id=:company AND session_id=:session AND chat_id=:chat"
+            ),
+            {
+                "company": company,
+                "session": state["session_id"],
+                "chat": chat,
+                "phone": phone,
+            },
+        )
     if await db.scalar(
         text(
             "SELECT 1 FROM nps_surveys WHERE company_id=:company AND kind='service' AND phone=:phone AND created_at>now()-interval '7 days'"
         ),
-        {"company": company, "phone": state["phone"]},
+        {"company": company, "phone": phone},
     ):
-        return
+        return "cooldown"
     name = await db.scalar(
         text(
             "SELECT r.contact_name FROM reservations r JOIN trips t ON t.id=r.trip_id WHERE r.company_id=:company AND r.phone=:phone AND r.status='confirmed' AND t.status IN ('scheduled','in_progress') ORDER BY t.starts_at,r.created_at LIMIT 1"
         ),
-        {"company": company, "phone": state["phone"]},
+        {"company": company, "phone": phone},
     )
     await create_survey(
         db,
         company,
         "service",
         f"{state['session_id']}:{chat}:{state['handoff_at'].isoformat()}",
-        state["phone"],
+        phone,
         name,
         utc_now(),
         operator=operator,
     )
+
+    return "queued"
 
 
 async def schedule_surveys(engine, company):
@@ -481,7 +529,7 @@ async def process_nps(engine, company, transport=openwa_request):
                 busy = await db.scalar(
                     text("""SELECT 1 FROM whatsapp_command_states WHERE company_id=:company AND session_id=:session
                   AND (phone=:phone OR chat_id=:chat) AND ((handoff_at IS NOT NULL AND (handoff_closed_at IS NULL OR handoff_closed_at<handoff_at))
-                    OR (automatic_open AND last_activity_at>now()-interval '2 minutes'))
+                    OR (automatic_open AND last_activity_at>now()-interval '10 minutes'))
                   UNION ALL SELECT 1 FROM nps_surveys WHERE company_id=:company AND phone=:phone AND id<>:id AND stage<>'closed' AND status IN ('sending','sent','uncertain') AND expires_at>now() LIMIT 1"""),
                     {
                         "company": company,
@@ -533,7 +581,7 @@ async def process_nps(engine, company, transport=openwa_request):
             if await db.scalar(
                 text("""SELECT 1 FROM whatsapp_command_states WHERE company_id=:company AND session_id=:session
               AND (chat_id=:chat OR phone=:phone) AND ((handoff_at IS NOT NULL AND (handoff_closed_at IS NULL OR handoff_closed_at<handoff_at))
-                OR (:invite AND automatic_open AND last_activity_at>now()-interval '2 minutes')) LIMIT 1"""),
+                OR (:invite AND automatic_open AND last_activity_at>now()-interval '10 minutes')) LIMIT 1"""),
                 {
                     "company": company,
                     "session": session["session_id"],

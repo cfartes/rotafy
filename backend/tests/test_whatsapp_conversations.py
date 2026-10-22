@@ -13,7 +13,7 @@ automation = automation_fixture
 pytestmark = pytest.mark.usefixtures("protected_key")
 
 
-def age(owner, seconds=61):
+def age(owner, seconds=601):
     with owner.begin() as db:
         db.execute(
             text(
@@ -85,12 +85,12 @@ def test_profile_name_fallback_and_generic_greeting(
     assert "PRIVATE_ADDRESS_BOOK_NAME" not in sent[-1]["text"]
 
 
-def test_farewell_after_one_minute_once_and_numeric_message_reopens_menu(
+def test_farewell_after_ten_minutes_once_and_numeric_message_reopens_menu(
     client, seeded, owner, automation
 ):
     sent = []
     greet(client, seeded, automation, sent)
-    age(owner, 59)
+    age(owner, 599)
     run(schedule_inactivity, seeded["a"])
     with owner.connect() as db:
         assert (
@@ -269,3 +269,21 @@ def test_pending_farewell_revalidates_connection_and_permissions(
             db.execute(text("UPDATE whatsapp_automation SET commands_enabled=false"))
     assert run(process_automation, seeded["a"], BASE, transport=provider(sent))
     assert all(m["text"] != FAREWELL for m in sent)
+
+
+@pytest.mark.parametrize("seconds,retained", [(120, True), (601, False)])
+def test_menu_selection_uses_ten_minute_inactivity_window(
+    client, seeded, owner, automation, seconds, retained
+):
+    greet(client, seeded, automation, [])
+    with owner.begin() as db:
+        db.execute(
+            text(
+                "UPDATE whatsapp_command_states SET selection=jsonb_build_object('marker',true)"
+            )
+        )
+    age(owner, seconds)
+    assert receive(client, seeded, automation, body="1").status_code == 200
+    with owner.connect() as db:
+        selection = db.scalar(text("SELECT selection FROM whatsapp_command_states"))
+    assert bool(selection) is retained

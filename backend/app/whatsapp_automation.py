@@ -169,7 +169,9 @@ class CloseHandoff(Input):
 
 
 @router.post("/whatsapp/chat/handoffs/close", status_code=204)
-async def close_handoff(data: CloseHandoff, request: Request, actor: Auth):
+async def close_handoff(
+    data: CloseHandoff, request: Request, actor: Auth, include_nps: bool = False
+):
     chat_access(actor)
     async with request.app.state.platform_engine.begin() as db:
         await scope(db, actor.company_id)
@@ -185,8 +187,11 @@ async def close_handoff(data: CloseHandoff, request: Request, actor: Auth):
         )
         from app.nps_worker import service_survey
 
+        outcome = "already_closed"
         if closed.scalar_one_or_none():
-            await service_survey(db, actor.company_id, data.chat_id, actor.user["id"])
+            outcome = await service_survey(
+                db, actor.company_id, data.chat_id, actor.user["id"]
+            )
         await audit(
             db,
             actor.company_id,
@@ -194,6 +199,11 @@ async def close_handoff(data: CloseHandoff, request: Request, actor: Auth):
             "whatsapp.handoff_closed",
             actor.company_id,
         )
+
+    if include_nps:
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse({"nps": outcome}, status_code=200)
 
 
 def parse_command(value):
@@ -342,7 +352,7 @@ async def webhook(company_id: UUID, request: Request):
                     text("""INSERT INTO whatsapp_command_states(company_id,session_id,chat_id,last_activity_at,activity_version,automatic_open)
           VALUES(:company,:session,:chat,clock_timestamp(),1,true)
           ON CONFLICT(company_id,session_id,chat_id) DO UPDATE SET
-          selection=CASE WHEN NOT whatsapp_command_states.automatic_open OR whatsapp_command_states.last_activity_at<clock_timestamp()-interval '1 minute' THEN NULL ELSE whatsapp_command_states.selection END,
+          selection=CASE WHEN NOT whatsapp_command_states.automatic_open OR whatsapp_command_states.last_activity_at<clock_timestamp()-interval '10 minutes' THEN NULL ELSE whatsapp_command_states.selection END,
           last_activity_at=clock_timestamp(),activity_version=whatsapp_command_states.activity_version+1,
           automatic_open=NOT (whatsapp_command_states.handoff_at IS NOT NULL AND (whatsapp_command_states.handoff_closed_at IS NULL OR whatsapp_command_states.handoff_closed_at<whatsapp_command_states.handoff_at))
           RETURNING activity_version,selection,automatic_open"""),

@@ -11,7 +11,7 @@ test("central pública permite consultar e baixar os materiais sem autenticaçã
   });
   await page.goto("/ajuda");
   await expect(page.getByRole("heading", { name: /Conheça/ })).toBeVisible();
-  await expect(page.getByText("Edição 2026.10 · Revisão 7 · Atualizado em 22/10/2026")).toBeVisible();
+  await expect(page.getByText("Edição 2026.10 · Revisão 8 · Atualizado em 22/10/2026")).toBeVisible();
   expect(authRequests).toBe(0);
   for (const filename of [
     "manual.pdf",
@@ -40,7 +40,7 @@ test("manual oferece busca, navegação e leitura em celular", async ({
   await expect(page.locator(".chapter")).toHaveCount(34);
   await expect(page.getByRole("heading", { name: "Menu automático e bilhetes antecipados" })).toBeVisible();
   await expect(page.locator("#automacoes-whatsapp").locator("..")).toContainText("três minutos");
-  await expect(page.locator("#automacoes-whatsapp").locator("..")).toContainText("um minuto");
+  await expect(page.locator("#automacoes-whatsapp").locator("..")).toContainText("dez minutos");
   const search = page.locator('input[type="search"]');
   await search.fill("csv/xlsx");
   const matches = await page.locator(".chapter:visible").count();

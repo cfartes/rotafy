@@ -605,7 +605,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 4. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 8. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -712,7 +712,10 @@ Qualquer mensagem de texto não vazia inicia o atendimento. O sistema apresenta 
 
 As opções habilitadas aparecem numeradas: **Bilhete de embarque**, **Meu veículo**, **Minha reserva**, **Local e horário de embarque** e **Falar com a equipe**. O passageiro responde com o número mostrado. Durante a conversa, outro texto reapresenta o menu. Quando houver várias reservas ou passageiros, o sistema solicita a seleção correspondente. As consultas utilizam o telefone da reserva e não permitem consultar dados de terceiros.
 
-Após **um minuto sem nova mensagem do cliente**, o atendimento automático envia: “Devido ao período de inatividade, estamos encerrando esse atendimento. Caso precise de alguma outra informação, é só nos chamar.” Uma nova mensagem reinicia o prazo. O envio depende da conexão; o prazo não representa garantia de recebimento no segundo exato. A regra não encerra atendimentos humanos. Após encerrar, qualquer novo texto inicia outro menu.
+Após **dez minutos sem nova mensagem do cliente**, o atendimento automático envia: “Oi! Como não nos falamos há um tempinho, estamos fechando essa conversa por agora. Se precisar de mais alguma coisa, é só nos chamar novamente por aqui, tá bom? Tenha um ótimo dia! ✨” Uma nova mensagem reinicia o prazo. O envio depende da conexão; o prazo não representa garantia de recebimento no segundo exato. A regra não encerra atendimentos humanos. Após encerrar, qualquer novo texto inicia outro menu.
+
+Ao concluir um atendimento humano, a tela informa se a pesquisa entrou na fila ou se uma regra impediu a criação. Caso não seja possível identificar o telefone, o atendimento permanece aberto e a tela orienta uma nova tentativa.
+
 
 Em hotéis e endereços personalizados, confirme com a equipe o horário específico da coleta. O horário geral de saída não equivale ao horário exato de chegada ao hotel.
 

@@ -18,7 +18,7 @@ Administradores e atendentes com WhatsApp habilitado veem, em qualquer tela do p
 
 ## Atendimento automático e transferência humana
 
-Qualquer texto abre o menu numerado personalizado quando a automação está habilitada. Uma resposta manual na tela de conversas assume o atendimento e cancela respostas automáticas e despedidas pendentes. Solicitações humanas também pausam o bot. Use **Concluir atendimento** para liberar a automação; a despedida de um minuto não encerra conversas assumidas pela equipe. Detalhes e filas em [AUTOMACAO_WHATSAPP.md](AUTOMACAO_WHATSAPP.md).
+Qualquer texto abre o menu numerado personalizado quando a automação está habilitada. Uma resposta manual na tela de conversas assume o atendimento e cancela respostas automáticas e despedidas pendentes. Solicitações humanas também pausam o bot. Use **Concluir atendimento** para liberar a automação; a despedida de dez minutos não encerra conversas assumidas pela equipe. Detalhes e filas em [AUTOMACAO_WHATSAPP.md](AUTOMACAO_WHATSAPP.md).
 
 ## Supervisão pela Nexus
 
