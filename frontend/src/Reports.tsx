@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type Company, type User } from "./api";
@@ -218,6 +219,7 @@ export function Reports({
       ) : (
         <>
           <form className="reports-filters" onSubmit={submit}>
+            <DataUseNotice purpose="consultar e emitir os relatórios operacionais solicitados" />
             <Field label="Data inicial">
               <input
                 type="date"

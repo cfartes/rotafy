@@ -200,8 +200,12 @@ test("trip list filters open, ongoing, completed and cancelled states", async ({
   await setup(page);
   await page.getByRole("button", { name: "Viagens", exact: true }).click();
   const filter = page.getByLabel("Situação da viagem");
+  await filter.selectOption("scheduled");
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(page.locator("tbody")).toContainText("Transfer futuro");
   await filter.selectOption("open");
-  await expect(page.locator("tbody tr")).toHaveCount(3);
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(page.locator("tbody")).toContainText("Transfer passado");
   await expect(page.locator("tbody")).not.toContainText("Transfer concluído");
   await filter.selectOption("completed");
   await expect(page.locator("tbody tr")).toHaveCount(1);

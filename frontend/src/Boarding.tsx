@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { ticketToken } from "./ticketLinks";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -341,6 +342,7 @@ export function Boarding({
                 />
               </Field>
               <form onSubmit={submit}>
+                <DataUseNotice purpose="validar e registrar o embarque e o desembarque dos passageiros" />
                 <Field label="Código QR ou link do bilhete">
                   <textarea
                     value={code}

@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -171,6 +172,7 @@ function AutomationForm({
   }
   return (
     <form onSubmit={save}>
+      <DataUseNotice />
       <label className="check">
         <input
           type="checkbox"

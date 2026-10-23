@@ -1,3 +1,5 @@
+import { DataUseNotice } from "./components/DataUseNotice";
+import { PrivacyInbox } from "./Privacy";
 import { CollectionSettings } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, type FormEvent } from "react";
@@ -144,6 +146,7 @@ function CompanyBinding({
       className="operation-card package-route-card modal-form"
       onSubmit={submit}
     >
+      <DataUseNotice />
       <h3>{company.trade_name}</h3>
       <p className="muted">
         {company.slug}
@@ -372,7 +375,9 @@ export function IntegrationSettings() {
   return (
     <div className="reservation-workspace">
       <CollectionSettings />
+      <PrivacyInbox />
       <form className="operation-card modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <h2>Mensagens e e-mails</h2>
         <p>
           Configuração exclusiva da Nexus. As chaves salvas ficam protegidas e

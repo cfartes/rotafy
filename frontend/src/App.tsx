@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { MobileRelease } from "./MobileRelease";
 import { CompanyModules } from "./CompanyModules";
 import { PartnerIntegration } from "./PartnerIntegration";
@@ -24,6 +25,7 @@ import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
 import { Sales } from "./Sales";
 import { IntegrationSettings } from "./IntegrationSettings";
+import { LegalPage } from "./Privacy";
 import { Documentation } from "./Documentation";
 import { TicketSales } from "./TicketSales";
 import { Reports } from "./Reports";
@@ -211,6 +213,7 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
               : "Entre para acessar o espaço da sua empresa."}
           </p>
           <form onSubmit={submit}>
+            <DataUseNotice />
             {!isNexus && (
               <Field label="Identificador da empresa">
                 <input
@@ -327,6 +330,7 @@ function Reset() {
           </Alert>
         ) : (
           <form onSubmit={submit}>
+            <DataUseNotice />
             <p className="muted">
               Escolha uma senha com pelo menos 8 caracteres, incluindo uma letra
               maiúscula e um caractere especial.
@@ -415,6 +419,7 @@ function CreateCompany({
   return (
     <Modal title="Cadastrar empresa" onClose={onClose} wide>
       <form onSubmit={submit} className="modal-form">
+        <DataUseNotice />
         <p className="muted">
           Crie o espaço da empresa e seu primeiro administrador. Escolha o plano
           conforme as condições de contratação e teste configuradas. O CPF/CNPJ
@@ -575,6 +580,7 @@ function EditCompany({
   return (
     <Modal title="Editar empresa" onClose={onClose} wide>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <p className="muted">
           Ao alterar o identificador de acesso, informe o novo identificador à
           equipe e atualize os links públicos da empresa.
@@ -676,6 +682,7 @@ function CreateUser({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Adicionar à equipe" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <Field label="Nome completo">
           <input name="full_name" minLength={2} maxLength={150} required />
         </Field>
@@ -780,6 +787,7 @@ function PasswordModal({
   return (
     <Modal title="Alterar minha senha" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <p className="muted">
           Após a alteração, entre novamente. Suas outras sessões também serão
           encerradas.
@@ -940,6 +948,7 @@ function BrandingModal({
   return (
     <Modal title="Cadastro da empresa" onClose={onClose} wide>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <Field label="Identificador de acesso">
           <input value={company.slug} readOnly />
         </Field>
@@ -2027,6 +2036,7 @@ export function App() {
     });
     client.setQueryData(["session"], null);
   }
+  if (["/privacidade", "/termos", "/cancelamento-reembolso", "/privacidade/solicitacao"].includes(window.location.pathname)) return <LegalPage />;
   if (window.location.pathname === "/ajuda") return <Documentation />;
   if (window.location.pathname === "/cadastro")
     return (

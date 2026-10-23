@@ -86,6 +86,12 @@ test("sales creates the company once then sends welcome without recreating it on
   await dialog
     .getByLabel("Senha inicial", { exact: true })
     .fill("SenhaSegura!");
+  await dialog.getByLabel("CEP", { exact: true }).fill("88372822");
+  await dialog.getByLabel("Endereço", { exact: true }).fill("Rua de Teste");
+  await dialog.getByLabel("Número", { exact: true }).fill("200");
+  await dialog.getByLabel("Bairro", { exact: true }).fill("Centro");
+  await dialog.getByLabel("Cidade", { exact: true }).fill("Navegantes");
+  await dialog.getByLabel("UF", { exact: true }).selectOption("SC");
   await dialog
     .getByRole("button", { name: "Cadastrar empresa", exact: true })
     .click();

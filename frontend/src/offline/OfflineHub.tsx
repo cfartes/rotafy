@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./../components/DataUseNotice";
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Camera } from "../Boarding";
@@ -319,6 +320,7 @@ export function OfflineHub() {
                         void read(code);
                       }}
                     >
+                      <DataUseNotice />
                       <Field label="Código QR ou link do bilhete">
                         <textarea
                           maxLength={300}

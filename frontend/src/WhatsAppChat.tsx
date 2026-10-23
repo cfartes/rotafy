@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -609,6 +610,7 @@ export function WhatsAppChat({
                 ))}
               </div>
               <form className="chat-composer" onSubmit={(e) => void send(e)}>
+                <DataUseNotice purpose="enviar e receber mensagens de atendimento relacionadas ao serviço" />
                 {(error || notice) && (
                   <div
                     role={error ? "alert" : "status"}
@@ -762,6 +764,7 @@ function NewConversation({
   return (
     <Modal title="Nova conversa WhatsApp" onClose={onClose}>
       <form className="modal-form" onSubmit={(e) => void submit(e)}>
+        <DataUseNotice purpose="enviar e receber mensagens de atendimento relacionadas ao serviço" />
         <p>
           Informe o telefone com DDD. O número será conferido no WhatsApp antes
           de abrir a conversa.

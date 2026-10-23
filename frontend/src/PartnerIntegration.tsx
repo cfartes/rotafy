@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, post, type User } from "./api";
@@ -109,6 +110,7 @@ export function PartnerIntegration() {
           </div>
         )}
         <form className="modal-form" onSubmit={(e) => void create(e)}>
+          <DataUseNotice />
           <Field label="Nome da integração">
             <input
               name="name"

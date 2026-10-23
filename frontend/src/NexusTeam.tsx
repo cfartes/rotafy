@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, roleName, type User } from "./api";
@@ -161,6 +162,7 @@ export function NexusTeam({ currentUserId }: { currentUserId: string }) {
           }}
         >
           <form className="modal-form" onSubmit={create}>
+            <DataUseNotice purpose="administrar os cadastros e acessos dos colaboradores Nexus" />
             <Field label="Nome completo">
               <input
                 required

@@ -7,11 +7,11 @@ class Settings(BaseSettings):
     database_url: str = Field(repr=False)
     platform_database_url: str = Field(repr=False)
     cookie_secure: bool = True
-    allowed_origins: str = "https://frotafy.nexusdataanalytics.com.br"
+    allowed_origins: str = "https://rotafy.nexusdataanalytics.tech"
     session_hours: int = 8
     resend_api_key: str = Field(default="", repr=False)
     email_from: str = ""
-    public_base_url: str = "https://frotafy.nexusdataanalytics.com.br"
+    public_base_url: str = "https://rotafy.nexusdataanalytics.tech"
 
     @property
     def origins(self) -> list[str]:

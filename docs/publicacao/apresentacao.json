@@ -1,6 +1,6 @@
 {
   "edition": "2026.10",
-  "date": "22/10/2026",
+  "date": "23/10/2026",
   "slides": [
     {
       "eyebrow": "NEXUS · GESTÃO DE TRANSPORTE",
@@ -35,10 +35,11 @@
         "Cadastros, viagens, reservas e históricos pertencem à empresa.",
         "Acesso definido pelo identificador da empresa e pelo perfil do usuário.",
         "Um profissional de várias empresas possui um cadastro em cada uma.",
-        "Nexus administra empresas, planos e configurações da plataforma."
+        "Nexus administra empresas, planos e configurações da plataforma.",
+        "Políticas públicas e canal para solicitações de privacidade."
       ],
       "footnote": "Guias e motoristas acessam somente os deslocamentos atribuídos.",
-      "notes": "Uma plataforma compartilhada, com operação segregada. Cadastros, viagens, reservas e históricos pertencem à empresa. Acesso definido pelo identificador da empresa e pelo perfil do usuário. Um profissional de várias empresas possui um cadastro em cada uma. Nexus administra empresas, planos e configurações da plataforma. Guias e motoristas acessam somente os deslocamentos atribuídos."
+      "notes": "Uma plataforma compartilhada, com operação segregada. Cadastros, viagens, reservas e históricos pertencem à empresa. Acesso definido pelo identificador da empresa e pelo perfil do usuário. Um profissional de várias empresas possui um cadastro em cada uma. Nexus administra empresas, planos e configurações da plataforma. Guias e motoristas acessam somente os deslocamentos atribuídos. Políticas públicas e canal para solicitações de privacidade."
     },
     {
       "eyebrow": "DOIS PERFIS OPERACIONAIS",
@@ -121,7 +122,7 @@
     },
     {
       "eyebrow": "VENDA E RESERVA FAMILIAR",
-      "title": "A família inteira, com lugar garantido ao salvar",
+      "title": "A família inteira na mesma reserva",
       "lead": "Um responsável, um telefone e vários passageiros.",
       "points": [
         "Menu Vender bilhete, sem abrir o cadastro da viagem.",

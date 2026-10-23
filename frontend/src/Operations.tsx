@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import {
   PackageItineraryEditor,
   PackageProgram,
@@ -924,6 +925,7 @@ function CatalogModal({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <Field label="Nome">
           <input
             name="name"
@@ -1246,6 +1248,7 @@ function TripModal({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <p className="muted">
           {edit
             ? "A edição mantém o consumo da franquia e os valores das reservas existentes. Preserve os veículos já alocados e os trechos. Com reservas, mantenha as paradas existentes; endereços, nomes e horários podem mudar e novas paradas podem ser acrescentadas antes do destino."

@@ -1,5 +1,7 @@
 # Revisão de segurança — Nexus Rotafy
 
+Revisão histórica. Consulte o [checklist atualizado de 23/10/2026](CHECKLIST_SEGURANCA_PRIVACIDADE_2026-10-23.md) para as verificações e correções mais recentes.
+
 Data: 16/10/2026. Base analisada: commit `f9687cb`, acrescido das correções desta entrega.
 
 ## Conclusão e alcance

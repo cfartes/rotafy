@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, patch, post, type Company } from "./api";
@@ -113,6 +114,7 @@ export function Sales({
             }}
           />
           <form onSubmit={upload}>
+            <DataUseNotice purpose="registrar a venda, os passageiros e as informações necessárias à viagem" />
             <Field label="Arquivo do logo">
               <input
                 type="file"
@@ -213,6 +215,7 @@ export function Sales({
             acessa apenas as reservas criadas por ela.
           </p>
           <form onSubmit={createKey}>
+            <DataUseNotice purpose="registrar a venda, os passageiros e as informações necessárias à viagem" />
             <Field label="Nome da integração">
               <input name="name" required minLength={2} maxLength={100} />
             </Field>

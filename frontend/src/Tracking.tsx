@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -32,7 +33,8 @@ function Preferences({ settings }: { settings: Settings }) {
   const cache = useQueryClient();
   const [value, setValue] = useState(settings), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice,setNotice] = useState("");
   async function save(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); setNotice(""); try { await api("/tracking/settings", { method: "PUT", body: JSON.stringify(value) }); await cache.invalidateQueries({ queryKey: ["tracking"] }); setNotice("Configuração salva."); } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível salvar."); } finally { setBusy(false); } }
-  return <form className="operation-card modal-form" onSubmit={save}><h2>Rastreamento e avisos</h2>
+  return <form className="operation-card modal-form" onSubmit={save}>
+<DataUseNotice purpose="configurar e acompanhar a localização operacional do veículo durante a viagem" /><h2>Rastreamento e avisos</h2>
     <label><input type="checkbox" checked={value.enabled} onChange={e=>setValue({...value,enabled:e.target.checked})}/>Permitir rastreamento dos veículos durante as viagens</label>
     <label><input type="checkbox" checked={value.proximity_enabled} onChange={e=>setValue({...value,proximity_enabled:e.target.checked})}/>Avisar proximidade por WhatsApp, quando o rastreamento estiver ativo</label>
     <Field label="Raio de proximidade (km)"><input type="number" min="0.5" max="20" step="0.5" required value={value.radius_m/1000} onChange={e=>setValue({...value,radius_m:Math.round(Number(e.target.value)*1000)})}/></Field>
