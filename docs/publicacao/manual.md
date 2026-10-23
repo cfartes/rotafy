@@ -797,3 +797,6 @@ Os formulários informam a finalidade dos dados e a base legal. Preencha somente
 Para pedir acesso, correção ou exclusão, abra **Exercer meus direitos**, informe um e-mail para retorno e o tipo do pedido. A descrição é opcional. O sistema registra um protocolo; anote-o. Não envie documentos ou senhas. A equipe confirmará sua identidade antes de responder, e a exclusão depende da análise do controlador e das obrigações legais de conservação. Você também pode escrever para **contato@nexusdataanalytics.com.br**.
 
 No mapa de embarque, além do clique, é possível mover a área com as setas e usar **Enter** para selecionar o centro. Os links, botões e formulários podem ser percorridos com **Tab**; caixas de diálogo podem ser fechadas com **Esc**.
+
+
+Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** começa recolhido. Clique para ler a finalidade e a base legal; use **Ocultar** para recolher sem perder o que foi digitado. Os links de privacidade, condições de uso e ajuda abrem em nova aba. As políticas são organizadas em seções expansíveis. **Dados da empresa** revela razão social, CNPJ, endereço e contato. As preferências de cookies abrem em uma janela de diálogo. A tela de acesso usa um rodapé compacto; em dispositivos menores ou com ampliação, a rolagem permanece disponível quando necessária para a leitura.
