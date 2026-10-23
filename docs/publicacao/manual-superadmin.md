@@ -270,3 +270,6 @@ Em **Configurações → Solicitações de privacidade**, o Superadmin completo 
 A situação permite acompanhar o recebimento, a verificação, a análise e a conclusão. Alterar a situação é apenas um registro interno: não envia resposta nem apaga dados automaticamente. Registre a avaliação do controlador, as obrigações de conservação e o tratamento das cópias antes de concluir uma exclusão. Não solicite documentos por canais inadequados nem mantenha cópias desnecessárias.
 
 As políticas públicas e os dados oficiais estão no rodapé. O contato informado é **contato@nexusdataanalytics.com.br**. As condições comerciais do contrato aceito continuam vigentes; não há alteração automática de regras de reembolso por conta da publicação das políticas.
+
+
+Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** começa recolhido. Clique para ler a finalidade e a base legal; use **Ocultar** para recolher sem perder o que foi digitado. Os links de privacidade, condições de uso e ajuda abrem em nova aba. As políticas são organizadas em seções expansíveis. **Dados da empresa** revela razão social, CNPJ, endereço e contato. As preferências de cookies abrem em uma janela de diálogo. A tela de acesso usa um rodapé compacto; em dispositivos menores ou com ampliação, a rolagem permanece disponível quando necessária para a leitura.

@@ -255,7 +255,7 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
               {pending ? "Entrando…" : "Acessar painel"}
               <ArrowRight size={18} />
             </button>
-            <a className="button secondary full" href="/offline">
+            <a className="button secondary full" href="/offline" target="_blank" rel="noopener noreferrer">
               Abrir operação offline preparada
             </a>
           </form>
@@ -265,14 +265,15 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
           >
             <KeyRound size={15} /> Esqueci minha senha
           </button>
-          <a className="portal-link" href="/ajuda">
+          <a className="portal-link" href="/ajuda" target="_blank" rel="noopener noreferrer">
             <BookOpen size={15} /> Manual e apresentação
           </a>
-          <a className="portal-link" href={isNexus ? "/" : "/nexus"}>
+          <a className="portal-link" href={isNexus ? "/" : "/nexus"} target="_blank" rel="noopener noreferrer">
             {isNexus ? "Acessar portal da empresa" : "Administração Nexus"}
             <ChevronRight size={15} />
           </a>
         </div>
+        <div id="login-privacy" />
         <footer className="login-footer">
           <ShieldCheck size={16} /> Acesso exclusivo à sua operação
         </footer>

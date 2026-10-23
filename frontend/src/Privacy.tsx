@@ -22,21 +22,33 @@ export function PrivacyCenter() {
   const [acknowledged, setAcknowledged] = useState(savedPreferences);
   const dialog = useRef<HTMLDialogElement>(null);
   const [bannerTarget, setBannerTarget] = useState<HTMLElement | null>(null);
-  useEffect(() => setBannerTarget(document.getElementById("privacy-banner")), []);
+  const [footerTarget, setFooterTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const update = () => {
+      const slot = document.getElementById("login-privacy");
+      setFooterTarget(slot);
+      setBannerTarget(slot || document.getElementById("privacy-banner"));
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.getElementById("root") || document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify({ version: VERSION, necessary: true, analytics: false, advertising: false, updated_at: new Date().toISOString() })); } catch { /* Browsing remains available with storage disabled. */ }
     setAcknowledged(true); dialog.current?.close();
   }
+  const footer = <footer className="legal-footer" aria-label="Informações legais">
+      <nav aria-label="Privacidade e condições de uso"><a href="/privacidade" target="_blank" rel="noopener noreferrer">Privacidade</a><a href="/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a><a href="/cancelamento-reembolso" target="_blank" rel="noopener noreferrer">Cancelamento e reembolso</a><a href="/privacidade/solicitacao" target="_blank" rel="noopener noreferrer">Exercer meus direitos</a><button type="button" onClick={() => dialog.current?.showModal()}>Preferências de cookies</button></nav>
+      <details><summary>Dados da empresa</summary><p>{LEGAL.name} · CNPJ {LEGAL.cnpj}</p><p>{LEGAL.address}</p><a href={`mailto:${LEGAL.email}`} target="_blank" rel="noopener noreferrer">{LEGAL.email}</a></details>
+    </footer>;
   return <>
     {!acknowledged && bannerTarget && createPortal(<aside className="cookie-banner" aria-label="Informações sobre cookies">
       <strong>Sua privacidade</strong>
-      <p>Usamos cookies necessários para manter sua sessão e proteger os formulários. Não usamos Google Analytics, cookies de publicidade ou pixels de rastreamento. Esses cookies necessários não dependem de consentimento.</p>
-      <div><button type="button" className="button primary" onClick={save}>Usar somente necessários</button><button type="button" className="button secondary" onClick={() => dialog.current?.showModal()}>Gerenciar cookies</button><a href="/privacidade#cookies">Ler sobre cookies</a></div>
+      <p>Somente cookies necessários para sessão e segurança. Sem análise ou publicidade.</p>
+      <div><button type="button" className="button primary" onClick={save}>Usar somente necessários</button><button type="button" className="button secondary" onClick={() => dialog.current?.showModal()}>Gerenciar cookies</button><a href="/privacidade#cookies" target="_blank" rel="noopener noreferrer">Ler sobre cookies</a></div>
     </aside>, bannerTarget)}
-    <footer className="legal-footer" aria-label="Informações legais">
-      <nav aria-label="Privacidade e condições de uso"><a href="/privacidade">Privacidade</a><a href="/termos">Termos de uso</a><a href="/cancelamento-reembolso">Cancelamento e reembolso</a><a href="/privacidade/solicitacao">Exercer meus direitos</a><button type="button" onClick={() => dialog.current?.showModal()}>Preferências de cookies</button></nav>
-      <p>{LEGAL.name} · CNPJ {LEGAL.cnpj}</p><p>{LEGAL.address}</p><a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
-    </footer>
+    {footerTarget ? createPortal(footer, footerTarget) : footer}
     <dialog ref={dialog} aria-labelledby="cookie-title" className="cookie-dialog">
       <h2 id="cookie-title">Preferências de cookies</h2>
       <label className="operation-checkbox"><input type="checkbox" checked disabled />Cookies necessários — sempre ativos</label>
@@ -78,8 +90,8 @@ export function LegalPage() {
   const request = path === "/privacidade/solicitacao";
   const title = request ? "Exercer meus direitos" : path === "/termos" ? "Termos de uso" : path === "/cancelamento-reembolso" ? "Cancelamento e reembolso" : "Política de privacidade";
   const sections = path === "/termos" ? termsSections : path === "/cancelamento-reembolso" ? refundSections : privacySections;
-  return <main className="legal-page" id="main-content"><a href="/">Voltar ao app</a><h1>{title}</h1><p>Atualizado em 23/10/2026 · Nexus Rotafy</p>
-    {request ? <PrivacyRequestForm /> : <><nav aria-label="Conteúdo desta política">{sections.map(([id, heading]) => <a key={id} href={`#${id}`}>{heading}</a>)}</nav>{sections.map(([id, heading, text]) => <section id={id} key={id}><h2>{heading}</h2><p>{text}</p></section>)}<a className="button primary" href="/privacidade/solicitacao">Solicitar atendimento sobre meus dados</a></>}
+  return <main className="legal-page" id="main-content"><a href="/" target="_blank" rel="noopener noreferrer">Abrir app</a><h1>{title}</h1><p>Atualizado em 23/10/2026 · Nexus Rotafy</p>
+    {request ? <PrivacyRequestForm /> : <><div className="legal-sections">{sections.map(([id, heading, text]) => <details id={id} key={id} open={window.location.hash === `#${id}`}><summary>{heading}</summary><p>{text}</p></details>)}<a className="button primary" href="/privacidade/solicitacao" target="_blank" rel="noopener noreferrer">Solicitar atendimento sobre meus dados</a></div></>}
   </main>;
 }
 
