@@ -268,7 +268,7 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
           <a className="portal-link" href="/ajuda" target="_blank" rel="noopener noreferrer">
             <BookOpen size={15} /> Manual e apresentação
           </a>
-          <a className="portal-link" href={isNexus ? "/" : "/nexus"} target="_blank" rel="noopener noreferrer">
+          <a className="portal-link" href={isNexus ? "/" : "/nexus"}>
             {isNexus ? "Acessar portal da empresa" : "Administração Nexus"}
             <ChevronRight size={15} />
           </a>
