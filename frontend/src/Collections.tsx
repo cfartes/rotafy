@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -336,6 +337,7 @@ export function CollectionSettings() {
   return (
     <>
       <form className="operation-card modal-form" onSubmit={save}>
+        <DataUseNotice />
         <h2>Cobrança e período de teste</h2>
         <p>
           Configure a cobrança das empresas assinantes. As condições de setup e
@@ -990,6 +992,7 @@ export function Collections({ nexus }: { nexus: boolean }) {
           onClose={() => !busy && setSelected(null)}
         >
           <form className="modal-form" onSubmit={pay}>
+            <DataUseNotice />
             <p>
               Confirme o recebimento integral de{" "}
               <strong>{money(selected.total_cents)}</strong> para{" "}

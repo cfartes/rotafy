@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, patch, post } from "./api";
@@ -200,6 +201,7 @@ function RouteEditor({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <p className="muted">
           Alterações serão utilizadas nas novas viagens. Viagens existentes
           preservam o percurso original.

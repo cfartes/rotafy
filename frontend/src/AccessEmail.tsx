@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, post, type User } from "./api";
@@ -40,6 +41,7 @@ export function InvitationModal({
   return (
     <Modal title="Enviar convite" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice purpose="identificar a conta e enviar instruções de acesso ou recuperação de senha" />
         <p>
           <strong>{user.full_name}</strong>
           <br />
@@ -113,6 +115,7 @@ export function ForgotPassword({
   return (
     <Modal title="Recuperar acesso" onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice purpose="identificar a conta e enviar instruções de acesso ou recuperação de senha" />
         {!nexus && (
           <Field label="Identificador da empresa">
             <input

@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import {
   PassengerExceptions,
   type PassengerDocuments,
@@ -278,6 +279,7 @@ function BookingForm({ company, trip }: { company: Company; trip: Trip }) {
       </section>
       <div className="public-booking-grid">
         <form className="public-trip-card modal-form" onSubmit={submit}>
+          <DataUseNotice purpose="processar sua solicitação de reserva e permitir o contato da empresa responsável pela viagem" />
           <h2>Reserve para sua família</h2>
           <Field label="Nome do responsável">
             <input name="contact_name" required minLength={2} maxLength={150} />

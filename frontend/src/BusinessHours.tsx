@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
@@ -50,6 +51,7 @@ function Editor({ value }: { value: Settings }) {
   }
   return (
     <form className="panel business-hours" onSubmit={save}>
+      <DataUseNotice />
       <h2>Horários de atendimento humano</h2>
       <p>
         O WhatsApp informa os horários e a próxima abertura quando alguém

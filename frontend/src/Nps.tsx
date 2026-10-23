@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -97,6 +98,7 @@ function Configuration({
     <details className="panel nps-settings">
       <summary>Configurar pesquisas automáticas</summary>
       <form onSubmit={save}>
+        <DataUseNotice />
         <label className="nps-toggle">
           <input
             type="checkbox"
@@ -252,6 +254,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
             setPage(1);
           }}
         >
+          <DataUseNotice />
           <Field label="Data inicial">
             <input
               type="date"

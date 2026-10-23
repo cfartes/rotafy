@@ -605,7 +605,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 10. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 11. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -784,3 +784,16 @@ Dias sem horários são fechados. Se o término for anterior ao início, o turno
 Ao escolher **Falar com a equipe** fora do expediente, o cliente recebe a confirmação da solicitação, a relação dos horários e a próxima abertura, no fuso escolhido. A solicitação permanece no painel para resposta. A equipe pode atender manualmente a qualquer momento. Essa configuração não bloqueia o menu automático, pesquisas NPS ou outros envios automáticos.
 
 Sem a opção habilitada, continua a confirmação usual de atendimento, sem restrição de horário. A configuração é semanal; mantenha os turnos atualizados conforme a rotina da empresa.
+
+
+## 35. Privacidade, cookies e seus direitos
+
+O rodapé do aplicativo apresenta os dados legais da Nexus e os links **Privacidade**, **Termos de uso**, **Cancelamento e reembolso** e **Exercer meus direitos**. Essas páginas podem ser lidas sem entrar no sistema. As regras de cancelamento da assinatura seguem o contrato vigente; pedidos relativos a uma viagem devem ser tratados com a empresa que vendeu o bilhete.
+
+O aviso de cookies informa quais recursos são necessários. Use **Usar somente necessários** para guardar essa preferência no navegador. Em **Preferências de cookies**, no rodapé, você pode consultar novamente as informações. Esta versão não utiliza cookies de publicidade ou análise. A navegação e os direitos do titular não dependem de aceitar publicidade.
+
+Os formulários informam a finalidade dos dados e a base legal. Preencha somente o necessário, confira os campos opcionais e evite inserir dados sensíveis nos comentários. Ler a política não representa um consentimento geral para qualquer tratamento.
+
+Para pedir acesso, correção ou exclusão, abra **Exercer meus direitos**, informe um e-mail para retorno e o tipo do pedido. A descrição é opcional. O sistema registra um protocolo; anote-o. Não envie documentos ou senhas. A equipe confirmará sua identidade antes de responder, e a exclusão depende da análise do controlador e das obrigações legais de conservação. Você também pode escrever para **contato@nexusdataanalytics.com.br**.
+
+No mapa de embarque, além do clique, é possível mover a área com as setas e usar **Enter** para selecionar o centro. Os links, botões e formulários podem ser percorridos com **Tab**; caixas de diálogo podem ser fechadas com **Esc**.

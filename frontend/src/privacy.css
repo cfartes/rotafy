@@ -1,0 +1,18 @@
+.legal-page { max-width: 900px; margin: 32px auto; padding: 24px; color: #18324a; background: white; line-height: 1.75; }
+.legal-page h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 20px 0; }
+.legal-page h2 { margin: 28px 0 10px; font-size: 1.35rem; }
+.legal-page section { scroll-margin-top: 24px; }
+.legal-page nav, .legal-footer nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.legal-page a, .legal-footer a, .data-use-notice a { text-decoration: underline; text-underline-offset: 3px; }
+.legal-page .button { text-decoration: none; }
+.legal-footer { padding: 20px 28px; background: #edf3f6; color: #304e62; line-height: 1.8; font-size: .875rem; overflow-wrap: anywhere; }
+.legal-footer button { background: transparent; color: inherit; text-decoration: underline; padding: 0; }
+.data-use-notice { background: #edf3f6; color: #304e62; padding: 12px; border-radius: 8px; font-size: .85rem; line-height: 1.6; }
+.cookie-banner { position: relative; margin: 16px auto; max-width: 880px; padding: 20px; border: 1px solid #b7cbd6; border-radius: 12px; background: white; color: #18324a; box-shadow: 0 4px 24px #0b253f30; line-height: 1.6; }
+.cookie-banner div { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 14px; }
+.cookie-banner a { text-decoration: underline; }
+.cookie-dialog { max-width: 680px; padding: 28px; color: #18324a; }
+.cookie-dialog p, .cookie-dialog h2 { margin-bottom: 16px; }
+.cookie-dialog .button { margin: 8px; }
+.privacy-request { padding: 16px; border: 1px solid #b7cbd6; border-radius: 8px; overflow-wrap: anywhere; }
+@media print { .cookie-banner, .legal-footer, .cookie-dialog { display: none; } }

@@ -1,0 +1,4 @@
+# Reviewed historical false positives only: SQL EXCLUDED.secret assignment and isolated deployment test bootstrap fixture.
+580592552d4906b41a42608f71aa1c1b5870b138:backend/app/ticket_delivery.py:generic-api-key:20
+ca62ec1a00fc842b859dfba29c053a1c2192758d:backend/app/ticket_delivery.py:generic-api-key:20
+ba275e651105ab584dfe0c0de7f39566111f9bb7:scripts/tests/test_deploy_vps.py:generic-api-key:17

@@ -261,3 +261,12 @@ Pesquisas já enviadas preservam seu fluxo anterior. Convites ainda sem tentativ
 
 
 O **PowerPoint editável** da apresentação fica disponível somente para o Superadmin completo em **Ajuda e manuais → Apresentação do sistema → Baixar PowerPoint editável**. Clientes e colaboradores Nexus sem acesso completo não podem baixar esse formato. A apresentação em HTML e PDF continua disponível para consulta e compartilhamento.
+
+
+## 15. Solicitações de privacidade
+
+Em **Configurações → Solicitações de privacidade**, o Superadmin completo consulta os últimos cem protocolos recebidos pelo formulário público. O painel apresenta tipo, e-mail, descrição e situação do pedido. Use o e-mail para responder e confirmar a identidade do solicitante antes de atender ao pedido. A equipe Nexus sem acesso completo não acessa essa área.
+
+A situação permite acompanhar o recebimento, a verificação, a análise e a conclusão. Alterar a situação é apenas um registro interno: não envia resposta nem apaga dados automaticamente. Registre a avaliação do controlador, as obrigações de conservação e o tratamento das cópias antes de concluir uma exclusão. Não solicite documentos por canais inadequados nem mantenha cópias desnecessárias.
+
+As políticas públicas e os dados oficiais estão no rodapé. O contato informado é **contato@nexusdataanalytics.com.br**. As condições comerciais do contrato aceito continuam vigentes; não há alteração automática de regras de reembolso por conta da publicação das políticas.

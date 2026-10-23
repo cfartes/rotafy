@@ -21,10 +21,18 @@ export function TrackingMap({ points, onPick }: { points: GeoPoint[]; onPick?: (
       else map.fitBounds(L.latLngBounds(coordinates), { padding: [24,24], maxZoom: 17 });
     }
     map.on("click", e => pick.current?.({ latitude: e.latlng.lat, longitude: e.latlng.lng }));
+    const container = root.current;
+    const keyboardPick = (event: KeyboardEvent) => {
+      if (event.key === "Enter" && pick.current && event.target === container) {
+        event.preventDefault(); const center = map.getCenter();
+        pick.current({ latitude: center.lat, longitude: center.lng });
+      }
+    };
+    container.addEventListener("keydown", keyboardPick);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(root.current);
-    return () => { observer.disconnect(); map.remove(); };
+    return () => { container.removeEventListener("keydown", keyboardPick); observer.disconnect(); map.remove(); };
   }, [points]);
-  return <div ref={root} style={{ height: 360, width: "100%", zIndex: 0 }} aria-label={onPick ? "Mapa: clique para selecionar o embarque" : "Mapa das posições coletadas"} />;
+  return <div ref={root} style={{ height: 360, width: "100%", zIndex: 0 }} aria-label={onPick ? "Mapa: use as setas para mover e Enter para selecionar o centro, ou clique para selecionar o embarque" : "Mapa das posições coletadas"} />;
 }
 
 export function mapsCoordinate(value: string): GeoPoint | null {

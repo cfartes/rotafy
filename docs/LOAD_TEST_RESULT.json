@@ -6,9 +6,9 @@
   "concurrent_readers": 10,
   "requests": 100,
   "errors": 0,
-  "duration_seconds": 2.59,
-  "requests_per_second": 38.68,
-  "p50_ms": 204.12,
-  "p95_ms": 497.04,
-  "max_ms": 639.07
+  "duration_seconds": 1.28,
+  "requests_per_second": 78.21,
+  "p50_ms": 102.45,
+  "p95_ms": 266.23,
+  "max_ms": 280.58
 }

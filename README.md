@@ -164,10 +164,13 @@ O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os e
 
 ### Documentação revisada em 22/10/2026
 
-A central de ajuda está na revisão 10: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+A central de ajuda está na revisão 11: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
 
 **Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após dez minutos de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo configurado pela Nexus (padrão: 30 segundos) entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).
 
 **NPS e satisfação:** avaliações pelo WhatsApp após concluir atendimento humano ou viagem completa, com nota e comentário opcional. Administradores e atendentes consultam indicadores, filtros, evolução e relatórios CSV/PDF; somente o administrador configura as pesquisas. Veja [NPS e satisfação](docs/NPS_E_SATISFACAO.md).
 
 **Horários de atendimento:** o administrador define dias, turnos e fuso em Configurações ou WhatsApp. Fora do expediente, a solicitação humana recebe os horários e a próxima abertura, sem perder o registro. O NPS utiliza respostas por categoria e encaminha avaliações negativas à equipe de qualidade no próprio app. Consulte [horários](docs/HORARIOS_DE_ATENDIMENTO.md).
+
+
+Privacidade e condições públicas: `/privacidade`, `/termos`, `/cancelamento-reembolso` e `/privacidade/solicitacao`. O canal LGPD registra protocolo e permite triagem pelo Superadmin em Configurações, sem exclusão automática. Auditoria de segurança, privacidade e acessibilidade: [checklist de 23/10/2026](docs/CHECKLIST_SEGURANCA_PRIVACIDADE_2026-10-23.md).

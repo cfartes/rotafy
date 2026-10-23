@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, roleName, type User } from "./api";
@@ -65,6 +66,7 @@ export function EditCollaborator({
       }}
     >
       <form className="modal-form" onSubmit={save}>
+        <DataUseNotice purpose="manter o cadastro e as permissões de acesso do colaborador" />
         <Field label="Nome completo">
           <input
             required

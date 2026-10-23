@@ -1,6 +1,7 @@
 """Gera HTML portátil e apresentação editável a partir das fontes revisáveis."""
 
 import base64
+import hashlib
 import html
 import json
 import re
@@ -19,7 +20,7 @@ OUTPUT = ROOT / "frontend" / "public" / "documentacao"
 NAVY = "0B253F"
 TEAL = "0C7A76"
 MUTED = "577084"
-DATE = "22/10/2026"
+DATE = "23/10/2026"
 
 
 def image_url(name):
@@ -62,7 +63,7 @@ def manual(
         .replace(
             "{{HELP}}", "/nexus/ajuda" if name == "manual-superadmin" else "/ajuda"
         )
-        .replace("{{COUNT}}", str(len(re.findall(r"^## ", source, re.M))))
+        .replace("{{COUNT}}", str(len(re.findall(r"^## ", source, re.MULTILINE))))
     )
     (OUTPUT / f"{name}.html").write_text(template, encoding="utf-8")
 
@@ -217,6 +218,21 @@ def powerpoint(data):
     (OUTPUT / "apresentacao.pptx").unlink(missing_ok=True)
 
 
+
+def update_documentation_csp():
+    """Allow only the exact bundled documentation scripts, not arbitrary inline JS."""
+    hashes = set()
+    for name in ("manual", "manual-superadmin", "apresentacao"):
+        markup = (OUTPUT / f"{name}.html").read_text(encoding="utf-8")
+        for script in re.findall(r"<script>(.*?)</script>", markup, re.DOTALL):
+            value = base64.b64encode(hashlib.sha256(script.encode("utf-8")).digest()).decode()
+            hashes.add("'sha256-" + value + "'")
+    config = ROOT / "frontend" / "nginx.conf"
+    content = config.read_text(encoding="utf-8")
+    content = re.sub(r"script-src[^;]+;", "script-src 'self' " + " ".join(sorted(hashes)) + ";", content)
+    config.write_text(content, encoding="utf-8")
+
+
 def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     data = json.loads((SOURCE / "apresentacao.json").read_text(encoding="utf-8"))
@@ -228,6 +244,7 @@ def main():
     )
     presentation(data)
     powerpoint(data)
+    update_documentation_csp()
     print(
         f"HTML do manual e da apresentação gerados; {len(data['slides'])} slides editáveis."
     )

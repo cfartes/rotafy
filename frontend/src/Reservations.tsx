@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { ReservationWhatsApp } from "./ReservationWhatsApp";
 import { useModules } from "./modules";
 import {
@@ -423,6 +424,7 @@ function ReservationModal({
   return (
     <Modal title="Nova reserva familiar" wide onClose={onClose}>
       <form className="modal-form reservation-form" onSubmit={submit}>
+        <DataUseNotice purpose="organizar reservas, passageiros e locais de embarque e enviar comunicações operacionais" />
         <div className="reservation-trip-summary">
           <strong>{trip.name}</strong>
           <span>
@@ -682,6 +684,7 @@ function ReservationEditor({
   return (
     <Modal title="Editar reserva" wide onClose={onClose}>
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice purpose="organizar reservas, passageiros e locais de embarque e enviar comunicações operacionais" />
         <p className="muted">
           Passageiros, bilhetes, valor e pagamento são preservados. Pontos de um
           trecho com histórico de embarque ficam protegidos.

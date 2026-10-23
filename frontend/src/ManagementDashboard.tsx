@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type User } from "./api";
@@ -319,6 +320,7 @@ export function ManagementDashboard({
         )}
       </div>
       <form className="reports-filters" onSubmit={submit}>
+        <DataUseNotice purpose="consultar os indicadores e relatórios de gestão da operação" />
         <Field label="Data inicial">
           <input
             type="date"

@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
@@ -224,6 +225,7 @@ export function CompanyWhatsApp() {
             className="modal-form"
             key={state.data.phone || "new"}
           >
+            <DataUseNotice />
             <Field label="WhatsApp de envio da empresa">
               <input type="tel" value={state.data.phone || ""} readOnly />
             </Field>

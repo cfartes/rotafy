@@ -67,7 +67,7 @@ p {
   margin: 0;
 }
 .muted {
-  color: #65788a;
+  color: #52697b;
   font-size: 14px;
   line-height: 1.65;
 }
@@ -375,7 +375,7 @@ textarea:focus {
   gap: 7px;
   align-items: center;
   font-size: 10px;
-  color: #8295a3;
+  color: #52697b;
 }
 .mobile-logo {
   display: none;
@@ -641,7 +641,7 @@ label:has(> input[type="checkbox"]) {
   align-items: center;
   gap: 12px;
   font-size: 11px;
-  color: #8293a1;
+  color: #52697b;
 }
 .topbar-left strong {
   font-weight: 500;
@@ -665,7 +665,7 @@ label:has(> input[type="checkbox"]) {
 }
 .profile-text small {
   font-size: 9px;
-  color: #7e909e;
+  color: #52697b;
 }
 .avatar {
   background: #e5f3f0;
@@ -959,10 +959,10 @@ code {
   gap: 10px;
   padding: 25px 0 6px;
   font-size: 9px;
-  color: #8fa0ad;
+  color: #52697b;
 }
 .content-footer span {
-  color: #9baab5;
+  color: #52697b;
 }
 dialog {
   border: 0;

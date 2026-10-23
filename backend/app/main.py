@@ -51,6 +51,7 @@ from app.onboarding import COMPANY_FIELDS, register_company
 from app.operational_profiles import capabilities, change_profile
 from app.operations import router as operations_router
 from app.postal_codes import router as postal_codes_router
+from app.privacy import router as privacy_router
 from app.public_sales import router as public_sales_router
 from app.reports import router as reports_router
 from app.request_security import RequestBodyLimit
@@ -854,6 +855,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(boarding_router)
     application.include_router(mobile_releases_router)
     application.include_router(documentation_router)
+    application.include_router(privacy_router)
     application.include_router(logos_router)
     application.include_router(reports_router)
     application.include_router(edits_router)

@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./../components/DataUseNotice";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -73,6 +74,7 @@ function PlanEditor({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
+        <DataUseNotice />
         <p className="muted">
           Defina a franquia mensal e os valores. Ciclos já iniciados mantêm as
           condições contratadas.
@@ -213,6 +215,7 @@ function SubscribeForm({
   }
   return (
     <form className="subscription-form" onSubmit={submit}>
+      <DataUseNotice />
       <h3>Definir assinatura</h3>
       <p className="muted">
         Vincule um plano para iniciar os ciclos mensais desta empresa.
@@ -483,6 +486,7 @@ function SubscriptionDetails({
               );
             }}
           >
+            <DataUseNotice />
             <p className="muted">A mudança só será agendada após o cliente ler e aceitar o aditivo enviado por e-mail.</p>
             <Field label="Plano para o próximo ciclo">
               <select name="plan_id" required defaultValue="">

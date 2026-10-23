@@ -1,3 +1,4 @@
+import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
@@ -25,6 +26,7 @@ export function MobileRelease() {
     {error && <Alert>{error}</Alert>}{notice && <p role="status">{notice}</p>}
     {busy && <div role="status"><progress value={progress} max={100} aria-label="Envio do APK" /><p>{progress === 100 ? "Arquivo enviado. Validando e publicando a versão…" : `Enviando APK: ${progress}%`}</p><small>Mantenha esta página aberta até a confirmação da publicação.</small></div>}
     {releases.data?.map?.((r) => <div key={r.package_id}><strong>Versão disponível: {r.version} · compilação {r.build}</strong><p className="muted">Publicada em {new Date(r.published_at).toLocaleString("pt-BR")}</p><a href={r.download_url} className="button secondary">Baixar APK disponível</a><p className="muted contract-hash">SHA-256: {r.sha256}</p></div>)}
-    <form onSubmit={publish} className="modal-form"><Field label="Novo APK Android"><input name="apk" type="file" accept=".apk" required disabled={busy} /></Field><button className="button primary" disabled={busy}>{busy ? "Publicando APK…" : "Publicar atualização Android"}</button></form>
+    <form onSubmit={publish} className="modal-form">
+<DataUseNotice /><Field label="Novo APK Android"><input name="apk" type="file" accept=".apk" required disabled={busy} /></Field><button className="button primary" disabled={busy}>{busy ? "Publicando APK…" : "Publicar atualização Android"}</button></form>
   </section>;
 }
