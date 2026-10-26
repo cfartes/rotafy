@@ -262,6 +262,23 @@ def test_multiple_reservations_and_selection_revalidates_owner(
     assert "A reserva selecionada mudou" in sent[-1]["text"]
 
 
+@pytest.mark.parametrize("option", ["1", "2", "3", "4"])
+def test_passenger_commands_include_boarding_address_and_maps(
+    client, seeded, automation, option
+):
+    from test_reservation_locations import HOTEL, journeys
+
+    trip = setup(client, seeded)
+    reserve(client, trip, family(size=1, journeys=journeys(trip)))
+    sent = []
+    request_option(client, seeded, automation, sent, option=option)
+    assert HOTEL["address"] in sent[-1]["text"]
+    assert "Rua+das+Flores%2C+100%2C+Blumenau+SC" in sent[-1]["text"]
+    assert sent[-1]["text"].count("https://www.google.com/maps/search/?") == len(
+        trip["legs"]
+    )
+
+
 def move_departure(owner, trip, hours):
     with owner.begin() as db:
         delta = utc_now() + timedelta(hours=hours)
@@ -308,6 +325,10 @@ def test_24h_ticket_window_single_passenger_all_legs_and_global_three_minute_que
     sent = []
     assert run(process_automation, seeded["a"], BASE, transport=provider(sent))
     assert len(sent) == 1 and "todos os trechos" in sent[0]["text"]
+    assert sent[0]["text"].count("https://www.google.com/maps/search/?") == len(
+        trip["legs"]
+    )
+    assert "Endereço:" in sent[0]["text"]
     with owner.connect() as db:
         remaining = db.scalar(
             text(

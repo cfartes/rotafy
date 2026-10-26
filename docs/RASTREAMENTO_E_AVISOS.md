@@ -45,3 +45,6 @@ O histórico de posições fica limitado a noventa dias, com limpeza pelo worker
 Testes automatizados cobrem permissões, isolamento, transferência, encerramento, validação de posições, proximidade, deduplicação, passageiro já embarcado, ida/volta e janela do lembrete. A coleta com tela bloqueada e comportamento da bateria requerem homologação no aparelho Android utilizado em operação; compilação e testes automatizados não substituem essa verificação de campo.
 
 O mapa usa Leaflet e mosaicos OpenStreetMap, com atribuição e referência limitada à origem. Não faz download para uso offline ou busca automática de endereços. O serviço público de mosaicos não tem garantia de disponibilidade e deve respeitar sua [política de uso](https://operations.osmfoundation.org/policies/tiles/).
+
+
+Os avisos de quinze minutos e proximidade incluem endereço e complemento do ponto de embarque do trecho notificado e um link de busca no Google Maps. Hotéis personalizados têm prioridade sobre parada/origem. Sem endereço cadastrado, o aviso explicita a ausência e pesquisa pelo nome e cidade, sem prometer uma posição exata.

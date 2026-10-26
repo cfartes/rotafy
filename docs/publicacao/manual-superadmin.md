@@ -276,3 +276,6 @@ Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** come�
 
 
 A revisão de 26/10/2026 inclui o APK 1.9.1, compilação 15, com ajustes de leitura e controles. Publique esse arquivo em **Configurações → Atualizações do aplicativo Android** para disponibilizá-lo aos usuários. Oriente a sincronizar registros pendentes e instalar por cima, sem desinstalar. As amostras temporárias de localização não são mantidas após encerrar o processo; embarques e desembarques offline continuam salvos para sincronização.
+
+
+Os avisos de viagem e bilhetes incluem o endereço de embarque de cada trecho e link de busca no Google Maps. A configuração vem dos dados da reserva e da rota; um hotel personalizado não herda o endereço da rodoviária. A mudança é aplicada no servidor, sem novo APK ou migração de banco.

@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import text
 
 from app.billing.service import lock_company
+from app.boarding_messages import reservation_boarding_message
 from app.identity import Auth, audit, scope, throttle
 from app.integration_secrets import encrypt
 from app.operations import tenant
@@ -121,7 +122,8 @@ async def queue_message(
     if len(passenger_rows) > 8:
         names += f"\n… e mais {len(passenger_rows) - 8} passageiro(s). Consulte a reserva para a lista completa."
     people = f"Passageiros: {len(passenger_rows)}\n{names}"
-    body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\nPara dúvidas, fale com a empresa."
+    boarding = await reservation_boarding_message(db, company_id, reservation_id)
+    body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\n{boarding}\n\nPara dúvidas, fale com a empresa."
     identifier = uuid4()
     if ticket_link:
         passenger_name = await db.scalar(
@@ -134,7 +136,7 @@ async def queue_message(
             raise HTTPException(
                 409, "Não foi possível identificar o passageiro deste bilhete."
             )
-        body = f"Bilhete de embarque\nEmpresa: {item['trade_name']}\nPassageiro: {passenger_name}\nViagem/pacote: {item['trip_name']}\n\n{ticket_link}\n\nEste bilhete é individual e vale para todos os trechos contratados do passageiro. Apresente o QR Code ao motorista ou guia."
+        body = f"Bilhete de embarque\nEmpresa: {item['trade_name']}\nPassageiro: {passenger_name}\nViagem/pacote: {item['trip_name']}\n\n{ticket_link}\n\nEste bilhete é individual e vale para todos os trechos contratados do passageiro. Apresente o QR Code ao motorista ou guia.\n\n{boarding}"
     await db.execute(
         text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body)
       VALUES(:id,:company,:reservation,:session,:kind,:key,:phone,:body) ON CONFLICT(company_id,dedupe_key) DO NOTHING"""),
@@ -146,7 +148,7 @@ async def queue_message(
             "kind": kind,
             "key": dedupe,
             "phone": item["phone"],
-            "body": encrypt(body[:4096]),
+            "body": encrypt(body[:65536]),
         },
     )
     if ticket_hash:

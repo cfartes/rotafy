@@ -346,6 +346,15 @@ Sessões WhatsApp desconectadas mantêm os envios aguardando. Mensagens automát
 
 Se o resultado estiver incerto, confira o recebimento com o destinatário antes de reenviar. Para um convite com falha definitiva, solicite um novo envio pelo cadastro do colaborador.
 
+
+
+### Endereço de embarque nas mensagens
+
+Os novos bilhetes enviados manualmente ou de forma automática, confirmações e informações da reserva, respostas do menu e avisos de saída em quinze minutos ou de proximidade incluem o local de embarque, endereço, complemento quando cadastrado e um link para pesquisar no Google Maps. Os bilhetes e consultas mostram cada trecho contratado em ordem; os avisos apresentam somente o trecho correspondente, com endereço próprio na ida e no retorno.
+
+O hotel/local personalizado tem prioridade. Na ausência dele, usa-se a parada escolhida ou a origem do trecho. Se o endereço não estiver cadastrado, a mensagem informa isso e oferece uma busca pelo nome do local e cidade, sem substituir pelo endereço de outro ponto. Confira os dados de embarque na reserva antes de enviar. O link do Maps não substitui o link privado do bilhete. Mensagens já recebidas não são alteradas.
+
+
 ## 16. App Android: acesso e agenda {#android}
 
 O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação.
