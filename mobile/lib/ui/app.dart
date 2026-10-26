@@ -22,10 +22,56 @@ class RotafyApp extends StatelessWidget {
       child: child ?? const SizedBox.shrink(),
     ),
     theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff087f78)),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff0f766e)),
       useMaterial3: true,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Color(0xff0a2540),
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xffd8e2e9)),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+      ),
       inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderSide: BorderSide(color: Color(0xffa6bac8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderSide: BorderSide(color: Color(0xff0f766e), width: 2),
+        ),
       ),
       scaffoldBackgroundColor: const Color(0xfff4f7fa),
     ),
@@ -130,7 +176,23 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.directions_bus_rounded, size: 60),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xffe3f3f0),
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Icon(
+                  Icons.directions_bus_rounded,
+                  size: 36,
+                  color: Color(0xff0f766e),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'Pronto para a viagem',
@@ -154,6 +216,7 @@ class _LoginFormState extends State<LoginForm> {
             controller: company,
             readOnly: AppConfig.company.isNotEmpty,
             decoration: const InputDecoration(labelText: 'Empresa'),
+            textInputAction: TextInputAction.next,
             validator: requiredValue,
           ),
           const SizedBox(height: 16),
@@ -161,6 +224,7 @@ class _LoginFormState extends State<LoginForm> {
             controller: email,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
+            textInputAction: TextInputAction.next,
             decoration: const InputDecoration(labelText: 'E-mail'),
             validator: requiredValue,
           ),

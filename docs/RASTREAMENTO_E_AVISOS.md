@@ -16,13 +16,13 @@ Se o endereço/ponto mudar, a confirmação anterior perde validade. Sem coorden
 
 ## Operação no Android
 
-Instale o **APK 1.8.0, compilação 13**, sobre a versão anterior. Após **Iniciar viagem**, o motorista ou guia usa **Assumir rastreamento deste veículo**, lê a informação e autoriza o GPS. O celular deve permanecer no veículo.
+Instale o **APK 1.9.1, compilação 15**, sobre a versão anterior. Após **Iniciar viagem**, o motorista ou guia usa **Assumir rastreamento deste veículo**, lê a informação e autoriza o GPS. O celular deve permanecer no veículo.
 
 Um único aparelho fica responsável por veículo e deslocamento. Outro colaborador atribuído pode confirmar a transferência. A sessão anterior deixa de aceitar posições. Cada retorno ou próximo deslocamento deve ser iniciado e ter seu rastreamento assumido; não há coleta durante o intervalo entre os passeios.
 
 O serviço Android mantém uma notificação visível e solicita GPS a cada cinco minutos. O usuário pode interromper pelo app. A chegada encerra a coleta, assim como o logout. Desativar o recurso no servidor impede novas posições imediatamente; o celular toma conhecimento na próxima consulta, normalmente em até cinco minutos com conexão. Sem contato com o servidor por quinze minutos, o serviço local se encerra para não continuar coletando indefinidamente após uma possível revogação.
 
-Posições ainda não enviadas ficam na área privada do aplicativo, somente durante a sessão ativa. Uma interrupção ou revogação descarta posições locais que já não podem ser transmitidas. Não há credenciais persistidas pelo serviço nativo. O Android pode encerrar o processo por ação do usuário ou restrições do aparelho; nesse caso, abra o APK e assuma novamente. O recurso não reinicia a coleta silenciosamente após reinicialização do telefone.
+Posições ainda não enviadas ficam somente na memória do processo, durante a sessão ativa, sem gravação em disco. Encerrar o processo descarta essas amostras; as posições já confirmadas permanecem no servidor. Os registros de embarque/desembarque continuam na fila SQLite criptografada. Uma interrupção ou revogação descarta posições locais que já não podem ser transmitidas. Não há credenciais persistidas pelo serviço nativo. O Android pode encerrar o processo por ação do usuário ou restrições do aparelho; nesse caso, abra o APK e assuma novamente. O recurso não reinicia a coleta silenciosamente após reinicialização do telefone.
 
 O GPS e a manutenção do serviço consomem bateria. Oriente o uso de carregador no veículo. Permissão negada, GPS desativado, rede indisponível ou encerramento forçado interrompem ou atrasam os dados; a tela administrativa mostra o horário da última posição e sinaliza atraso acima de seis minutos.
 
