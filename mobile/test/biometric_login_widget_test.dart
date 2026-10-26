@@ -135,6 +135,29 @@ void main() {
     c.dispose();
   });
 
+  testWidgets('themed login supports narrow screens and enlarged text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.4;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final c = await controller(tester);
+    await tester.pumpWidget(RotafyApp(controller: c));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Entrar'));
+    expect(
+      tester.getSize(find.widgetWithText(FilledButton, 'Entrar')).height,
+      greaterThanOrEqualTo(48),
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(() => c.store.db.close());
+    c.dispose();
+  });
+
   testWidgets(
     'saved biometric login is available without filling password fields',
     (tester) async {

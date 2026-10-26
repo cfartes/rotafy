@@ -58,7 +58,7 @@ Assinatura de distribuição, ícone/marca definitiva, publicação e geração 
 - Conflitos/rejeições bloqueiam comandos dependentes do passageiro. **Revisar → Manter servidor** requer confirmação e descarta a cadeia local daquele passageiro/trecho.
 - Logout/troca de usuário não apagam registros pendentes. **Renovar acesso** permite autenticar o operador original mantendo a fila.
 - QR offline confere empresa, veículo/trecho, hash do bilhete e validade da preparação. Revogação/cancelamento ou alteração em outro aparelho só são conhecidos após conectar; o servidor decide a confirmação.
-- Sincronização manual e automática a cada 15 segundos enquanto o app está aberto, e ao voltar ao app. Não há serviço com o app fechado, GPS em segundo plano ou WhatsApp nesta entrega.
+- Sincronização manual e automática a cada 15 segundos enquanto o app está aberto, e ao voltar ao app. O rastreamento assumido pelo colaborador utiliza um serviço Android em primeiro plano com notificação visível, inclusive com a tela bloqueada; não reinicia silenciosamente após encerrar o processo. Mensagens são enviadas pelo servidor.
 - Rotas preparadas abrem por links externos no Google Maps. Não há pesquisa integrada nem chave Google Cloud.
 
 ## Homologação pendente
@@ -70,3 +70,8 @@ Testar em aparelhos reais: permissão e foco da câmera, QR impresso/tela, recus
 ## Entrega HTTPS / Hostinger
 
 Configura??o `config/production.json` usa `https://rotafy.nexusdataanalytics.tech` e pacote `br.com.nexusdataanalytics.rotafy`. A vers?o release ? assinada com chave Nexus privada e permite selecionar a empresa; vers?es por cliente continuam usando configura??o pr?pria. Guia completo em [IMPLANTACAO_E_OPERACAO.md](../docs/IMPLANTACAO_E_OPERACAO.md). A API precisa estar publicada para o login funcionar. iOS n?o ser? gerado nesta etapa.
+
+
+## Revisão visual e segurança — 26/10/2026
+
+APK 1.9.1 (15): campos e cartões padronizados, botões com área de toque mínima de 48 pontos, foco mais claro e login validado em tela estreita com fonte ampliada. HTTP é bloqueado explicitamente no manifesto release; debug mantém a exceção para testes locais. A fila temporária de GPS fica apenas na memória, limitada à sessão ativa; o banco de embarques continua criptografado. Assinatura release, configuração do manifesto e hash do APK foram conferidos. Detalhes e limites em [Revisão visual e segurança](../docs/REVISAO_VISUAL_E_SEGURANCA_2026-10-26.md).

@@ -29,6 +29,8 @@ class TrackingService : Service() {
     private var csrf = ""
     private var lastContact = 0L
     private var listener: LocationListener? = null
+    // Positions are temporary; never persist passenger-trip location on disk.
+    private val pendingPositions = mutableMapOf<String, JSONArray>()
     private var wakeLock: PowerManager.WakeLock? = null
     @Volatile private var generation = 0
     @Volatile private var destroyed = false
@@ -60,10 +62,8 @@ class TrackingService : Service() {
         cookie = intent.getStringExtra("cookie") ?: ""; csrf = intent.getStringExtra("csrf") ?: ""
         lastContact = SystemClock.elapsedRealtime()
         executor.execute {
-            val prefs = getSharedPreferences("tracking_positions", MODE_PRIVATE)
-            val edit = prefs.edit()
-            for (key in prefs.all.keys) if (key != session) edit.remove(key)
-            edit.apply()
+            pendingPositions.keys.retainAll(setOf(session))
+            getSharedPreferences("tracking_positions", MODE_PRIVATE).edit().clear().apply()
         }
         val open = packageManager.getLaunchIntentForPackage(packageName) ?: Intent(this, MainActivity::class.java)
         val pending = PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -131,10 +131,8 @@ class TrackingService : Service() {
                     .put("captured_at",SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",Locale.US).apply { timeZone=TimeZone.getTimeZone("UTC") }.format(Date(location.time)))
                 executor.execute {
                     if (destroyed || current != generation) return@execute
-                    val prefs = getSharedPreferences("tracking_positions",MODE_PRIVATE)
-                    val queued = JSONArray(prefs.getString(session,"[]"))
+                    val queued = pendingPositions.getOrPut(session) { JSONArray() }
                     if (queued.length() < 300) queued.put(point)
-                    prefs.edit().putString(session,queued.toString()).apply()
                     flush(session)
                 }
             }
@@ -150,11 +148,10 @@ class TrackingService : Service() {
 
     private fun flush(session: String) {
         if (destroyed || activeSession != session) return
-        val prefs = getSharedPreferences("tracking_positions",MODE_PRIVATE)
-        val queued = JSONArray(prefs.getString(session,"[]"))
+        val queued = pendingPositions[session] ?: return
         if (queued.length() == 0) return
         val status = request("POST","/tracking/sessions/$session/positions",JSONObject().put("positions",queued))
-        if (status in 200..299 || status in listOf(401,403,404,409,422,423)) prefs.edit().remove(session).apply()
+        if (status in 200..299 || status in listOf(401,403,404,409,422,423)) pendingPositions.remove(session)
         if (status in listOf(401,402,403,404,409,423)) handler.post { stopSelf() }
     }
 
@@ -164,7 +161,7 @@ class TrackingService : Service() {
         // A deliberate local stop also releases the server session when online.
         if (session != null) executor.execute {
             request("DELETE","/tracking/sessions/$session")
-            getSharedPreferences("tracking_positions",MODE_PRIVATE).edit().remove(session).apply()
+            pendingPositions.clear()
         }
         executor.shutdown(); stopForeground(STOP_FOREGROUND_REMOVE)
         if (wakeLock?.isHeld == true) wakeLock?.release()

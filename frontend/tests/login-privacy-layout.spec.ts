@@ -30,3 +30,17 @@ test("políticas compactas abrem a seção solicitada", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.locator("details#dados")).toHaveAttribute("open", "");
 });
+
+test("controles de toque mantêm texto legível e respeitam movimento reduzido", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await context.newPage();
+  await page.route("**/api/v1/auth/me", route => route.fulfill({ status: 401, json: {} }));
+  await page.goto("/");
+  const email = page.getByLabel("E-mail", { exact: true });
+  await expect(email).toHaveCSS("font-size", "16px");
+  await email.focus();
+  await expect(email).toHaveCSS("outline-style", "solid");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.getByRole("button", { name: "Acessar painel" })).toHaveCSS("transition-duration", "0s");
+  await context.close();
+});

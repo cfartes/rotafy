@@ -273,3 +273,6 @@ As políticas públicas e os dados oficiais estão no rodapé. O contato informa
 
 
 Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** começa recolhido. Clique para ler a finalidade e a base legal; use **Ocultar** para recolher sem perder o que foi digitado. Os links de privacidade, condições de uso e ajuda abrem em nova aba. As políticas são organizadas em seções expansíveis. **Dados da empresa** revela razão social, CNPJ, endereço e contato. As preferências de cookies abrem em uma janela de diálogo. A tela de acesso usa um rodapé compacto; em dispositivos menores ou com ampliação, a rolagem permanece disponível quando necessária para a leitura.
+
+
+A revisão de 26/10/2026 inclui o APK 1.9.1, compilação 15, com ajustes de leitura e controles. Publique esse arquivo em **Configurações → Atualizações do aplicativo Android** para disponibilizá-lo aos usuários. Oriente a sincronizar registros pendentes e instalar por cima, sem desinstalar. As amostras temporárias de localização não são mantidas após encerrar o processo; embarques e desembarques offline continuam salvos para sincronização.

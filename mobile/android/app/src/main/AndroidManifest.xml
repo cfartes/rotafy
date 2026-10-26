@@ -12,6 +12,7 @@
     <application
         android:label="${appLabel}"
         android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <service android:name=".TrackingService" android:exported="false" android:foregroundServiceType="location" android:stopWithTask="false" />

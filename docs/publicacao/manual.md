@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **22/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **26/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -678,6 +678,8 @@ O administrador acessa **Rastreamento** para ativar a coleta durante as viagens,
 Em **Locais de embarque para avisos**, selecione a viagem e confirme cada local no mapa, incluindo hotéis. Sem coordenadas confirmadas, não há aviso de proximidade. Alterar o endereço exige nova confirmação. É possível clicar no mapa ou colar coordenadas explícitas de um link completo do Google Maps.
 
 No Android, a partir de 1.8.0, inicie o trecho e use **Assumir rastreamento deste veículo**. Autorize a localização e mantenha o celular no veículo. Uma notificação acompanha a coleta a cada cinco minutos. Outro motorista ou guia atribuído pode confirmar a transferência. O rastreamento termina na chegada; cada retorno ou próximo trecho exige nova ativação. **Interromper rastreamento neste celular** permite parar o compartilhamento.
+
+A versão 1.9.1 melhora a leitura dos campos, cartões e botões. As posições de GPS aguardam envio somente na memória durante a sessão ativa; se o Android encerrar o processo, essas amostras temporárias serão perdidas. As posições já recebidas continuam no servidor. Os embarques e desembarques offline permanecem salvos no aparelho e devem ser sincronizados. Instale a atualização por cima da versão atual, sem desinstalar.
 
 O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.
 
