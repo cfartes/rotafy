@@ -13,6 +13,7 @@ from sqlalchemy import text
 
 from app.billing.calendar import utc_now
 from app.boarding import allocation_access, check_leg_allocation, leg_for_trip
+from app.boarding_messages import boarding_message, boarding_point
 from app.identity import Auth, admin, audit, scope
 from app.integration_secrets import encrypt
 from app.operations import rows, tenant
@@ -309,13 +310,7 @@ async def boardings(db, trip_id=None):
         trip=trip_id,
     )
     for row in result:
-        location = row["boarding_location"] or {}
-        row["boarding_name"] = location.get("name") or (
-            row["stop_name"] if row["boarding_position"] else row["origin"]
-        )
-        row["boarding_address"] = location.get("address") or (
-            row["stop_address"] if row["boarding_position"] else row["origin_address"]
-        )
+        row["boarding_name"], row["boarding_address"], _ = boarding_point(row)
         raw = [
             row[k]
             for k in (
@@ -531,7 +526,7 @@ async def process_alerts(engine, company_id):
                     .astimezone(ZoneInfo("America/Sao_Paulo"))
                     .strftime("%d/%m/%Y às %H:%M")
                 )
-                body = f"Empresa: {point['trade_name']}\nResponsável pela reserva: {point['contact_name']}\nPassageiros: {', '.join(point['passenger_names'])}\nViagem/pacote: {point['trip_name']}\nDeslocamento {point['position'] + 1}: {point['origin']}\nEmbarque: {point['boarding_name']}\n\n"
+                body = f"Empresa: {point['trade_name']}\nResponsável pela reserva: {point['contact_name']}\nPassageiros: {', '.join(point['passenger_names'])}\nViagem/pacote: {point['trip_name']}\nDeslocamento {point['position']}: {point['origin']}\n{boarding_message(point)}\n\n"
                 body += (
                     f"Lembrete: a saída do veículo está prevista para {departure} (horário de Brasília), em até 15 minutos. Este é o horário de saída do trecho; o atendimento do seu ponto pode ocorrer depois."
                     if kind == "departure"
@@ -549,7 +544,7 @@ async def process_alerts(engine, company_id):
                         "kind": kind,
                         "key": key,
                         "phone": point["phone"],
-                        "body": encrypt(body[:4096]),
+                        "body": encrypt(body[:65536]),
                         "expires": point["starts_at"]
                         if kind == "departure"
                         else now + timedelta(minutes=5),

@@ -227,6 +227,12 @@ def test_departure_reminders_for_outbound_and_return_are_timed_once(
     from datetime import datetime
 
     trip, _reservation, _prefix = prepare(client, seeded, size=1)
+    with owner.begin() as db:
+        for index, leg in enumerate(trip["legs"]):
+            db.execute(
+                text("UPDATE trip_legs SET origin_address=:address WHERE id=:id"),
+                {"address": f"Rua de embarque {index}, 100", "id": leg["id"]},
+            )
     configure(client, seeded)
     configure_tracking(client, enabled=False)
     for index, leg in enumerate(trip["legs"]):
@@ -250,6 +256,19 @@ def test_departure_reminders_for_outbound_and_return_are_timed_once(
         alerts(seeded["a"])
         alerts(seeded["a"])
         with owner.connect() as db:
+            from app.integration_secrets import decrypt
+
+            body = decrypt(
+                db.scalar(
+                    text(
+                        "SELECT body FROM whatsapp_outbox WHERE kind='departure' AND tracking_leg_id=:leg"
+                    ),
+                    {"leg": leg["id"]},
+                )
+            )
+            assert f"Endereço: Rua de embarque {index}, 100" in body
+            assert f"Rua+de+embarque+{index}%2C+100" in body
+            assert f"Rua de embarque {1 - index}, 100" not in body
             assert (
                 db.scalar(
                     text("SELECT count(*) FROM whatsapp_outbox WHERE kind='departure'")

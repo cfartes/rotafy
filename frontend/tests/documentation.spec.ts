@@ -11,7 +11,7 @@ test("central pública permite consultar e baixar os materiais sem autenticaçã
   });
   await page.goto("/ajuda");
   await expect(page.getByRole("heading", { name: /Conheça/ })).toBeVisible();
-  await expect(page.getByText("Edição 2026.10 · Revisão 12 · Atualizado em 26/10/2026")).toBeVisible();
+  await expect(page.getByText("Edição 2026.10 · Revisão 13 · Atualizado em 26/10/2026")).toBeVisible();
   expect(authRequests).toBe(0);
   await expect(page.getByRole("link", { name: /PowerPoint/ })).toHaveCount(0);
   for (const filename of [

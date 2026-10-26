@@ -464,6 +464,15 @@ Sessões WhatsApp desconectadas mantêm os envios aguardando. Mensagens automát
 
 Se o resultado estiver incerto, confira o recebimento com o destinatário antes de reenviar. Para um convite com falha definitiva, solicite um novo envio pelo cadastro do colaborador.
 
+
+
+### Endereço de embarque nas mensagens
+
+Os novos bilhetes enviados manualmente ou de forma automática, confirmações e informações da reserva, respostas do menu e avisos de saída em quinze minutos ou de proximidade incluem o local de embarque, endereço, complemento quando cadastrado e um link para pesquisar no Google Maps. Os bilhetes e consultas mostram cada trecho contratado em ordem; os avisos apresentam somente o trecho correspondente, com endereço próprio na ida e no retorno.
+
+O hotel/local personalizado tem prioridade. Na ausência dele, usa-se a parada escolhida ou a origem do trecho. Se o endereço não estiver cadastrado, a mensagem informa isso e oferece uma busca pelo nome do local e cidade, sem substituir pelo endereço de outro ponto. Confira os dados de embarque na reserva antes de enviar. O link do Maps não substitui o link privado do bilhete. Mensagens já recebidas não são alteradas.
+
+
 ## 16. App Android: acesso e agenda {#android}
 
 O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação.
@@ -723,7 +732,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 12. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 11. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -1203,6 +1212,9 @@ Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** come�
 
 
 A revisão de 26/10/2026 inclui o APK 1.9.1, compilação 15, com ajustes de leitura e controles. Publique esse arquivo em **Configurações → Atualizações do aplicativo Android** para disponibilizá-lo aos usuários. Oriente a sincronizar registros pendentes e instalar por cima, sem desinstalar. As amostras temporárias de localização não são mantidas após encerrar o processo; embarques e desembarques offline continuam salvos para sincronização.
+
+
+Os avisos de viagem e bilhetes incluem o endereço de embarque de cada trecho e link de busca no Google Maps. A configuração vem dos dados da reserva e da rota; um hotel personalizado não herda o endereço da rodoviária. A mudança é aplicada no servidor, sem novo APK ou migração de banco.
 
 
 <a id="recursos-com-menu-oculto"></a>

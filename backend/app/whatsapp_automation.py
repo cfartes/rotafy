@@ -18,6 +18,11 @@ from pydantic import Field
 from sqlalchemy import text
 
 from app.billing.calendar import utc_now
+from app.boarding_messages import (
+    boarding_message,
+    reservation_boarding_message,
+    reservation_boardings,
+)
 from app.identity import Auth, admin, audit, scope
 from app.integration_secrets import decrypt, encrypt
 from app.integration_settings import openwa_key, openwa_request, whatsapp_queue_interval
@@ -724,52 +729,25 @@ async def command_reply(
         await set_selection(db, company, session, chat, phone, None)
         if not link:
             return "Seu bilhete precisa ser atualizado pela equipe para o envio automático. Envie /atendimento. Os bilhetes já recebidos continuam com a validade original."
-        return f"Bilhete de embarque\nPassageiro: {passenger['full_name']}\nViagem/pacote: {reservation['name']}\n\n{link}\n\nAbra o link para apresentar o QR Code. O bilhete vale para todos os trechos contratados deste passageiro."
+        boarding = await reservation_boarding_message(db, company, reservation["id"])
+        return f"Bilhete de embarque\nPassageiro: {passenger['full_name']}\nViagem/pacote: {reservation['name']}\n\n{link}\n\nAbra o link para apresentar o QR Code. O bilhete vale para todos os trechos contratados deste passageiro.\n\n{boarding}"
     if command == "dados":
+        boarding = await reservation_boarding_message(db, company, reservation["id"])
         names = "\n".join("• " + p["full_name"] for p in passengers[:12])
         if len(passengers) > 12:
             names += f"\n… e mais {len(passengers) - 12} passageiro(s)."
         amount = f"{reservation['total_cents'] / 100:.2f}".replace(".", ",")
         return (
             f"Sua reserva — {str(reservation['id'])[:8].upper()}\nViagem: {reservation['name']}\nResponsável: {reservation['contact_name']}\nPassageiros:\n{names}\nValor total: R$ {amount}"
-            + f"\nPagamento: {'PAGO' if reservation['is_paid'] else 'Aguardando pagamento'}"
+            + f"\nPagamento: {'PAGO' if reservation['is_paid'] else 'Aguardando pagamento'}\n\n{boarding}"
         )
-    legs = (
-        (
-            await db.execute(
-                text("""SELECT l.origin,l.destination,l.starts_at,l.ends_at,l.position,rl.boarding_position,
-      rl.boarding_location,v.name,v.plate,s.name AS stop_name,s.scheduled_at AS stop_at
-      FROM reservation_legs rl JOIN trip_legs l ON l.id=rl.leg_id JOIN trip_vehicles tv ON tv.id=rl.allocation_id
-      JOIN vehicles v ON v.id=tv.vehicle_id LEFT JOIN trip_stops s ON s.leg_id=l.id AND s.position=rl.boarding_position
-      WHERE rl.company_id=:company AND rl.reservation_id=:reservation ORDER BY l.position LIMIT 12"""),
-                {"company": company, "reservation": reservation["id"]},
-            )
-        )
-        .mappings()
-        .all()
-    )
+    legs = await reservation_boardings(db, company, reservation["id"])
     lines = [f"Viagem: {reservation['name']}"]
     for leg in legs:
         location = leg["boarding_location"]
-        point = (
-            " · ".join(
-                dict.fromkeys(
-                    filter(
-                        None,
-                        [
-                            location.get("name"),
-                            location.get("address"),
-                            location.get("complement"),
-                        ],
-                    )
-                )
-            )
-            if location
-            else leg["stop_name"] or leg["origin"]
-        )
         date = when(leg["stop_at"] or leg["starts_at"])
         lines.append(
-            f"\nTrecho {leg['position']}: {leg['origin']} → {leg['destination']}\nVeículo: {leg['name']} — {leg['plate']}\nEmbarque: {point}\n"
+            f"\nTrecho {leg['position']}: {leg['origin']} → {leg['destination']}\nVeículo: {leg['name']} — {leg['plate']}\n{boarding_message(leg)}\n"
             + (
                 "Horário do embarque no hotel/local: confirme com a equipe.\nSaída do trecho: "
                 + date
@@ -778,7 +756,7 @@ async def command_reply(
             )
         )
     return (
-        "\n".join(lines)[:4000]
+        "\n".join(lines)
         + "\nHorário de Brasília. Consulte a equipe em caso de alteração."
     )
 
@@ -1029,7 +1007,10 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
                         {"id": row["id"]},
                     )
                     return True
-                body = f"Bilhete de embarque\nPassageiro: {reservation['full_name']}\nViagem/pacote: {reservation['name']}\nEmbarque previsto: {when(reservation['boarding_at'])} (horário de Brasília)\n\n{link}\n\nAbra o link e apresente o QR Code ao motorista ou guia. Este bilhete vale para todos os trechos contratados deste passageiro."
+                boarding = await reservation_boarding_message(
+                    db, company_id, row["reservation_id"]
+                )
+                body = f"Bilhete de embarque\nPassageiro: {reservation['full_name']}\nViagem/pacote: {reservation['name']}\nEmbarque previsto: {when(reservation['boarding_at'])} (horário de Brasília)\n\n{link}\n\nAbra o link e apresente o QR Code ao motorista ou guia. Este bilhete vale para todos os trechos contratados deste passageiro.\n\n{boarding}"
             if row["kind"] == "ticket":
                 await db.execute(
                     text(
@@ -1061,7 +1042,7 @@ async def process_automation(engine, company_id, base_url, transport=openwa_requ
             transport,
             key,
             f"/sessions/{row['session_id']}/messages/send-text",
-            {"chatId": recipient, "text": body[:4096], "linkPreview": False},
+            {"chatId": recipient, "text": body[:65536], "linkPreview": False},
         )
         provider = result.get("messageId") if isinstance(result, dict) else None
         if not isinstance(provider, str) or not provider:

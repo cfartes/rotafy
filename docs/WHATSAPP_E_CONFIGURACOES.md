@@ -98,3 +98,12 @@ Os novos envios e links exibidos na reserva usam `/api/v1/public/bilhete/` segui
 Os links antigos `/bilhete#token=...` e o formato anterior `/b/` continuam aceitos pelo site atualizado. Para destinatários com versões antigas em cache, reenvie usando o novo endereço público. Mensagens já recebidas não podem ser alteradas pelo sistema; envie outra mensagem com o formato atualizado. O bilhete continua sendo privado. O Nginx não registra acessos aos caminhos `/b/` e `/api/v1/public/bilhete/`, e a política de referência permanece `no-referrer`. O código representa uma credencial de acesso, não deve ser publicado ou incluído em logs e chamados.
 
 Validação automatizada: equivalência entre o formato do backend e frontend, abertura de links novos e antigos em Chromium e WebKit, QR único para todos os trechos e descarte do envio após revogação. A validação no WhatsApp nativo de um iPhone depende de conferência no aparelho após a atualização.
+
+
+### Endereço de embarque nas mensagens
+
+Os novos bilhetes enviados manualmente ou de forma automática, confirmações e informações da reserva, respostas do menu e avisos de saída em quinze minutos ou de proximidade incluem o local de embarque, endereço, complemento quando cadastrado e um link para pesquisar no Google Maps. Os bilhetes e consultas mostram cada trecho contratado em ordem; os avisos apresentam somente o trecho correspondente, com endereço próprio na ida e no retorno.
+
+O hotel/local personalizado tem prioridade. Na ausência dele, usa-se a parada escolhida ou a origem do trecho. Se o endereço não estiver cadastrado, a mensagem informa isso e oferece uma busca pelo nome do local e cidade, sem substituir pelo endereço de outro ponto. Confira os dados de embarque na reserva antes de enviar. O link do Maps não substitui o link privado do bilhete. Mensagens já recebidas não são alteradas.
+
+Implementação compartilhada em `backend/app/boarding_messages.py`, utilizada por `whatsapp.py`, `whatsapp_automation.py` e `tracking.py`. A consulta aplica empresa e reserva explicitamente. Links são gerados com `urlencode`, sem chamada a APIs de mapas, sem chave e sem incluir dados do passageiro. Mensagens com vários trechos passam a aceitar até 65.536 caracteres, evitando o corte anterior em 4.096 caracteres de endereços e URLs. A fila e os horários de envio permanecem os existentes; mensagens já gravadas na fila não são reescritas.
