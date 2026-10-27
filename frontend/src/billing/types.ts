@@ -101,14 +101,14 @@ export const moneyInput = (value: number | null) =>
   value === null
     ? ""
     : `${Math.floor(value / 100)},${String(value % 100).padStart(2, "0")}`;
-export function parseMoney(value: FormDataEntryValue | null): number {
+export function parseMoney(value: FormDataEntryValue | null, maxCents = 1000000000): number {
   const match = String(value || "")
     .trim()
     .match(/^(\d+)(?:[,.](\d{1,2}))?$/);
   if (!match) throw new Error("Informe os valores em reais, como 199,90.");
   const cents =
     Number(match[1]) * 100 + Number((match[2] || "").padEnd(2, "0"));
-  if (!Number.isSafeInteger(cents) || cents > 1000000000)
+  if (!Number.isSafeInteger(cents) || cents > maxCents)
     throw new Error("O valor informado excede o limite permitido.");
   return cents;
 }

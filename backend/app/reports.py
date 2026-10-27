@@ -39,6 +39,9 @@ CSV_COLUMNS = {
         ("status", "Situação da reserva"),
         ("is_paid", "Pagamento manual"),
         ("total_cents", "Valor do pacote (R$)"),
+        ("credit_cents", "Crédito aplicado (R$)"),
+        ("paid_cents", "Pagamento recebido (R$)"),
+        ("balance_due_cents", "Saldo a pagar (R$)"),
     ],
     "presence": [
         ("trip_name", "Viagem"),
@@ -138,7 +141,7 @@ async def operational_report(actor, start, end, trip_id=None):
         """SELECT r.id AS reservation_id,t.id AS trip_id,
       t.name AS trip_name,t.starts_at,v.name AS vehicle_name,r.contact_name,r.passenger_count,
       CASE WHEN r.status='pending' AND r.expires_at<=:now THEN 'expired' ELSE r.status END AS status,
-      r.is_paid,r.total_cents,r.created_at
+      r.is_paid,r.total_cents,r.credit_cents,r.paid_cents,(r.total_cents-r.credit_cents-r.paid_cents) AS balance_due_cents,r.created_at
       FROM reservations r JOIN trips t ON t.id=r.trip_id JOIN trip_vehicles a ON a.id=r.allocation_id
       JOIN vehicles v ON v.id=a.vehicle_id WHERE t.id=ANY(:ids) ORDER BY t.starts_at,r.created_at,r.id LIMIT 5001""",
         **params,

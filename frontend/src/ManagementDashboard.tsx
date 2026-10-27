@@ -440,8 +440,8 @@ export function ManagementDashboard({
                   number(data.summary.confirmed_families),
                 ],
                 ["Valor confirmado", money(data.summary.confirmed_value_cents)],
-                ["Marcado PAGO", money(data.summary.paid_value_cents)],
-                ["Confirmado não pago", money(data.summary.unpaid_value_cents)],
+                ["Pago / crédito aplicado", money(data.summary.paid_value_cents)],
+                ["Saldo a receber", money(data.summary.unpaid_value_cents)],
                 [
                   "Ticket médio por passageiro",
                   data.summary.average_ticket_cents === null

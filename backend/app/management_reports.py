@@ -101,8 +101,8 @@ async def management_report(
  count(*) FILTER(WHERE effective_status='confirmed')::integer AS confirmed_families,
  COALESCE(sum(passenger_count) FILTER(WHERE effective_status='confirmed'),0)::bigint AS confirmed_passengers,
  COALESCE(sum(total_cents) FILTER(WHERE effective_status='confirmed'),0)::bigint AS confirmed_value_cents,
- COALESCE(sum(total_cents) FILTER(WHERE effective_status='confirmed' AND is_paid),0)::bigint AS paid_value_cents,
- COALESCE(sum(total_cents) FILTER(WHERE effective_status='confirmed' AND NOT is_paid),0)::bigint AS unpaid_value_cents
+ COALESCE(sum(paid_cents+credit_cents) FILTER(WHERE effective_status='confirmed'),0)::bigint AS paid_value_cents,
+ COALESCE(sum(total_cents-paid_cents-credit_cents) FILTER(WHERE effective_status='confirmed'),0)::bigint AS unpaid_value_cents
  FROM selected_reservations""",
             **params,
         )

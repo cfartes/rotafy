@@ -151,7 +151,7 @@ def required_modules(path, *, service=False):
     ):
         required.add("boarding")
     elif path.startswith(
-        ("/reservations", "/reservation-imports", "/availability-alerts")
+        ("/reservations", "/reservation-imports", "/availability-alerts", "/reaccommodations")
     ) or re.search(
         r"/trips/[^/]+/(reservations|availability|reservation-imports/preview|publication)$",
         path,

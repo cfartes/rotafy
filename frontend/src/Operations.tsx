@@ -282,17 +282,15 @@ export function Operations({
     await client.invalidateQueries({ queryKey: ["billing"] });
   }
   async function transition(value: string) {
-    if (
-      value === "cancelled" &&
-      !window.confirm(
-        "Cancelar esta viagem e devolver seu consumo à franquia do mês original?",
-      )
-    )
-      return;
     setPending(true);
     setError("");
     try {
+      if (value === "cancelled") {
+        const impact = await api<{ confirmed_families: number; pending_families: number; passengers: number }>(`/trips/${selected}/cancellation-impact`);
+        if (!window.confirm(`Cancelar esta viagem e devolver seu consumo à franquia do mês original? ${impact.confirmed_families} família(s) confirmada(s), ${impact.pending_families} bloqueio(s) provisório(s), ${impact.passengers} passageiro(s) serão afetados. A equipe receberá uma pendência para revisar alternativas.`)) return;
+      }
       await patch(`/trips/${selected}/status`, { status: value });
+      await client.invalidateQueries({ queryKey: ["reaccommodations"] });
       await refresh();
     } catch (e) {
       setError(message(e));

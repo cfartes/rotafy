@@ -1,3 +1,4 @@
+import { Reaccommodations } from "./Reaccommodations";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { MobileRelease } from "./MobileRelease";
 import { CompanyModules } from "./CompanyModules";
@@ -1496,6 +1497,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </Alert>
           )}
           {isAdmin && page !== "collections" && <BillingUpcoming notice />}
+          {!isNexus && !financialOnly && (isAdmin || user.role === "attendant") && hasModule(user, "sales") && (page === "overview" || (page === "operations" && operationModule === "trips")) && <Reaccommodations allowHistory={page === "operations"} />}
           {!isNexus && !financialOnly && page !== "nps" && (isAdmin || user.role === "attendant") && hasModule(user, "whatsapp") && <NpsQualityAlert onOpen={() => setPage("nps")} />}
           {!isNexus && !financialOnly && (isAdmin || user.role === "attendant") && hasModule(user, "whatsapp") && (
             <WhatsAppHandoffAlert onOpen={handoff => {

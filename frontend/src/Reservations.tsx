@@ -70,6 +70,8 @@ type Reservation = {
     plate: string;
   }[];
   edit_version: number;
+  credit_cents?: number;
+  paid_cents?: number;
   is_paid: boolean;
   id: string;
   contact_name: string;
@@ -901,10 +903,11 @@ function ReservationDetail({
               <p>
                 <strong>{detail.data.is_paid ? "PAGO" : "NÃO PAGO"}</strong> ·
                 Registro manual; nenhum pagamento é processado.
+                {!!detail.data.credit_cents && <> Crédito aplicado: {money(detail.data.credit_cents)} · Pago em dinheiro: {money(detail.data.paid_cents || 0)} · Saldo: {money(detail.data.total_cents-detail.data.credit_cents-(detail.data.paid_cents || 0))}.</>}
               </p>
               <button
                 className="button secondary"
-                disabled={pending || (!active && !detail.data.is_paid)}
+                disabled={pending || (!active && !detail.data.is_paid) || (!!detail.data.credit_cents && detail.data.credit_cents >= detail.data.total_cents)}
                 onClick={() => salesAction("payment")}
               >
                 {detail.data.is_paid ? "Desmarcar PAGO" : "Marcar PAGO"}

@@ -124,6 +124,16 @@ async def queue_message(
     people = f"Passageiros: {len(passenger_rows)}\n{names}"
     boarding = await reservation_boarding_message(db, company_id, reservation_id)
     body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\n{boarding}\n\nPara dúvidas, fale com a empresa."
+    if item["credit_cents"]:
+        body += f"\nCrédito de realocação aplicado: R$ {item['credit_cents'] / 100:.2f}".replace(
+            ".", ","
+        )
+        if kind == "cancelled":
+            body += "\nO crédito da reserva cancelada será conferido pela equipe. Nenhuma cobrança ou devolução foi realizada automaticamente."
+        else:
+            body += f"\nSaldo a pagar: R$ {(item['total_cents'] - item['credit_cents'] - item['paid_cents']) / 100:.2f}".replace(
+                ".", ","
+            )
     identifier = uuid4()
     if ticket_link:
         passenger_name = await db.scalar(

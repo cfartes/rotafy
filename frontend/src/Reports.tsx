@@ -42,6 +42,9 @@ const columns: Record<Category, [string, string][]> = {
     ["status", "Reserva"],
     ["is_paid", "Pagamento manual"],
     ["total_cents", "Valor do pacote"],
+    ["credit_cents", "Crédito aplicado"],
+    ["paid_cents", "Pagamento recebido"],
+    ["balance_due_cents", "Saldo a pagar"],
   ],
   presence: [
     ["trip_name", "Viagem"],

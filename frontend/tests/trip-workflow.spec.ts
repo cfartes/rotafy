@@ -194,6 +194,22 @@ test("route refresh requires confirmation and is disabled for closed trips", asy
   await expect(refresh).toBeDisabled();
 });
 
+test("cancelamento informa famílias e passageiros antes de confirmar", async ({ page }) => {
+  await setup(page);
+  let writes = 0;
+  await page.route("**/api/v1/trips/open/cancellation-impact", route => route.fulfill({ json: { confirmed_families: 2, pending_families: 1, passengers: 7 } }));
+  await page.route("**/api/v1/trips/open/status", route => { writes++; return route.fulfill({ json: {} }); });
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
+  await page.locator("tbody tr").filter({ hasText: "Transfer futuro" }).getByRole("button", { name: "Detalhes" }).click();
+  let prompt = "";
+  page.once("dialog", async dialog => { prompt = dialog.message(); await dialog.dismiss(); });
+  const cancel = page.getByRole("button", { name: "Cancelar viagem", exact: true });
+  await cancel.click();
+  await expect(cancel).toBeEnabled();
+  expect(prompt).toContain("2 família(s) confirmada(s), 1 bloqueio(s) provisório(s), 7 passageiro(s)");
+  expect(writes).toBe(0);
+});
+
 test("trip list filters open, ongoing, completed and cancelled states", async ({
   page,
 }) => {

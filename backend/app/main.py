@@ -53,6 +53,7 @@ from app.operations import router as operations_router
 from app.postal_codes import router as postal_codes_router
 from app.privacy import router as privacy_router
 from app.public_sales import router as public_sales_router
+from app.reaccommodations import router as reaccommodations_router
 from app.reports import router as reports_router
 from app.request_security import RequestBodyLimit
 from app.reservation_imports import router as reservation_imports_router
@@ -850,6 +851,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(infinitepay_router)
     application.include_router(operations_router)
     application.include_router(reservations_router)
+    application.include_router(reaccommodations_router)
     application.include_router(reservation_imports_router)
     application.include_router(public_sales_router)
     application.include_router(boarding_router)

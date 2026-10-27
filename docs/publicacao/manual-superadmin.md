@@ -279,3 +279,8 @@ A revisão de 26/10/2026 inclui o APK 1.9.1, compilação 15, com ajustes de lei
 
 
 Os avisos de viagem e bilhetes incluem o endereço de embarque de cada trecho e link de busca no Google Maps. A configuração vem dos dados da reserva e da rota; um hotel personalizado não herda o endereço da rodoviária. A mudança é aplicada no servidor, sem novo APK ou migração de banco.
+
+
+### Atendimento das reservas após cancelamento
+
+Administradores e atendentes da empresa recebem pendências para as reservas afetadas por cancelamentos feitos após a atualização. As alternativas respeitam itinerário, disponibilidade da família e proximidade de data/hora. A equipe confirma o cliente e a logística; valores pagos podem ser aproveitados como crédito, com diferenças revisadas manualmente. Histórico, novos bilhetes e saldos a favor são rastreáveis. Essa operação utiliza o acesso da própria empresa, sem novo menu Nexus e sem alterar a assinatura Rotafy. A atualização mantém os dados existentes; nenhum aceite ou cancelamento retroativo é criado.

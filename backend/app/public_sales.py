@@ -445,10 +445,24 @@ async def payment(reservation_id: UUID, data: Paid, request: Request, actor: Aut
             raise HTTPException(
                 409, "Reserva cancelada ou expirada não pode ser marcada PAGO."
             )
+        if reservation["is_paid"] != data.is_paid and (
+            await db.scalar(
+                text(
+                    "SELECT 1 FROM reaccommodation_cases WHERE source_reservation_id=:id AND status<>'pending'"
+                ),
+                {"id": reservation_id},
+            )
+            or reservation["credit_cents"] >= reservation["total_cents"]
+            and reservation["credit_cents"] > 0
+        ):
+            raise HTTPException(
+                409,
+                "Pagamento vinculado a uma realocação. Preserve o crédito e revise o ajuste no atendimento.",
+            )
         if reservation["is_paid"] != data.is_paid:
             await db.execute(
                 text(
-                    "UPDATE reservations SET is_paid=:paid,paid_at=CASE WHEN :paid THEN now() ELSE NULL END WHERE id=:id"
+                    "UPDATE reservations SET is_paid=:paid,paid_cents=CASE WHEN :paid THEN total_cents-credit_cents ELSE 0 END,paid_at=CASE WHEN :paid THEN now() ELSE NULL END WHERE id=:id"
                 ),
                 {"id": reservation_id, "paid": data.is_paid},
             )

@@ -811,3 +811,24 @@ No mapa de embarque, além do clique, é possível mover a área com as setas e 
 
 
 Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** começa recolhido. Clique para ler a finalidade e a base legal; use **Ocultar** para recolher sem perder o que foi digitado. Os links de privacidade, condições de uso e ajuda abrem em nova aba. As políticas são organizadas em seções expansíveis. **Dados da empresa** revela razão social, CNPJ, endereço e contato. As preferências de cookies abrem em uma janela de diálogo. A tela de acesso usa um rodapé compacto; em dispositivos menores ou com ampliação, a rolagem permanece disponível quando necessária para a leitura.
+
+## 36. Realocar reservas após cancelar uma viagem {#realocacao-cancelamento}
+
+Ao cancelar uma viagem, a confirmação informa quantas famílias, passageiros e reservas provisórias serão afetados. As reservas anteriores permanecem canceladas. A **Visão geral** e a tela **Viagens** mostram o aviso para administradores e atendentes, com o botão **Revisar passageiros e alternativas**. Reservas já canceladas e bloqueios expirados não entram nessa lista.
+
+1. Abra o aviso e selecione **Revisar** na família desejada.
+2. Confira as viagens compatíveis, ordenadas pela menor diferença de data e hora em relação à saída original. Podem ser anteriores ou posteriores, desde que ainda não tenham iniciado. No empate, a saída posterior é apresentada primeiro. Use **Ver mais alternativas** para consultar as seguintes.
+3. Escolha a viagem e o veículo. A família precisa caber inteira em cada trecho. Confira os locais de embarque e desembarque, hotéis e horários da ida e do retorno.
+4. Revise o dinheiro já recebido na reserva original. Se alterar esse valor para reconhecer, por exemplo, um pagamento parcial externo, registre a justificativa da conferência. O crédito anteriormente aplicado à reserva também é considerado.
+5. Confira o crédito disponível, o novo preço, a diferença a pagar e o eventual saldo a favor do cliente. Marque que revisou a logística e que o cliente concordou com a proposta. Clique em **Confirmar realocação da família**.
+6. Confira a nova reserva e os novos bilhetes. O histórico anterior permanece disponível. Os bilhetes antigos não valem para a nova viagem. Oriente motorista/guia a sincronizar e preparar o novo manifesto.
+
+[CAPTURA:realocacao-reserva-desktop.png]
+
+O crédito não é um novo recebimento. Se a viagem alternativa custar mais, a diferença fica pendente; registre seu recebimento na nova reserva somente quando efetivamente pago. Se custar menos, o saldo a favor do cliente permanece no aviso até a equipe registrar **Como o saldo foi tratado**. O sistema não faz cobrança ou estorno automaticamente. A consulta financeira e os relatórios distinguem valor da reserva, crédito aplicado, pagamento recebido e saldo a pagar.
+
+Se o cliente não aceitar uma alternativa, abra **Encerrar sem realocar**, informe o motivo e confira o saldo a favor para revisão. Fechar a janela não resolve a pendência. Na tela **Viagens**, use **Consultar realocações e histórico** para rever os atendimentos e suas justificativas. O aviso considera todas as pendências; as listas são paginadas.
+
+Viagens parcialmente realizadas exigem revisão manual: não há transferência automática do pacote inteiro nem crédito integral presumido. Reservas provisórias não são confirmadas automaticamente; provisórias com valores a transferir exigem tratamento financeiro manual. Se uma reserva já realocada com crédito for cancelada individualmente, seu saldo continua sinalizado para revisão.
+
+Os avisos de cancelamento e de confirmação seguem as filas existentes. O sistema confere preço e disponibilidade novamente na confirmação; se a última vaga for ocupada ou os dados mudarem, atualize as alternativas. A família não será reservada parcialmente. Um aparelho offline só descobre o cancelamento ao reconectar; seus registros são validados pelo servidor na sincronização.

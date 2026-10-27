@@ -182,14 +182,18 @@ async def expire_holds(db, company_id, now=None):
     now = now or utc_now()
     expired = await rows(
         db,
-        "UPDATE reservations SET status='expired' WHERE status='pending' AND expires_at<=:now RETURNING id",
+        "UPDATE reservations SET status='expired' WHERE company_id=:company AND status='pending' AND expires_at<=:now RETURNING id",
         now=now,
+        company=company_id,
     )
     for reservation in expired:
         await audit(db, company_id, None, "reservation.expired", reservation["id"])
 
 
 async def cancel_trip_reservations(db, company_id, trip_id, actor_id):
+    from app.reaccommodations import capture_cases
+
+    await capture_cases(db, company_id, trip_id)
     cancelled = await rows(
         db,
         "UPDATE reservations SET status='cancelled',cancelled_at=now() WHERE trip_id=:trip AND status IN ('pending','confirmed') RETURNING id",
@@ -515,7 +519,9 @@ async def reservation_detail(db, reservation_id):
     return result
 
 
-async def create_reservation(db, actor, trip, data, import_id=None, reference=None):
+async def create_reservation(
+    db, actor, trip, data, import_id=None, reference=None, *, notify=True
+):
     from app.billing.collections import financially_blocked
 
     if await financially_blocked(db, trip["company_id"]):
@@ -644,7 +650,7 @@ async def create_reservation(db, actor, trip, data, import_id=None, reference=No
     await audit(
         db, actor.company_id, actor.user["id"], "reservation.created", reservation_id
     )
-    if data.status == "confirmed":
+    if data.status == "confirmed" and notify:
         from app.whatsapp import queue_message
 
         await queue_message(db, actor.company_id, reservation_id, "confirmed")
@@ -665,7 +671,7 @@ async def list_reservations(trip_id: UUID, actor: Auth):
     await trip_detail(actor.db, trip_id)
     return await rows(
         actor.db,
-        """SELECT r.id,r.contact_name,r.phone,r.passenger_count,r.total_cents,r.is_paid,r.allocation_id,r.expires_at,r.created_at,
+        """SELECT r.id,r.contact_name,r.phone,r.passenger_count,r.total_cents,r.is_paid,r.credit_cents,r.paid_cents,r.allocation_id,r.expires_at,r.created_at,
        CASE WHEN r.status='pending' AND r.expires_at<=:now THEN 'expired' ELSE r.status END AS status,
        v.name AS vehicle_name FROM reservations r JOIN trip_vehicles tv ON tv.id=r.allocation_id JOIN vehicles v ON v.id=tv.vehicle_id
        WHERE r.trip_id=:trip ORDER BY r.created_at DESC,r.id""",
@@ -750,6 +756,10 @@ async def change_reservation_status(
                 409,
                 "Registre desembarque ou reverta os embarques antes de cancelar a reserva.",
             )
+        if data.status == "cancelled":
+            from app.reaccommodations import capture_cancelled_credit
+
+            await capture_cancelled_credit(db, actor, reservation)
         changed = await db.scalar(
             text("""UPDATE reservations SET status=CAST(:status AS varchar),
            confirmed_at=CASE WHEN CAST(:status AS varchar)='confirmed' THEN now() ELSE confirmed_at END,

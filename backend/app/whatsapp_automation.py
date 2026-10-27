@@ -633,7 +633,7 @@ async def command_reply(
     reservations = (
         (
             await db.execute(
-                text("""SELECT r.id,r.contact_name,r.is_paid,r.total_cents,t.name,t.starts_at
+                text("""SELECT r.id,r.contact_name,r.is_paid,r.total_cents,r.credit_cents,r.paid_cents,t.name,t.starts_at
       FROM reservations r JOIN trips t ON t.id=r.trip_id WHERE r.company_id=:company AND r.phone=:phone AND r.status='confirmed'
       AND t.status IN ('scheduled','in_progress') ORDER BY t.starts_at,r.id LIMIT 21"""),
                 {"company": company, "phone": phone},
@@ -737,9 +737,15 @@ async def command_reply(
         if len(passengers) > 12:
             names += f"\n… e mais {len(passengers) - 12} passageiro(s)."
         amount = f"{reservation['total_cents'] / 100:.2f}".replace(".", ",")
+        payment_details = ""
+        if reservation["credit_cents"]:
+            payment_details = (
+                f"\nCrédito de realocação: R$ {reservation['credit_cents'] / 100:.2f}"
+                f"\nSaldo a pagar: R$ {(reservation['total_cents'] - reservation['credit_cents'] - reservation['paid_cents']) / 100:.2f}"
+            ).replace(".", ",")
         return (
             f"Sua reserva — {str(reservation['id'])[:8].upper()}\nViagem: {reservation['name']}\nResponsável: {reservation['contact_name']}\nPassageiros:\n{names}\nValor total: R$ {amount}"
-            + f"\nPagamento: {'PAGO' if reservation['is_paid'] else 'Aguardando pagamento'}\n\n{boarding}"
+            + f"\nPagamento: {'PAGO' if reservation['is_paid'] else 'Aguardando pagamento'}{payment_details}\n\n{boarding}"
         )
     legs = await reservation_boardings(db, company, reservation["id"])
     lines = [f"Viagem: {reservation['name']}"]

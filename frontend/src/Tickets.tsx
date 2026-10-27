@@ -20,15 +20,17 @@ const message = (e: unknown) =>
 export function TicketManager({
   reservationId,
   confirmed,
+  initialIssued = [],
 }: {
   reservationId: string;
   confirmed: boolean;
+  initialIssued?: Issued[];
   legs: { id: string; origin: string; destination: string }[];
 }) {
   const allowed = useModules();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [issued, setIssued] = useState<Issued[]>([]);
+  const [issued, setIssued] = useState<Issued[]>(initialIssued);
   const [notice, setNotice] = useState("");
   const [sendKeys, setSendKeys] = useState<Record<string, string>>({});
   const tickets = useQuery({

@@ -462,57 +462,60 @@ async def issue_tickets(reservation_id: UUID, request: Request, actor: Auth):
         await lock_company(db, actor.company_id, require_active=True)
         reservation = await reservation_detail(db, reservation_id)
         trip = await trip_detail(db, reservation["trip_id"])
-        if reservation["status"] != "confirmed" or trip["status"] not in {
-            "scheduled",
-            "in_progress",
-        }:
-            raise HTTPException(
-                409, "Bilhetes exigem reserva confirmada e viagem ativa."
-            )
-        issued = []
-        for passenger in reservation["passengers"]:
-            count = await db.scalar(
-                text(
-                    "SELECT count(*) FROM tickets WHERE passenger_id=:passenger AND shared_token_hash IS NOT NULL"
-                ),
-                {"passenger": passenger["id"]},
-            )
-            if count == len(reservation["journeys"]):
-                continue
-            token = f"bt.{actor.company_id}.{secrets.token_urlsafe(32)}"
-            for journey in reservation["journeys"]:
-                ticket_id = uuid4()
-                ticket_id = await db.scalar(
-                    text(
-                        "INSERT INTO tickets(id,company_id,trip_id,reservation_id,passenger_id,leg_id,token_hash,shared_token_hash) VALUES(:id,:company,:trip,:reservation,:passenger,:leg,replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-',''),:hash) ON CONFLICT(company_id,passenger_id,leg_id) DO UPDATE SET shared_token_hash=EXCLUDED.shared_token_hash,token_hash=EXCLUDED.token_hash,revoked_at=NULL,updated_at=now() RETURNING id"
-                    ),
-                    {
-                        "id": ticket_id,
-                        "company": actor.company_id,
-                        "trip": trip["id"],
-                        "reservation": reservation_id,
-                        "passenger": passenger["id"],
-                        "leg": journey["leg_id"],
-                        "hash": digest(token),
-                    },
-                )
-                await audit(
-                    db, actor.company_id, actor.user["id"], "ticket.issued", ticket_id
-                )
-                issued.append(
-                    {
-                        "id": ticket_id,
-                        "full_name": passenger["full_name"],
-                        "leg_id": journey["leg_id"],
-                        "token": token,
-                    }
-                )
-            from app.ticket_delivery import remember_ticket
+        return await issue_reservation_tickets(db, actor, reservation, trip)
 
-            await remember_ticket(
-                db, actor.company_id, passenger["id"], reservation_id, token
+
+async def issue_reservation_tickets(db, actor, reservation, trip):
+    reservation_id = reservation["id"]
+    if reservation["status"] != "confirmed" or trip["status"] not in {
+        "scheduled",
+        "in_progress",
+    }:
+        raise HTTPException(409, "Bilhetes exigem reserva confirmada e viagem ativa.")
+    issued = []
+    for passenger in reservation["passengers"]:
+        count = await db.scalar(
+            text(
+                "SELECT count(*) FROM tickets WHERE passenger_id=:passenger AND shared_token_hash IS NOT NULL"
+            ),
+            {"passenger": passenger["id"]},
+        )
+        if count == len(reservation["journeys"]):
+            continue
+        token = f"bt.{actor.company_id}.{secrets.token_urlsafe(32)}"
+        for journey in reservation["journeys"]:
+            ticket_id = uuid4()
+            ticket_id = await db.scalar(
+                text(
+                    "INSERT INTO tickets(id,company_id,trip_id,reservation_id,passenger_id,leg_id,token_hash,shared_token_hash) VALUES(:id,:company,:trip,:reservation,:passenger,:leg,replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-',''),:hash) ON CONFLICT(company_id,passenger_id,leg_id) DO UPDATE SET shared_token_hash=EXCLUDED.shared_token_hash,token_hash=EXCLUDED.token_hash,revoked_at=NULL,updated_at=now() RETURNING id"
+                ),
+                {
+                    "id": ticket_id,
+                    "company": actor.company_id,
+                    "trip": trip["id"],
+                    "reservation": reservation_id,
+                    "passenger": passenger["id"],
+                    "leg": journey["leg_id"],
+                    "hash": digest(token),
+                },
             )
-        return {"issued": issued}
+            await audit(
+                db, actor.company_id, actor.user["id"], "ticket.issued", ticket_id
+            )
+            issued.append(
+                {
+                    "id": ticket_id,
+                    "full_name": passenger["full_name"],
+                    "leg_id": journey["leg_id"],
+                    "token": token,
+                }
+            )
+        from app.ticket_delivery import remember_ticket
+
+        await remember_ticket(
+            db, actor.company_id, passenger["id"], reservation_id, token
+        )
+    return {"issued": issued}
 
 
 @router.post("/tickets/{ticket_id}/reissue")

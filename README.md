@@ -164,7 +164,7 @@ O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os e
 
 ### Documentação revisada em 22/10/2026
 
-A central de ajuda está na revisão 13: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+A central de ajuda está na revisão 14: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
 
 **Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após dez minutos de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo configurado pela Nexus (padrão: 30 segundos) entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).
 
@@ -176,3 +176,5 @@ A central de ajuda está na revisão 13: manuais separados para empresa e Nexus,
 Privacidade e condições públicas: `/privacidade`, `/termos`, `/cancelamento-reembolso` e `/privacidade/solicitacao`. O canal LGPD registra protocolo e permite triagem pelo Superadmin em Configurações, sem exclusão automática. Auditoria de segurança, privacidade e acessibilidade: [checklist de 23/10/2026](docs/CHECKLIST_SEGURANCA_PRIVACIDADE_2026-10-23.md).
 
 Revisão de 26/10/2026: [refinamentos visuais e segurança, incluindo APK 1.9.1](docs/REVISAO_VISUAL_E_SEGURANCA_2026-10-26.md).
+
+Realocação após cancelamento: administradores e atendentes consultam alternativas compatíveis por data/hora, registram a concordância do cliente e aproveitam créditos com histórico preservado. [Operação e atualização](docs/REALOCACAO_APOS_CANCELAMENTO.md).

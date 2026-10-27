@@ -230,7 +230,7 @@ test("attendant sees management finances and legacy reports without franchise ac
   await setup(page, "attendant");
   await expect(
     page
-      .getByRole("heading", { name: "Marcado PAGO", exact: true })
+      .getByRole("heading", { name: "Pago / crédito aplicado", exact: true })
       .locator(".."),
   ).toContainText("2.000,00");
   await expect(
