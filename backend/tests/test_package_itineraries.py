@@ -216,7 +216,9 @@ def test_four_destinations_charge_once_return_included_and_cancel(
     assert package["itinerary"]["steps"][-1]["destination_position"] is None
 
 
-def test_whole_family_across_different_vehicles_and_qr_manifest(client, seeded):
+def test_whole_family_across_different_vehicles_and_qr_manifest(
+    client, seeded, monkeypatch
+):
     payload, _package, _model = setup_package(client, seeded, split_fleet=True)
     trip = create(client, payload)
     reservation = reserve(client, trip, family(size=2))
@@ -238,6 +240,10 @@ def test_whole_family_across_different_vehicles_and_qr_manifest(client, seeded):
     assert len(tickets) == 10
     third = reservation["leg_allocations"][2]
     prefix = f"/api/v1/trips/{trip['id']}/vehicles/{third['allocation_id']}/legs/{third['leg_id']}"
+    departure = next(l["starts_at"] for l in trip["legs"] if l["id"] == third["leg_id"])
+    monkeypatch.setattr(
+        "app.crew_schedule.utc_now", lambda: datetime.fromisoformat(departure)
+    )
     login(client, email="driver1@example.com")
     manifest = client.get(prefix + "/offline-manifest")
     assert manifest.status_code == 200, manifest.text
@@ -262,7 +268,7 @@ def test_whole_family_across_different_vehicles_and_qr_manifest(client, seeded):
         command(client, prefix, reservation["passengers"][0]["id"]).status_code == 201
     )
     agenda = client.get("/api/v1/trips").json()[0]["agenda_legs"]
-    assert [l["position"] for l in agenda] == [3, 4, 5]
+    assert [l["position"] for l in agenda] == [3]
     login(client, email="driver0@example.com")
     assert client.get(prefix + "/manifest").status_code == 404
     first = reservation["leg_allocations"][0]
@@ -270,12 +276,17 @@ def test_whole_family_across_different_vehicles_and_qr_manifest(client, seeded):
     assert client.get(wrong + "/manifest").status_code == 404
 
 
-def test_package_lifecycle_completes_only_after_return(client, seeded):
+def test_package_lifecycle_completes_only_after_return(client, seeded, monkeypatch):
     payload, _, _ = setup_package(client, seeded, split_fleet=True)
     trip = create(client, payload)
     for index, leg in enumerate(trip["legs"]):
         vehicle = next(
             v for v in trip["vehicles"] if leg["position"] in v["leg_positions"]
+        )
+        departure = datetime.fromisoformat(leg["starts_at"])
+        monkeypatch.setattr(
+            "app.crew_schedule.utc_now",
+            lambda departure=departure: departure - timedelta(minutes=10),
         )
         login(client, email=f"driver{0 if index < 2 else 1}@example.com")
         prefix = f"/api/v1/trips/{trip['id']}/vehicles/{vehicle['id']}/legs/{leg['id']}"

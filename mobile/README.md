@@ -75,3 +75,12 @@ Configura??o `config/production.json` usa `https://rotafy.nexusdataanalytics.tec
 ## Revisão visual e segurança — 26/10/2026
 
 APK 1.9.1 (15): campos e cartões padronizados, botões com área de toque mínima de 48 pontos, foco mais claro e login validado em tela estreita com fonte ampliada. HTTP é bloqueado explicitamente no manifesto release; debug mantém a exceção para testes locais. A fila temporária de GPS fica apenas na memória, limitada à sessão ativa; o banco de embarques continua criptografado. Assinatura release, configuração do manifesto e hash do APK foram conferidos. Detalhes e limites em [Revisão visual e segurança](../docs/REVISAO_VISUAL_E_SEGURANCA_2026-10-26.md).
+
+
+## APK 1.10.0 (compilação 16)
+
+- Rastreamento automático ao iniciar, com coleta prevista a cada minuto. A permissão Android continua necessária; GPS indisponível não desfaz uma saída já registrada.
+- Um celular responsável por veículo, com transferência explícita para motorista ou guia atribuído.
+- Motorista consulta os trechos do dia em Brasília; guia mantém consulta antecipada. Ambos iniciam somente nos trinta minutos anteriores ao horário. O backend valida a regra e mantém viagens em andamento após a meia-noite.
+- Atualização da rota na saída e leitura da mesma sequência otimizada usada pelo backend. Em falha de atualização, a saída é preservada e a tela informa a necessidade de sincronizar.
+- [Operação, mapa administrativo e previsão de chegada](../docs/RASTREAMENTO_E_PREVISAO.md).

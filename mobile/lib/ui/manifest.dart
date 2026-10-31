@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/api.dart';
 import '../core/config.dart';
 import '../core/controller.dart';
+import '../core/crew.dart';
 import '../core/offline.dart';
 import '../core/tracking.dart';
 
@@ -35,13 +36,28 @@ class _ManifestPageState extends State<ManifestPage> {
   String filter = 'all';
   bool listOpen = true;
   String? trackingNotice;
+  Timer? availabilityTimer;
+  @override
+  void initState() {
+    super.initState();
+    availabilityTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
-  Future<void> tracking() async {
-    if (!await confirm(
-      'Compartilhar localização do veículo?',
-      'Este celular será o responsável por este veículo. O GPS será coletado a cada 5 minutos durante o trecho, inclusive com a tela bloqueada, com notificação visível. Permaneça no veículo. O administrador poderá acompanhar o percurso e enviar avisos de proximidade aos passageiros.',
-      'Assumir rastreamento',
-    )) {
+  @override
+  void dispose() {
+    availabilityTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> tracking({bool automatic = false}) async {
+    if (!automatic &&
+        !await confirm(
+          'Compartilhar localização do veículo?',
+          'Este celular será o responsável por este veículo. O GPS será coletado a cada 1 minuto durante o trecho, inclusive com a tela bloqueada, com notificação visível. Permaneça no veículo. O administrador poderá acompanhar o percurso e enviar avisos de proximidade aos passageiros.',
+          'Assumir rastreamento',
+        )) {
       return;
     }
     try {
@@ -54,6 +70,14 @@ class _ManifestPageState extends State<ManifestPage> {
         );
       } on ApiFailure catch (e) {
         if (e.status != 409 || !e.message.contains('Outro aparelho')) rethrow;
+        if (automatic) {
+          if (mounted) {
+            setState(
+              () => trackingNotice = 'Outro celular já está rastreando este veículo. Use Assumir rastreamento para transferir para este aparelho.',
+            );
+          }
+          return;
+        }
         if (!await confirm(
           'Transferir rastreamento?',
           'Outro celular está responsável. Ao assumir, o rastreamento anterior será encerrado.',
@@ -103,14 +127,18 @@ class _ManifestPageState extends State<ManifestPage> {
     if (await confirm(
       start ? 'Iniciar viagem?' : 'Fechar viagem neste trecho?',
       start
-          ? 'Registrar a saída deste veículo e trecho. É necessário estar conectado.'
+          ? 'Registrar a saída deste veículo e trecho. Se habilitado pela empresa, o rastreamento será iniciado automaticamente. Autorize o GPS quando solicitado e mantenha este celular no veículo. É necessário estar conectado.'
           : 'Registrar a chegada deste veículo ao destino e tentar capturar sua localização. Autorize o GPS quando solicitado. Se estiver indisponível, a chegada será registrada sem coordenadas. Os passageiros devem estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
       start ? 'Iniciar viagem' : 'Confirmar chegada',
     )) {
-      if (await controller.changeJourney(manifestId, status) &&
-          mounted &&
-          !controller.prepared.any((s) => s['id'] == manifestId)) {
+      final changed = await controller.changeJourney(manifestId, status);
+      if (!changed || !mounted) return;
+      if (!controller.prepared.any((s) => s['id'] == manifestId)) {
         Navigator.pop(context);
+        return;
+      }
+      if (start && controller.moduleEnabled('tracking')) {
+        await tracking(automatic: true);
       }
     }
   }
@@ -241,6 +269,7 @@ class _ManifestPageState extends State<ManifestPage> {
           .where((person) => person['status'] == 'waiting')
           .length;
       final journeyStatus = data['journey']?['status'] ?? 'scheduled';
+      final startAllowed = canStartLeg(Json.from(data['leg']), DateTime.now());
       final canOperate =
           controller.moduleEnabled('boarding') &&
           data['can_write'] == true &&
@@ -291,11 +320,15 @@ class _ManifestPageState extends State<ManifestPage> {
               ),
               if (journeyStatus == 'scheduled')
                 FilledButton.icon(
-                  onPressed: canOperate && records.isEmpty
+                  onPressed: canOperate && startAllowed && records.isEmpty
                       ? () => journey('in_progress')
                       : null,
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Iniciar viagem'),
+                ),
+              if (journeyStatus == 'scheduled' && !startAllowed)
+                const Text(
+                  'O início será liberado 30 minutos antes da saída prevista. Você já pode consultar o manifesto.',
                 ),
               if (journeyStatus == 'in_progress' &&
                   controller.moduleEnabled('tracking'))
@@ -320,7 +353,11 @@ class _ManifestPageState extends State<ManifestPage> {
               if (trackingNotice != null) Text(trackingNotice!),
               if (journeyStatus == 'in_progress')
                 FilledButton.icon(
-                  onPressed: canOperate && records.isEmpty && onboard == 0
+                  onPressed:
+                      canOperate &&
+                          startAllowed &&
+                          records.isEmpty &&
+                          onboard == 0
                       ? () => journey('completed')
                       : null,
                   icon: const Icon(Icons.flag),
@@ -348,6 +385,10 @@ class _ManifestPageState extends State<ManifestPage> {
                 icon: const Icon(Icons.sync),
                 label: Text('Sincronizar · ${records.length} registros'),
               ),
+              if (route.isNotEmpty && route.first['order_optimized'] == true)
+                const Text(
+                  'Sequência otimizada dos pontos de embarque e desembarque.',
+                ),
               if (route.isNotEmpty)
                 ...(route.first['navigation_stages'] as List)
                     .asMap()

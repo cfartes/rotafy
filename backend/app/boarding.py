@@ -118,6 +118,10 @@ async def change_journey(
         states = allocation["journey_states"]
         current = states.get(str(leg_id), {"status": "scheduled"})
         if current["status"] != data.status:
+            if data.status == "in_progress":
+                from app.crew_schedule import check_start
+
+                check_start(actor, leg)
             if trip["status"] not in {"scheduled", "in_progress"}:
                 raise HTTPException(
                     409, "Viagem encerrada não permite iniciar ou fechar trechos."
@@ -233,6 +237,9 @@ async def change_journey(
 
 async def allocation_access(db, actor, trip_id, allocation_id, write=False):
     tenant(actor)
+    from app.crew_schedule import check_driver_trip
+
+    await check_driver_trip(db, actor, trip_id)
     allocation = await rows(
         db,
         "SELECT tv.*,v.name,v.plate FROM trip_vehicles tv JOIN vehicles v ON v.id=tv.vehicle_id WHERE tv.id=:id AND tv.trip_id=:trip",

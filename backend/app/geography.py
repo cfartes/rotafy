@@ -60,9 +60,11 @@ async def cities(uf: str):
 
 @router.get("/trips/{trip_id}/vehicles/{allocation_id}/route")
 async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
-    from app.operations import detail, rows, tenant
+    from app.crew_schedule import check_driver_trip
+    from app.operations import detail, tenant
 
     tenant(actor)
+    await check_driver_trip(actor.db, actor, trip_id)
     trip = await detail(actor.db, trip_id)
     vehicle = next((v for v in trip["vehicles"] if v["id"] == allocation_id), None)
     manage = actor.user["role"] in {"admin", "attendant"}
@@ -73,11 +75,24 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
         or any(g["id"] == actor.user["id"] for g in vehicle["guides"])
     ):
         raise HTTPException(404, "Rota não encontrada para este acesso.")
+    return await vehicle_route_data(actor.db, trip, vehicle, allocation_id)
+
+
+async def vehicle_route_data(
+    db, trip, vehicle, allocation_id, *, use_optimization=True
+):
+    from app.operations import rows
+
+    trip_id = trip["id"]
     legs = []
     locations = await rows(
-        actor.db,
+        db,
         """SELECT rl.leg_id,rl.boarding_position,rl.dropoff_position,
         rl.boarding_location,rl.dropoff_location,r.status,r.id,
+        NOT EXISTS(SELECT 1 FROM passengers p LEFT JOIN boarding_states bs ON bs.passenger_id=p.id AND bs.leg_id=rl.leg_id
+          WHERE p.reservation_id=r.id AND COALESCE(bs.status,'waiting')='waiting') AS boarded,
+        NOT EXISTS(SELECT 1 FROM passengers p LEFT JOIN boarding_states bs ON bs.passenger_id=p.id AND bs.leg_id=rl.leg_id
+          WHERE p.reservation_id=r.id AND COALESCE(bs.status,'waiting')<>'alighted') AS disembarked,
         ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names
         FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
         WHERE rl.allocation_id=:allocation AND r.trip_id=:trip
@@ -124,12 +139,31 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
             for pos, point in zip(sorted(served_positions(vehicle, leg)), points)
         ]
         grouped = {}
+        anchor_points = {
+            pos: point
+            for pos, point in zip(sorted(served_positions(vehicle, leg)), points)
+        }
+        for point in points:
+            point["boarding_reservations"] = []
+            point["service_pending"] = False
+            point["service_completed"] = False
         for entry in locations:
             if entry["leg_id"] != leg["id"]:
                 continue
             for kind in ("boarding", "dropoff"):
                 location = entry[f"{kind}_location"]
                 if not location:
+                    point = anchor_points.get(entry[f"{kind}_position"])
+                    if point is not None and entry["status"] == "confirmed":
+                        if kind == "boarding":
+                            point["boarding_reservations"].append(str(entry["id"]))
+                        complete = (
+                            entry["boarded"]
+                            if kind == "boarding"
+                            else entry["disembarked"]
+                        )
+                        point["service_completed"] |= complete
+                        point["service_pending"] |= not complete
                     continue
                 anchor = entry[f"{kind}_position"] * 3 + (
                     1 if kind == "boarding" else -1
@@ -153,11 +187,24 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
                         else leg["destination"],
                         "scheduled_at": None,
                         "kind": kind,
+                        "optimization_group": anchor,
+                        "boarding_reservations": [],
+                        "service_pending": False,
+                        "service_completed": False,
                         "passenger_names": [],
                         "pending_passenger_names": [],
                     }
                     grouped[key] = point
                     ordered.append((anchor, location.get("order", 1), point))
+                point = grouped[key]
+                if entry["status"] == "confirmed":
+                    if kind == "boarding":
+                        point["boarding_reservations"].append(str(entry["id"]))
+                    complete = (
+                        entry["boarded"] if kind == "boarding" else entry["disembarked"]
+                    )
+                    point["service_completed"] |= complete
+                    point["service_pending"] |= not complete
                 field = (
                     "passenger_names"
                     if entry["status"] == "confirmed"
@@ -168,6 +215,11 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
             entry[2]
             for entry in sorted(ordered, key=lambda entry: (entry[0], entry[1]))
         ]
+        optimized = False
+        if use_optimization:
+            from app.route_order import apply_order
+
+            points, optimized = await apply_order(db, points, allocation_id, leg["id"])
         for index, point in enumerate(points):
             query = point_query(point)
             point["maps_url"] = "https://www.google.com/maps/dir/?" + urlencode(
@@ -205,6 +257,7 @@ async def vehicle_route(trip_id: UUID, allocation_id: UUID, actor: Auth):
                 "position": leg["position"],
                 "points": points,
                 "navigation_stages": stages,
+                "order_optimized": optimized,
             }
         )
     return {

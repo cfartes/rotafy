@@ -8,6 +8,7 @@ import 'location.dart';
 import 'biometrics.dart';
 import 'config.dart';
 import 'tracking.dart';
+import 'crew.dart';
 
 class OperationController extends ChangeNotifier {
   final RotafyApi api;
@@ -32,6 +33,22 @@ class OperationController extends ChangeNotifier {
     if (!moduleEnabled('tracking')) await VehicleTracking.stop();
   }
 
+  bool canSeeTrip(Json trip) =>
+      user?['role'] != 'driver' ||
+      ((trip['agenda_legs'] as List?) ?? []).any(
+        (leg) => canSeeLeg(Json.from(leg), {
+          'status': leg['in_progress'] == true ? 'in_progress' : 'scheduled',
+        }),
+      );
+  bool canSeeLeg(Json leg, Json journey) =>
+      user?['role'] != 'driver' ||
+      driverDayVisible(leg, journey, DateTime.now());
+  bool canSeeSnapshot(Json snapshot) =>
+      canSeeLeg(
+        Json.from(snapshot['data']['leg']),
+        Json.from(snapshot['data']['journey'] ?? {}),
+      ) ||
+      records.any((r) => r['manifest'] == snapshot['id']);
   List<Json> prepared = [];
   List<Json> records = [];
   bool busy = false;
@@ -329,6 +346,21 @@ class OperationController extends ChangeNotifier {
       ...Json.from(snapshot['data']),
       ...response,
     });
+    if (status == 'in_progress') {
+      try {
+        final route = await api.request(
+          'GET',
+          '${(snapshot['endpoint'] as String).split('/legs/').first}/route',
+        );
+        await store.prepare(snapshot['endpoint'], {
+          ...Json.from(snapshot['data']),
+          ...response,
+          'route': route,
+        });
+      } on ApiFailure {
+        error = 'Saída registrada. Não foi possível atualizar a rota; sincronize para conferir os últimos pontos.';
+      }
+    }
     if (response['trip']['status'] == 'completed') {
       closedTrips.add(response['trip']['id']);
       await store.closeTrip(response['trip']['id']);

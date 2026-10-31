@@ -299,7 +299,7 @@ async def boardings(db, trip_id=None):
     result = await rows(
         db,
         """SELECT rl.reservation_id,rl.leg_id,rl.allocation_id,rl.boarding_position,rl.boarding_location,
-      r.contact_name,r.phone,r.status,r.trip_id,c.trade_name,t.name AS trip_name,t.status AS trip_status,
+      r.company_id,r.contact_name,r.phone,r.status,r.trip_id,c.trade_name,t.name AS trip_name,t.status AS trip_status,
       l.position,l.starts_at,l.origin,l.origin_uf,l.origin_address,ts.name AS stop_name,ts.address AS stop_address,
       tv.journey_states,b.latitude,b.longitude,b.source_hash,
       ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names
@@ -553,6 +553,20 @@ async def process_alerts(engine, company_id):
                 key = f"tracking:{kind}:{point['reservation_id']}:{point['leg_id']}:{point['allocation_id']}"
                 if kind == "departure":
                     key += ":" + point["starts_at"].isoformat()
+                if await db.scalar(
+                    text(
+                        "SELECT 1 FROM whatsapp_outbox WHERE company_id=:company AND dedupe_key=:key"
+                    ),
+                    {"company": company_id, "key": key},
+                ):
+                    continue
+                eta = None
+                if kind == "proximity":
+                    from app.arrival_estimates import estimate
+
+                    ready, eta = await estimate(db, point)
+                    if not ready:
+                        continue
                 departure = (
                     point["starts_at"]
                     .astimezone(ZoneInfo("America/Sao_Paulo"))
@@ -564,6 +578,8 @@ async def process_alerts(engine, company_id):
                     if kind == "departure"
                     else "O veículo está nas proximidades do seu ponto de embarque. Prepare-se para embarcar. A localização é aproximada e não representa uma previsão exata de chegada."
                 )
+                if eta is not None:
+                    body += f"\n\n🚌 Chegada estimada em aproximadamente {eta} {'minuto' if eta == 1 else 'minutos'}, considerando o trânsito e as paradas previstas antes do seu embarque. O tempo pode variar. Estimativa Google Maps."
                 await db.execute(
                     text("""INSERT INTO whatsapp_outbox(id,company_id,reservation_id,session_id,kind,dedupe_key,phone,body,expires_at,tracking_leg_id,tracking_allocation_id,tracking_reference)
                   VALUES(:id,:company,:reservation,:session,:kind,:key,:phone,:body,:expires,:leg,:allocation,:reference)
@@ -579,7 +595,7 @@ async def process_alerts(engine, company_id):
                         "body": encrypt(body[:65536]),
                         "expires": point["starts_at"]
                         if kind == "departure"
-                        else now + timedelta(minutes=5),
+                        else now + timedelta(minutes=2),
                         "leg": point["leg_id"],
                         "allocation": point["allocation_id"],
                         "reference": point["starts_at"],

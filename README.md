@@ -119,7 +119,7 @@ Em **Nexus → Configurações**, cadastre as chaves OpenWA/Resend, o e-mail rem
 
 Logs JSON e métricas autenticadas da Nexus disponíveis. Configuração de produção independente, HTTPS/Traefik existente e serviço de backup externo criptografado preparados em `compose.production.yaml`. Restauração ensaiada em container isolado; carga local medida com duas empresas, 20 veículos e 800 passageiros. Consulte [implantação e operação](docs/IMPLANTACAO_E_OPERACAO.md) e [pendências de homologação](docs/HOMOLOGACAO.md). A VPS e o envio de backups externos ainda não foram configurados.
 
-A assinatura da empresa possui cobrança de setup ao fim do teste e mensalidade ao fim de ciclos de 30 dias, com links de pagamento e confirmação automática quando configurados. Veja [cobranças](docs/COBRANCAS_MENSAIS.md) e [pagamentos e teste](docs/INFINITEPAY_E_TESTE.md). O pagamento do passageiro continua sendo registrado manualmente por **Marcar PAGO**, separado da confirmação da reserva. O APK já oferece rastreamento a cada cinco minutos, com avisos configuráveis: [rastreamento](docs/RASTREAMENTO_E_AVISOS.md).
+A assinatura da empresa possui cobrança de setup ao fim do teste e mensalidade ao fim de ciclos de 30 dias, com links de pagamento e confirmação automática quando configurados. Veja [cobranças](docs/COBRANCAS_MENSAIS.md) e [pagamentos e teste](docs/INFINITEPAY_E_TESTE.md). O pagamento do passageiro continua sendo registrado manualmente por **Marcar PAGO**, separado da confirmação da reserva. O APK 1.10.0 oferece início automático e rastreamento previsto a cada minuto, com avisos configuráveis: [rastreamento](docs/RASTREAMENTO_E_AVISOS.md).
 
 Edição de viagens/reservas, realocação após desembarque/reversão e convites/recuperação por Resend foram acrescentados. Configure chave e remetente verificado para ativar os e-mails; a integração foi testada com transporte simulado. Consulte [edição e e-mails de acesso](docs/EDICAO_E_EMAILS.md).
 
@@ -164,7 +164,7 @@ O [guia de WhatsApp, bilhetes e embarque](docs/integracao/README.md) reúne os e
 
 ### Documentação revisada em 22/10/2026
 
-A central de ajuda está na revisão 15: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
+A central de ajuda está na revisão 16: manuais separados para empresa e Nexus, HTML/PDF e apresentação de 26 slides em HTML/PDF; o PowerPoint editável é exclusivo do Superadmin completo. O [documento consolidado](PROJETO_COMPLETO_ROTAFY.md) reúne funcionalidades e referências técnicas.
 
 **Conversas WhatsApp** permite atendimento e anexos no painel; **Conexões WhatsApp** permite supervisão pelo Superadmin completo. A automação apresenta menu numerado personalizado para qualquer texto, transfere à equipe e encerra somente conversas automáticas após dez minutos de inatividade. Bilhetes podem entrar na fila 24 horas antes do primeiro embarque, com intervalo configurado pela Nexus (padrão: 30 segundos) entre envios automáticos. Ambos exigem habilitação do administrador. Consulte [conversas e conexões](docs/CHAT_WHATSAPP_E_SUPERVISAO.md) e [atendimento e bilhetes](docs/AUTOMACAO_WHATSAPP.md).
 
@@ -180,3 +180,5 @@ Revisão de 26/10/2026: [refinamentos visuais e segurança, incluindo APK 1.9.1]
 Realocação após cancelamento: administradores e atendentes consultam alternativas compatíveis por data/hora, registram a concordância do cliente e aproveitam créditos com histórico preservado. [Operação e atualização](docs/REALOCACAO_APOS_CANCELAMENTO.md).
 
 Localização automática de embarques: [configuração Google, limites e operação](docs/GEOCODIFICACAO_GOOGLE.md).
+
+Previsão de chegada, mapa geral, sequência dos pontos e APK 1.10.0: [operação e publicação](docs/RASTREAMENTO_E_PREVISAO.md).

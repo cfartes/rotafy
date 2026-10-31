@@ -298,6 +298,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     timer = Timer.periodic(const Duration(seconds: 15), (_) {
       final c = widget.controller;
+      if (foreground && c.user?['role'] == 'driver' && timer!.tick % 4 == 0 && !c.busy && !loading) {
+        unawaited(loadTrips());
+      }
       if (foreground &&
           !c.busy &&
           c.records.any((r) => r['status'] == 'pending')) {
@@ -458,34 +461,36 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               'Trechos preparados',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            if (c.prepared.isEmpty)
+            if (!c.prepared.any(c.canSeeSnapshot))
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'Nenhum trecho preparado. Carregue suas viagens com conexão.',
                 ),
               ),
-            ...c.prepared.map(
-              (s) => Card(
-                child: ListTile(
-                  leading: const Icon(Icons.offline_pin),
-                  title: Text(s['data']['trip']['name']),
-                  subtitle: Text(
-                    c.closedSnapshot(s)
-                        ? 'Viagem encerrada · registros pendentes de revisão'
-                        : '${s['data']['vehicle']['name']} · ${s['data']['leg']['origin']} → ${s['data']['leg']['destination']}',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ManifestPage(controller: c, manifestId: s['id']),
+            ...c.prepared
+                .where(c.canSeeSnapshot)
+                .map(
+                  (s) => Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.offline_pin),
+                      title: Text(s['data']['trip']['name']),
+                      subtitle: Text(
+                        c.closedSnapshot(s)
+                            ? 'Viagem encerrada · registros pendentes de revisão'
+                            : '${s['data']['vehicle']['name']} · ${s['data']['leg']['origin']} → ${s['data']['leg']['destination']}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ManifestPage(controller: c, manifestId: s['id']),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -505,7 +510,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             if (loading) const LinearProgressIndicator(),
             if (error != null) Text(error!),
             ...trips
-                .where((trip) => !c.closedTrips.contains(trip['id']))
+                .where((trip) => !c.closedTrips.contains(trip['id']) && c.canSeeTrip(Json.from(trip)))
                 .map((trip) => TripCard(controller: c, trip: trip)),
           ],
         ),
@@ -566,6 +571,12 @@ class _TripCardState extends State<TripCard> {
                           (v['leg_positions'] as List).contains(
                             leg['position'],
                           ),
+                    )
+                    .where(
+                      (leg) => widget.controller.canSeeLeg(
+                        Json.from(leg),
+                        Json.from(v['journey_states']?[leg['id']] ?? {}),
+                      ),
                     )
                     .map(
                       (leg) => ListTile(
