@@ -85,57 +85,63 @@ async def queue_message(
     )
     if existing:
         return existing
-    label = {
-        "confirmed": "Reserva confirmada",
-        "cancelled": "Reserva cancelada",
-        "paid": "Pagamento registrado como PAGO",
-        "manual": "Informações da sua reserva",
-    }[kind]
-    start = item["starts_at"]
-    if isinstance(start, str):
-        start = datetime.fromisoformat(start)
-    date = start.astimezone(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y às %H:%M")
-    amount = (
-        f"{item['total_cents'] / 100:,.2f}".replace(",", "X")
-        .replace(".", ",")
-        .replace("X", ".")
-    )
-    status = {
-        "confirmed": "Confirmada",
-        "pending": "Aguardando confirmação",
-        "cancelled": "Cancelada",
-        "expired": "Expirada",
-    }.get(item["status"], item["status"])
-    passenger_rows = (
-        (
-            await db.execute(
-                text(
-                    "SELECT full_name FROM passengers WHERE reservation_id=:id AND company_id=:company ORDER BY full_name,id"
-                ),
-                {"id": reservation_id, "company": company_id},
+    if kind == "cancelled":
+        cancelled_date = (
+            item["cancelled_at"]
+            .astimezone(ZoneInfo("America/Sao_Paulo"))
+            .strftime("%d/%m/%Y")
+        )
+        body = f"A reserva nº {str(reservation_id)[:8].upper()}, de {item['contact_name']}, foi cancelada em {cancelled_date}."
+    else:
+        label = {
+            "confirmed": "Reserva confirmada",
+            "paid": "Pagamento registrado como PAGO",
+            "manual": "Informações da sua reserva",
+        }[kind]
+        start = item["starts_at"]
+        if isinstance(start, str):
+            start = datetime.fromisoformat(start)
+        date = start.astimezone(ZoneInfo("America/Sao_Paulo")).strftime(
+            "%d/%m/%Y às %H:%M"
+        )
+        amount = (
+            f"{item['total_cents'] / 100:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+        status = {
+            "confirmed": "Confirmada",
+            "pending": "Aguardando confirmação",
+            "cancelled": "Cancelada",
+            "expired": "Expirada",
+        }.get(item["status"], item["status"])
+        passenger_rows = (
+            (
+                await db.execute(
+                    text(
+                        "SELECT full_name FROM passengers WHERE reservation_id=:id AND company_id=:company ORDER BY full_name,id"
+                    ),
+                    {"id": reservation_id, "company": company_id},
+                )
             )
+            .scalars()
+            .all()
         )
-        .scalars()
-        .all()
-    )
-    names = "\n".join(f"• {name}" for name in passenger_rows[:8])
-    if len(passenger_rows) > 8:
-        names += f"\n… e mais {len(passenger_rows) - 8} passageiro(s). Consulte a reserva para a lista completa."
-    people = f"Passageiros: {len(passenger_rows)}\n{names}"
-    boarding = await reservation_boarding_message(db, company_id, reservation_id)
-    body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\n{boarding}\n\nPara dúvidas, fale com a empresa."
-    if item["credit_cents"]:
-        body += f"\nCrédito de realocação aplicado: R$ {item['credit_cents'] / 100:.2f}".replace(
-            ".", ","
-        )
-        if kind == "cancelled":
-            body += "\nO crédito da reserva cancelada será conferido pela equipe. Nenhuma cobrança ou devolução foi realizada automaticamente."
-        else:
+        names = "\n".join(f"• {name}" for name in passenger_rows[:8])
+        if len(passenger_rows) > 8:
+            names += f"\n… e mais {len(passenger_rows) - 8} passageiro(s). Consulte a reserva para a lista completa."
+        people = f"Passageiros: {len(passenger_rows)}\n{names}"
+        boarding = await reservation_boarding_message(db, company_id, reservation_id)
+        body = f"{label}\nEmpresa: {item['trade_name']}\nResponsável pela reserva: {item['contact_name']}\n\nViagem/pacote: {item['trip_name']}\nDestino: {item['destination']}\nSaída: {date} (horário de Brasília)\n{people}\nValor total: R$ {amount}\nReserva: {str(reservation_id)[:8].upper()}\nSituação: {status}\nPagamento: {'PAGO' if item['is_paid'] else 'Não marcado como pago'}\n\n{boarding}\n\nPara dúvidas, fale com a empresa."
+        if item["credit_cents"]:
+            body += f"\nCrédito de realocação aplicado: R$ {item['credit_cents'] / 100:.2f}".replace(
+                ".", ","
+            )
             body += f"\nSaldo a pagar: R$ {(item['total_cents'] - item['credit_cents'] - item['paid_cents']) / 100:.2f}".replace(
                 ".", ","
             )
     identifier = uuid4()
-    if ticket_link:
+    if ticket_link and kind != "cancelled":
         passenger_name = await db.scalar(
             text("""SELECT p.full_name FROM tickets tk JOIN passengers p ON p.id=tk.passenger_id
           WHERE tk.company_id=:company AND tk.reservation_id=:reservation AND tk.revoked_at IS NULL

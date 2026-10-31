@@ -1,5 +1,6 @@
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 import pytest
 from app.boarding_messages import boarding_message
@@ -7,6 +8,44 @@ from app.integration_secrets import decrypt
 from sqlalchemy import text
 from test_messaging import configure, protected_key  # noqa: F401
 from test_reservations import family, reserve, setup
+
+
+@pytest.mark.usefixtures("protected_key")
+@pytest.mark.parametrize("cancel_trip", [False, True])
+def test_cancellation_only_identifies_reservation_owner_and_event_date(
+    client, seeded, owner, monkeypatch, cancel_trip
+):
+    configure(client, seeded)
+    trip = setup(client, seeded)
+    booking = reserve(client, trip, family(size=1))
+
+    async def no_boarding_data(*_):
+        raise AssertionError("Cancellation must not load boarding or Maps data")
+
+    monkeypatch.setattr("app.whatsapp.reservation_boarding_message", no_boarding_data)
+    resource = f"trips/{trip['id']}" if cancel_trip else f"reservations/{booking['id']}"
+    response = client.patch(f"/api/v1/{resource}/status", json={"status": "cancelled"})
+    assert response.status_code == 200, response.text
+    with owner.connect() as db:
+        row = (
+            db.execute(
+                text("""SELECT r.contact_name,r.cancelled_at,o.body FROM reservations r
+            JOIN whatsapp_outbox o ON o.reservation_id=r.id
+            WHERE r.id=:id AND o.kind='cancelled'"""),
+                {"id": booking["id"]},
+            )
+            .mappings()
+            .one()
+        )
+    date = (
+        row["cancelled_at"]
+        .astimezone(ZoneInfo("America/Sao_Paulo"))
+        .strftime("%d/%m/%Y")
+    )
+    assert decrypt(row["body"]) == (
+        f"A reserva nº {booking['id'][:8].upper()}, de {row['contact_name']}, "
+        f"foi cancelada em {date}."
+    )
 
 
 @pytest.mark.parametrize("position", [0, 1])

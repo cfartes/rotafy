@@ -27,13 +27,13 @@ Antes do primeiro salvamento pelo painel, Resend continua aceitando a configura�
 ## Mensagens
 
 - Reserva confirmada: após criação manual/importação já confirmada ou confirmação de uma solicitação pendente.
-- Cancelamento: ao cancelar a reserva ou a viagem; inclui reservas canceladas junto com a viagem.
+- Cancelamento: ao cancelar a reserva ou a viagem; inclui reservas canceladas junto com a viagem. Envia somente número curto da reserva, nome do responsável e data efetiva do cancelamento em Brasília (dd/mm/yyyy), sem mapas, embarques, valores ou detalhes financeiros.
 - PAGO: quando a marcação muda para PAGO. Não envia ao simplesmente salvar novamente o mesmo estado nem ao desmarcar.
 - Resumo manual: em **Detalhes da reserva → Enviar resumo pelo WhatsApp**. Cada solicitação tem uma chave de operação para não repetir uma requisição perdida por falha de conexão.
 - Bilhete individual: após emitir ou reemitir, use **Enviar bilhete pelo WhatsApp** na seção de bilhetes da reserva. O link vai para o telefone da família. Um único link/QR por passageiro atende todos os trechos contratados; embarques e desembarques continuam separados por trecho. O conteúdo com link é cifrado na fila e descartado se o bilhete for revogado/reemitido ou a viagem encerrada antes do envio.
 - Convite de colaborador: escolha E-mail, WhatsApp ou ambos em **Equipe → Adicionar pessoa** ou **Enviar convite**. Usa o telefone do colaborador e o mesmo link privado de criação de senha nos dois canais. Consulte [CONVITES_WHATSAPP.md](CONVITES_WHATSAPP.md).
 
-O resumo contém empresa, responsável, viagem/pacote, destino, saída em Brasília, quantidade de passageiros, valor nominal, referência curta da reserva, situação e marcação PAGO. Inclui os nomes dos passageiros, com até oito nomes no resumo e indicação da quantidade restante. Não inclui CPF. Empresa e responsável pela reserva recebem rótulos explícitos para evitar confusão entre os nomes. Usa o único telefone internacional da família, no formato `<DDI><DDD><número>@c.us`. O envio do bilhete identifica explicitamente a empresa e o passageiro correspondente ao QR, além do link privado para a página de embarque. Não há cobrança integrada, anexos, senha de passageiro, lembretes, grupos ou recebimento de mensagens nesta etapa.
+Exceto no aviso simplificado de cancelamento, o resumo contém empresa, responsável, viagem/pacote, destino, saída em Brasília, quantidade de passageiros, valor nominal, referência curta da reserva, situação e marcação PAGO. Inclui os nomes dos passageiros, com até oito nomes no resumo e indicação da quantidade restante. Não inclui CPF. Empresa e responsável pela reserva recebem rótulos explícitos para evitar confusão entre os nomes. Usa o único telefone internacional da família, no formato `<DDI><DDD><número>@c.us`. O envio do bilhete identifica explicitamente a empresa e o passageiro correspondente ao QR, além do link privado para a página de embarque. Não há cobrança integrada, anexos, senha de passageiro, lembretes, grupos ou recebimento de mensagens nesta etapa.
 
 ## Fila e histórico
 
