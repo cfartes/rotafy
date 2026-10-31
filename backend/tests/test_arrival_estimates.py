@@ -157,7 +157,7 @@ def test_optimized_order_is_shared_and_never_published_after_departure(
         )
         db.execute(
             text(
-                "UPDATE geocoding_settings SET routes_enabled=true,optimization_enabled=true"
+                "UPDATE geocoding_settings SET routes_enabled=false,optimization_enabled=true"
             )
         )
     calls = []

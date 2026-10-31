@@ -90,7 +90,12 @@ async def put_configuration(data: Configuration, actor: Auth):
         if data.routes_enabled is not None
         else current["routes_enabled"]
     )
-    if (data.enabled or routes_enabled) and not key:
+    optimization_enabled = (
+        data.optimization_enabled
+        if data.optimization_enabled is not None
+        else current["optimization_enabled"]
+    )
+    if (data.enabled or routes_enabled or optimization_enabled) and not key:
         raise HTTPException(422, "Cadastre a chave de backend antes de habilitar.")
     await actor.db.execute(
         text("""UPDATE geocoding_settings SET enabled=:enabled,
@@ -101,9 +106,7 @@ async def put_configuration(data: Configuration, actor: Auth):
             "key": key,
             "limit": data.monthly_limit,
             "routes_enabled": routes_enabled,
-            "optimization_enabled": data.optimization_enabled
-            if data.optimization_enabled is not None
-            else current["optimization_enabled"],
+            "optimization_enabled": optimization_enabled,
             "routes_limit": data.routes_limit
             if data.routes_limit is not None
             else current["routes_limit"],

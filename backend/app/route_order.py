@@ -118,7 +118,6 @@ async def next_order(db, company):
     config = await configuration(db)
     if (
         not config["optimization_enabled"]
-        or not config["routes_enabled"]
         or not config["api_key"]
         or not await enabled(db, company, "boarding")
     ):
@@ -167,7 +166,7 @@ async def next_order(db, company):
                 reserved = await db.scalar(
                     text("""UPDATE geocoding_settings SET
                   routes_used=CASE WHEN routes_month=date_trunc('month',now())::date THEN routes_used+1 ELSE 1 END,
-                  routes_month=date_trunc('month',now())::date WHERE id AND routes_enabled AND optimization_enabled
+                  routes_month=date_trunc('month',now())::date WHERE id AND optimization_enabled
                   AND (routes_month<>date_trunc('month',now())::date OR routes_used<routes_limit) RETURNING routes_used""")
                 )
                 if reserved is None:
