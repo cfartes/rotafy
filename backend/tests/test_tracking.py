@@ -32,6 +32,18 @@ def configure_tracking(client, **changes):
     assert result.status_code == 200, result.text
 
 
+def test_saved_settings_can_be_loaded_and_saved_again(client, seeded):
+    configure_tracking(client)
+    loaded = client.get("/api/v1/tracking/settings")
+    assert loaded.status_code == 200, loaded.text
+    data = loaded.json()
+    assert set(data) == {"enabled", "proximity_enabled", "departure_enabled", "radius_m"}
+    data["enabled"] = False
+    saved = client.put("/api/v1/tracking/settings", json=data)
+    assert saved.status_code == 200, saved.text
+    assert client.get("/api/v1/tracking/settings").json() == data
+
+
 def started(client, seeded):
     trip, reservation, prefix = prepare(client, seeded, size=1)
     configure_tracking(client)
