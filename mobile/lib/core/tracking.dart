@@ -8,6 +8,19 @@ import 'store.dart';
 
 class VehicleTracking {
   static const channel = MethodChannel('rotafy/tracking');
+  static Future<Json?> diagnostics() async {
+    try {
+      final data = await channel.invokeMapMethod<String, dynamic>(
+        'diagnostics',
+      );
+      return data == null ? null : Json.from(data);
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
   static Future<String?> active() async {
     try {
       return await channel.invokeMethod<String>('status');

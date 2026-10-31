@@ -36,13 +36,21 @@ class _ManifestPageState extends State<ManifestPage> {
   String filter = 'all';
   bool listOpen = true;
   String? trackingNotice;
+  Json? trackingHealth;
   Timer? availabilityTimer;
   @override
   void initState() {
     super.initState();
+    refreshTracking();
     availabilityTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      refreshTracking();
       if (mounted) setState(() {});
     });
+  }
+
+  Future<void> refreshTracking() async {
+    final health = await VehicleTracking.diagnostics();
+    if (mounted) setState(() => trackingHealth = health);
   }
 
   @override
@@ -97,6 +105,7 @@ class _ManifestPageState extends State<ManifestPage> {
           () => trackingNotice = 'Rastreamento iniciado neste celular. A coleta para ao encerrar o trecho ou interromper o compartilhamento.',
         );
       }
+      await refreshTracking();
     } catch (e) {
       if (mounted) setState(() => trackingNotice = e.toString());
     }
@@ -341,6 +350,7 @@ class _ManifestPageState extends State<ManifestPage> {
                 TextButton(
                   onPressed: () async {
                     await VehicleTracking.stop();
+                    await refreshTracking();
                     if (mounted) {
                       setState(
                         () => trackingNotice =
@@ -351,6 +361,19 @@ class _ManifestPageState extends State<ManifestPage> {
                   child: const Text('Interromper rastreamento neste celular'),
                 ),
               if (trackingNotice != null) Text(trackingNotice!),
+              if (journeyStatus == 'in_progress' &&
+                  trackingHealth != null &&
+                  controller.moduleEnabled('tracking')) ...[
+                Text(
+                  trackingHealth!['active'] == true
+                      ? trackingHealth!['message'] as String
+                      : 'Rastreamento parado neste celular. Use Assumir rastreamento para iniciar.',
+                ),
+                if ((trackingHealth!['last_sent_at'] as num? ?? 0) > 0)
+                  Text(
+                    'Último envio confirmado: ${TimeOfDay.fromDateTime(DateTime.fromMillisecondsSinceEpoch((trackingHealth!['last_sent_at'] as num).toInt())).format(context)}',
+                  ),
+              ],
               if (journeyStatus == 'in_progress')
                 FilledButton.icon(
                   onPressed:
