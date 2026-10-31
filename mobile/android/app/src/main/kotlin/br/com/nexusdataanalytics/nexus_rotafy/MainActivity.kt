@@ -39,6 +39,11 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 "stop" -> { stopService(Intent(this, TrackingService::class.java)); result.success(true) }
                 "status" -> result.success(TrackingService.activeSession)
+                "diagnostics" -> result.success(mapOf(
+                    "active" to (TrackingService.activeSession != null),
+                    "message" to TrackingService.lastIssue,
+                    "last_sent_at" to TrackingService.lastSentAt
+                ))
                 else -> result.notImplemented()
             }
         }

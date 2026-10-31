@@ -292,7 +292,7 @@ Em **Configurações → Localização automática de embarques**, cadastre a ch
 
 A tela mostra o consumo registrado pelo Rotafy no mês UTC. O limite soma todas as empresas e inclui tentativas com erro. O Google Cloud continua sendo a fonte de cobrança: configure cotas e alertas lá, pois outros aplicativos ou projetos não entram no contador do Rotafy. Ao atingir o limite local, novas consultas aguardam a renovação mensal ou um ajuste autorizado do limite.
 
-O processamento é separado do WhatsApp. Falhas temporárias têm até cinco tentativas, espaçadas em cinco minutos; após isso, o local fica para revisão. Confira a ativação da API, o faturamento e a restrição pelo IP se vários endereços falharem. Endereços e coordenadas manuais são preservados. Os resultados automáticos aparecem por link do Google Maps e não são desenhados sobre o mapa OpenStreetMap. Para coleta prevista a cada minuto e início automático, publique o APK 1.10.1 (compilação 17), com confirmação de início do serviço e envio da primeira posição.
+O processamento é separado do WhatsApp. Falhas temporárias têm até cinco tentativas, espaçadas em cinco minutos; após isso, o local fica para revisão. Confira a ativação da API, o faturamento e a restrição pelo IP se vários endereços falharem. Endereços e coordenadas manuais são preservados. Os resultados automáticos aparecem por link do Google Maps e não são desenhados sobre o mapa OpenStreetMap. Para coleta prevista a cada minuto e início automático, publique o APK 1.10.2 (compilação 18), com confirmação de início, primeira posição e coleta periódica combinada. O manifesto mostra o último envio periódico confirmado e falhas de localização ou comunicação.
 
 
 ### Tempo de chegada e sequência dos pontos

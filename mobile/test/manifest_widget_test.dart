@@ -35,6 +35,17 @@ void main() {
                 return !nativeFailure;
               }
               if (call.method == 'stop') nativeStops++;
+              if (call.method == 'diagnostics') {
+                return {
+                  'active': nativeStarts > nativeStops,
+                  'message': positions > 0
+                      ? 'Localização recebida pelo servidor.'
+                      : 'Aguardando a próxima posição do veículo.',
+                  'last_sent_at': positions > 0
+                      ? DateTime.now().millisecondsSinceEpoch
+                      : 0,
+                };
+              }
               return null;
             });
         late Database db;
@@ -126,11 +137,22 @@ void main() {
           }
         }
         await tester.pump();
+        await tester.pumpAndSettle();
         expect(claims, 1);
         expect(nativeStarts, otherPhone ? 0 : 1);
         expect(positions, otherPhone || nativeFailure ? 0 : 1);
         expect(released, nativeFailure ? 1 : 0);
         expect(nativeStops, nativeFailure ? 1 : 0);
+        if (!otherPhone && !nativeFailure) {
+          expect(
+            find.text('Localização recebida pelo servidor.'),
+            findsOneWidget,
+          );
+          expect(
+            find.textContaining('Último envio confirmado:'),
+            findsOneWidget,
+          );
+        }
         if (nativeFailure) {
           expect(
             find.textContaining('O Android não confirmou'),

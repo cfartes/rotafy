@@ -16,7 +16,7 @@ Se o endereço/ponto mudar, a confirmação anterior perde validade. Sem coorden
 
 ## Operação no Android
 
-Instale o **APK 1.10.1, compilação 17**, sobre a versão anterior. **Iniciar viagem** tenta ativar o GPS automaticamente quando habilitado pela empresa. Autorize a localização e mantenha o celular no veículo. Se outro aparelho já está ativo, sua sessão é preservada; use **Assumir rastreamento deste veículo** para transferir. Falha de GPS não desfaz a saída, e pode ser corrigida para assumir depois. O app tenta atualizar a rota ao registrar a saída; se essa consulta falhar, preserva a saída e informa a necessidade de sincronizar.
+Instale o **APK 1.10.2, compilação 18**, sobre a versão anterior. **Iniciar viagem** tenta ativar o GPS automaticamente quando habilitado pela empresa. Autorize a localização e mantenha o celular no veículo. Se outro aparelho já está ativo, sua sessão é preservada; use **Assumir rastreamento deste veículo** para transferir. Falha de GPS não desfaz a saída, e pode ser corrigida para assumir depois. O app tenta atualizar a rota ao registrar a saída; se essa consulta falhar, preserva a saída e informa a necessidade de sincronizar.
 
 Um único aparelho fica responsável por veículo e deslocamento. Outro colaborador atribuído pode confirmar a transferência. A sessão anterior deixa de aceitar posições. Cada retorno ou próximo deslocamento inicia seu rastreamento ao registrar a saída; não há coleta durante o intervalo entre os passeios.
 
@@ -67,3 +67,11 @@ Veja [configuração, limites e funcionamento](RASTREAMENTO_E_PREVISAO.md).
 O APK aguarda a confirmação de que o serviço Android entrou em primeiro plano antes de informar que o rastreamento iniciou. A solicitação da permissão de notificações ocorre depois dessa inicialização. A primeira posição obtida na ativação é enviada ao servidor; não é descartada. Se o Android não confirmar o serviço ou a API recusar a primeira posição, a ativação falha, a sessão criada é encerrada e a tela permite tentar novamente. A saída da viagem permanece registrada.
 
 Publicar `artifacts/mobile/nexus-rotafy-1.10.1.apk` no Superadmin e instalar sobre a versão anterior. Não há alteração de esquema nem recriação do banco. Validar no aparelho a notificação, o recebimento contínuo com tela bloqueada e o aviso em uma reserva ainda aguardando embarque. Ausência de notificação não prova, isoladamente, falha de GPS: a permissão de notificações também pode ocultá-la.
+
+## Coleta periódica — 1.10.2, compilação 18
+
+A coleta periódica usa o mesmo cliente de localização combinada já utilizado na captura inicial, em vez de depender exclusivamente do GPS por satélite quando ele está habilitado. Solicita uma posição recente a cada minuto, inclusive sem deslocamento, e mantém a tentativa nativa como alternativa se o cliente combinado não retornar posição. Cada tentativa é limitada no tempo e cancelada ao interromper ou transferir o rastreamento. A precisão informada é preservada: o backend continua exigindo até cem metros para aviso de proximidade. Não reutiliza indefinidamente coordenadas antigas.
+
+O manifesto consulta o estado local a cada trinta segundos e mostra o último envio periódico confirmado pela API, falta de posição recente ou erro de comunicação HTTP. A confirmação inicial enviada pelo Flutter não é contada nesse indicador do serviço periódico. Uma notificação ativa e consultas GET com sucesso não comprovam a coleta: confirme o aumento de registros na sessão atual no banco.
+
+Publique `artifacts/mobile/nexus-rotafy-1.10.2.apk` no Superadmin e instale sobre a versão anterior. Teste por pelo menos três minutos, com tela bloqueada, parado e em deslocamento. Ambiente fechado ou restrições do aparelho ainda podem impedir uma posição precisa. Sem alteração no banco.
