@@ -69,7 +69,7 @@ class TrackingService : Service() {
         val pending = PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, "rotafy_location") else Notification.Builder(this)
         val notification = builder.setContentTitle("Rotafy · viagem em rastreamento")
-            .setContentText("Localização a cada 5 minutos. Abra o app para interromper.")
+            .setContentText("Localização a cada 1 minuto. Abra o app para interromper.")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).setContentIntent(pending).build()
         startForeground(3838, notification)
         wakeLock?.acquire(360000)
@@ -108,7 +108,7 @@ class TrackingService : Service() {
                 if (SystemClock.elapsedRealtime()-lastContact > 15*60000) { handler.post { stopSelf() }; return@execute }
                 handler.post { if (!destroyed && current == generation) capture(session, current) }
             }
-            handler.postDelayed(this, 300000)
+            handler.postDelayed(this, 60000)
         }
     }
 

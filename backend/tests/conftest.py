@@ -85,7 +85,14 @@ def owner():
 
 
 @pytest.fixture
-def seeded(owner):
+def seeded(owner, monkeypatch):
+    from datetime import datetime, timezone
+
+    # Operational fixtures use 10–11 January 2027; other domain clocks stay real.
+    monkeypatch.setattr(
+        "app.crew_schedule.utc_now",
+        lambda: datetime(2027, 1, 11, 19, tzinfo=timezone.utc),
+    )
     ids = {key: uuid4() for key in ["nexus", "a", "b", "admin_a", "admin_b", "guide_a"]}
     hashed = passwords.hash(PASSWORD)
     with owner.begin() as db:
@@ -98,6 +105,11 @@ def seeded(owner):
         )
         db.execute(
             text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true")
+        )
+        db.execute(
+            text("""UPDATE geocoding_settings SET enabled=false,api_key='',used=0,
+          monthly_limit=9000,version=0,routes_enabled=false,routes_used=0,routes_limit=9000,
+          optimization_enabled=false,stop_minutes=2,usage_month=date_trunc('month',now()),routes_month=date_trunc('month',now())""")
         )
         db.execute(
             text("""INSERT INTO plans(id,code,name) VALUES

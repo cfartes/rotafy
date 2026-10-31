@@ -282,13 +282,13 @@
       "title": "Acompanhe o veículo.\nOriente o passageiro.",
       "lead": "Rastreamento e avisos configuráveis pela empresa.",
       "points": [
-        "Posições do celular responsável coletadas a cada cinco minutos.",
-        "Mapa com última posição e trilha das amostras durante o trecho.",
-        "Aviso de proximidade para embarques confirmados no mapa.",
-        "Lembrete de saída na ida e na volta pelo WhatsApp."
+        "Rastreamento automático ao iniciar, com coleta prevista a cada minuto.",
+        "Mapa geral da frota e histórico individual por veículo.",
+        "WhatsApp com lembrete de saída e previsão de chegada quando disponível.",
+        "Localização automática dos embarques e sequência otimizada dos pontos."
       ],
-      "footnote": "Localização aproximada; depende de conexão, GPS e permissões.",
-      "notes": "Rastreamento e avisos configuráveis pela empresa. Posições do celular responsável coletadas a cada cinco minutos. Mapa com última posição e trilha das amostras durante o trecho. Aviso de proximidade para embarques confirmados no mapa. Lembrete de saída na ida e na volta pelo WhatsApp. Localização aproximada; depende de conexão, GPS e permissões."
+      "footnote": "Requer configuração habilitada e APK atualizado. Estimativas dependem de GPS, rede e trânsito.",
+      "notes": "Rastreamento e avisos configuráveis pela empresa. Rastreamento automático ao iniciar, com coleta prevista a cada minuto. Mapa geral da frota e histórico individual por veículo. WhatsApp com lembrete de saída e previsão de chegada quando disponível. Localização automática dos embarques e sequência otimizada dos pontos. Requer configuração habilitada e APK atualizado. Estimativas dependem de GPS, rede e trânsito."
     },
     {
       "eyebrow": "GESTÃO DA ASSINATURA",

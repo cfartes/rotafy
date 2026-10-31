@@ -35,6 +35,10 @@ class Configuration(Input):
     monthly_limit: int = Field(ge=1, le=1000000, strict=True)
     api_key: SecretStr | None = Field(default=None, max_length=512)
     clear_key: bool = False
+    optimization_enabled: bool | None = None
+    routes_enabled: bool | None = None
+    routes_limit: int | None = Field(default=None, ge=1, le=1000000, strict=True)
+    stop_minutes: int | None = Field(default=None, ge=0, le=30, strict=True)
 
 
 async def configuration(db):
@@ -46,6 +50,13 @@ def public_config(value):
         "key_configured": bool(value["api_key"]),
         "used": value["used"]
         if value["usage_month"] == utc_now().date().replace(day=1)
+        else 0,
+        "optimization_enabled": value["optimization_enabled"],
+        "routes_enabled": value["routes_enabled"],
+        "routes_limit": value["routes_limit"],
+        "stop_minutes": value["stop_minutes"],
+        "routes_used": value["routes_used"]
+        if value["routes_month"] == utc_now().date().replace(day=1)
         else 0,
     }
 
@@ -74,12 +85,32 @@ async def put_configuration(data: Configuration, actor: Auth):
                 422, "Informe uma chave válida ou mantenha o campo vazio."
             )
         key = encrypt(value)
-    if data.enabled and not key:
+    routes_enabled = (
+        data.routes_enabled
+        if data.routes_enabled is not None
+        else current["routes_enabled"]
+    )
+    if (data.enabled or routes_enabled) and not key:
         raise HTTPException(422, "Cadastre a chave de backend antes de habilitar.")
     await actor.db.execute(
         text("""UPDATE geocoding_settings SET enabled=:enabled,
-      api_key=:key,monthly_limit=:limit,version=version+1 WHERE id"""),
-        {"enabled": data.enabled, "key": key, "limit": data.monthly_limit},
+      api_key=:key,monthly_limit=:limit,routes_enabled=:routes_enabled,
+      routes_limit=:routes_limit,stop_minutes=:stop_minutes,optimization_enabled=:optimization_enabled,version=version+1 WHERE id"""),
+        {
+            "enabled": data.enabled,
+            "key": key,
+            "limit": data.monthly_limit,
+            "routes_enabled": routes_enabled,
+            "optimization_enabled": data.optimization_enabled
+            if data.optimization_enabled is not None
+            else current["optimization_enabled"],
+            "routes_limit": data.routes_limit
+            if data.routes_limit is not None
+            else current["routes_limit"],
+            "stop_minutes": data.stop_minutes
+            if data.stop_minutes is not None
+            else current["stop_minutes"],
+        },
     )
     await audit(actor.db, None, actor.user["id"], "geocoding.configuration", None)
     return public_config(await configuration(actor.db))
@@ -312,7 +343,13 @@ async def main():
                     )
                 for company in companies:
                     Path("/tmp/rotafy-geocoding-health").touch()
+                    from app.arrival_estimates import process_estimates
+
+                    await process_estimates(engine, company)
                     await process_company(engine, company)
+                    from app.route_order import process_orders
+
+                    await process_orders(engine, company)
             except (SQLAlchemyError, OSError, ValueError):
                 logging.getLogger(__name__).error("geocoding.cycle_failed")
             await asyncio.sleep(2)

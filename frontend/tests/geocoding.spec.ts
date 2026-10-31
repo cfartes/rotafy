@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("full superadmin saves a server key without reading it back", async ({ page }) => {
-  let config = { enabled: false, monthly_limit: 9000, used: 12, key_configured: false, version: 0 };
+  let config = { enabled: false, monthly_limit: 9000, used: 12, key_configured: false, version: 0, routes_enabled: false, routes_limit: 9000, routes_used: 0, stop_minutes: 2, optimization_enabled: false };
   let submission: any;
   await page.route("**/api/v1/**", async route => {
     const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
@@ -21,9 +21,11 @@ test("full superadmin saves a server key without reading it back", async ({ page
   await page.getByRole("button", { name: "Configurações", exact: true }).click();
   await page.getByLabel("Ativar localização automática", { exact: true }).check();
   await page.getByLabel("Chave Google Geocoding do backend", { exact: true }).fill("sample_test_key");
+  await page.getByLabel("Incluir tempo estimado de chegada pelo Google Maps").check();
+  await page.getByLabel("Calcular sequência otimizada dos hotéis e casas antes da viagem").check();
   await page.getByRole("button", { name: "Salvar localização automática", exact: true }).click();
   await expect(page.getByText("Chave cadastrada. Deixe vazio para mantê-la.", { exact: true })).toBeVisible();
-  expect(submission).toEqual({ expected_version: 0, enabled: true, monthly_limit: 9000, api_key: "sample_test_key", clear_key: false });
+  expect(submission).toEqual({ expected_version: 0, enabled: true, monthly_limit: 9000, api_key: "sample_test_key", clear_key: false, optimization_enabled: true, routes_enabled: true, routes_limit: 9000, stop_minutes: 2 });
   await expect(page.getByLabel("Chave Google Geocoding do backend", { exact: true })).toHaveValue("");
 });
 

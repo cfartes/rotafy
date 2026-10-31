@@ -174,6 +174,13 @@ def test_google_coordinates_feed_proximity_queue_without_manual_confirmation(
     )
     process(seeded["a"])
     process(seeded["a"])
+    from datetime import timedelta
+
+    from app.billing.calendar import utc_now
+
+    monkeypatch.setattr(
+        "app.crew_schedule.utc_now", lambda: utc_now() + timedelta(days=1)
+    )
     login(client, email="driver0@example.com")
     assert (
         client.patch(prefix + "/journey", json={"status": "in_progress"}).status_code

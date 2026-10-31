@@ -59,7 +59,7 @@ export function Documentation({ nexus = false, editablePresentation = false }: {
           Apresentação das funcionalidades e manual de utilização com
           orientações para gestão, atendimento e operação das viagens.
         </p>
-        <span>Edição 2026.10 · Revisão 15 · Atualizado em 31/10/2026</span>
+        <span>Edição 2026.10 · Revisão 16 · Atualizado em 31/10/2026</span>
       </header>
       <div className="documentation-grid">
         <AndroidDownload nexus={nexus} />

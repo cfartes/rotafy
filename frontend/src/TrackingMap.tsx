@@ -3,7 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 export type GeoPoint = { latitude: number; longitude: number };
-export function TrackingMap({ points, onPick }: { points: GeoPoint[]; onPick?: (point: GeoPoint) => void }) {
+export function TrackingMap({ points, onPick, markers }: { points: GeoPoint[]; onPick?: (point: GeoPoint) => void; markers?: (GeoPoint & { label: string; stale: boolean })[] }) {
   const root = useRef<HTMLDivElement>(null);
   const pick = useRef(onPick); pick.current = onPick;
   useEffect(() => {
@@ -14,6 +14,13 @@ export function TrackingMap({ points, onPick }: { points: GeoPoint[]; onPick?: (
       maxZoom: 19, referrerPolicy: "origin",
     }).addTo(map);
     const coordinates = points.map(p => [p.latitude, p.longitude] as L.LatLngTuple);
+    if (markers?.length) {
+      markers.forEach(p => {
+        const label = document.createElement("span"); label.textContent = p.label;
+        L.circleMarker([p.latitude, p.longitude], { radius: 9, color: p.stale ? "#a34b00" : "#0c7a76" }).bindTooltip(label, { permanent: false, direction: "top" }).addTo(map);
+      });
+      map.fitBounds(L.latLngBounds(markers.map(p => [p.latitude, p.longitude] as L.LatLngTuple)), { padding: [40,40], maxZoom: 16 });
+    }
     if (coordinates.length) {
       L.polyline(coordinates, { color: "#0c7a76", dashArray: "6 6" }).addTo(map);
       coordinates.forEach((p, i) => L.circleMarker(p, { radius: i === coordinates.length - 1 ? 9 : 4, color: "#0c7a76" }).addTo(map));
@@ -31,8 +38,8 @@ export function TrackingMap({ points, onPick }: { points: GeoPoint[]; onPick?: (
     container.addEventListener("keydown", keyboardPick);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(root.current);
     return () => { container.removeEventListener("keydown", keyboardPick); observer.disconnect(); map.remove(); };
-  }, [points]);
-  return <div ref={root} style={{ height: 360, width: "100%", zIndex: 0 }} aria-label={onPick ? "Mapa: use as setas para mover e Enter para selecionar o centro, ou clique para selecionar o embarque" : "Mapa das posições coletadas"} />;
+  }, [points, markers]);
+  return <div ref={root} style={{ height: 360, width: "100%", zIndex: 0 }} aria-label={onPick ? "Mapa: use as setas para mover e Enter para selecionar o centro, ou clique para selecionar o embarque" : markers ? "Mapa de veículos em viagem" : "Mapa das posições coletadas"} />;
 }
 
 export function mapsCoordinate(value: string): GeoPoint | null {

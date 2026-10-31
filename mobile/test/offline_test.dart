@@ -94,6 +94,7 @@ void main() {
         final controller = OperationController(
           FakeApi((method, path, body) async {
             if (path == '/auth/me') return data['operator'];
+            if (path.endsWith('/route')) return {'legs': []};
             bodies.add(body!);
             return {
               ...data,

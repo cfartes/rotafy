@@ -355,6 +355,8 @@ VISIBILITY = """( :manage OR EXISTS (SELECT 1 FROM trip_vehicles tv
 @router.get("/trips")
 async def trips(actor: Auth):
     tenant(actor)
+    from app.crew_schedule import today
+
     result = await rows(
         actor.db,
         f"""SELECT t.*, (SELECT min(total) FROM (SELECT sum(v.capacity) AS total FROM trip_legs l JOIN trip_vehicles v ON v.trip_id=l.trip_id
@@ -368,20 +370,25 @@ async def trips(actor: Auth):
         agenda = await rows(
             actor.db,
             """SELECT l.trip_id,l.id,l.position,l.origin,l.destination,l.starts_at,l.ends_at,
-          bool_and((v.journey_states -> l.id::text ->> 'status')='completed') IS TRUE AS completed
+          bool_and((v.journey_states -> l.id::text ->> 'status')='completed') IS TRUE AS completed,
+          bool_or((v.journey_states -> l.id::text ->> 'status')='in_progress') IS TRUE AS in_progress
           FROM trip_legs l JOIN trip_vehicles v ON v.trip_id=l.trip_id
             AND (v.leg_positions='[]'::jsonb OR v.leg_positions @> to_jsonb(l.position))
           WHERE l.trip_id=ANY(:ids) AND (:manage OR v.driver_id=:user OR EXISTS(SELECT 1 FROM trip_drivers d WHERE d.allocation_id=v.id AND d.user_id=:user) OR EXISTS(SELECT 1 FROM trip_guides g WHERE g.allocation_id=v.id AND g.user_id=:user))
+          AND (NOT :driver OR (l.starts_at AT TIME ZONE 'America/Sao_Paulo')::date=:today
+            OR v.journey_states -> l.id::text ->> 'status'='in_progress')
           GROUP BY l.id ORDER BY l.starts_at,l.position""",
             ids=[t["id"] for t in result],
             manage=actor.user["role"] in {"admin", "attendant"},
             user=actor.user["id"],
+            driver=actor.user["role"] == "driver",
+            today=today(),
         )
         for trip in result:
             trip["agenda_legs"] = [
                 leg for leg in agenda if leg["trip_id"] == trip["id"]
             ]
-    return result
+    return [t for t in result if actor.user["role"] != "driver" or t.get("agenda_legs")]
 
 
 async def detail(db, trip_id):
@@ -433,6 +440,9 @@ async def detail(db, trip_id):
 @router.get("/trips/{trip_id}")
 async def get_trip(trip_id: UUID, actor: Auth):
     tenant(actor)
+    from app.crew_schedule import check_driver_trip
+
+    await check_driver_trip(actor.db, actor, trip_id)
     allowed = await actor.db.scalar(
         text(f"SELECT t.id FROM trips t WHERE t.id=:id AND {VISIBILITY}"),
         {

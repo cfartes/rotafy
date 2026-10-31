@@ -11,7 +11,7 @@ No Superadmin completo, abra Configurações → Localização automática de
 embarques. Cadastre a chave de **backend** com Geocoding API habilitada,
 faturamento ativo e restrição ao IP público de saída da VPS. Ative o serviço.
 A chave é criptografada pela chave persistente das integrações; a API devolve
-somente se está configurada, nunca a credencial. Não é necessário alterar APK,
+somente se está configurada, nunca a credencial. Para geocodificação isolada, não é necessário alterar APK,
 informar a chave Android ou expor credenciais no frontend.
 
 O limite inicial é 9.000 tentativas por mês UTC, global para todas as empresas.
@@ -79,3 +79,11 @@ URLs de requisições em logs, chamados ou mensagens.
 - https://developers.google.com/maps/documentation/geocoding/policies
 - https://cloud.google.com/maps-platform/terms/maps-service-terms
 - https://developers.google.com/maps/billing-and-pricing/pricing
+
+
+## Previsão, otimização e APK 1.10.0
+
+A previsão de chegada e a otimização da sequência usam a Routes API, além da
+Geocoding API. Consulte [RASTREAMENTO_E_PREVISAO.md](RASTREAMENTO_E_PREVISAO.md).
+O APK 1.10.0 (compilação 16) reduz a coleta prevista para um minuto, inicia GPS
+junto com a saída e aplica as regras de agenda e liberação dos trinta minutos.

@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../core/api.dart';
 import '../core/controller.dart';
+import '../core/crew.dart';
 
-List<Json> upcomingTrips(List<Json> trips, DateTime now) {
+List<Json> upcomingTrips(
+  List<Json> trips,
+  DateTime now, {
+  bool todayOnly = false,
+}) {
   final local = now.toLocal();
   final end = DateTime(local.year, local.month, local.day + 7);
   final expanded = trips.expand<Json>((trip) {
@@ -15,6 +20,7 @@ List<Json> upcomingTrips(List<Json> trips, DateTime now) {
           (leg) => {
             ...trip,
             'leg_id': leg['id'],
+            'journey_in_progress': leg['in_progress'] == true,
             'starts_at': leg['starts_at'],
             'destination': leg['destination'],
             'name': trip['mode'] == 'multi_destination'
@@ -26,6 +32,14 @@ List<Json> upcomingTrips(List<Json> trips, DateTime now) {
   final result = expanded.where((trip) {
     final starts = DateTime.tryParse(trip['starts_at'] as String? ?? '')
         ?.toLocal();
+    if (todayOnly) {
+      return driverDayVisible(trip, {
+            'status': trip['journey_in_progress'] == true
+                ? 'in_progress'
+                : 'scheduled',
+          }, now) &&
+          ['scheduled', 'in_progress'].contains(trip['status']);
+    }
     return starts != null &&
         !starts.isBefore(local) &&
         starts.isBefore(end) &&
@@ -48,26 +62,40 @@ String agendaTime(DateTime date) =>
 class AgendaList extends StatelessWidget {
   final List<Json> trips;
   final DateTime now;
-  const AgendaList({super.key, required this.trips, required this.now});
+  final bool todayOnly;
+  const AgendaList({
+    super.key,
+    required this.trips,
+    required this.now,
+    this.todayOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final items = upcomingTrips(trips, now);
+    final items = upcomingTrips(trips, now, todayOnly: todayOnly);
     final local = now.toLocal();
     final last = DateTime(local.year, local.month, local.day + 6);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Próximos 7 dias',
+          todayOnly ? 'Viagens de hoje' : 'Próximos 7 dias',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
-        Text('${agendaDate(local)} a ${agendaDate(last)} · horário do celular'),
+        Text(
+          todayOnly
+              ? '${agendaDate(now.toUtc().subtract(const Duration(hours: 3)))} · horário de Brasília'
+              : '${agendaDate(local)} a ${agendaDate(last)} · horário do celular',
+        ),
         const SizedBox(height: 16),
         if (items.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Text('Nenhuma viagem prevista para os próximos 7 dias.'),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              todayOnly
+                  ? 'Nenhuma viagem disponível para hoje.'
+                  : 'Nenhuma viagem prevista para os próximos 7 dias.',
+            ),
           ),
         for (final trip in items)
           Card(
@@ -152,6 +180,7 @@ class _AgendaPageState extends State<AgendaPage> {
                     )
                     .toList(),
                 now: DateTime.now(),
+                todayOnly: widget.controller.user?['role'] == 'driver',
               ),
             ),
           ),
