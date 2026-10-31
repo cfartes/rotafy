@@ -1,5 +1,6 @@
 import { DataUseNotice } from "./components/DataUseNotice";
 import { PrivacyInbox } from "./Privacy";
+import { GeocodingSettings } from "./GeocodingSettings";
 import { CollectionSettings } from "./Collections";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, type FormEvent } from "react";
@@ -375,6 +376,7 @@ export function IntegrationSettings() {
   return (
     <div className="reservation-workspace">
       <CollectionSettings />
+      <GeocodingSettings />
       <PrivacyInbox />
       <form className="operation-card modal-form" onSubmit={submit}>
         <DataUseNotice />

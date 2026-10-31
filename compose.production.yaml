@@ -115,6 +115,20 @@ services:
     environment: {}
     networks: []
     volumes: [integration_keys:/run/rotafy]
+  geocoding:
+    <<: *api
+    restart: unless-stopped
+    command: [python, -m, app.geocoding]
+    networks: [database, email_egress]
+    volumes: [integration_keys:/run/rotafy:ro]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      integration-secrets: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-geocoding-health'); assert p.exists() and time.time()-p.stat().st_mtime < 120"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
   whatsapp:
     <<: *api
     restart: unless-stopped

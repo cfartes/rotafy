@@ -300,7 +300,7 @@ async def boardings(db, trip_id=None):
         db,
         """SELECT rl.reservation_id,rl.leg_id,rl.allocation_id,rl.boarding_position,rl.boarding_location,
       r.contact_name,r.phone,r.status,r.trip_id,c.trade_name,t.name AS trip_name,t.status AS trip_status,
-      l.position,l.starts_at,l.origin,l.origin_address,ts.name AS stop_name,ts.address AS stop_address,
+      l.position,l.starts_at,l.origin,l.origin_uf,l.origin_address,ts.name AS stop_name,ts.address AS stop_address,
       tv.journey_states,b.latitude,b.longitude,b.source_hash,
       ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names
       FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id JOIN companies c ON c.id=r.company_id
@@ -330,6 +330,35 @@ async def boardings(db, trip_id=None):
         ).hexdigest()
         row["coordinates_valid"] = row["source_hash"] == fingerprint
         row["source_hash"] = fingerprint
+        row["coordinate_source"] = "manual" if row["coordinates_valid"] else None
+        row["geocoding_status"] = "pending"
+    from app.geocoding import address_query
+
+    keys = [address_query(row)[0] for row in result if not row["coordinates_valid"]]
+    cached_rows = (
+        await rows(
+            db,
+            """SELECT address_hash,status,latitude,longitude
+      FROM geocoding_locations WHERE address_hash=ANY(:keys) AND expires_at>now()""",
+            keys=keys,
+        )
+        if keys
+        else []
+    )
+    locations = {r["address_hash"]: r for r in cached_rows}
+    for row in result:
+        if not row["coordinates_valid"]:
+            cached = locations.get(address_query(row)[0])
+            if cached:
+                row["geocoding_status"] = cached["status"]
+                if cached["status"] == "resolved":
+                    row["latitude"] = cached["latitude"]
+                    row["longitude"] = cached["longitude"]
+                    row["coordinates_valid"] = True
+                    row["coordinate_source"] = "google"
+        # Never expose stale manual coordinates as a suggested valid location.
+        if not row["coordinates_valid"]:
+            row["latitude"] = row["longitude"] = None
     return result
 
 

@@ -114,6 +114,22 @@ services:
     command: [python, -m, app.integration_secrets]
     volumes:
       - integration_keys:/run/rotafy
+  geocoding:
+    build: ./backend
+    command: [python, -m, app.geocoding]
+    restart: unless-stopped
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD}@db:5432/rotafy
+    volumes:
+      - integration_keys:/run/rotafy:ro
+    depends_on:
+      integration-secrets: {condition: service_completed_successfully}
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; p=pathlib.Path('/tmp/rotafy-geocoding-health'); assert p.exists() and time.time()-p.stat().st_mtime < 120"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
   whatsapp:
     build: ./backend
     command: [python, -m, app.whatsapp_worker]
