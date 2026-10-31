@@ -31,7 +31,7 @@ function ConfirmBoarding({ point, onClose }: { point: Boarding; onClose: () => v
 
 function Preferences({ settings }: { settings: Settings }) {
   const cache = useQueryClient();
-  const [value, setValue] = useState(settings), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice,setNotice] = useState("");
+  const [value, setValue] = useState<Settings>(() => ({ enabled: settings.enabled, proximity_enabled: settings.proximity_enabled, departure_enabled: settings.departure_enabled, radius_m: settings.radius_m })), [busy, setBusy] = useState(false), [error, setError] = useState(""), [notice,setNotice] = useState("");
   async function save(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); setNotice(""); try { await api("/tracking/settings", { method: "PUT", body: JSON.stringify(value) }); await cache.invalidateQueries({ queryKey: ["tracking"] }); setNotice("Configuração salva."); } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível salvar."); } finally { setBusy(false); } }
   return <form className="operation-card modal-form" onSubmit={save}>
 <DataUseNotice purpose="configurar e acompanhar a localização operacional do veículo durante a viagem" /><h2>Rastreamento e avisos</h2>

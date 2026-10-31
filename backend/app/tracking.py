@@ -57,7 +57,10 @@ class BoardingPoint(Input):
 
 async def settings(db, company):
     result = await rows(
-        db, "SELECT * FROM tracking_settings WHERE company_id=:company", company=company
+        db,
+        """SELECT enabled,proximity_enabled,departure_enabled,radius_m
+        FROM tracking_settings WHERE company_id=:company""",
+        company=company,
     )
     return result[0] if result else Settings().model_dump()
 
