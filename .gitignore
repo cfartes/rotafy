@@ -23,3 +23,6 @@ mobile/android/local.properties
 mobile/android/key.properties
 *.jks
 *.keystore
+
+# Credenciais locais de hospedagem
+info_vps.md

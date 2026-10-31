@@ -51,7 +51,7 @@ class VehicleTracking {
       if (previous != null && previous != session['id']) {
         await api.request('DELETE', '/tracking/sessions/$previous');
       }
-      await channel.invokeMethod('start', {
+      final started = await channel.invokeMethod<bool>('start', {
         'session': session['id'],
         'base': AppConfig.apiUrl,
         'origin': AppConfig.origin,
@@ -60,8 +60,30 @@ class VehicleTracking {
             .join('; '),
         'csrf': api.cookies['rotafy_csrf'] ?? '',
       });
+      if (started != true) {
+        throw StateError(
+          'O Android não confirmou o início do rastreamento. Tente assumir o rastreamento novamente.',
+        );
+      }
+      await api.request(
+        'POST',
+        '/tracking/sessions/${session['id']}/positions',
+        {
+          'positions': [
+            {
+              'id': const Uuid().v4(),
+              for (final entry in position.entries)
+                if (entry.key != 'status') entry.key: entry.value,
+            },
+          ],
+        },
+      );
     } catch (_) {
-      await api.request('DELETE', '/tracking/sessions/${session['id']}');
+      try {
+        await stop();
+      } finally {
+        await api.request('DELETE', '/tracking/sessions/${session['id']}');
+      }
       rethrow;
     }
   }

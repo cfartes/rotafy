@@ -57,7 +57,6 @@ class TrackingService : Service() {
         generation++
         handler.removeCallbacksAndMessages(null)
         listener?.let { locations.removeUpdates(it) }; listener = null
-        activeSession = session
         base = api; origin = intent.getStringExtra("origin") ?: ""
         cookie = intent.getStringExtra("cookie") ?: ""; csrf = intent.getStringExtra("csrf") ?: ""
         lastContact = SystemClock.elapsedRealtime()
@@ -72,6 +71,7 @@ class TrackingService : Service() {
             .setContentText("Localização a cada 1 minuto. Abra o app para interromper.")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).setContentIntent(pending).build()
         startForeground(3838, notification)
+        activeSession = session
         wakeLock?.acquire(360000)
         handler.post(tick)
         return START_NOT_STICKY

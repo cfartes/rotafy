@@ -14,18 +14,27 @@ import 'location_test.dart' show FakeLocation;
 
 void main() {
   sqfliteFfiInit();
-  for (final otherPhone in [false, true]) {
+  for (final scenario in ['started', 'other_phone', 'native_failure']) {
+    final otherPhone = scenario == 'other_phone';
+    final nativeFailure = scenario == 'native_failure';
     testWidgets(
-      'starting starts GPS automatically and preserves other phone: $otherPhone',
+      'automatic tracking confirms native start and sends initial GPS: $scenario',
       (tester) async {
         final previousLocation = GeolocatorPlatform.instance;
         GeolocatorPlatform.instance = FakeLocation();
         const channel = MethodChannel('rotafy/tracking');
         var nativeStarts = 0;
         var claims = 0;
+        var positions = 0;
+        var released = 0;
+        var nativeStops = 0;
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(channel, (call) async {
-              if (call.method == 'start') nativeStarts++;
+              if (call.method == 'start') {
+                nativeStarts++;
+                return !nativeFailure;
+              }
+              if (call.method == 'stop') nativeStops++;
               return null;
             });
         late Database db;
@@ -67,6 +76,18 @@ void main() {
               };
             }
             if (path == '/tracking/settings') return {'enabled': true};
+            if (path == '/tracking/sessions/session/positions') {
+              expect(nativeStarts, 1);
+              expect(body!['positions'][0]['latitude'], -9.0123);
+              expect(body['positions'][0]['accuracy_m'], 12.5);
+              expect(body['positions'][0].containsKey('status'), false);
+              positions++;
+              return {'accepted': 1};
+            }
+            if (method == 'DELETE' && path == '/tracking/sessions/session') {
+              released++;
+              return {};
+            }
             if (path == '/tracking/sessions') {
               claims++;
               if (otherPhone) {
@@ -98,11 +119,28 @@ void main() {
           await tester.runAsync(
             () => Future<void>.delayed(const Duration(milliseconds: 50)),
           );
-          if (claims == 1 && !controller.busy) break;
+          if (claims == 1 &&
+              !controller.busy &&
+              (otherPhone || positions == 1 || released == 1)) {
+            break;
+          }
         }
         await tester.pump();
         expect(claims, 1);
         expect(nativeStarts, otherPhone ? 0 : 1);
+        expect(positions, otherPhone || nativeFailure ? 0 : 1);
+        expect(released, nativeFailure ? 1 : 0);
+        expect(nativeStops, nativeFailure ? 1 : 0);
+        if (nativeFailure) {
+          expect(
+            find.textContaining('O Android não confirmou'),
+            findsOneWidget,
+          );
+          expect(
+            find.textContaining('Rastreamento iniciado neste celular'),
+            findsNothing,
+          );
+        }
         expect(find.text('Compartilhar localização do veículo?'), findsNothing);
         await tester.pumpWidget(const SizedBox.shrink());
         controller.dispose();
