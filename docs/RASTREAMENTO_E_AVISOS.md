@@ -16,7 +16,7 @@ Se o endereço/ponto mudar, a confirmação anterior perde validade. Sem coorden
 
 ## Operação no Android
 
-Instale o **APK 1.10.0, compilação 16**, sobre a versão anterior. **Iniciar viagem** tenta ativar o GPS automaticamente quando habilitado pela empresa. Autorize a localização e mantenha o celular no veículo. Se outro aparelho já está ativo, sua sessão é preservada; use **Assumir rastreamento deste veículo** para transferir. Falha de GPS não desfaz a saída, e pode ser corrigida para assumir depois. O app tenta atualizar a rota ao registrar a saída; se essa consulta falhar, preserva a saída e informa a necessidade de sincronizar.
+Instale o **APK 1.10.1, compilação 17**, sobre a versão anterior. **Iniciar viagem** tenta ativar o GPS automaticamente quando habilitado pela empresa. Autorize a localização e mantenha o celular no veículo. Se outro aparelho já está ativo, sua sessão é preservada; use **Assumir rastreamento deste veículo** para transferir. Falha de GPS não desfaz a saída, e pode ser corrigida para assumir depois. O app tenta atualizar a rota ao registrar a saída; se essa consulta falhar, preserva a saída e informa a necessidade de sincronizar.
 
 Um único aparelho fica responsável por veículo e deslocamento. Outro colaborador atribuído pode confirmar a transferência. A sessão anterior deixa de aceitar posições. Cada retorno ou próximo deslocamento inicia seu rastreamento ao registrar a saída; não há coleta durante o intervalo entre os passeios.
 
@@ -61,3 +61,9 @@ não são apagadas.
 O mapa geral mostra todos os veículos da empresa com GPS recebido. A previsão
 e a otimização preservam os pontos fixos da rota e são configuradas pela Nexus.
 Veja [configuração, limites e funcionamento](RASTREAMENTO_E_PREVISAO.md).
+
+## Confirmação do serviço Android — 1.10.1, compilação 17
+
+O APK aguarda a confirmação de que o serviço Android entrou em primeiro plano antes de informar que o rastreamento iniciou. A solicitação da permissão de notificações ocorre depois dessa inicialização. A primeira posição obtida na ativação é enviada ao servidor; não é descartada. Se o Android não confirmar o serviço ou a API recusar a primeira posição, a ativação falha, a sessão criada é encerrada e a tela permite tentar novamente. A saída da viagem permanece registrada.
+
+Publicar `artifacts/mobile/nexus-rotafy-1.10.1.apk` no Superadmin e instalar sobre a versão anterior. Não há alteração de esquema nem recriação do banco. Validar no aparelho a notificação, o recebimento contínuo com tela bloqueada e o aviso em uma reserva ainda aguardando embarque. Ausência de notificação não prova, isoladamente, falha de GPS: a permissão de notificações também pode ocultá-la.

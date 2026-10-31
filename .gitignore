@@ -20,6 +20,10 @@ mobile/android/build/
 mobile/.dart_tool/
 mobile/.idea/
 mobile/android/local.properties
+mobile/android/.kotlin/
 mobile/android/key.properties
 *.jks
 *.keystore
+
+# Credenciais locais de hospedagem
+info_vps.md
