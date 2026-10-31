@@ -26,6 +26,7 @@ from app.documentation import router as documentation_router
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
 from app.email_auth import router as email_auth_router
+from app.geocoding import router as geocoding_router
 from app.geography import router as geography_router
 from app.identity import (
     Auth,
@@ -873,6 +874,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)
+    application.include_router(geocoding_router)
     application.include_router(postal_codes_router)
     application.include_router(email_auth_router)
     return application

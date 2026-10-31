@@ -284,3 +284,12 @@ Os avisos de viagem e bilhetes incluem o endereço de embarque de cada trecho e 
 ### Atendimento das reservas após cancelamento
 
 Administradores e atendentes da empresa recebem pendências para as reservas afetadas por cancelamentos feitos após a atualização. As alternativas respeitam itinerário, disponibilidade da família e proximidade de data/hora. A equipe confirma o cliente e a logística; valores pagos podem ser aproveitados como crédito, com diferenças revisadas manualmente. Histórico, novos bilhetes e saldos a favor são rastreáveis. Essa operação utiliza o acesso da própria empresa, sem novo menu Nexus e sem alterar a assinatura Rotafy. A atualização mantém os dados existentes; nenhum aceite ou cancelamento retroativo é criado.
+
+
+### Localização automática de embarques
+
+Em **Configurações → Localização automática de embarques**, cadastre a chave de backend da Google Geocoding API, restrita ao IP de saída da VPS e a essa API. Ative o serviço e defina o limite mensal global de consultas (padrão: 9.000). O campo vazio preserva a chave existente; a remoção exige desativar o serviço. A chave é armazenada criptografada e nunca devolvida pela API. Não é necessário cadastrar as chaves web ou Android para esta função.
+
+A tela mostra o consumo registrado pelo Rotafy no mês UTC. O limite soma todas as empresas e inclui tentativas com erro. O Google Cloud continua sendo a fonte de cobrança: configure cotas e alertas lá, pois outros aplicativos ou projetos não entram no contador do Rotafy. Ao atingir o limite local, novas consultas aguardam a renovação mensal ou um ajuste autorizado do limite.
+
+O processamento é separado do WhatsApp. Falhas temporárias têm até cinco tentativas, espaçadas em cinco minutos; após isso, o local fica para revisão. Confira a ativação da API, o faturamento e a restrição pelo IP se vários endereços falharem. Endereços e coordenadas manuais são preservados. Os resultados automáticos aparecem por link do Google Maps e não são desenhados sobre o mapa OpenStreetMap. Não há nova versão do APK nesta entrega.

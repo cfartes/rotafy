@@ -7,11 +7,11 @@ import { TrackingMap, mapsCoordinate, type GeoPoint } from "./TrackingMap";
 
 type Settings = { enabled: boolean; proximity_enabled: boolean; departure_enabled: boolean; radius_m: number };
 type Vehicle = { id: string; trip_name: string; trip_id: string; vehicle_name: string; plate: string; responsible: string; origin: string; destination: string; captured_at: string | null; accuracy_m: number | null };
-type Boarding = { reservation_id: string; leg_id: string; contact_name: string; boarding_name: string; boarding_address: string; coordinates_valid: boolean; latitude: number | null; longitude: number | null; source_hash: string; starts_at: string };
+type Boarding = { reservation_id: string; leg_id: string; contact_name: string; boarding_name: string; boarding_address: string; coordinates_valid: boolean; coordinate_source?: string | null; geocoding_status?: string; latitude: number | null; longitude: number | null; source_hash: string; starts_at: string };
 
 function ConfirmBoarding({ point, onClose }: { point: Boarding; onClose: () => void }) {
   const cache = useQueryClient();
-  const [coordinate, setCoordinate] = useState<GeoPoint | null>(point.coordinates_valid && point.latitude !== null && point.longitude !== null ? { latitude: point.latitude, longitude: point.longitude } : null);
+  const [coordinate, setCoordinate] = useState<GeoPoint | null>(point.coordinate_source !== "google" && point.coordinates_valid && point.latitude !== null && point.longitude !== null ? { latitude: point.latitude, longitude: point.longitude } : null);
   const [error, setError] = useState(""), [busy, setBusy] = useState(false);
   return <Modal title="Confirmar ponto de embarque" onClose={onClose} wide><div className="modal-form">
     <p><strong>{point.boarding_name}</strong> · {point.boarding_address} · Reserva de {point.contact_name}</p>
@@ -50,7 +50,7 @@ export function Tracking() {
   const trips = useQuery({ queryKey:["tracking","trips"], queryFn:()=>api<{id:string;name:string;status:string}[]>("/trips") });
   const [session,setSession] = useState(""), [trip,setTrip] = useState(""), [editing,setEditing] = useState<Boarding|null>(null);
   const history = useQuery({ queryKey:["tracking","history",session],queryFn:()=>api<(GeoPoint & {captured_at:string})[]>(`/tracking/sessions/${session}/history`), enabled:!!session,refetchInterval:30000 });
-  const boardings = useQuery({queryKey:["tracking-boardings",trip],queryFn:()=>api<Boarding[]>(`/tracking/boardings?trip_id=${trip}`),enabled:!!trip});
+  const boardings = useQuery({queryKey:["tracking-boardings",trip],queryFn:()=>api<Boarding[]>(`/tracking/boardings?trip_id=${trip}`),enabled:!!trip,refetchInterval:15000});
   return <div className="modal-form">
     {(settings.error || vehicles.error || history.error || boardings.error) && <Alert>Não foi possível atualizar o rastreamento. Confira sua conexão.</Alert>}
     {settings.data && <Preferences settings={settings.data}/>}
@@ -60,8 +60,8 @@ export function Tracking() {
       {session && <TrackingMap points={history.data||[]}/>}
     </section>
     <section className="operation-card"><h2>Locais de embarque para avisos</h2><Field label="Viagem"><select value={trip} onChange={e=>setTrip(e.target.value)}><option value="">Selecione a viagem</option>{trips.data?.filter(t=>["scheduled","in_progress"].includes(t.status)).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
-      <p>Confirme o local no mapa para habilitar o aviso de proximidade. Se o endereço mudar, confirme novamente.</p>
-      {boardings.data?.map(p=><article className="operation-card" key={`${p.reservation_id}:${p.leg_id}`}><strong>{p.contact_name}</strong><p>{p.boarding_name} · {p.boarding_address}</p><p>Saída do trecho: {new Date(p.starts_at).toLocaleString("pt-BR")} · {p.coordinates_valid ? "Ponto confirmado" : "Sem coordenadas confirmadas"}</p><button className="button secondary" onClick={()=>setEditing(p)}>{p.coordinates_valid ? "Ajustar ponto no mapa" : "Confirmar ponto no mapa"}</button></article>)}
+      <p>Quando a localização automática estiver habilitada pela Nexus, os endereços serão localizados em segundo plano. Revise somente locais não encontrados ou ambíguos. Correções manuais continuam disponíveis.</p>
+      {boardings.data?.map(p=><article className="operation-card" key={`${p.reservation_id}:${p.leg_id}`}><strong>{p.contact_name}</strong><p>{p.boarding_name} · {p.boarding_address}</p><p>Saída do trecho: {new Date(p.starts_at).toLocaleString("pt-BR")} · {p.coordinates_valid ? (p.coordinate_source === "google" ? "Localizado automaticamente pelo Google Maps" : "Ponto confirmado manualmente") : (p.geocoding_status === "review" ? "Local não identificado com segurança. Revise o endereço ou marque no mapa." : "Aguardando localização automática ou confirmação manual")}</p>{p.coordinate_source === "google" && <a className="button secondary" href={`https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`} target="_blank" rel="noopener noreferrer">Ver no Google Maps</a>}<button className="button secondary" onClick={()=>setEditing(p)}>{p.coordinates_valid ? "Corrigir local manualmente" : "Confirmar ponto no mapa"}</button></article>)}
     </section>{editing && <ConfirmBoarding point={editing} onClose={()=>setEditing(null)}/>}
   </div>;
 }

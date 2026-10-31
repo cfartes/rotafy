@@ -802,7 +802,9 @@ Nas mensagens de reserva, os campos Empresa e Responsável pela reserva distingu
 
 O administrador acessa **Rastreamento** para ativar a coleta durante as viagens, ajustar o raio de proximidade (inicialmente cinco quilômetros) e habilitar o lembrete de saída. Os controles são independentes: o lembrete pode funcionar sem GPS.
 
-Em **Locais de embarque para avisos**, selecione a viagem e confirme cada local no mapa, incluindo hotéis. Sem coordenadas confirmadas, não há aviso de proximidade. Alterar o endereço exige nova confirmação. É possível clicar no mapa ou colar coordenadas explícitas de um link completo do Google Maps.
+Em **Locais de embarque para avisos**, selecione a viagem para acompanhar a localização dos embarques. Quando a Nexus habilita a localização automática, o endereço é pesquisado em segundo plano, sem bloquear a venda. Novas reservas confirmadas e viagens futuras já cadastradas são processadas; para evitar consultas prematuras, a busca ocorre a partir dos 29 dias anteriores ao trecho. Informe endereço com número e cidade, ou nome do hotel com cidade. Endereços repetidos da mesma empresa reaproveitam as coordenadas durante sua validade. Cada retorno utiliza seu próprio embarque.
+
+O estado **Localizado automaticamente pelo Google Maps** dispensa confirmação manual e permite abrir o ponto no Google Maps. Endereços incompletos, ambíguos ou não encontrados exigem revisão. A correção manual no mapa continua disponível e tem prioridade sobre a localização automática. Ao alterar um endereço, a associação anterior é invalidada e uma nova consulta é necessária. Sem localização válida, o lembrete por horário continua funcionando, mas não há aviso de proximidade. Indisponibilidade do serviço ou limite de consultas atingido pode adiar a localização. Coordenadas automáticas expiram em até 29 dias e são novamente pesquisadas quando necessárias.
 
 No Android, a partir de 1.8.0, inicie o trecho e use **Assumir rastreamento deste veículo**. Autorize a localização e mantenha o celular no veículo. Uma notificação acompanha a coleta a cada cinco minutos. Outro motorista ou guia atribuído pode confirmar a transferência. O rastreamento termina na chegada; cada retorno ou próximo trecho exige nova ativação. **Interromper rastreamento neste celular** permite parar o compartilhamento.
 
@@ -810,7 +812,7 @@ A versão 1.9.1 melhora a leitura dos campos, cartões e botões. As posições 
 
 O administrador acompanha as posições no mapa e consulta o horário da última coleta. A linha liga amostras e não representa o caminho exato entre elas. A tela indica posição desatualizada. Não há coleta entre os passeios; sem contato com o servidor por quinze minutos, o compartilhamento local é interrompido.
 
-Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, embarque confirmado no mapa e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.
+Os avisos são enviados por WhatsApp ao telefone da reserva familiar. O lembrete informa a saída programada de cada trecho, incluindo volta, nos quinze minutos anteriores. O aviso de proximidade depende de GPS recente, boa precisão, local de embarque localizado automaticamente ou confirmado manualmente e passageiros ainda aguardando. Ambos evitam repetição e expiram quando deixam de ser úteis. A proximidade é aproximada, sem previsão exata de chegada. Rede, GPS, bateria e permissões podem atrasar a coleta ou o envio.
 
 
 ## Conversas WhatsApp e atendimento da equipe {#conversas-whatsapp}
