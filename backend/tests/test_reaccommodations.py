@@ -412,7 +412,8 @@ def test_cancelling_a_transferred_reservation_keeps_credit_visible(
             )
         )
     assert "Saldo a pagar" not in body
-    assert "Nenhuma cobrança ou devolução" in body
+    assert "foi cancelada em" in body
+    assert "Crédito" not in body and "Google Maps" not in body
 
 
 def test_pending_counts_include_all_pages(client, seeded, owner):

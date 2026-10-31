@@ -205,7 +205,7 @@ Utilize o filtro **Situação da viagem**: Todas, Abertas, Agendadas, Em andamen
 
 Em **Detalhes**, confira roteiro, equipe, capacidade, reservas e finalização. A edição operacional respeita a situação da viagem e protege reservas e embarques existentes. Alterar o preço para novas reservas não recalcula as reservas já vendidas.
 
-**Duplicar viagem** cria uma nova saída; confirme as datas e a equipe antes de salvar. Ao cancelar a viagem, reservas ativas são canceladas, lugares são liberados e o consumo é estornado no ciclo original. Não há reembolso bancário automático.
+**Duplicar viagem** cria uma nova saída; confirme as datas e a equipe antes de salvar. Ao cancelar a viagem, reservas ativas são canceladas, lugares são liberados e o consumo é estornado no ciclo original. Não há reembolso bancário automático. O aviso de cancelamento por WhatsApp informa somente o número da reserva, o nome do responsável e a data do cancelamento, sem mapas ou dados de embarque.
 
 ## 10. Vender bilhetes e cadastrar uma família {#vendas}
 
