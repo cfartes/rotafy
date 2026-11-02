@@ -301,6 +301,7 @@ class RollingTests(unittest.TestCase):
         self.assertIn("set_real_ip_from 172.20.0.2;", config)
         self.assertIn("proxy_set_header X-Forwarded-For $remote_addr;", config)
         self.assertIn("access_log off;", config)
+        self.assertIn("error_log /dev/stderr crit;", config)
         self.assertIn("location ^~ /assets/", config)
         with self.assertRaises(ValueError):
             gateway_config("api", "web", "0.0.0.0/0")

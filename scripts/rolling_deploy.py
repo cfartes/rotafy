@@ -96,6 +96,8 @@ upstream rotafy_web {{ zone rotafy_web 64k; server {web}:80 resolve; }}
 server {{
     listen 80;
     access_log off;
+    # Upstream error logs otherwise include private ticket URLs.
+    error_log /dev/stderr crit;
     client_max_body_size 3m;
     set_real_ip_from {trusted};
     real_ip_header X-Forwarded-For;
