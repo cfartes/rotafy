@@ -345,11 +345,14 @@ async def process_company(engine, company):
 
 
 async def main():
+    from app.worker_shutdown import pause, shutdown_event
+
+    stop = shutdown_event()
     engine = create_async_engine(
         os.environ["PLATFORM_DATABASE_URL"], pool_pre_ping=True
     )
     try:
-        while True:
+        while not stop.is_set():
             Path("/tmp/rotafy-geocoding-health").touch()
             try:
                 async with engine.connect() as db:
@@ -361,17 +364,23 @@ async def main():
                         ).scalars()
                     )
                 for company in companies:
+                    if stop.is_set():
+                        break
                     Path("/tmp/rotafy-geocoding-health").touch()
                     from app.arrival_estimates import process_estimates
 
                     await process_estimates(engine, company)
+                    if stop.is_set():
+                        break
                     await process_company(engine, company)
+                    if stop.is_set():
+                        break
                     from app.route_order import process_orders
 
                     await process_orders(engine, company)
             except (SQLAlchemyError, OSError, ValueError):
                 logging.getLogger(__name__).error("geocoding.cycle_failed")
-            await asyncio.sleep(2)
+            await pause(stop, 2)
     finally:
         await engine.dispose()
 

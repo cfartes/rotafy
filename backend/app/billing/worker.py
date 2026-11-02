@@ -21,11 +21,14 @@ logger = logging.getLogger("rotafy.billing")
 
 
 async def main():
+    from app.worker_shutdown import pause, shutdown_event
+
+    stop = shutdown_event()
     engine = create_async_engine(
         os.environ["PLATFORM_DATABASE_URL"], pool_pre_ping=True
     )
     try:
-        while True:
+        while not stop.is_set():
             try:
                 async with engine.connect() as db:
                     ids = (
@@ -34,6 +37,8 @@ async def main():
                         .all()
                     )
                 for company_id in ids:
+                    if stop.is_set():
+                        break
                     async with engine.begin() as db:
                         await scope(db, company_id)
                         await lock_company(db, company_id)
@@ -43,20 +48,21 @@ async def main():
                     Path("/tmp/rotafy-billing-health").touch()
                 # Canais financeiros independentes das sessões das empresas.
                 for _ in range(5):
-                    if not await process_checkout(engine):
+                    if stop.is_set() or not await process_checkout(engine):
                         break
                     Path("/tmp/rotafy-billing-health").touch()
                 for _ in range(10):
-                    if not await process_payment_event(engine):
+                    if stop.is_set() or not await process_payment_event(engine):
                         break
                     Path("/tmp/rotafy-billing-health").touch()
-                await process_notification(engine)
+                if not stop.is_set():
+                    await process_notification(engine)
                 Path("/tmp/rotafy-billing-health").touch()
                 logger.info('{"event":"billing.cycle_completed"}')
             except (SQLAlchemyError, HTTPException, ValueError):
                 # Não registrar parâmetros de conexão ou dados pessoais.
                 logger.error('{"event":"billing.cycle_failed","retry_seconds":60}')
-            await asyncio.sleep(60)
+            await pause(stop, 60)
     finally:
         await engine.dispose()
 

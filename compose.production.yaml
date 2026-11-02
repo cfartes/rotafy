@@ -6,8 +6,11 @@ x-api: &api
   image: nexus-rotafy-tech-api:${RELEASE:?Configure RELEASE com a versão da entrega}
   build: ./backend
   logging: *logging
+  stop_grace_period: 300s
+  init: true
   labels: {traefik.enable: "false"}
   environment: &api-env
+    APP_RELEASE: ${RELEASE:-development}
     DATABASE_URL: postgresql+psycopg://rotafy_app:${APP_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
     PLATFORM_DATABASE_URL: postgresql+psycopg://rotafy_platform:${PLATFORM_DB_PASSWORD:?Configure senha hexadecimal}@db:5432/rotafy
     COOKIE_SECURE: "true"

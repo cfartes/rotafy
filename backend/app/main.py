@@ -1,3 +1,4 @@
+import os
 import re
 import secrets
 from contextlib import asynccontextmanager
@@ -211,7 +212,11 @@ def create_app(settings: Settings | None = None):
     async def health(request: Request):
         async with request.app.state.engine.connect() as db:
             await db.execute(text("SELECT 1"))
-        return {"status": "ok", "version": "0.1.0"}
+        return {
+            "status": "ok",
+            "version": "0.1.0",
+            "release": os.environ.get("APP_RELEASE", "development"),
+        }
 
     @application.get("/api/v1/nexus/metrics")
     async def metrics(actor: Auth, request: Request):
