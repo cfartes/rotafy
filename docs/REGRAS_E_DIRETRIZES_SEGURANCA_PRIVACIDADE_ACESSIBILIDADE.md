@@ -250,3 +250,16 @@ Essas pendências devem ser tratadas pelos responsáveis correspondentes; não d
 
 
 Na tela de acesso, o aviso **Mostrar informações sobre o uso dos dados** começa recolhido. Clique para ler a finalidade e a base legal; use **Ocultar** para recolher sem perder o que foi digitado. Os links de privacidade, condições de uso e ajuda abrem em nova aba. As políticas são organizadas em seções expansíveis. **Dados da empresa** revela razão social, CNPJ, endereço e contato. As preferências de cookies abrem em uma janela de diálogo. A tela de acesso usa um rodapé compacto; em dispositivos menores ou com ampliação, a rolagem permanece disponível quando necessária para a leitura.
+
+
+## Dependências do build web — 02/11/2026
+
+Os dez apontamentos de npm audit vinham de três bibliotecas transitivas do gerador de PWA. Foram aplicadas substituições limitadas a essa cadeia: glob 14.0.2 (com minimatch 11.0.4 no lock) e EJS 5.0.2, eliminando a cadeia antiga EJS/Jake/filelist. Vite, vite-plugin-pwa e Workbox mantêm suas versões.
+
+O deepmerge ainda não tem versão corrigida publicada. A cópia local privada em `frontend/vendor/deepmerge` mantém o código e a licença MIT de 4.3.1 e corrige as três escritas que podiam acionar o setter de protótipo. Não se trata de uma versão oficial do fornecedor. Como o npm audit não inspeciona código local, testes específicos verificam o ataque e a compatibilidade; a ausência de alertas no audit não substitui essa revisão. Substituir a cópia quando houver correção oficial validada.
+
+A imagem de build copia a dependência local antes de npm ci. O pipeline executa auditoria com nível mínimo low, os testes da correção e o build de produção. Não foram adicionadas exceções de auditoria. A alteração não requer migração de banco nem novo APK.
+
+Verificação reproduzível em `frontend`: `npm ci --ignore-scripts`, `npm audit --audit-level=low`, `npm run test:build-security`, `npm run build` e `npm run test:pwa-build` (este último exige Chromium do Playwright instalado). O teste de PWA usa a saída de produção, verifica navegação offline, exclusão de API/documentação do cache, atualização por confirmação e preservação de um registro pendente no IndexedDB. Todos passaram localmente. A implantação na VPS não foi realizada nesta revisão.
+
+Referências: [deepmerge GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4), [glob GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), [minimatch GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
