@@ -1,18 +1,63 @@
 import copy
+import io
 import json
 import subprocess
 import tempfile
 import time
 import unittest
+from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from urllib.response import addinfourl
 
 from scripts.production import command
-from scripts.rolling_deploy import RollingDeployment, gateway_config, save, slot_config
+from scripts.rolling_deploy import (
+    RollingDeployment,
+    gateway_config,
+    save,
+    slot_config,
+    verify_public_assets,
+)
 
 
 class RollingTests(unittest.TestCase):
+    def test_public_assets_require_real_javascript_and_stylesheet_responses(self):
+        def response(body, content_type):
+            headers = Message()
+            headers["Content-Type"] = content_type
+            return addinfourl(io.BytesIO(body), headers, "https://example.com", 200)
+
+        html = b'<script src="/assets/app.js"></script><link href="/assets/app.css">'
+        with patch(
+            "scripts.rolling_deploy.urllib.request.urlopen",
+            side_effect=[
+                response(html, "text/html"),
+                response(b"script", "text/javascript"),
+                response(b"style", "text/css"),
+            ],
+        ):
+            verify_public_assets("https://example.com")
+        with (
+            patch(
+                "scripts.rolling_deploy.urllib.request.urlopen",
+                side_effect=[
+                    response(html, "text/html"),
+                    response(b"<!doctype html>", "text/html"),
+                ],
+            ),
+            self.assertRaisesRegex(ValueError, "tipo incorreto"),
+        ):
+            verify_public_assets("https://example.com")
+        with (
+            patch(
+                "scripts.rolling_deploy.urllib.request.urlopen",
+                return_value=response(b"<html></html>", "text/html"),
+            ),
+            self.assertRaisesRegex(ValueError, "JavaScript/CSS"),
+        ):
+            verify_public_assets("https://example.com")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -334,6 +379,22 @@ class RollingTests(unittest.TestCase):
             "http://127.0.0.1/api/v1/health",
         )
         self.deployment.compose.assert_not_called()
+
+        self.deployment.state = {
+            "phase": "ready",
+            "active": candidate,
+            "previous": old,
+            "changed_at": 0,
+        }
+        self.deployment.output.reset_mock()
+        with patch.object(self.deployment, "preflight"):
+            self.deployment.prepare(base)
+        copied = [
+            call.args[0][-3]
+            for call in self.deployment.output.call_args_list
+            if call.args[0][-1].startswith("cp -a ")
+        ]
+        self.assertIn("sha256:" + "b" * 64, copied)
 
     def test_gateway_trusts_only_proxy_and_keeps_sensitive_paths_out_of_access_logs(
         self,

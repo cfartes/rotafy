@@ -11,7 +11,7 @@ import unittest
 import urllib.request
 from pathlib import Path
 
-from scripts.rolling_deploy import gateway_config, slot_config
+from scripts.rolling_deploy import gateway_config, slot_config, stage_assets
 
 SERVER = """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -34,6 +34,97 @@ ThreadingHTTPServer(('0.0.0.0',int(sys.argv[1])),Handler).serve_forever()
     "Explicit isolated Docker test required",
 )
 class GatewayIntegrationTests(unittest.TestCase):
+    def test_staged_named_volume_serves_bundles_and_preserves_older_files(self):
+        name = "rotafy-bundles-test-" + str(os.getpid())
+        volume, image = name + "-assets", name + ":fixture"
+
+        def output(args):
+            return subprocess.run(
+                args, check=True, capture_output=True, text=True
+            ).stdout.strip()
+
+        def docker(*args):
+            return output(["docker", *args])
+
+        with tempfile.TemporaryDirectory(prefix=name) as temporary:
+            directory = Path(temporary)
+            assets = directory / "assets"
+            assets.mkdir()
+            (assets / "nested").mkdir()
+            (assets / "app.js").write_text("window.fixture=true;")
+            (assets / "app.css").write_text("body{color:teal}")
+            (assets / "nested/lazy.js").write_text("export default 1;")
+            (directory / "Dockerfile").write_text(
+                "FROM nginx:1.28-alpine\nCOPY assets /usr/share/nginx/html/assets\nRUN chmod -R a+rX /usr/share/nginx/html/assets\n"
+            )
+            conf = directory / "gateway.conf"
+            conf.write_text(gateway_config("127.0.0.1", "127.0.0.1", "127.0.0.1"))
+            try:
+                docker("build", "--network", "none", "-t", image, str(directory))
+                docker("volume", "create", volume)
+                docker(
+                    "run",
+                    "--rm",
+                    "--network",
+                    "none",
+                    "-v",
+                    volume + ":/assets",
+                    "--entrypoint",
+                    "sh",
+                    image,
+                    "-c",
+                    "echo previous > /assets/previous.js",
+                )
+                stage_assets(output, [image, image], volume)
+                docker(
+                    "run",
+                    "-d",
+                    "--name",
+                    name,
+                    "-p",
+                    "127.0.0.1::80",
+                    "-v",
+                    str(conf) + ":/etc/nginx/conf.d/default.conf:ro",
+                    "-v",
+                    volume + ":/srv/assets:ro",
+                    "nginx:1.28-alpine",
+                )
+                address = "http://" + docker("port", name, "80").splitlines()[0]
+                for attempt in range(50):
+                    try:
+                        with urllib.request.urlopen(
+                            address + "/assets/app.js", timeout=2
+                        ) as response:
+                            self.assertEqual(response.read(), b"window.fixture=true;")
+                            self.assertIn(
+                                response.headers.get_content_type(),
+                                ("text/javascript", "application/javascript"),
+                            )
+                        break
+                    except OSError:
+                        if attempt == 49:
+                            raise
+                        time.sleep(0.1)
+                for path, expected in (
+                    ("app.css", b"body{color:teal}"),
+                    ("nested/lazy.js", b"export default 1;"),
+                    ("previous.js", b"previous\n"),
+                ):
+                    with urllib.request.urlopen(
+                        address + "/assets/" + path, timeout=5
+                    ) as response:
+                        self.assertEqual(response.read(), expected)
+            finally:
+                subprocess.run(
+                    ["docker", "rm", "-f", name], check=False, capture_output=True
+                )
+                subprocess.run(
+                    ["docker", "volume", "rm", volume], check=False, capture_output=True
+                )
+                subprocess.run(
+                    ["docker", "image", "rm", image], check=False, capture_output=True
+                )
+
     def test_generated_web_probe_reaches_ipv4_only_nginx(self):
         name = "rotafy-ipv4-probe-test-" + str(os.getpid())
 
