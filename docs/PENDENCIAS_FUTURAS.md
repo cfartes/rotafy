@@ -1,6 +1,14 @@
 # Pendências para próximas etapas
 
-Revisado em 22/10/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
+Revisado em 02/11/2026. Este arquivo registra trabalho futuro; não representa funcionalidades já implementadas.
+
+## Chamados de suporte para a Nexus
+
+Status: **backlog — aguardando definição das regras, sem início do desenvolvimento**.
+
+- Criar o menu **Chamados** para o cliente abrir um chamado diretamente para a Nexus pelo aplicativo.
+- Definir SLA de atendimento conforme a urgência do chamado.
+- Definir posteriormente os campos da tela, níveis de urgência, prazos de SLA e demais informações e regras de funcionamento. Não há prazos ou critérios de atendimento aprovados nesta etapa.
 
 ## App Android do passageiro
 
