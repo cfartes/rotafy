@@ -11,7 +11,7 @@ import unittest
 import urllib.request
 from pathlib import Path
 
-from scripts.rolling_deploy import gateway_config
+from scripts.rolling_deploy import gateway_config, slot_config
 
 SERVER = """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -34,6 +34,85 @@ ThreadingHTTPServer(('0.0.0.0',int(sys.argv[1])),Handler).serve_forever()
     "Explicit isolated Docker test required",
 )
 class GatewayIntegrationTests(unittest.TestCase):
+    def test_generated_web_probe_reaches_ipv4_only_nginx(self):
+        name = "rotafy-ipv4-probe-test-" + str(os.getpid())
+
+        def docker(*args):
+            return subprocess.run(
+                ["docker", *args], check=True, capture_output=True, text=True
+            ).stdout.strip()
+
+        with tempfile.TemporaryDirectory(prefix=name) as temporary:
+            directory = Path(temporary)
+            conf = directory / "default.conf"
+            conf.write_text('server { listen 80; location / { return 200 "ready"; } }')
+            base = {
+                "services": {
+                    key: {"image": "nginx:1.28-alpine", "command": ["placeholder"]}
+                    for key in (
+                        "api",
+                        "web",
+                        "billing",
+                        "email",
+                        "geocoding",
+                        "whatsapp",
+                    )
+                },
+                "networks": {
+                    "database": {"name": "test-db"},
+                    "frontend": {"name": "test-front"},
+                },
+                "volumes": {},
+                "x-deploy-subnet": "172.20.0.0/24",
+            }
+            probe = slot_config(base, "test", "blue", directory)["services"]["web"][
+                "healthcheck"
+            ]["test"][1:]
+            try:
+                docker(
+                    "run",
+                    "-d",
+                    "--name",
+                    name,
+                    "--network",
+                    "none",
+                    "-v",
+                    str(conf) + ":/etc/nginx/conf.d/default.conf:ro",
+                    "--health-cmd",
+                    " ".join(probe),
+                    "--health-interval",
+                    "1s",
+                    "--health-timeout",
+                    "2s",
+                    "--health-retries",
+                    "10",
+                    "nginx:1.28-alpine",
+                )
+                for attempt in range(60):
+                    if (
+                        docker("inspect", "--format", "{{.State.Health.Status}}", name)
+                        == "healthy"
+                    ):
+                        break
+                    time.sleep(0.2)
+                self.assertEqual(
+                    docker("inspect", "--format", "{{.State.Health.Status}}", name),
+                    "healthy",
+                )
+                docker(
+                    "exec",
+                    name,
+                    "wget",
+                    "-q",
+                    "-O",
+                    "/dev/null",
+                    "http://127.0.0.1/api/v1/health",
+                )
+            finally:
+                subprocess.run(
+                    ["docker", "rm", "-f", name], check=False, capture_output=True
+                )
+
     def test_idle_legacy_worker_can_stop_while_frozen(self):
         name = "rotafy-pause-test-" + str(os.getpid())
 
