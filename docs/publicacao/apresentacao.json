@@ -11,8 +11,8 @@
         "Android para motorista e guia",
         "Bilhete individual para o passageiro"
       ],
-      "footnote": "Apresentação do sistema · Edição 2026.10 · 22/10/2026",
-      "notes": "Nexus Rotafy Painel web para gestão e atendimento Android para motorista e guia Bilhete individual para o passageiro Apresentação do sistema · Edição 2026.10 · 22/10/2026"
+      "footnote": "Apresentação do sistema · Edição 2026.10 · Revisão 17 · 02/11/2026",
+      "notes": "Nexus Rotafy Painel web para gestão e atendimento Android para motorista e guia Bilhete individual para o passageiro Apresentação do sistema · Edição 2026.10 · Revisão 17 · 02/11/2026"
     },
     {
       "eyebrow": "DA VENDA À CHEGADA",
@@ -62,10 +62,10 @@
         "Cadastro, ativação e suspensão de colaboradores.",
         "Convite por e-mail, WhatsApp ou pelos dois canais.",
         "Link de 24 horas para definir a própria senha.",
-        "Recuperação de acesso e registro de atividades."
+        "Motoristas e guias recebem o link do aplicativo pelo WhatsApp."
       ],
       "footnote": "Motorista e guia compartilham os recursos operacionais; o guia é opcional.",
-      "notes": "Administrador, atendente, motorista e guia. Cadastro, ativação e suspensão de colaboradores. Convite por e-mail, WhatsApp ou pelos dois canais. Link de 24 horas para definir a própria senha. Recuperação de acesso e registro de atividades. Motorista e guia compartilham os recursos operacionais; o guia é opcional."
+      "notes": "Administrador, atendente, motorista e guia. Cadastro, ativação e suspensão de colaboradores. Convite por e-mail, WhatsApp ou pelos dois canais. Link de 24 horas para definir a própria senha. Motoristas e guias recebem o link do aplicativo pelo WhatsApp. Motorista e guia compartilham os recursos operacionais; o guia é opcional."
     },
     {
       "eyebrow": "FROTA",
@@ -282,13 +282,13 @@
       "title": "Acompanhe o veículo.\nOriente o passageiro.",
       "lead": "Rastreamento e avisos configuráveis pela empresa.",
       "points": [
-        "Rastreamento automático ao iniciar, com coleta prevista a cada minuto.",
-        "Mapa geral da frota e histórico individual por veículo.",
+        "Início com antecedência configurável e rastreamento a cada minuto.",
+        "Mapa da frota em tela cheia e comparação do roteiro com GPS.",
         "WhatsApp com lembrete de saída e previsão de chegada quando disponível.",
         "Localização automática dos embarques e sequência otimizada dos pontos."
       ],
       "footnote": "Requer configuração habilitada e APK atualizado. Estimativas dependem de GPS, rede e trânsito.",
-      "notes": "Rastreamento e avisos configuráveis pela empresa. Rastreamento automático ao iniciar, com coleta prevista a cada minuto. Mapa geral da frota e histórico individual por veículo. WhatsApp com lembrete de saída e previsão de chegada quando disponível. Localização automática dos embarques e sequência otimizada dos pontos. Requer configuração habilitada e APK atualizado. Estimativas dependem de GPS, rede e trânsito."
+      "notes": "Rastreamento e avisos configuráveis pela empresa. Início com antecedência configurável e rastreamento a cada minuto. Mapa da frota em tela cheia e comparação do roteiro com GPS. WhatsApp com lembrete de saída e previsão de chegada quando disponível. Localização automática dos embarques e sequência otimizada dos pontos. Requer configuração habilitada e APK atualizado. Estimativas dependem de GPS, rede e trânsito."
     },
     {
       "eyebrow": "GESTÃO DA ASSINATURA",
@@ -336,10 +336,10 @@
       "points": [
         "Conheça o sistema: rotafy.nexusdataanalytics.tech",
         "Manual e downloads: /ajuda",
-        "Central com HTML, PDF e apresentação editável"
+        "Central de ajuda com manuais e apresentação em HTML e PDF"
       ],
       "footnote": "Nexus Data Analytics · Edição 2026.10",
-      "notes": "Planejamento, atendimento e equipe conectados. Conheça o sistema: rotafy.nexusdataanalytics.tech Manual e downloads: /ajuda Central com HTML, PDF e apresentação editável Nexus Data Analytics · Edição 2026.10"
+      "notes": "Planejamento, atendimento e equipe conectados. Conheça o sistema: rotafy.nexusdataanalytics.tech Manual e downloads: /ajuda Central de ajuda com manuais e apresentação em HTML e PDF Nexus Data Analytics · Edição 2026.10"
     }
   ]
 }

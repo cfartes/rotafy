@@ -107,3 +107,7 @@ Os novos bilhetes enviados manualmente ou de forma automática, confirmações e
 O hotel/local personalizado tem prioridade. Na ausência dele, usa-se a parada escolhida ou a origem do trecho. Se o endereço não estiver cadastrado, a mensagem informa isso e oferece uma busca pelo nome do local e cidade, sem substituir pelo endereço de outro ponto. Confira os dados de embarque na reserva antes de enviar. O link do Maps não substitui o link privado do bilhete. Mensagens já recebidas não são alteradas.
 
 Implementação compartilhada em `backend/app/boarding_messages.py`, utilizada por `whatsapp.py`, `whatsapp_automation.py` e `tracking.py`. A consulta aplica empresa e reserva explicitamente. Links são gerados com `urlencode`, sem chamada a APIs de mapas, sem chave e sem incluir dados do passageiro. Mensagens com vários trechos passam a aceitar até 65.536 caracteres, evitando o corte anterior em 4.096 caracteres de endereços e URLs. A fila e os horários de envio permanecem os existentes; mensagens já gravadas na fila não são reescritas.
+
+## APK para novos motoristas e guias
+
+Cadastros com senha inicial e convites geram uma mensagem independente de download para o telefone do novo motorista/guia, desde que o WhatsApp da empresa esteja habilitado. A fila revalida usuário, telefone, papel e sessão. O link resolve o APK mais recente e não depende do token de senha. Não há disparo retroativo. Ver [Operação da equipe e rotas](OPERACAO_EQUIPE_E_ROTAS.md).

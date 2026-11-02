@@ -22,6 +22,7 @@ from app.company_welcome import router as company_welcome_router
 from app.config import Settings
 from app.contracts import pending as contract_pending
 from app.contracts import router as contracts_router
+from app.crew_schedule import router as crew_schedule_router
 from app.documentation import router as documentation_router
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
@@ -59,6 +60,7 @@ from app.reports import router as reports_router
 from app.request_security import RequestBodyLimit
 from app.reservation_imports import router as reservation_imports_router
 from app.reservations import router as reservations_router
+from app.route_comparison import router as route_comparison_router
 from app.route_refresh import router as route_refresh_router
 from app.route_templates import router as route_templates_router
 from app.schemas import (
@@ -635,32 +637,37 @@ def create_app(settings: Settings | None = None):
         ]
 
     @application.post("/api/v1/users", response_model=UserView, status_code=201)
-    async def create_user(payload: UserCreate, actor: Auth):
+    async def create_user(payload: UserCreate, request: Request, actor: Auth):
         admin(actor)
-        user_id = uuid4()
-        row = (
-            (
-                await actor.db.execute(
-                    text(f"""INSERT INTO users(id,company_id,full_name,email,password_hash,role,contact_phone)
-            VALUES(:id,:company,:name,:email,:hash,:role,:phone) RETURNING {USER_FIELDS},contact_phone"""),
-                    {
-                        "id": user_id,
-                        "company": actor.company_id,
-                        "name": payload.full_name,
-                        "email": str(payload.email).lower(),
-                        "hash": passwords.hash(payload.password),
-                        "role": payload.role,
-                        "phone": payload.contact_phone,
-                    },
+        async with request.app.state.platform_engine.begin() as db:
+            await scope(db, actor.company_id)
+            user_id = uuid4()
+            row = (
+                (
+                    await db.execute(
+                        text(f"""INSERT INTO users(id,company_id,full_name,email,password_hash,role,contact_phone)
+                VALUES(:id,:company,:name,:email,:hash,:role,:phone) RETURNING {USER_FIELDS},contact_phone"""),
+                        {
+                            "id": user_id,
+                            "company": actor.company_id,
+                            "name": payload.full_name,
+                            "email": str(payload.email).lower(),
+                            "hash": passwords.hash(payload.password),
+                            "role": payload.role,
+                            "phone": payload.contact_phone,
+                        },
+                    )
                 )
+                .mappings()
+                .one()
             )
-            .mappings()
-            .one()
-        )
-        await audit(
-            actor.db, actor.company_id, actor.user["id"], "user.created", user_id
-        )
-        return dict(row)
+            await audit(db, actor.company_id, actor.user["id"], "user.created", user_id)
+            from app.crew_onboarding import queue_crew_apk
+
+            apk_status = await queue_crew_apk(
+                db, request.app.state.settings, actor.company_id, dict(row)
+            )
+            return dict(row) | {"apk_whatsapp_status": apk_status}
 
     @application.patch("/api/v1/users/{user_id}", response_model=UserView)
     async def update_user(user_id: UUID, payload: UserUpdate, actor: Auth):
@@ -856,6 +863,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(reservation_imports_router)
     application.include_router(public_sales_router)
     application.include_router(boarding_router)
+    application.include_router(crew_schedule_router)
     application.include_router(mobile_releases_router)
     application.include_router(documentation_router)
     application.include_router(privacy_router)
@@ -871,6 +879,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(nps_router)
     application.include_router(service_hours_router)
     application.include_router(tracking_router)
+    application.include_router(route_comparison_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)

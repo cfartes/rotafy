@@ -1,0 +1,1 @@
+html,body{height:100%;margin:0;font:14px system-ui,sans-serif;color:#153951}body{display:flex;flex-direction:column}#status{padding:10px 12px;margin:0;background:#edf4f7}#map{flex:1;min-height:300px}

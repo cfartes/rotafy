@@ -20,7 +20,7 @@ OUTPUT = ROOT / "frontend" / "public" / "documentacao"
 NAVY = "0B253F"
 TEAL = "0C7A76"
 MUTED = "577084"
-DATE = "26/10/2026"
+DATE = "02/11/2026"
 
 
 def image_url(name):
@@ -229,7 +229,7 @@ def update_documentation_csp():
             hashes.add("'sha256-" + value + "'")
     config = ROOT / "frontend" / "nginx.conf"
     content = config.read_text(encoding="utf-8")
-    content = re.sub(r"script-src[^;]+;", "script-src 'self' " + " ".join(sorted(hashes)) + ";", content)
+    content = re.sub(r"script-src[^;]+;", "script-src 'self' " + " ".join(sorted(hashes)) + ";", content, count=1)
     config.write_text(content, encoding="utf-8")
 
 

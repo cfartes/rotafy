@@ -98,7 +98,7 @@ A aplicação web atende várias empresas no mesmo banco, com separação de dad
 - Endereços específicos da reserva compõem o roteiro operacional do veículo, sem modificar o modelo reutilizável da Rota.
 - Alterar a Rota não altera automaticamente viagens existentes: elas guardam uma cópia do percurso. A atualização é uma ação explícita e validada.
 - A chegada física é registrada por veículo/deslocamento; não encerra automaticamente as demais etapas ainda abertas.
-- O GPS é capturado pontualmente na chegada quando disponível. Esse recurso não representa rastreamento contínuo.
+- Além da captura na chegada, o APK oferece rastreamento periódico configurável durante os trechos em viagem.
 - Valores de reservas e valores da assinatura SaaS têm finalidades e processos distintos.
 
 ### Sequência de implantação operacional na empresa
@@ -1509,3 +1509,17 @@ Pesquisas, notas, comentários, perguntas utilizadas, vínculos e histórico de 
 ## Horários e redação do NPS — revisão de 22/10/2026
 
 Migração incremental 0045_service_hours_nps_copy: horários semanais por empresa, versão da redação do NPS e identificação da análise de qualidade. A solicitação humana fora do expediente informa horários e próxima abertura. Respostas NPS variam conforme a categoria; pesquisas já enviadas preservam a versão anterior. Consulte `docs/HORARIOS_DE_ATENDIMENTO.md` e `docs/NPS_E_SATISFACAO.md`.
+
+## Equipe e rotas: atualização de 02/11/2026
+
+Motoristas e guias cadastrados recebem pelo WhatsApp o link estável do APK mais recente publicado, separado do convite de senha. O envio requer telefone e WhatsApp da empresa configurado.
+
+O administrador define em Configurações se permite iniciar antecipadamente e quantos minutos (1 a 1.440). Desmarcado, motorista e guia iniciam apenas no horário previsto. Empresas existentes mantêm trinta minutos por padrão. A validação da API é obrigatória; o APK 1.11.0, compilação 19, mostra a regra do manifesto sincronizado.
+
+Rastreamento oferece comparação visual da sequência de paradas preservada no início com o percurso GPS recebido, inclusive quando há transferência entre celulares. O mapa Google carrega por solicitação, com chave web separada configurada no Superadmin e consumo próprio de mapas e geocodificação. O roteiro original não é substituído por edições posteriores. Não há histórico retroativo, reconstrução pelas ruas nem alertas automáticos de desvios. Os horários e registros de embarque/desembarque ficam disponíveis junto à comparação.
+
+Detalhes de endpoints, segurança, retenção, limites e atualização incremental: [Operação da equipe e rotas](docs/OPERACAO_EQUIPE_E_ROTAS.md).
+
+## Mapa da frota em tela inteira
+
+Menu separado de Rastreamento, exclusivo do administrador e condicionado ao módulo tracking. Ocupa a área de trabalho e oferece expansão nativa quando suportada. Consulta `/api/v1/tracking/vehicles` a cada quinze segundos; a coleta do APK permanece a cada minuto. Mostra placa, veículo, viagem, precisão e horário do GPS; amostras acima de dois minutos são sinalizadas. Atualizações preservam zoom e enquadramento. Veículos sem posição ficam contabilizados como aguardando GPS. A função usa GPS próprio sobre OSM, sem resultados Google ou chave web. Configurações, histórico e comparação permanecem em Rastreamento.

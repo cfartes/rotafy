@@ -1373,3 +1373,29 @@ dialog.modal-wide {
 .module-option input[type="checkbox"] { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 3px; }
 .module-option span { display: grid; gap: 6px; min-width: 0; }
 .module-option small { color: #536b7b; line-height: 1.5; }
+
+/* The fleet map uses the full workspace; only operational notices take space above it. */
+.content.fleet-map-content { max-width:none; margin:0; padding:0; height:calc(100dvh - 80px); display:flex; flex-direction:column; overflow:auto; }
+.fleet-map-content > .page-heading,.fleet-map-content > .content-footer { display:none; }
+.fleet-map { position:relative; width:100%; flex:1; min-height:240px; }
+.fleet-map-canvas { position:absolute; inset:0; }
+.fleet-map-panel { position:absolute; z-index:500; top:12px; left:56px; width:min(360px,calc(100% - 72px)); padding:12px; border:1px solid #cfdee6; border-radius:12px; background:#ffffffed; box-shadow:0 3px 16px #0b253f24; }
+.fleet-map-panel h1 { margin:0 0 6px; font-size:18px; }
+.fleet-map-panel p { margin:4px 0; font-size:12px; }
+.fleet-map-panel small { font-size:11px; }
+.fleet-map-legend { display:flex; flex-wrap:wrap; gap:12px; }
+.fleet-map-legend span:first-child { color:#0c7a76; }
+.fleet-map-legend span:last-child { color:#a34b00; }
+.fleet-map-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.fleet-map-actions .button { padding:8px 10px; font-size:12px; }
+.fleet-map .leaflet-tooltip { max-width:260px; white-space:normal; }
+.fleet-map:fullscreen { width:100vw; height:100dvh; background:#edf4f7; }
+@media(max-width:800px) { .content.fleet-map-content { height:calc(100dvh - 68px); } }
+
+body:has(.fleet-map-content) #privacy-banner { position:fixed; right:12px; bottom:32px; width:min(420px,calc(100% - 24px)); z-index:1000; }
+body:has(.fleet-map-content) #privacy-banner .cookie-banner { margin:0; padding:12px; font-size:12px; }
+
+body:has(.fleet-map-content) #root > .legal-footer { display:none; }
+.fleet-map-privacy { display:inline-block; margin-top:6px; font-size:11px; text-decoration:underline; }
+
+.fleet-map-panel .muted { color:#52697b; }

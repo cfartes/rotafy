@@ -11,6 +11,8 @@ import { CompanyWhatsApp } from "./CompanyWhatsApp";
 import { WhatsAppChat } from "./WhatsAppChat";
 import { Nps } from "./Nps";
 import { BusinessHours } from "./BusinessHours";
+import { DepartureSettings } from "./DepartureSettings";
+import { FleetMap } from "./FleetMap";
 import { NpsQualityAlert } from "./NpsQuality";
 import { WhatsAppHandoffAlert, type Handoff } from "./WhatsAppHandoffAlert";
 import { NexusWhatsApp } from "./NexusWhatsApp";
@@ -657,13 +659,16 @@ function EditCompany({
 }
 
 function CreateUser({ onClose }: { onClose: () => void }) {
+  const [role, setRole] = useState("attendant");
   const [invitation, setInvitation] = useState(false);
   const [channel, setChannel] = useState("email");
   const client = useQueryClient();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [created, setCreated] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (created) return;
     setPending(true);
     setError("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -672,8 +677,15 @@ function CreateUser({ onClose }: { onClose: () => void }) {
         delete data.password;
         data.channel = channel;
       }
-      await post(invitation ? "/users/invitations" : "/users", data);
+      const result = await post<{ apk_whatsapp_status?: string | null }>(invitation ? "/users/invitations" : "/users", data);
       await client.invalidateQueries({ queryKey: ["users"] });
+      if (result.apk_whatsapp_status && result.apk_whatsapp_status !== "pending") {
+        setCreated(true);
+        setError(result.apk_whatsapp_status === "missing_phone"
+          ? "Colaborador cadastrado. O link do APK não foi enviado porque falta o telefone/WhatsApp. Edite o colaborador para informar o número."
+          : "Colaborador cadastrado. O link do APK não foi enviado porque o WhatsApp da empresa não está configurado ou habilitado.");
+        return;
+      }
       onClose();
     } catch (err) {
       setError(message(err));
@@ -692,10 +704,10 @@ function CreateUser({ onClose }: { onClose: () => void }) {
           <input name="email" type="email" required />
         </Field>
         <Field label="Telefone/WhatsApp do colaborador">
-          <PhoneInput required={invitation && channel !== "email"} />
+          <PhoneInput required={(invitation && channel !== "email") || role === "driver" || role === "guide"} />
         </Field>
         <Field label="Perfil">
-          <select name="role" defaultValue="attendant">
+          <select name="role" value={role} onChange={event => setRole(event.target.value)}>
             {Object.entries(roleName)
               .filter(([role]) => role !== "nexus" && role !== "nexus_staff")
               .map(([role, name]) => (
@@ -741,12 +753,13 @@ function CreateUser({ onClose }: { onClose: () => void }) {
             ? "Convite válido por 24 horas. A pessoa define sua própria senha."
             : "Mínimo de 8 caracteres, com uma letra maiúscula e um caractere especial."}
         </small>
+        <p className="muted">Motoristas e guias recebem automaticamente no WhatsApp o link do APK, quando houver telefone e WhatsApp da empresa habilitado.</p>
         {error && <Alert>{error}</Alert>}
         <footer className="modal-actions">
           <button type="button" className="button secondary" onClick={onClose}>
-            Cancelar
+            {created ? "Concluir" : "Cancelar"}
           </button>
-          <button className="button primary" disabled={pending}>
+          <button className="button primary" disabled={pending || created}>
             {pending ? "Salvando…" : "Adicionar pessoa"}
           </button>
         </footer>
@@ -1031,6 +1044,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "sales"
     | "routes"
     | "tracking"
+    | "fleet-map"
     | "ticket-sales"
     | "reports"
     | "integrations"
@@ -1166,7 +1180,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const title =
     page === "company-settings" ? "Configurações da empresa" :
     page === "nps" ? "NPS e satisfação" :
-    page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
+    page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "fleet-map" ? "Mapa da frota" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
@@ -1218,6 +1232,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "packages",
     "operations",
     "tracking",
+    "fleet-map",
     "ticket-sales",
     "allocations",
     "passengers",
@@ -1320,6 +1335,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
                   ...(isAdmin ? [{ id: "tracking", label: "Rastreamento", icon: Route }] : []),
+                  ...(isAdmin ? [{ id: "fleet-map", label: "Mapa da frota", icon: Route }] : []),
                   { id: "vehicles", label: "Veículos", icon: Route },
                   ...(companyCapabilities(company.data).packages
                     ? [{ id: "packages", label: "Pacotes", icon: Route }]
@@ -1451,7 +1467,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <span className="avatar">{initials(user.full_name)}</span>
           </button>
         </header>
-        <main className="content" id="main-content" tabIndex={-1}>
+        <main className={`content${page === "fleet-map" ? " fleet-map-content" : ""}`} id="main-content" tabIndex={-1}>
           <div className="page-heading">
             <div>
               <span className="section-kicker">
@@ -1523,6 +1539,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "whatsapp-chat" && !isNexus && (isAdmin || user.role === "attendant") && <WhatsAppChat requestedChat={requestedChat} canConfigure={isAdmin} onConfigure={() => setPage("whatsapp")} />}
           {page === "nps" && !isNexus && !financialOnly && (isAdmin || user.role === "attendant") && hasModule(user, "whatsapp") && <Nps canConfigure={isAdmin} />}
           {page === "company-settings" && isAdmin && !financialOnly && hasModule(user, "whatsapp") && <BusinessHours />}
+          {page === "company-settings" && isAdmin && !financialOnly && hasModule(user, "trips") && <DepartureSettings />}
           {page === "whatsapp-connections" && fullNexus && <NexusWhatsApp />}
           {page === "billing" && (fullNexus || isAdmin) && (
             <Billing
@@ -1555,6 +1572,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             !isNexus &&
             (isAdmin || user.role === "attendant") && <RouteCatalog />}
           {page === "tracking" && isAdmin && <Tracking />}
+          {page === "fleet-map" && isAdmin && <FleetMap />}
           {page === "operations" && (
             <Operations
               key={`${operationModule}:${reportTripId || ""}`}

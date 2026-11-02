@@ -365,3 +365,18 @@ async def download(
         filename=f"rotafy-{row['version']}.apk",
         headers={"Cache-Control": "no-store", "X-Content-SHA256": row["sha256"]},
     )
+
+
+@router.get("/public/mobile/latest/download")
+async def download_latest(request: Request):
+    package = "br.com.nexusdataanalytics.rotafy"
+    async with request.app.state.platform_engine.connect() as db:
+        build = await db.scalar(
+            text("SELECT max(build) FROM mobile_releases WHERE package_id=:id"),
+            {"id": package},
+        )
+    if build is None:
+        raise HTTPException(
+            404, "O APK ainda não foi publicado. Solicite à equipe Nexus."
+        )
+    return await download(request, package_id=package, build=build)

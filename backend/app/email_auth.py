@@ -292,10 +292,16 @@ async def invite(data: Invite, request: Request, actor: Auth):
         await queue_reset(
             db, settings, actor.company_id, user, invitation=True, channel=data.channel
         )
+        from app.crew_onboarding import queue_crew_apk
+
+        apk_status = await queue_crew_apk(
+            db, settings, actor.company_id, user | {"role": data.role}
+        )
         await audit(db, actor.company_id, actor.user["id"], "user.invited", user_id)
         return {
             "id": user_id,
             "channel": data.channel,
+            "apk_whatsapp_status": apk_status,
             "email_status": "pending" if data.channel != "whatsapp" else None,
             "whatsapp_status": "pending" if data.channel != "email" else None,
         }

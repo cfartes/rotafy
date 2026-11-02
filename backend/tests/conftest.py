@@ -107,7 +107,7 @@ def seeded(owner, monkeypatch):
             text("UPDATE contract_settings SET active_version_id=NULL WHERE id=true")
         )
         db.execute(
-            text("""UPDATE geocoding_settings SET enabled=false,api_key='',used=0,
+            text("""UPDATE geocoding_settings SET enabled=false,api_key='',browser_key='',used=0,
           monthly_limit=9000,version=0,routes_enabled=false,routes_used=0,routes_limit=9000,
           optimization_enabled=false,stop_minutes=2,usage_month=date_trunc('month',now()),routes_month=date_trunc('month',now())""")
         )

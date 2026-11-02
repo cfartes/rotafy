@@ -35,6 +35,8 @@ class Configuration(Input):
     monthly_limit: int = Field(ge=1, le=1000000, strict=True)
     api_key: SecretStr | None = Field(default=None, max_length=512)
     clear_key: bool = False
+    browser_key: SecretStr | None = Field(default=None, max_length=512)
+    clear_browser_key: bool = False
     optimization_enabled: bool | None = None
     routes_enabled: bool | None = None
     routes_limit: int | None = Field(default=None, ge=1, le=1000000, strict=True)
@@ -48,6 +50,7 @@ async def configuration(db):
 def public_config(value):
     return {k: value[k] for k in ("enabled", "monthly_limit", "version")} | {
         "key_configured": bool(value["api_key"]),
+        "browser_key_configured": bool(value["browser_key"]),
         "used": value["used"]
         if value["usage_month"] == utc_now().date().replace(day=1)
         else 0,
@@ -97,13 +100,26 @@ async def put_configuration(data: Configuration, actor: Auth):
     )
     if (data.enabled or routes_enabled or optimization_enabled) and not key:
         raise HTTPException(422, "Cadastre a chave de backend antes de habilitar.")
+    browser_key = current["browser_key"]
+    if data.clear_browser_key:
+        browser_key = ""
+    elif data.browser_key is not None:
+        value = data.browser_key.get_secret_value().strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]{10,512}", value):
+            raise HTTPException(422, "Informe uma chave web válida.")
+        browser_key = encrypt(value)
+    if browser_key and key and decrypt(browser_key) == decrypt(key):
+        raise HTTPException(
+            422, "Use uma chave web diferente da chave privada do backend."
+        )
     await actor.db.execute(
         text("""UPDATE geocoding_settings SET enabled=:enabled,
-      api_key=:key,monthly_limit=:limit,routes_enabled=:routes_enabled,
+      api_key=:key,browser_key=:browser_key,monthly_limit=:limit,routes_enabled=:routes_enabled,
       routes_limit=:routes_limit,stop_minutes=:stop_minutes,optimization_enabled=:optimization_enabled,version=version+1 WHERE id"""),
         {
             "enabled": data.enabled,
             "key": key,
+            "browser_key": browser_key,
             "limit": data.monthly_limit,
             "routes_enabled": routes_enabled,
             "optimization_enabled": optimization_enabled,

@@ -24,7 +24,9 @@ test("admin enables tracking and confirms the boarding location before proximity
   await page.getByRole("button", { name: "Salvar configurações" }).click();
   await expect.poll(()=>settings.enabled && settings.departure_enabled).toBe(true);
   await expect(page.getByText(/Localização desatualizada/)).toBeVisible();
+  await page.getByRole("button", { name: "Mapa da frota", exact: true }).click();
   await expect(page.getByLabel("Mapa de veículos em viagem", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Rastreamento", exact: true }).click();
   await page.getByRole("button", { name: "Acompanhar no mapa" }).click();
   await expect(page.getByLabel("Mapa das posições coletadas")).toBeVisible();
   await page.getByRole("button", { name: "Confirmar ponto no mapa" }).click();
