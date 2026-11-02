@@ -37,7 +37,7 @@ window.addEventListener("message", async event => {
       try {
         if (!cache.has(address)) cache.set(address, geocoder.geocode({ address, region: "BR" }));
         const response = await cache.get(address);
-        if (response.results.length !== 1 || response.results[0].partial_match) { previous = null; continue; }
+        if (response.results.length !== 1 || response.results[0].partial_match || !["ROOFTOP", "RANGE_INTERPOLATED"].includes(response.results[0].geometry?.location_type)) { previous = null; continue; }
         const point = response.results[0].geometry.location;
         bounds.extend(point); located++;
         new maps.Marker({ map, position: point, label: { text: String(i + 1), color: "#ffffff" }, icon: { path: maps.SymbolPath.CIRCLE, scale: 12, fillColor: "#205bce", fillOpacity: 1, strokeWeight: 1 }, title: `${p.name} · ${p.address}${p.scheduled_at ? " · " + new Date(p.scheduled_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}` });

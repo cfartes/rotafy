@@ -15,7 +15,7 @@ test("admin changes the departure gate and compares an immutable route in an iso
       try { parent.document.body; document.body.dataset.parentAccess='allowed'; } catch { document.body.dataset.parentAccess='blocked'; }
       window.google={maps:{Map:class{fitBounds(){} getZoom(){return 14} setZoom(){}},
         LatLngBounds:class{extend(){} isEmpty(){return false}},Polyline:class{},Marker:class{},SymbolPath:{CIRCLE:0},
-        Geocoder:class{async geocode(){return {results:[{geometry:{location:{lat:()=>-26.9,lng:()=>-49.0}}}]}}},
+        Geocoder:class{async geocode(){return {results:[{geometry:{location_type:"ROOFTOP",location:{lat:()=>-26.9,lng:()=>-49.0}}}]}}},
         event:{addListenerOnce(m,n,f){f()}}}}; window.routeMapReady();
     ` });
   });
