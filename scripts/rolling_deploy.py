@@ -4,6 +4,7 @@ import copy
 import ipaddress
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -12,6 +13,78 @@ from pathlib import Path
 
 WORKERS = ("billing", "email", "geocoding", "whatsapp")
 DRAIN_SECONDS = 300
+
+
+def stage_assets(output, images, volume):
+    images = list(dict.fromkeys(images))
+    for image in images:
+        # BusyBox cp -n skips an existing destination directory, including its
+        # children. Merge instead; hash-named bundles are safe to overwrite.
+        output(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "none",
+                "-v",
+                volume + ":/assets",
+                "--entrypoint",
+                "sh",
+                image,
+                "-c",
+                "cp -a /usr/share/nginx/html/assets/. /assets/",
+            ]
+        )
+    for image in images:
+        output(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "none",
+                "--user",
+                "nginx",
+                "-v",
+                volume + ":/assets:ro",
+                "--entrypoint",
+                "sh",
+                image,
+                "-c",
+                'find /usr/share/nginx/html/assets -type f | while IFS= read -r file; do cmp -s "$file" "/assets/${file#/usr/share/nginx/html/assets/}" || exit 1; done',
+            ]
+        )
+
+
+def verify_public_assets(base):
+    with urllib.request.urlopen(base + "/", timeout=10) as response:
+        markup = response.read().decode("utf-8")
+    paths = list(
+        dict.fromkeys(re.findall(r"""(?:src|href)=["'](/assets/[^"']+)["']""", markup))
+    )
+    if not all(
+        any(path.endswith(extension) for path in paths) for extension in (".js", ".css")
+    ):
+        raise ValueError("A página pública não identifica seu JavaScript/CSS.")
+    for path in paths:
+        expected = (
+            ("application/javascript", "text/javascript")
+            if path.endswith(".js")
+            else ("text/css",)
+            if path.endswith(".css")
+            else None
+        )
+        if expected:
+            with urllib.request.urlopen(base + path, timeout=10) as response:
+                if (
+                    response.status != 200
+                    or response.headers.get_content_type() not in expected
+                    or not response.read(1)
+                ):
+                    raise ValueError(
+                        "JavaScript/CSS público indisponível ou com tipo incorreto."
+                    )
 
 
 def save(path, value):
@@ -302,13 +375,20 @@ class RollingDeployment:
                         raise ValueError(
                             "Public endpoint still serves another release."
                         )
-                return
             except (OSError, ValueError):
                 if attempt == 17:
                     raise ValueError(
                         "Nova versão não confirmada via HTTPS; retornando à anterior."
                     ) from None
                 time.sleep(2)
+            else:
+                try:
+                    verify_public_assets("https://rotafy.nexusdataanalytics.tech")
+                except OSError:
+                    raise ValueError(
+                        "Arquivos públicos JavaScript/CSS não acessíveis; publicação cancelada."
+                    ) from None
+                return
 
     def restore(self, old, candidate):
         # Stop new senders before restarting old ones, even after a partial failure.
@@ -370,6 +450,14 @@ class RollingDeployment:
     def prepare(self, base):
         self.recover()
         self.preflight()
+        retained = (
+            [self.state["active"], self.state.get("previous")] if self.state else []
+        )
+        retained_images = [
+            json.loads(Path(target["compose"]).read_text())["services"]["web"]["image"]
+            for target in retained
+            if target
+        ]
         base = copy.deepcopy(base)
         for service in ("api", "web", *WORKERS):
             base["services"][service]["image"] = self.output(
@@ -458,27 +546,15 @@ class RollingDeployment:
         # The volume holds only immutable public bundles; keep old tabs' lazy chunks.
         assets = self.project + "_web_assets"
         self.output(["docker", "volume", "create", assets])
-        images = [base["services"]["web"]["image"]]
-        if old["slot"] == "legacy":
-            legacy = json.loads(Path(old["compose"]).read_text())
-            images.append(legacy["services"]["web"]["image"])
-        for image in images:
-            self.output(
-                [
-                    "docker",
-                    "run",
-                    "--rm",
-                    "--network",
-                    "none",
-                    "-v",
-                    assets + ":/assets",
-                    "--entrypoint",
-                    "sh",
-                    image,
-                    "-c",
-                    "cp -an /usr/share/nginx/html/assets/. /assets/",
-                ]
-            )
+        images = [base["services"]["web"]["image"], *retained_images]
+        snapshot = json.loads(Path(old["compose"]).read_text())
+        images.append(snapshot["services"]["web"]["image"])
+        try:
+            stage_assets(self.output, images, assets)
+        except subprocess.CalledProcessError:
+            raise ValueError(
+                "Falha ao preparar/verificar os arquivos públicos; tráfego atual preservado."
+            ) from None
         labels = {
             "traefik.enable": "true",
             "traefik.docker.network": self.values["TRAEFIK_NETWORK"],

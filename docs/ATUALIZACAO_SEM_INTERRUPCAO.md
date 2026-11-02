@@ -58,6 +58,8 @@ Se houver queda do processo/servidor durante a troca, o journal em `artifacts/de
 
 Os testes de saúde da web e do gateway usam `127.0.0.1`, pois o Nginx ouve em IPv4. Em containers Alpine, `localhost` pode tentar IPv6 e informar conexão recusada mesmo com a página funcionando. Se uma entrega antiga parar em **Validando web/API novas**, atualize o script e tente novamente. Falhas nessa fase agora identificam o slot, a etapa e o estado/saúde de cada serviço, sem imprimir variáveis de ambiente, saída dos probes ou logs com dados privados. A mensagem **Administrador Nexus já provisionado; nenhuma senha foi alterada** é normal.
 
+Se o HTML abre, mas a tela fica branca, confira o retorno dos arquivos `/assets/` no navegador. O atualizador corrige a cópia de bundles em volumes já existentes: não usa `cp -n` sobre o diretório, pois o BusyBox podia ignorar seu conteúdo inteiro. Mescla os bundles da versão nova e das versões preservadas, sem apagar arquivos antigos, e compara os arquivos como o usuário `nginx` antes de trocar o tráfego. A validação HTTPS também exige que o JavaScript/CSS referenciado pelo HTML retorne conteúdo não vazio e o tipo correto; apenas `/version.json` e saúde da API não bastam para aprovar a entrega. Falhas nessa checagem cancelam a publicação e acionam o retorno. Não apague o IndexedDB ou os dados offline do navegador para tratar uma falha de arquivos no servidor.
+
 Os projetos de aplicação são `<projeto>-blue` e `<projeto>-green`; o gateway é `<projeto>-edge`. O banco permanece no projeto original. Para consultar a versão ativa, sem precisar descobrir a cor:
 
 ```sh
