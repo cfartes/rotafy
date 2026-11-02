@@ -68,7 +68,7 @@ def slot_config(base, project, slot, directory):
                     "-q",
                     "-O",
                     "/dev/null",
-                    "http://localhost/version.json",
+                    "http://127.0.0.1/version.json",
                 ],
                 "interval": "5s",
                 "timeout": "5s",
@@ -515,7 +515,7 @@ class RollingDeployment:
                                 "-q",
                                 "-O",
                                 "/dev/null",
-                                "http://localhost/api/v1/health",
+                                "http://127.0.0.1/api/v1/health",
                             ],
                             "interval": "5s",
                             "timeout": "5s",
@@ -538,29 +538,63 @@ class RollingDeployment:
         )
         return old, candidate
 
+    def readiness_error(self, candidate, stage):
+        details = []
+        try:
+            ids = self.compose(candidate, "ps", "-aq", "api", "web").stdout.split()
+            containers = (
+                json.loads(self.output(["docker", "inspect", *ids])) if ids else []
+            )
+            for container in containers:
+                service = (
+                    container["Config"]
+                    .get("Labels", {})
+                    .get("com.docker.compose.service")
+                )
+                if service not in ("api", "web"):
+                    continue
+                state = container["State"]
+                health = state.get("Health", {})
+                checks = health.get("Log", [])
+                probe = checks[-1].get("ExitCode") if checks else None
+                details.append(
+                    f"{service}: estado={state.get('Status')}, saúde={health.get('Status', 'sem teste')}, saída={state.get('ExitCode')}, teste={probe}"
+                )
+        except (subprocess.CalledProcessError, ValueError, KeyError, OSError):
+            details.append("estado dos containers indisponível")
+        return ValueError(
+            f"Nova versão não validada (slot {candidate['slot']}, {stage}); tráfego não alterado. "
+            + ("; ".join(details) or "Nenhum container novo identificado.")
+        )
+
     def publish(self, old, candidate):
         print("Validando web/API novas; a versão atual continua atendendo.")
-        self.compose(
-            candidate,
-            "up",
-            "-d",
-            "--no-deps",
-            "--wait",
-            "--wait-timeout",
-            "180",
-            "api",
-            "web",
-        )
-        # Ensure assets and API really belong to the candidate before public routing.
-        self.compose(
-            candidate,
-            "exec",
-            "-T",
-            "api",
-            "python",
-            "-c",
-            f"import json,urllib.request; assert json.load(urllib.request.urlopen('http://{self.project}-{candidate['slot']}-web/version.json'))['version']=={candidate['release']!r}",
-        )
+        stage = "inicialização dos serviços"
+        try:
+            self.compose(
+                candidate,
+                "up",
+                "-d",
+                "--no-deps",
+                "--wait",
+                "--wait-timeout",
+                "180",
+                "api",
+                "web",
+            )
+            stage = "comunicação entre API e web"
+            # Ensure assets and API really belong to the candidate before public routing.
+            self.compose(
+                candidate,
+                "exec",
+                "-T",
+                "api",
+                "python",
+                "-c",
+                f"import json,urllib.request; assert json.load(urllib.request.urlopen('http://{self.project}-{candidate['slot']}-web/version.json', timeout=10))['version']=={candidate['release']!r}",
+            )
+        except subprocess.CalledProcessError:
+            raise self.readiness_error(candidate, stage) from None
         save(
             self.state_path,
             {"phase": "switching", "active": old, "candidate": candidate},

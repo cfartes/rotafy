@@ -1,5 +1,6 @@
 import copy
 import json
+import subprocess
 import tempfile
 import time
 import unittest
@@ -60,6 +61,37 @@ class RollingTests(unittest.TestCase):
         self.deployment.route.assert_not_called()
         self.deployment.stopped.assert_not_called()
         self.assertFalse(self.deployment.state_path.exists())
+
+    def test_readiness_failure_identifies_service_without_logging_secrets(self):
+        self.deployment.compose.side_effect = [
+            subprocess.CalledProcessError(1, ["docker"], stderr="secret-from-command"),
+            SimpleNamespace(stdout="new-web"),
+        ]
+        self.deployment.output.return_value = json.dumps(
+            [
+                {
+                    "Config": {
+                        "Labels": {"com.docker.compose.service": "web"},
+                        "Env": ["PASSWORD=secret-env"],
+                    },
+                    "State": {
+                        "Status": "running",
+                        "ExitCode": 0,
+                        "Health": {
+                            "Status": "unhealthy",
+                            "Log": [{"ExitCode": 1, "Output": "secret-probe-output"}],
+                        },
+                    },
+                }
+            ]
+        )
+        with self.assertRaises(ValueError) as caught:
+            self.deployment.publish(self.old, self.new)
+        self.assertIn("web: estado=running", str(caught.exception))
+        self.assertIn("saúde=unhealthy", str(caught.exception))
+        self.assertNotIn("secret", str(caught.exception))
+        self.deployment.route.assert_not_called()
+        self.deployment.stopped.assert_not_called()
 
     def test_failed_workers_stop_new_before_restoring_old(self):
         events = []
@@ -292,6 +324,15 @@ class RollingTests(unittest.TestCase):
             all(volume["external"] for volume in legacy["volumes"].values())
         )
         self.assertNotIn("depends_on", legacy["services"]["api"])
+        self.assertEqual(
+            saved["services"]["web"]["healthcheck"]["test"][-1],
+            "http://127.0.0.1/version.json",
+        )
+        edge = json.loads((self.deployment.gateway / "compose.json").read_text())
+        self.assertEqual(
+            edge["services"]["gateway"]["healthcheck"]["test"][-1],
+            "http://127.0.0.1/api/v1/health",
+        )
         self.deployment.compose.assert_not_called()
 
     def test_gateway_trusts_only_proxy_and_keeps_sensitive_paths_out_of_access_logs(

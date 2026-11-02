@@ -56,6 +56,8 @@ Se houver queda do processo/servidor durante a troca, o journal em `artifacts/de
 
 ## Operar e diagnosticar
 
+Os testes de saúde da web e do gateway usam `127.0.0.1`, pois o Nginx ouve em IPv4. Em containers Alpine, `localhost` pode tentar IPv6 e informar conexão recusada mesmo com a página funcionando. Se uma entrega antiga parar em **Validando web/API novas**, atualize o script e tente novamente. Falhas nessa fase agora identificam o slot, a etapa e o estado/saúde de cada serviço, sem imprimir variáveis de ambiente, saída dos probes ou logs com dados privados. A mensagem **Administrador Nexus já provisionado; nenhuma senha foi alterada** é normal.
+
 Os projetos de aplicação são `<projeto>-blue` e `<projeto>-green`; o gateway é `<projeto>-edge`. O banco permanece no projeto original. Para consultar a versão ativa, sem precisar descobrir a cor:
 
 ```sh
