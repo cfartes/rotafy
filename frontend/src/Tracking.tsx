@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { Alert, Field, Modal } from "./components/ui";
 import { TrackingMap, mapsCoordinate, type GeoPoint } from "./TrackingMap";
+import { RouteComparison } from "./RouteComparison";
 
 type Settings = { enabled: boolean; proximity_enabled: boolean; departure_enabled: boolean; radius_m: number };
 type Vehicle = { id: string; trip_name: string; trip_id: string; vehicle_name: string; plate: string; responsible: string; origin: string; destination: string; captured_at: string | null; accuracy_m: number | null; latitude?: number | null; longitude?: number | null };
@@ -54,8 +55,8 @@ export function Tracking() {
   return <div className="modal-form">
     {(settings.error || vehicles.error || history.error || boardings.error) && <Alert>Não foi possível atualizar o rastreamento. Confira sua conexão.</Alert>}
     {settings.data && <Preferences settings={settings.data}/>}
+    <RouteComparison trips={trips.data || []} />
     <section className="operation-card"><h2>Veículos em viagem</h2><p>No APK 1.10.0 ou superior, a coleta é prevista a cada minuto. Versões anteriores coletam a cada cinco minutos. A linha liga amostras de GPS e não representa todo o percurso pelas ruas.</p>
-      {vehicles.data?.some(v => v.latitude != null && v.longitude != null) && <TrackingMap points={[]} markers={vehicles.data.filter(v => v.latitude != null && v.longitude != null).map(v => ({ latitude: v.latitude!, longitude: v.longitude!, label: `${v.vehicle_name} · ${v.plate} · ${v.trip_name}${!v.captured_at || Date.now()-Date.parse(v.captured_at)>120000 ? " · posição desatualizada" : ""}`, stale: !v.captured_at || Date.now()-Date.parse(v.captured_at)>120000 }))} />}
       {vehicles.data?.length===0 && <p>Nenhum veículo está compartilhando localização neste momento.</p>}
       {vehicles.data?.map(v=><article className="operation-card" key={v.id}><strong>{v.vehicle_name} · {v.plate}</strong><p>{v.trip_name} · {v.origin} → {v.destination}</p><p>Responsável: {v.responsible}</p><p>{v.captured_at ? `Última posição: ${new Date(v.captured_at).toLocaleString("pt-BR")} · Precisão: ${Math.round(v.accuracy_m||0)} m${Date.now()-Date.parse(v.captured_at)>6*60000 ? " · Localização desatualizada" : ""}` : "Aguardando a primeira posição"}</p><button className="button secondary" onClick={()=>{setSession(v.id);setTrip(v.trip_id);}}>Acompanhar no mapa</button></article>)}
       {session && <TrackingMap points={history.data||[]}/>}

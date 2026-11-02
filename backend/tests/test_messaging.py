@@ -204,7 +204,11 @@ def test_whatsapp_invitation_without_resend_and_shared_link_for_both(
     assert response.json()["email_status"] is None
     with owner.connect() as db:
         assert db.scalar(text("SELECT count(*) FROM email_outbox")) == 0
-        row = db.execute(text("SELECT * FROM whatsapp_outbox")).mappings().one()
+        row = (
+            db.execute(text("SELECT * FROM whatsapp_outbox WHERE kind='invitation'"))
+            .mappings()
+            .one()
+        )
         body = decrypt(row["body"])
         assert "/redefinir#token=" in body
         assert row["phone"] == "+5547999999999" and row["reservation_id"] is None
@@ -243,8 +247,11 @@ def test_whatsapp_invitation_without_resend_and_shared_link_for_both(
             sent.append(payload)
         return ready(key, path, payload)
 
-    assert process(seeded["a"], sender)
-    assert len(sent) == 1 and "/redefinir#token=" in sent[0]["text"]
+    for _ in range(3):
+        if any("/redefinir#token=" in message["text"] for message in sent):
+            break
+        assert process(seeded["a"], sender)
+    assert sum("/redefinir#token=" in message["text"] for message in sent) == 1
     login(client, email="nexus@example.com", nexus=True)
     client.put(
         "/api/v1/nexus/integrations",
@@ -260,7 +267,9 @@ def test_whatsapp_invitation_without_resend_and_shared_link_for_both(
     with owner.connect() as db:
         email = db.scalar(text("SELECT body FROM email_outbox"))
         whatsapp = db.scalar(
-            text("SELECT body FROM whatsapp_outbox WHERE status='pending'")
+            text(
+                "SELECT body FROM whatsapp_outbox WHERE status='pending' AND kind='invitation'"
+            )
         )
         assert email == decrypt(whatsapp)
     login(client, company="empresa-b")

@@ -3,6 +3,40 @@ import 'package:nexus_rotafy/core/crew.dart';
 
 void main() {
   test(
+    'departure gate follows company minutes and disabled early departure',
+    () {
+      final leg = {'starts_at': '2027-01-10T12:00:00Z'};
+      final departure = DateTime.parse(leg['starts_at']!);
+      final policy = {'early_start_enabled': true, 'early_start_minutes': 90};
+      expect(
+        canStartLeg(
+          leg,
+          departure.subtract(const Duration(minutes: 91)),
+          policy: policy,
+        ),
+        isFalse,
+      );
+      expect(
+        canStartLeg(
+          leg,
+          departure.subtract(const Duration(minutes: 90)),
+          policy: policy,
+        ),
+        isTrue,
+      );
+      policy['early_start_enabled'] = false;
+      expect(
+        canStartLeg(
+          leg,
+          departure.subtract(const Duration(seconds: 1)),
+          policy: policy,
+        ),
+        isFalse,
+      );
+      expect(canStartLeg(leg, departure, policy: policy), isTrue);
+    },
+  );
+  test(
     'driver sees only Brazilian operational day and ongoing overnight leg',
     () {
       final now = DateTime.parse('2027-01-10T02:59:00Z');

@@ -278,7 +278,15 @@ class _ManifestPageState extends State<ManifestPage> {
           .where((person) => person['status'] == 'waiting')
           .length;
       final journeyStatus = data['journey']?['status'] ?? 'scheduled';
-      final startAllowed = canStartLeg(Json.from(data['leg']), DateTime.now());
+      final policy = Json.from(data['departure_policy'] ?? {});
+      final earlyMinutes = policy['early_start_enabled'] == false
+          ? 0
+          : (policy['early_start_minutes'] as num? ?? 30).toInt();
+      final startAllowed = canStartLeg(
+        Json.from(data['leg']),
+        DateTime.now(),
+        policy: policy,
+      );
       final canOperate =
           controller.moduleEnabled('boarding') &&
           data['can_write'] == true &&
@@ -336,8 +344,10 @@ class _ManifestPageState extends State<ManifestPage> {
                   label: const Text('Iniciar viagem'),
                 ),
               if (journeyStatus == 'scheduled' && !startAllowed)
-                const Text(
-                  'O início será liberado 30 minutos antes da saída prevista. Você já pode consultar o manifesto.',
+                Text(
+                  earlyMinutes == 0
+                      ? 'O início será liberado no horário previsto da saída. Você já pode consultar o manifesto.'
+                      : 'O início será liberado $earlyMinutes minutos antes da saída prevista. Você já pode consultar o manifesto.',
                 ),
               if (journeyStatus == 'in_progress' &&
                   controller.moduleEnabled('tracking'))

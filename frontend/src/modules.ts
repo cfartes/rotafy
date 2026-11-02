@@ -22,6 +22,7 @@ export const menuModule: Record<string, string> = {
   packages: "packages",
   operations: "trips",
   tracking: "tracking",
+  "fleet-map": "tracking",
   "ticket-sales": "sales",
   allocations: "trips",
   passengers: "sales",

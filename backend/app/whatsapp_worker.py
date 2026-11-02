@@ -101,6 +101,16 @@ async def process_company(engine, company_id, transport=openwa_request):
             from app.tracking import alert_valid
 
             valid = await alert_valid(db, item)
+        elif item["kind"] == "crew_apk":
+            valid = await db.scalar(
+                text("""SELECT 1 FROM users WHERE id=:user
+              AND company_id=:company AND is_active AND role IN ('driver','guide') AND contact_phone=:phone"""),
+                {
+                    "user": item["user_id"],
+                    "company": company_id,
+                    "phone": item["phone"],
+                },
+            )
         elif item["kind"] == "invitation":
             valid = await db.scalar(
                 text("""SELECT 1 FROM password_resets r JOIN users u ON u.id=r.user_id

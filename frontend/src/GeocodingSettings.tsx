@@ -4,7 +4,7 @@ import { api } from "./api";
 import { PasswordInput } from "./components/PasswordInput";
 import { Alert, Field } from "./components/ui";
 
-type Configuration = { enabled: boolean; monthly_limit: number; used: number; key_configured: boolean; version: number; optimization_enabled?: boolean; routes_enabled?: boolean; routes_limit?: number; routes_used?: number; stop_minutes?: number };
+type Configuration = { enabled: boolean; monthly_limit: number; used: number; key_configured: boolean; browser_key_configured?: boolean; version: number; optimization_enabled?: boolean; routes_enabled?: boolean; routes_limit?: number; routes_used?: number; stop_minutes?: number };
 
 export function GeocodingSettings() {
   const cache = useQueryClient();
@@ -16,10 +16,10 @@ export function GeocodingSettings() {
     <p>Converte endereços em coordenadas pelo Google Maps, em segundo plano. Use a chave de backend restrita ao IP da VPS. Habilite a Geocoding API e, para previsão de chegada, a Routes API nas restrições da chave. Não use a chave web ou Android.</p>
     {query.error && <Alert>Não foi possível carregar a configuração.</Alert>}
     {query.data && <form key={query.data.version} className="modal-form" onSubmit={async event => {
-      event.preventDefault(); const form = new FormData(event.currentTarget); const key = String(form.get("api_key") || "").trim();
+      event.preventDefault(); const form = new FormData(event.currentTarget); const key = String(form.get("api_key") || "").trim(); const browserKey = String(form.get("browser_key") || "").trim();
       setBusy(true); setError(""); setNotice("");
       try {
-        await api("/nexus/geocoding", { method: "PUT", body: JSON.stringify({ expected_version: query.data!.version, enabled: form.has("enabled"), monthly_limit: Number(form.get("monthly_limit")), ...(key ? { api_key: key } : {}), clear_key: form.has("clear_key"), optimization_enabled: form.has("optimization_enabled"), routes_enabled: form.has("routes_enabled"), routes_limit: Number(form.get("routes_limit")), stop_minutes: Number(form.get("stop_minutes")) }) });
+        await api("/nexus/geocoding", { method: "PUT", body: JSON.stringify({ expected_version: query.data!.version, enabled: form.has("enabled"), monthly_limit: Number(form.get("monthly_limit")), ...(key ? { api_key: key } : {}), clear_key: form.has("clear_key"), ...(browserKey ? { browser_key: browserKey } : {}), clear_browser_key: form.has("clear_browser_key"), optimization_enabled: form.has("optimization_enabled"), routes_enabled: form.has("routes_enabled"), routes_limit: Number(form.get("routes_limit")), stop_minutes: Number(form.get("stop_minutes")) }) });
         await cache.invalidateQueries({ queryKey: ["geocoding-settings"] }); setNotice("Configuração salva. Os endereços serão processados automaticamente.");
       } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível salvar."); } finally { setBusy(false); }
     }}>
@@ -29,6 +29,11 @@ export function GeocodingSettings() {
       <label><input type="checkbox" name="clear_key" />Remover a chave cadastrada</label>
       <Field label="Limite mensal de consultas de todas as empresas"><input name="monthly_limit" type="number" min="1" max="1000000" step="1" required defaultValue={query.data.monthly_limit} /></Field>
       <p>Consultas neste mês: {query.data.used}. O limite é global do Rotafy e inclui tentativas com erro. Ao atingir o limite, novas consultas aguardam o próximo mês (UTC). Configure também cotas no Google Cloud; o app não contabiliza uso externo.</p>
+      <h3>Mapa de comparação de rotas</h3>
+      <Field label="Chave web Google Maps"><PasswordInput name="browser_key" autoComplete="new-password" /></Field>
+      <p>{query.data.browser_key_configured ? "Chave web cadastrada. Deixe vazio para manter." : "Nenhuma chave web cadastrada."} Use uma chave separada da chave de backend, restrita ao domínio do app por HTTP referrer. Habilite Maps JavaScript API e Geocoding API. A chave web é utilizada pelo navegador e será visível ao administrador que carregar o mapa.</p>
+      <label><input type="checkbox" name="clear_browser_key" />Remover a chave web cadastrada</label>
+      <p>O mapa só carrega após solicitação do administrador. Carregamentos e localização dos endereços têm consumo próprio no Google e não entram no limite de consultas do backend. Configure cotas no Google Cloud.</p>
       <h3>Previsão de chegada no aviso de proximidade</h3>
       <label><input type="checkbox" name="routes_enabled" defaultChecked={query.data.routes_enabled ?? false} />Incluir tempo estimado de chegada pelo Google Maps</label>
       <label><input type="checkbox" name="optimization_enabled" defaultChecked={query.data.optimization_enabled ?? false} />Calcular sequência otimizada dos hotéis e casas antes da viagem</label>

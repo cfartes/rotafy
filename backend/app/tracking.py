@@ -529,6 +529,12 @@ async def process_alerts(engine, company_id):
             ),
             {"company": company_id},
         )
+        await db.execute(
+            text(
+                "DELETE FROM journey_route_snapshots WHERE company_id=:company AND created_at<now()-interval '90 days'"
+            ),
+            {"company": company_id},
+        )
         if not await enabled(db, company_id, "tracking") or not await enabled(
             db, company_id, "whatsapp"
         ):

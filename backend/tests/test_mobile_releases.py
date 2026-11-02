@@ -46,6 +46,7 @@ def test_publish_detect_version_and_download_without_login(client, storage):
     assert available.headers["cache-control"] == "no-store"
     assert available.json()["android"]["build"] == 12
     assert client.get(info["download_url"]).content == data
+    assert client.get("/api/v1/public/mobile/latest/download").content == data
     assert (
         client.get("/api/v1/public/mobile-version?package_id=other.package").json()[
             "android"

@@ -121,7 +121,7 @@ async def change_journey(
             if data.status == "in_progress":
                 from app.crew_schedule import check_start
 
-                check_start(actor, leg)
+                await check_start(db, actor, leg)
             if trip["status"] not in {"scheduled", "in_progress"}:
                 raise HTTPException(
                     409, "Viagem encerrada não permite iniciar ou fechar trechos."
@@ -176,6 +176,10 @@ async def change_journey(
                     409,
                     "Há passageiros a bordo. Registre e sincronize os desembarques antes de fechar.",
                 )
+            if data.status == "in_progress":
+                from app.route_comparison import snapshot_route
+
+                await snapshot_route(db, actor.company_id, trip, allocation_id, leg_id)
             now = utc_now().isoformat()
             states[str(leg_id)] = current | {
                 "status": data.status,
@@ -365,6 +369,8 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
         for status in ["waiting", "onboard", "alighted"]
     }
     journey = allocation["journey_states"].get(str(leg_id), {"status": "scheduled"})
+    from app.crew_schedule import departure_policy
+
     return {
         "trip": {k: trip[k] for k in ["id", "name", "status"]},
         "vehicle": {k: allocation[k] for k in ["id", "name", "plate", "capacity"]},
@@ -372,6 +378,7 @@ async def manifest(trip_id: UUID, allocation_id: UUID, leg_id: UUID, actor: Auth
         "passengers": passengers,
         "counts": counts,
         "journey": journey,
+        "departure_policy": await departure_policy(actor.db, actor.company_id),
         "can_write": actor.user["role"] in {"admin", "attendant", "guide", "driver"}
         and actor.integration_key_id is None
         and trip["status"] in {"scheduled", "in_progress"}

@@ -16,10 +16,13 @@ bool driverDayVisible(Json leg, Json journey, DateTime now) {
       day.day == departure.day;
 }
 
-bool canStartLeg(Json leg, DateTime now) {
+bool canStartLeg(Json leg, DateTime now, {Json? policy}) {
+  final minutes = policy?['early_start_enabled'] == false
+      ? 0
+      : (policy?['early_start_minutes'] as num? ?? 30).toInt();
   final departure = DateTime.tryParse(leg['starts_at'] as String? ?? '');
   return departure != null &&
       !now.toUtc().isBefore(
-        departure.toUtc().subtract(const Duration(minutes: 30)),
+        departure.toUtc().subtract(Duration(minutes: minutes)),
       );
 }

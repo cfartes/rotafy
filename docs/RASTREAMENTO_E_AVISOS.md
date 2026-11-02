@@ -75,3 +75,11 @@ A coleta periódica usa o mesmo cliente de localização combinada já utilizado
 O manifesto consulta o estado local a cada trinta segundos e mostra o último envio periódico confirmado pela API, falta de posição recente ou erro de comunicação HTTP. A confirmação inicial enviada pelo Flutter não é contada nesse indicador do serviço periódico. Uma notificação ativa e consultas GET com sucesso não comprovam a coleta: confirme o aumento de registros na sessão atual no banco.
 
 Publique `artifacts/mobile/nexus-rotafy-1.10.2.apk` no Superadmin e instale sobre a versão anterior. Teste por pelo menos três minutos, com tela bloqueada, parado e em deslocamento. Ambiente fechado ou restrições do aparelho ainda podem impedir uma posição precisa. Sem alteração no banco.
+
+## Roteiro planejado e antecedência — 1.11.0, compilação 19
+
+A regra de trinta minutos passa a ser configurável pelo administrador em Configurações. A comparação visual preserva a sequência de pontos no início do trecho e reúne suas sessões GPS. Consulte [Operação da equipe e rotas](OPERACAO_EQUIPE_E_ROTAS.md), incluindo chave web separada, compartilhamento com Google, consumo e limites.
+
+## Mapa da frota em tela inteira
+
+Menu separado de Rastreamento, exclusivo do administrador e condicionado ao módulo tracking. Ocupa a área de trabalho e oferece expansão nativa quando suportada. Consulta `/api/v1/tracking/vehicles` a cada quinze segundos; a coleta do APK permanece a cada minuto. Mostra placa, veículo, viagem, precisão e horário do GPS; amostras acima de dois minutos são sinalizadas. Atualizações preservam zoom e enquadramento. Veículos sem posição ficam contabilizados como aguardando GPS. A função usa GPS próprio sobre OSM, sem resultados Google ou chave web. Configurações, histórico e comparação permanecem em Rastreamento.
