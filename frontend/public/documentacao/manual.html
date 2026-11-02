@@ -5,7 +5,7 @@
 @page{size:A4;margin:18mm 16mm 19mm}@media print{body{background:white;font-size:10.5pt;line-height:1.5;color:#142e42}.toolbar,.sidebar,.no-results{display:none!important}.layout{display:block;padding:0;margin:0}.document{border:0;border-radius:0;overflow:visible}.cover{min-height:245mm;padding:35mm 15mm;background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:page}.cover h1{font-size:43pt;margin:25mm 0 12mm}.cover p{font-size:13pt}.print-toc{display:block;break-after:page;padding:5mm 0}.print-toc ul{columns:1;padding-left:18px}.print-toc li{margin:5px 0;font-size:10pt}.chapter{display:block!important;padding:0;border:0;break-before:page}h2{font-size:23pt;margin-top:5mm;break-after:avoid}h3{font-size:13pt;break-after:avoid}p,li{orphans:3;widows:3}table{font-size:9pt;break-inside:auto}tr{break-inside:avoid}th{background:#edf6f5!important;-webkit-print-color-adjust:exact}.note{break-inside:avoid}figure img{max-height:165mm;border-radius:0}a{color:inherit}.end{padding:8mm 0}}
 .chapter a{overflow-wrap:anywhere}.legal-links{padding:18px 5vw;font:14px/1.8 Arial,sans-serif;background:#edf3f6;color:#304e62}.legal-links a{margin-right:20px;color:#304e62}@media print{.legal-links{display:none}}</style></head><body><a class="skip" href="#documento">Ir ao manual</a>
 <header class="toolbar"><strong>rotafy. <small>NEXUS</small></strong><a href="/ajuda">Central de documentação</a><a href="manual.pdf" download="manual.pdf">Baixar PDF</a><a href="manual.html" download="manual.html">Baixar HTML</a><button type="button" onclick="window.print()">Imprimir</button></header>
-<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 36 capítulos</summary><div class="toc">
+<div class="layout"><nav class="sidebar" aria-label="Sumário do manual"><label for="busca">Buscar no manual</label><input id="busca" type="search" placeholder="Ex.: convite, chegada, pacote"><details open><summary>Sumário · 37 capítulos</summary><div class="toc">
 <ul>
 <li><a href="#visao-geral">1. Conheça o Nexus Rotafy</a></li>
 <li><a href="#perfis">2. Perfis e permissões</a></li>
@@ -43,10 +43,11 @@
 <li><a href="#horarios-atendimento">Horários de atendimento humano</a></li>
 <li><a href="#35-privacidade-cookies-e-seus-direitos">35. Privacidade, cookies e seus direitos</a></li>
 <li><a href="#realocacao-cancelamento">36. Realocar reservas após cancelar uma viagem</a></li>
+<li><a href="#historico-atividades">37. Histórico de atividades</a></li>
 </ul>
 </div>
 </details><p id="resultado" role="status" aria-live="polite"></p></nav>
-<main class="document" id="documento"><div class="cover"><p class="eyebrow">NEXUS DATA ANALYTICS · EDIÇÃO 2026.10</p><h1>Manual da empresa<br>Nexus Rotafy</h1><p>Administradores, atendentes, motoristas e guias.</p><p>Revisão 17 · 2 de novembro de 2026<br>rotafy.nexusdataanalytics.tech</p></div><section class="print-toc"><h2>Sumário</h2><div class="toc">
+<main class="document" id="documento"><div class="cover"><p class="eyebrow">NEXUS DATA ANALYTICS · EDIÇÃO 2026.10</p><h1>Manual da empresa<br>Nexus Rotafy</h1><p>Administradores, atendentes, motoristas e guias.</p><p>Revisão 18 · 2 de novembro de 2026<br>rotafy.nexusdataanalytics.tech</p></div><section class="print-toc"><h2>Sumário</h2><div class="toc">
 <ul>
 <li><a href="#visao-geral">1. Conheça o Nexus Rotafy</a></li>
 <li><a href="#perfis">2. Perfis e permissões</a></li>
@@ -84,11 +85,12 @@
 <li><a href="#horarios-atendimento">Horários de atendimento humano</a></li>
 <li><a href="#35-privacidade-cookies-e-seus-direitos">35. Privacidade, cookies e seus direitos</a></li>
 <li><a href="#realocacao-cancelamento">36. Realocar reservas após cancelar uma viagem</a></li>
+<li><a href="#historico-atividades">37. Histórico de atividades</a></li>
 </ul>
 </div>
 </section><section class="chapter"><h2 id="visao-geral">1. Conheça o Nexus Rotafy</h2>
 <p>O <strong>Nexus Rotafy</strong> organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.</p>
-<p>Este manual descreve a implementação disponível em <strong>26/10/2026</strong>. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.</p>
+<p>Este manual descreve a implementação disponível em <strong>02/11/2026</strong>. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.</p>
 <p><strong>Endereço do painel:</strong> <a href="https://rotafy.nexusdataanalytics.tech">https://rotafy.nexusdataanalytics.tech</a>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza <code>/ajuda</code>.</p>
 <h3 id="o-fluxo-de-trabalho">O fluxo de trabalho</h3>
 <ol>
@@ -839,7 +841,11 @@
 <p>Em <strong>Rastreamento → Rota planejada × percurso realizado</strong>, selecione a viagem, o veículo e o trecho. A sequência de origem, paradas, hotéis, casas e destino é preservada quando o trecho começa. Alterações posteriores não substituem esse roteiro. Não há reconstrução retroativa para viagens iniciadas antes desta atualização.</p>
 <p>Clique em <strong>Carregar comparação no Google Maps</strong> para mostrar, no mesmo mapa, os pontos planejados em azul e as amostras GPS em verde. Confira os horários dos pontos e os registros de embarque e desembarque abaixo do mapa. Transferências entre celulares não separam o percurso do mesmo veículo e trecho. Use <strong>Atualizar comparação</strong> para buscar amostras novas.</p>
 <p>As linhas ligam pontos e não representam todo o caminho pelas ruas. O recurso não detecta infrações nem classifica desvios. Pontos sem endereço, ambíguos ou não localizados ficam sem ligação no mapa. O mapa mostra até cem pontos planejados e dez mil amostras GPS por consulta; o aviso informa se o limite for atingido. Os registros GPS e o roteiro preservado têm retenção operacional de noventa dias.</p>
-<p>O mapa é opcional e só carrega ao solicitar: envia os endereços do roteiro e as posições exibidas ao Google, podendo consumir consultas. Se a configuração não estiver disponível, solicite apoio à Nexus. O mapa geral da frota continua disponível separadamente.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual da empresa · Edição 2026.10 · Revisão 17</footer></main></div>
+<p>O mapa é opcional e só carrega ao solicitar: envia os endereços do roteiro e as posições exibidas ao Google, podendo consumir consultas. Se a configuração não estiver disponível, solicite apoio à Nexus. O mapa geral da frota continua disponível separadamente.</p>
+</section><section class="chapter"><h2 id="historico-atividades">37. Histórico de atividades</h2>
+<p>O administrador consulta <strong>Atividades</strong> para conferir as últimas 100 ações registradas na empresa. A lista em tabela mostra data e hora de Brasília, com segundos, usuário e perfil, atividade e registro afetado. Quando disponível, o registro aparece com o nome da viagem, veículo/placa, rota, pacote ou colaborador.</p>
+<p>Use <strong>Atualizar atividades</strong> para consultar os registros mais recentes. Em <strong>Ver detalhes</strong>, confira o código da ação e os identificadores do evento, usuário e registro. Esses códigos ajudam o suporte a localizar uma ocorrência. Em telas pequenas, deslize a tabela horizontalmente; os detalhes também abrem pelo teclado.</p>
+<p>Nomes e perfis refletem o cadastro disponível na consulta. Quando o usuário não pode ser identificado, o evento é preservado como <strong>Usuário indisponível</strong>, com seu identificador. Eventos sem usuário são apresentados como <strong>Sistema / automação</strong>. A lista não exibe senhas, credenciais nem conteúdo de mensagens e não substitui documentos financeiros.</p></section><p class="no-results" id="sem-resultados">Nenhum capítulo encontrado. Tente outra palavra ou limpe a busca.</p><footer class="end">Nexus Rotafy · Manual da empresa · Edição 2026.10 · Revisão 18</footer></main></div>
 <footer class="legal-links"><nav aria-label="Políticas e direitos"><a href="https://rotafy.nexusdataanalytics.tech/privacidade">Privacidade</a><a href="https://rotafy.nexusdataanalytics.tech/termos">Termos de uso</a><a href="https://rotafy.nexusdataanalytics.tech/cancelamento-reembolso">Cancelamento e reembolso</a><a href="https://rotafy.nexusdataanalytics.tech/privacidade/solicitacao">Exercer meus direitos</a></nav></footer><script>
 const search=document.getElementById('busca'),chapters=[...document.querySelectorAll('.chapter')];const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();search.addEventListener('input',()=>{const term=normalize(search.value.trim());let count=0;for(const chapter of chapters){const matches=!term||normalize(chapter.textContent).includes(term);chapter.hidden=!matches;if(matches)count++;}document.getElementById('resultado').textContent=term?`${count} capítulos encontrados.`:'';document.getElementById('sem-resultados').style.display=count?'none':'block';});document.querySelectorAll('.sidebar a').forEach(link=>link.addEventListener('click',()=>{search.value='';search.dispatchEvent(new Event('input'));}));
 </script></body></html>

@@ -862,6 +862,8 @@ const actionNames: Record<string, string> = {
   "auth.reset_email_queued": "Recuperação por e-mail solicitada",
   "user.invited": "Pessoa convidada para definir senha",
   "user.invitation_resent": "Convite de acesso reenviado",
+  "route.created": "Rota cadastrada",
+  "route.updated": "Rota atualizada",
   "trip.updated": "Viagem atualizada",
   "reservation.updated": "Reserva atualizada",
   "auth.password_changed": "Senha alterada",
@@ -1915,36 +1917,28 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             </section>
           )}
           {page === "audit" && (
-            <section className="panel">
+            <section className="panel activity-panel">
               <header className="panel-header">
-                <h2>Últimas atividades</h2>
-                <span className="muted">Até 100 registros recentes</span>
+                <div><h2>Últimas atividades</h2><span className="muted">Até 100 registros recentes · Horário de Brasília</span></div>
+                <button type="button" className="button secondary" disabled={audit.isFetching} onClick={() => void audit.refetch()}>Atualizar atividades</button>
               </header>
-              {audit.isPending ? (
-                <div className="empty-state">Carregando…</div>
-              ) : (
-                <div className="activity-list">
-                  {audit.data?.map((event) => (
-                    <div className="activity" key={event.id}>
-                      <span className="activity-icon">
-                        <Check size={16} />
-                      </span>
-                      <div>
-                        <strong>
-                          {actionNames[event.action] ||
-                            (event.action.startsWith("company.profile_changed.")
-                              ? `Perfil alterado: ${event.action.endsWith(".regular") ? "Turismo → Regular" : "Regular → Turismo"}`
-                              : event.action)}
-                        </strong>
-                        <small>{date(event.created_at)}</small>
-                      </div>
-                    </div>
-                  ))}
-                  {audit.data?.length === 0 && (
-                    <div className="empty-state">
-                      Nenhuma atividade registrada.
-                    </div>
-                  )}
+              {audit.error && <Alert>{message(audit.error)}</Alert>}
+              {audit.isPending ? <div className="empty-state">Carregando…</div> : (
+                <div className="table-scroll activity-table" role="region" aria-label="Histórico de atividades" tabIndex={0}>
+                  <table>
+                    <thead><tr><th scope="col">Data e hora</th><th scope="col">Usuário</th>{isNexus && <th scope="col">Empresa</th>}<th scope="col">Atividade</th><th scope="col">Registro afetado</th><th scope="col">Detalhes</th></tr></thead>
+                    <tbody>{audit.data?.map(event => (
+                      <tr key={event.id}>
+                        <td className="activity-time"><time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" })}</time></td>
+                        <td><strong>{event.actor_name || (event.actor_id ? "Usuário indisponível" : "Sistema / automação")}</strong>{event.actor_role && <small>{roleName[event.actor_role as keyof typeof roleName] || event.actor_role}</small>}</td>
+                        {isNexus && <td>{event.company_name || "Plataforma Nexus"}</td>}
+                        <td>{actionNames[event.action] || (event.action.startsWith("company.profile_changed.") ? `Perfil alterado: ${event.action.endsWith(".regular") ? "Turismo → Regular" : "Regular → Turismo"}` : event.action)}</td>
+                        <td>{event.target_name || (event.target_id ? `Registro ${event.target_id.slice(0, 8)}` : "—")}{event.target_name && event.target_id && <small>{event.target_id.slice(0, 8)}</small>}</td>
+                        <td><details><summary aria-label={`Detalhes da atividade ${event.id.slice(0, 8)}`}>Ver detalhes</summary><dl><dt>Código da ação</dt><dd>{event.action}</dd><dt>ID do evento</dt><dd>{event.id}</dd><dt>ID do usuário</dt><dd>{event.actor_id || "Não informado"}</dd><dt>ID do registro</dt><dd>{event.target_id || "Não se aplica"}</dd></dl></details></td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                  {audit.data?.length === 0 && <div className="empty-state">Nenhuma atividade registrada.</div>}
                 </div>
               )}
             </section>

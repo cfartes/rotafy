@@ -43,6 +43,11 @@ export type Company = {
 };
 export type AuditEvent = {
   id: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  company_name: string | null;
+  target_name: string | null;
   action: string;
   created_at: string;
   company_id: string | null;
