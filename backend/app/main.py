@@ -839,20 +839,12 @@ def create_app(settings: Settings | None = None):
             )
 
     @application.get("/api/v1/audit")
-    async def events(actor: Auth):
+    async def events(actor: Auth, request: Request):
         if not actor.platform:
             admin(actor)
-        return [
-            dict(row)
-            for row in (
-                await actor.db.execute(
-                    text(
-                        "SELECT id,company_id,actor_id,action,target_id,created_at FROM audit_events WHERE (:full OR action IN ('company.created','company.updated','company.activated','company.suspended','company.profile_changed','company.access_sent')) ORDER BY created_at DESC LIMIT 100"
-                    ),
-                    {"full": actor.user["role"] != "nexus_staff"},
-                )
-            ).mappings()
-        ]
+        from app.activity_history import history
+
+        return await history(actor, request.app.state.platform_engine)
 
     application.include_router(nexus_users_router)
     application.include_router(modules_router)

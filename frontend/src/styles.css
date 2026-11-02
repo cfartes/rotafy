@@ -1090,38 +1090,19 @@ dialog.modal-wide {
   font-size: 12px;
   word-break: break-all;
 }
-.activity-list {
-  padding: 0 24px;
-}
-.activity {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 18px 0;
-  border-bottom: 1px solid #edf1f4;
-}
-.activity:last-child {
-  border: 0;
-}
-.activity-icon {
-  background: #eaf5f1;
-  color: #408976;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.activity strong {
-  font-size: 12px;
-  font-weight: 500;
-}
-.activity small {
-  display: block;
-  font-size: 10px;
-  margin-top: 4px;
-  color: #899aa7;
-}
+.activity-table table { min-width: 760px; white-space: normal; }
+.activity-table th, .activity-table td { padding: 10px 16px; vertical-align: top; }
+.activity-table th { color: #526779; font-size: 12px; }
+.activity-table td { color: #29475e; max-width: 320px; overflow-wrap: anywhere; }
+.activity-table tbody tr:hover { background: #f6fafb; }
+.activity-table strong { font-weight: 600; }
+.activity-table small { display: block; margin-top: 3px; color: #526779; font-size: 11px; }
+.activity-table .activity-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.activity-table summary { cursor: pointer; white-space: nowrap; color: #086f6b; }
+.activity-table dl { margin: 10px 0 0; min-width: 210px; font-size: 11px; }
+.activity-table dt { font-weight: 600; margin-top: 6px; }
+.activity-table dd { margin: 2px 0 0; font-family: monospace; }
+.activity-panel .panel-header { gap: 12px; flex-wrap: wrap; }
 .app-loading {
   min-height: 100dvh;
   display: flex;

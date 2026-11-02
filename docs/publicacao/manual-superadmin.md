@@ -45,7 +45,7 @@ Alterar o catálogo não reescreve os valores históricos. Uma mudança agendada
 
 ### Atividades
 
-Consulte **Atividades** para acompanhar alterações registradas pelo sistema. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.
+Consulte **Atividades** para acompanhar alterações registradas pelo sistema em uma tabela compacta com data e hora de Brasília (incluindo segundos), usuário, perfil, empresa, ação e registro afetado. Use **Atualizar atividades** para renovar a consulta e **Ver detalhes** para conferir os identificadores do evento, usuário e registro. Nomes e perfis refletem os cadastros disponíveis na consulta; eventos de usuários indisponíveis permanecem identificados pelo código. A consulta respeita o perfil e o espaço de acesso. Os eventos não revelam senhas ou links privados. O histórico auxilia conferência, mas não substitui documentos financeiros ou a política de backup da operação.
 
 
 ## 3. Cadastro de empresas {#empresas}

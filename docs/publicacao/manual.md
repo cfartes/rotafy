@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **26/10/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **02/11/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -854,3 +854,12 @@ Clique em **Carregar comparação no Google Maps** para mostrar, no mesmo mapa, 
 As linhas ligam pontos e não representam todo o caminho pelas ruas. O recurso não detecta infrações nem classifica desvios. Pontos sem endereço, ambíguos ou não localizados ficam sem ligação no mapa. O mapa mostra até cem pontos planejados e dez mil amostras GPS por consulta; o aviso informa se o limite for atingido. Os registros GPS e o roteiro preservado têm retenção operacional de noventa dias.
 
 O mapa é opcional e só carrega ao solicitar: envia os endereços do roteiro e as posições exibidas ao Google, podendo consumir consultas. Se a configuração não estiver disponível, solicite apoio à Nexus. O mapa geral da frota continua disponível separadamente.
+
+
+## 37. Histórico de atividades {#historico-atividades}
+
+O administrador consulta **Atividades** para conferir as últimas 100 ações registradas na empresa. A lista em tabela mostra data e hora de Brasília, com segundos, usuário e perfil, atividade e registro afetado. Quando disponível, o registro aparece com o nome da viagem, veículo/placa, rota, pacote ou colaborador.
+
+Use **Atualizar atividades** para consultar os registros mais recentes. Em **Ver detalhes**, confira o código da ação e os identificadores do evento, usuário e registro. Esses códigos ajudam o suporte a localizar uma ocorrência. Em telas pequenas, deslize a tabela horizontalmente; os detalhes também abrem pelo teclado.
+
+Nomes e perfis refletem o cadastro disponível na consulta. Quando o usuário não pode ser identificado, o evento é preservado como **Usuário indisponível**, com seu identificador. Eventos sem usuário são apresentados como **Sistema / automação**. A lista não exibe senhas, credenciais nem conteúdo de mensagens e não substitui documentos financeiros.
