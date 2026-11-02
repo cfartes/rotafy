@@ -18,6 +18,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --ignore-scripts && npm audit --audit-level=low
         working-directory: frontend
+      - run: npm run test:build-security && npm run build
+        working-directory: frontend
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.13'
