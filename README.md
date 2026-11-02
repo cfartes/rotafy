@@ -1,5 +1,7 @@
 # Nexus Rotafy
 
+Atualizações da VPS com duas versões, preservação de sessões e retorno: [procedimento de publicação](docs/ATUALIZACAO_SEM_INTERRUPCAO.md).
+
 Plataforma SaaS de viagens e embarque. Entregas atuais: fundação multiempresa, acessos, planos, frota, viagens, reservas familiares, página pública, integrações, bilhetes QR e presença online. O plano completo está em [PLANO_DESENVOLVIMENTO.md](PLANO_DESENVOLVIMENTO.md).
 
 ## Executar localmente com Docker

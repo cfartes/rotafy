@@ -125,12 +125,15 @@ async def process_company(engine, settings, company_id, sender=send_email):
 
 
 async def main():
+    from app.worker_shutdown import pause, shutdown_event
+
+    stop = shutdown_event()
     settings = Settings()
     engine = create_async_engine(
         os.environ["PLATFORM_DATABASE_URL"], pool_pre_ping=True
     )
     try:
-        while True:
+        while not stop.is_set():
             try:
                 current_settings = await email_settings(engine, settings)
                 if configured(current_settings):
@@ -141,8 +144,12 @@ async def main():
                             ).scalars()
                         )
                     for company_id in [None, *ids]:
+                        if stop.is_set():
+                            break
                         # Um envio por empresa/ciclo limita rajadas; fila persiste no banco.
                         await process_company(engine, current_settings, company_id)
+                        if stop.is_set():
+                            break
                         if company_id:
                             from app.contract_mail import process_contract_mail
 
@@ -152,7 +159,7 @@ async def main():
                 Path("/tmp/rotafy-email-health").touch()
             except (SQLAlchemyError, OSError, ValueError, HTTPException):
                 logger.error('{"event":"email.cycle_failed"}')
-            await asyncio.sleep(5)
+            await pause(stop, 5)
     finally:
         await engine.dispose()
 

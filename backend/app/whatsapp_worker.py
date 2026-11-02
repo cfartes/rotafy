@@ -263,17 +263,22 @@ async def process_company(engine, company_id, transport=openwa_request):
 
 
 async def main():
+    from app.worker_shutdown import pause, shutdown_event
+
+    stop = shutdown_event()
     engine = create_async_engine(
         os.environ["PLATFORM_DATABASE_URL"], pool_pre_ping=True
     )
     try:
-        while True:
+        while not stop.is_set():
             try:
                 async with engine.connect() as db:
                     companies = list(
                         (await db.execute(text("SELECT id FROM companies"))).scalars()
                     )
                 for company in companies:
+                    if stop.is_set():
+                        break
                     Path("/tmp/rotafy-whatsapp-health").touch()
                     from app.nps_worker import process_nps, schedule_surveys
                     from app.tracking import process_alerts
@@ -286,8 +291,14 @@ async def main():
                     from app.whatsapp_conversations import schedule_inactivity
 
                     await process_alerts(engine, company)
+                    if stop.is_set():
+                        break
                     await process_company(engine, company)
+                    if stop.is_set():
+                        break
                     await process_chat(engine, company)
+                    if stop.is_set():
+                        break
                     base_url = os.environ.get(
                         "PUBLIC_BASE_URL", "https://rotafy.nexusdataanalytics.tech"
                     )
@@ -295,11 +306,17 @@ async def main():
                     await schedule_tickets(engine, company)
                     await schedule_inactivity(engine, company)
                     await process_automation(engine, company, base_url)
+                    if stop.is_set():
+                        break
                     await schedule_surveys(engine, company)
                     await process_nps(engine, company)
+                if stop.is_set():
+                    break
                 from app.session_discovery import process_discovery
 
                 await process_discovery(engine)
+                if stop.is_set():
+                    break
                 from app.whatsapp_connection import process_connection
 
                 Path("/tmp/rotafy-whatsapp-health").touch()
@@ -307,7 +324,7 @@ async def main():
                 Path("/tmp/rotafy-whatsapp-health").touch()
             except (SQLAlchemyError, OSError, ValueError):
                 logger.error('{"event":"whatsapp.cycle_failed"}')
-            await asyncio.sleep(5)
+            await pause(stop, 5)
     finally:
         await engine.dispose()
 

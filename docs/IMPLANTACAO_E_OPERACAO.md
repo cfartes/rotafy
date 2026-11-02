@@ -89,11 +89,9 @@ Na recuperação de produção, recupere o dump do restic para um ambiente isola
 
 ## Atualização e rollback
 
-1. Registre a entrega atual e gere um backup externo; confirme seu snapshot e possibilidade de restauração.
-2. Prepare as novas imagens com uma tag `RELEASE` nova e revise as migrações. Combine uma janela operacional, sincronizando os aparelhos com filas offline antes de atualizar.
-3. Aplique as migrações da entrega e suba API/web/worker. Confirme saúde e jornadas principais. PWA ativa a nova interface quando as abas da versão anterior forem encerradas; a fila local permanece no IndexedDB.
-4. Se o schema continuar compatível, volte API/web/workers às imagens anteriores, preservando o banco. A migração 0012 adiciona versões de edição, fila/recuperação Nexus e ajusta a restrição de motorista para permitir trocas na mesma viagem; seu downgrade é bloqueado para preservar a fila. Desative o worker de e-mail ao voltar para uma entrega que não o suporta e sincronize filas offline antes da troca. Não execute downgrade geral automaticamente: versões anteriores possuem migrações irreversíveis.
-5. Se a reversão exigir recuperar dados, restaure o backup num ambiente novo, confira o impacto dos registros posteriores ao backup e revise a troca do tráfego. Esse procedimento exige uma decisão operacional sobre possível perda de dados.
+As atualizações de instalações existentes usam agora dois slots de web/API e um gateway estável. Consulte [Atualização sem interrupção](ATUALIZACAO_SEM_INTERRUPCAO.md) para publicação, retorno, migrações compatíveis e comandos dos serviços ativos. A arquitetura descrita no início deste documento se refere à instalação inicial; após a primeira atualização, o gateway atende o tráfego do Traefik.
+
+Não use o procedimento antigo de subir todos os serviços do Compose principal: ele pode reativar workers antigos. Para logs/exec da aplicação, use `python3 scripts/production.py`; banco e backups continuam no projeto original. O retorno troca imagens e tráfego, sem downgrade ou restauração automática do banco ativo.
 
 ## Logs e métricas
 

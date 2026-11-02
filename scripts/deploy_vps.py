@@ -295,6 +295,17 @@ def deploy(args):
             values["RELEASE"],
         )
         return
+    if __package__:
+        from .rolling_deploy import RollingDeployment
+    else:
+        from rolling_deploy import RollingDeployment
+    rolling = RollingDeployment(ROOT, project, None, output, values)
+    rolling.recover()
+    if getattr(args, "rollback", False):
+        rolling.rollback()
+        return
+    if volume_exists:
+        rolling.preflight()
     write_env(path, values)
     # This tracked public script is mounted into Postgres, which reads it as
     # its own user. Do not change permissions of environment/backup files.
@@ -314,6 +325,7 @@ def deploy(args):
     def run(*parameters, **kwargs):
         return execute([*compose, *parameters], cwd=ROOT, env=environment, **kwargs)
 
+    rolling.run = run
     run("config", "--quiet")
     run("build", "api", "web")
     # Load the complete graph as the image's non-root user before replacing
@@ -323,7 +335,7 @@ def deploy(args):
     run("run", "--rm", "--no-deps", "integration-secrets")
     if volume_exists:
         print("Banco existente: backup obrigatório antes das migrações.")
-        run("up", "-d", "--wait", "--wait-timeout", "120", "db")
+        run("up", "-d", "--no-recreate", "--wait", "--wait-timeout", "120", "db")
         directory = ROOT / "artifacts" / "backups"
         directory.mkdir(parents=True, exist_ok=True)
         filename = (
@@ -383,6 +395,27 @@ def deploy(args):
         print(
             "Chave de integrações preservada no backup local protegido. Inclua-a no backup externo criptografado."
         )
+        base = json.loads(
+            run("config", "--format", "json", text=True, capture_output=True).stdout
+        )
+        old, candidate = rolling.prepare(base)
+        # Only explicitly reviewed, backward-compatible migrations may run online.
+        run("run", "--rm", "--no-deps", "migrate", "python", "-m", "app.deployment")
+        run(
+            "run",
+            "--rm",
+            "--no-deps",
+            "-e",
+            "PGOPTIONS=-c lock_timeout=3000 -c statement_timeout=60000",
+            "migrate",
+        )
+        run("run", "--rm", "--no-deps", "bootstrap")
+        rolling.publish(old, candidate)
+        activate_approved_contract(
+            lambda *parameters: rolling.compose(candidate, *parameters)
+        )
+        print(f"Publicado sem substituir o banco: https://{DOMAIN}")
+        return
     run("up", "-d", "--wait", "--wait-timeout", "300")
     for service in ("migrate", "bootstrap", "integration-secrets"):
         identifier = run(
@@ -465,6 +498,11 @@ def main():
     parser.add_argument("--non-interactive", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--replace-legacy", action="store_true")
+    parser.add_argument(
+        "--rollback",
+        action="store_true",
+        help="Retorna à versão anterior sem reverter o banco.",
+    )
     parser.add_argument(
         "--project", choices=(PROJECT, "nexus-rotafy-prod"), default=PROJECT
     )
