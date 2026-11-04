@@ -1380,3 +1380,17 @@ body:has(.fleet-map-content) #root > .legal-footer { display:none; }
 .fleet-map-privacy { display:inline-block; margin-top:6px; font-size:11px; text-decoration:underline; }
 
 .fleet-map-panel .muted { color:#52697b; }
+
+.history-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 16px; align-items: end; }
+.history-filters > *, .route-history .field { min-width: 0; }
+.history-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 0; }
+.history-summary dt { color: #526779; font-size: 12px; }
+.history-summary dd { margin: 6px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.history-map { height: min(62vh,560px); min-height: 340px; }
+.history-map-actions { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+@media (max-width: 640px) { .history-filters, .history-summary { grid-template-columns: minmax(0,1fr); } .history-map { min-height: 320px; } }
+
+.history-pickers { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+@media (max-width: 640px) { .history-pickers { grid-template-columns: minmax(0,1fr); } }
+
+.route-history { padding: 0; }

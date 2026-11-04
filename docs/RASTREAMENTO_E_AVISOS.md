@@ -83,3 +83,13 @@ A regra de trinta minutos passa a ser configurável pelo administrador em Config
 ## Mapa da frota em tela inteira
 
 Menu separado de Rastreamento, exclusivo do administrador e condicionado ao módulo tracking. Ocupa a área de trabalho e oferece expansão nativa quando suportada. Consulta `/api/v1/tracking/vehicles` a cada quinze segundos; a coleta do APK permanece a cada minuto. Mostra placa, veículo, viagem, precisão e horário do GPS; amostras acima de dois minutos são sinalizadas. Atualizações preservam zoom e enquadramento. Veículos sem posição ficam contabilizados como aguardando GPS. A função usa GPS próprio sobre OSM, sem resultados Google ou chave web. Configurações, histórico e comparação permanecem em Rastreamento.
+
+## Histórico de trajetos encerrados
+
+Menu próprio, exclusivo do administrador da empresa e condicionado ao módulo `tracking`. Usa somente GPS próprio sobre OSM, sem depender do snapshot planejado ou de chave Google. Reúne sessões por empresa, viagem, alocação e trecho; não mistura veículos ou retorno. Viagens concluídas/canceladas e trechos concluídos de viagens ainda em andamento são consultáveis. Sem migração de banco ou novo APK.
+
+- `GET /api/v1/tracking/history?start_date=AAAA-MM-DD&end_date=AAAA-MM-DD`: período inclusivo em Brasília, até 90 dias, padrão últimos 30; máximo 200 viagens com aviso de truncamento.
+- `GET /api/v1/tracking/history/{trip_id}`: veículos e trechos encerrados com sessões registradas, incluindo estados sem GPS.
+- `GET /api/v1/tracking/history/{trip_id}/{allocation_id}/{leg_id}`: GPS cronológico ainda retido, máximo 10.000 amostras e aviso de percurso parcial. Retenção de 90 dias preservada; não recupera dados já removidos.
+
+Todas as consultas exigem administrador e vínculo com a empresa autenticada, sob o RLS existente. O filtro de datas localiza a viagem, mas a seleção carrega todo o trecho retido. O mapa usa canvas para não criar um elemento por amostra; troca de sessão ou lacuna acima de dez minutos separa segmentos. A linha não reconstrói vias nem classifica desvios. A tela informa precisão baixa, ausência de GPS e amostra única.
