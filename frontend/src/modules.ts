@@ -23,6 +23,7 @@ export const menuModule: Record<string, string> = {
   operations: "trips",
   tracking: "tracking",
   "fleet-map": "tracking",
+  "route-history": "tracking",
   "ticket-sales": "sales",
   allocations: "trips",
   passengers: "sales",

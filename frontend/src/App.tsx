@@ -13,6 +13,7 @@ import { Nps } from "./Nps";
 import { BusinessHours } from "./BusinessHours";
 import { DepartureSettings } from "./DepartureSettings";
 import { FleetMap } from "./FleetMap";
+import { RouteHistory } from "./RouteHistory";
 import { NpsQualityAlert } from "./NpsQuality";
 import { WhatsAppHandoffAlert, type Handoff } from "./WhatsAppHandoffAlert";
 import { NexusWhatsApp } from "./NexusWhatsApp";
@@ -1047,6 +1048,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "routes"
     | "tracking"
     | "fleet-map"
+    | "route-history"
     | "ticket-sales"
     | "reports"
     | "integrations"
@@ -1182,7 +1184,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const title =
     page === "company-settings" ? "Configurações da empresa" :
     page === "nps" ? "NPS e satisfação" :
-    page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "fleet-map" ? "Mapa da frota" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
+    page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "route-history" ? "Histórico de trajetos" : page === "fleet-map" ? "Mapa da frota" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
       ? "WhatsApp"
       : page === "nexus-team"
         ? "Equipe Nexus"
@@ -1235,6 +1237,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     "operations",
     "tracking",
     "fleet-map",
+    "route-history",
     "ticket-sales",
     "allocations",
     "passengers",
@@ -1337,7 +1340,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                     : []),
                   { id: "routes", label: "Rotas", icon: Route },
                   ...(isAdmin ? [{ id: "tracking", label: "Rastreamento", icon: Route }] : []),
-                  ...(isAdmin ? [{ id: "fleet-map", label: "Mapa da frota", icon: Route }] : []),
+                  ...(isAdmin ? [{ id: "fleet-map", label: "Mapa da frota", icon: Route }, { id: "route-history", label: "Histórico de trajetos", icon: Route }] : []),
                   { id: "vehicles", label: "Veículos", icon: Route },
                   ...(companyCapabilities(company.data).packages
                     ? [{ id: "packages", label: "Pacotes", icon: Route }]
@@ -1575,6 +1578,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             (isAdmin || user.role === "attendant") && <RouteCatalog />}
           {page === "tracking" && isAdmin && <Tracking />}
           {page === "fleet-map" && isAdmin && <FleetMap />}
+          {page === "route-history" && isAdmin && <RouteHistory />}
           {page === "operations" && (
             <Operations
               key={`${operationModule}:${reportTripId || ""}`}

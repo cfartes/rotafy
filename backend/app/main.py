@@ -80,6 +80,7 @@ from app.security import DUMMY_HASH, digest, passwords, verify_password
 from app.service_hours import router as service_hours_router
 from app.service_keys import router as service_keys_router
 from app.tracking import router as tracking_router
+from app.tracking_history import router as tracking_history_router
 from app.whatsapp import router as whatsapp_router
 from app.whatsapp_admin import router as whatsapp_admin_router
 from app.whatsapp_automation import router as whatsapp_automation_router
@@ -877,6 +878,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(service_hours_router)
     application.include_router(tracking_router)
     application.include_router(route_comparison_router)
+    application.include_router(tracking_history_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
     application.include_router(geography_router)
