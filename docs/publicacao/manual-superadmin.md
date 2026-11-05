@@ -322,3 +322,9 @@ O menu **Mapa da frota** é separado de **Rastreamento** e pertence ao mesmo mó
 As tabelas do painel Nexus e do cliente exibem vinte registros por página, com botões para avançar e voltar. Totais e exportações completas preservam o conjunto consultado. O NPS mantém os indicadores gerais e entrega vinte avaliações por página.
 
 Na empresa, a **Visão geral** de administradores e atendentes apresenta indicadores por período, ranking de rotas concluídas e próximas saídas; a equipe fica somente em **Equipe**. As rotas mostram o total histórico de viagens concluídas e permitem exclusão do catálogo com confirmação, preservando viagens e percursos existentes. O menu **Integração com parceiros** foi retirado do painel do cliente; os endpoints e credenciais existentes não foram revogados por essa alteração visual.
+
+### Quilometragem registrada nas viagens
+
+No **Histórico de trajetos**, o administrador da empresa consulta a estimativa GPS por veículo e trecho e a soma da frota na viagem. O cálculo considera todas as posições retidas por até noventa dias, independentemente do limite visual de dez mil amostras do mapa. Não exige novo APK, alteração no banco ou consultas adicionais a serviços de mapas.
+
+Lacunas, trocas de sessão, pontos imprecisos ou incompatíveis, limites de coleta desconhecidos e trechos encerrados sem rastreamento deixam o resultado parcial. Falta de dados aparece como **Não calculável**; um veículo com intervalos válidos sem movimento pode mostrar **0,00 km**. A coleta **Sem lacunas detectadas** não comprova cobertura integral. Oriente utilizar como estimativa, sem substituir o hodômetro, e lembrar que a soma de vários veículos não é a distância de um único ônibus.

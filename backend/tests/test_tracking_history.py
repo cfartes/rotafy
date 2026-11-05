@@ -71,6 +71,13 @@ def test_period_boundaries_follow_brasilia_and_large_routes_are_marked_partial(
     assert response.json()["truncated"]
     assert len(response.json()["positions"]) == 10000
     assert response.json()["position_count"] == 10001
+    mileage = client.get(f"/api/v1/tracking/history/{trip['id']}/distance")
+    assert mileage.status_code == 200, mileage.text
+    recorded_leg = next(
+        r for r in mileage.json()["journeys"] if r["leg_id"] == payload["leg_id"]
+    )
+    assert recorded_leg["samples"] == 10001
+    assert recorded_leg["distance_m"] == 0
 
 
 def test_vehicles_and_return_legs_are_not_mixed_in_cancelled_trip_history(
@@ -85,7 +92,8 @@ def test_vehicles_and_return_legs_are_not_mixed_in_cancelled_trip_history(
     first = next(v for v in trip["vehicles"] if v["id"] == reservation["allocation_id"])
     with owner.begin() as db:
         db.execute(
-            text("UPDATE trips SET status='cancelled',cancelled_at=now() WHERE id=:id"), {"id": trip["id"]}
+            text("UPDATE trips SET status='cancelled',cancelled_at=now() WHERE id=:id"),
+            {"id": trip["id"]},
         )
         for allocation, vehicle, leg in [
             (other["id"], other["vehicle_id"], payload["leg_id"]),
@@ -168,12 +176,22 @@ def test_closed_journey_history_unites_transfers_without_requiring_snapshot(
         second,
     }
     assert not route.json()["truncated"]
+    mileage = client.get(f"/api/v1/tracking/history/{trip['id']}/distance")
+    assert mileage.status_code == 200, mileage.text
+    assert mileage.json()["journeys"][0]["session_breaks"] == 1
+    assert mileage.json()["distance_m"] is None
     login(client, company="empresa-b")
     assert client.get("/api/v1/tracking/history").json()["trips"] == []
     assert client.get(endpoint).status_code == 404
     assert client.get(f"/api/v1/tracking/history/{trip['id']}").status_code == 404
+    assert (
+        client.get(f"/api/v1/tracking/history/{trip['id']}/distance").status_code == 404
+    )
     login(client, email="guide@example.com")
     assert client.get(endpoint).status_code == 403
+    assert (
+        client.get(f"/api/v1/tracking/history/{trip['id']}/distance").status_code == 403
+    )
 
 
 def test_retention_empty_gps_and_period_limits(client, seeded, owner):
@@ -195,6 +213,10 @@ def test_retention_empty_gps_and_period_limits(client, seeded, owner):
     assert result.status_code == 200, result.text
     assert result.json()["positions"] == []
     assert result.json()["retention_days"] == 90
+    mileage = client.get(f"/api/v1/tracking/history/{trip['id']}/distance")
+    assert mileage.status_code == 200, mileage.text
+    assert mileage.json()["distance_m"] is None
+    assert mileage.json()["partial"]
     assert (
         client.get("/api/v1/tracking/history").json()["trips"][0]["position_count"] == 0
     )

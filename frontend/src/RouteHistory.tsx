@@ -1,3 +1,4 @@
+import { TripMileage } from "./TripMileage";
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
@@ -67,6 +68,7 @@ export function RouteHistory() {
       {journeys.error && <Alert>Não foi possível consultar os veículos e trechos.</Alert>}
       {!!journeys.data?.length && <Field label="Veículo e trecho registrado"><select value={journey ? `${journey.allocation_id}/${journey.leg_id}` : selected} onChange={e => setSelected(e.target.value)}><option value="">Selecione o veículo e trecho</option>{journeys.data.map(j => <option key={`${j.allocation_id}/${j.leg_id}`} value={`${j.allocation_id}/${j.leg_id}`}>{j.vehicle_name} · {j.plate} · Trecho {j.position}: {j.origin} → {j.destination}{j.position_count ? "" : " · Sem GPS disponível"}</option>)}</select></Field>}</div>
     </section>
+    {trip && <TripMileage key={trip} trip={trip} selected={journey} />}
     {trip && journey && <RecordedRoute key={`${trip}/${journey.allocation_id}/${journey.leg_id}`} trip={trip} journey={journey} />}
   </div>;
 }
