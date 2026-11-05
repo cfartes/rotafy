@@ -19,3 +19,7 @@ O botão Consultar distância e tempo no card abre uma previsão atual, sem modi
 A resposta usa TRAFFIC_UNAWARE, duration e distanceMeters. Os segundos são somados antes do arredondamento para minutos; margem de atendimento é cálculo operacional separado. Não persiste nem registra a resposta bruta ou cria cache de distância do Google em banco, snapshots ou armazenamento offline. A API responde Cache-Control: no-store; o cliente mantém a consulta somente no estado do componente. O tempo confirmado pelo operador permanece como parâmetro de seu planejamento existente. Atribuição Google Maps acompanha a previsão; não são desenhados resultados sobre OSM. Termos/privacidade públicos incluem links e explicam o compartilhamento.
 
 Referências oficiais: [computeRoutes](https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes), [políticas e atribuição](https://developers.google.com/maps/documentation/routes/policies) e [termos específicos](https://cloud.google.com/maps-platform/terms/maps-service-terms). A retenção de resultados não deve ser ampliada sem conferir os termos aplicáveis à conta.
+
+## Compatibilidade com o Google Routes
+
+O campo `travelMode` utiliza `DRIVE` no planejamento, ETA e ordenação de paradas. `DRIVING` pertence a outras interfaces e é inválido no endpoint REST v2 `computeRoutes`, causando rejeição mesmo com endereços válidos. Os testes verificam o valor nos três construtores de requisição.
