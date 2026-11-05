@@ -141,7 +141,12 @@ test("calcula automaticamente ida e volta, soma paradas e salva somente o plano 
         .analyze()
     ).violations,
   ).toEqual([]);
-  await leg.getByRole("region", { name: "Previsão da ida", exact: true }).screenshot({ path: "../artifacts/route-estimate-panel.png", animations: "disabled" });
+  await leg
+    .getByRole("region", { name: "Previsão da ida", exact: true })
+    .screenshot({
+      path: "../artifacts/route-estimate-panel.png",
+      animations: "disabled",
+    });
   await page.screenshot({
     path: "../artifacts/route-estimate-desktop.png",
     fullPage: true,
@@ -278,4 +283,88 @@ test("falha do provedor libera o salvamento com duração manual", async ({
     .click();
   await expect(dialog).toHaveCount(0);
   expect(state.saved[0].legs[0].duration_minutes).toBe(75);
+});
+
+test("editar rota salva não consulta ao abrir, renomear ou ajustar paradas; percurso e botão consultam", async ({
+  page,
+}) => {
+  const state = await setup(page);
+  const created = await fill(page);
+  await expect(
+    created.leg.getByText("32,10 km", { exact: true }),
+  ).toBeVisible();
+  await created.dialog
+    .getByRole("button", { name: "Salvar Rota", exact: true })
+    .click();
+  await expect(created.dialog).toHaveCount(0);
+  const before = state.requests.length;
+  await page.getByRole("button", { name: "Editar Rota", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Editar Rota", exact: true });
+  const leg = dialog.locator("fieldset").first();
+  await expect(
+    leg.getByText("Nenhuma consulta ao Google foi realizada.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: "Salvar Rota", exact: true }),
+  ).toBeEnabled();
+  await dialog
+    .getByLabel("Nome da Rota", { exact: true })
+    .fill("Nome alterado");
+  await leg
+    .getByLabel("Tempo adicional total nas paradas (minutos)", { exact: true })
+    .fill("20");
+  await leg.getByLabel("Parada 1", { exact: true }).fill("Hotel renomeado");
+  await page.waitForTimeout(1300);
+  expect(state.requests).toHaveLength(before);
+  await leg
+    .getByLabel("Endereço de saída", { exact: true })
+    .fill("Rua nova, 100");
+  await expect.poll(() => state.requests.length).toBe(before + 1);
+  await expect(leg.getByText("32,10 km", { exact: true })).toBeVisible();
+  await expect(
+    leg.getByLabel("Deslocamento estimado (minutos)", { exact: true }),
+  ).toHaveValue("46");
+  await leg
+    .getByRole("button", { name: "Recalcular percurso", exact: true })
+    .click();
+  await expect.poll(() => state.requests.length).toBe(before + 2);
+});
+
+test("consulta explícita funciona sem alterar rota existente e duplicar não consulta", async ({
+  page,
+}) => {
+  const state = await setup(page);
+  const created = await fill(page);
+  await expect(
+    created.leg.getByText("32,10 km", { exact: true }),
+  ).toBeVisible();
+  await created.dialog
+    .getByRole("button", { name: "Salvar Rota", exact: true })
+    .click();
+  await expect(created.dialog).toHaveCount(0);
+  const before = state.requests.length;
+  await page.getByRole("button", { name: "Editar Rota", exact: true }).click();
+  const edit = page.getByRole("dialog", { name: "Editar Rota", exact: true });
+  await edit
+    .getByRole("button", { name: "Consultar distância e tempo", exact: true })
+    .click();
+  await expect.poll(() => state.requests.length).toBe(before + 1);
+  await expect(edit.getByText("32,10 km", { exact: true })).toBeVisible();
+  await edit.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Duplicar Rota", exact: true })
+    .click();
+  const duplicate = page.getByRole("dialog", {
+    name: "Nova Rota",
+    exact: true,
+  });
+  await expect(
+    duplicate.getByText("Nenhuma consulta ao Google foi realizada.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await page.waitForTimeout(1300);
+  expect(state.requests).toHaveLength(before + 1);
 });

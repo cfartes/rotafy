@@ -16,12 +16,14 @@ export function RouteEstimate({
   leg,
   label,
   manual = true,
+  automatic = true,
   onApply,
   onBusy,
 }: {
   leg: RouteLeg;
   label: string;
   manual?: boolean;
+  automatic?: boolean;
   onApply?: (minutes: number) => void;
   onBusy?: (busy: boolean) => void;
 }) {
@@ -52,13 +54,15 @@ export function RouteEstimate({
     ].every((a) => a.length >= 3);
   const [result, setResult] = useState<Result | null>(null);
   const [revision, setRevision] = useState(0);
+  const original = useRef(signature);
+  const requested = automatic || signature !== original.current || revision > 0;
   const previous = useRef("");
   const apply = useRef(onApply),
     edited = useRef(manual);
   apply.current = onApply;
   edited.current = manual;
   useEffect(() => {
-    if (!configuration.data?.available || !ready) return;
+    if (!requested || !configuration.data?.available || !ready) return;
     let disposed = false;
     const controller = new AbortController();
     const delay = previous.current === signature ? 0 : 1000;
@@ -103,11 +107,12 @@ export function RouteEstimate({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [signature, revision, ready, configuration.data?.available]);
+  }, [signature, revision, ready, requested, configuration.data?.available]);
   const visible = result?.signature === signature ? result : null;
   const busyCallback = useRef(onBusy);
   busyCallback.current = onBusy;
   const busy =
+    requested &&
     ready &&
     (configuration.isPending ||
       (!!configuration.data?.available && (!visible || visible.loading)));
@@ -133,7 +138,15 @@ export function RouteEstimate({
               chegada e de todas as paradas para calcular.
             </p>
           )}
-          {ready && (visible?.loading || !visible) && (
+          {!requested && (
+            <p>
+              Tempo operacional cadastrado: {leg.duration_minutes} min de
+              deslocamento; {leg.duration_minutes + leg.stop_minutes} min com as
+              paradas. Nenhuma consulta ao Google foi realizada. Consulte a
+              distância e o tempo somente se precisar de uma previsão atual.
+            </p>
+          )}
+          {requested && ready && (visible?.loading || !visible) && (
             <p role="status">Calculando distância e tempo padrão…</p>
           )}
           {visible?.error && <Alert>{visible.error}</Alert>}
@@ -176,7 +189,7 @@ export function RouteEstimate({
                 {onApply
                   ? "Ao salvar, confirme o tempo operacional."
                   : "O tempo operacional cadastrado não foi alterado."}{" "}
-                A distância é consultada novamente ao abrir outra previsão.
+                A distância é consultada novamente ao solicitar outra previsão.
               </p>
             </>
           )}
@@ -187,7 +200,9 @@ export function RouteEstimate({
               disabled={!ready || visible?.loading}
               onClick={() => setRevision((v) => v + 1)}
             >
-              Recalcular percurso
+              {requested
+                ? "Recalcular percurso"
+                : "Consultar distância e tempo"}
             </button>
             {onApply && visible?.preview && (
               <button
