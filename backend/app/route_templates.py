@@ -77,7 +77,10 @@ def view(row):
 async def list_routes(actor: Auth):
     tenant(actor, write=True)
     result = await actor.db.execute(
-        text("SELECT * FROM route_templates ORDER BY name,id")
+        text("""SELECT rt.*,(SELECT count(*) FROM trips t WHERE t.company_id=rt.company_id
+          AND (t.route_id=rt.id OR t.package_snapshot @> jsonb_build_object('steps',
+          jsonb_build_array(jsonb_build_object('route_id',rt.id::text)))) AND t.status='completed') AS completed_trips
+          FROM route_templates rt WHERE rt.deleted_at IS NULL ORDER BY rt.name,rt.id""")
     )
     return [view(row) for row in result.mappings()]
 
@@ -108,7 +111,7 @@ async def edit_route(route_id: UUID, data: RouteEdit, actor: Auth):
     result = await actor.db.execute(
         text("""UPDATE route_templates SET name=:name,is_active=:active,
           itinerary=CAST(:itinerary AS jsonb),version=version+1
-          WHERE id=:id AND version=:version RETURNING *"""),
+          WHERE id=:id AND version=:version AND deleted_at IS NULL RETURNING *"""),
         {
             "id": route_id,
             "name": data.name,
@@ -126,6 +129,19 @@ async def edit_route(route_id: UUID, data: RouteEdit, actor: Auth):
     return view(row)
 
 
+@router.delete("/{route_id}", status_code=204)
+async def delete_route(route_id: UUID, actor: Auth):
+    tenant(actor, write=True)
+    deleted = await actor.db.scalar(
+        text("""UPDATE route_templates SET deleted_at=now(),is_active=false,version=version+1
+          WHERE id=:id AND company_id=:company AND deleted_at IS NULL RETURNING id"""),
+        {"id": route_id, "company": actor.company_id},
+    )
+    if not deleted:
+        raise HTTPException(404, "Rota não encontrada.")
+    await audit(actor.db, actor.company_id, actor.user["id"], "route.deleted", route_id)
+
+
 async def route_for_trip(db, data: Trip, old=None):
     """Valida percurso e duração no servidor, sem confiar no cálculo do navegador."""
     if old and old.get("route_snapshot") and data.route_id == old.get("route_id"):
@@ -138,7 +154,9 @@ async def route_for_trip(db, data: Trip, old=None):
         )
         await require(db, company_id, "routes")
         result = await db.execute(
-            text("SELECT * FROM route_templates WHERE id=:id AND is_active FOR SHARE"),
+            text(
+                "SELECT * FROM route_templates WHERE id=:id AND is_active AND deleted_at IS NULL FOR SHARE"
+            ),
             {"id": data.route_id},
         )
         row = result.mappings().first()

@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -196,7 +197,7 @@ function DailyChart({ data }: { data: Daily[] }) {
       <details>
         <summary>Consultar dados do gráfico diário</summary>
         <div className="reports-table">
-          <table>
+          <PaginatedTable>
             <thead>
               <tr>
                 <th>Dia</th>
@@ -213,7 +214,7 @@ function DailyChart({ data }: { data: Daily[] }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       </details>
     </section>
@@ -532,7 +533,7 @@ export function ManagementDashboard({
                   <p>Sem reservas confirmadas no período.</p>
                 ) : (
                   <div className="reports-table">
-                    <table>
+                    <PaginatedTable>
                       <thead>
                         <tr>
                           <th>Destino / produto</th>
@@ -549,7 +550,7 @@ export function ManagementDashboard({
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </PaginatedTable>
                   </div>
                 )}
               </section>
@@ -568,7 +569,7 @@ export function ManagementDashboard({
                   </p>
                 ) : (
                   <div className="reports-table">
-                    <table>
+                    <PaginatedTable>
                       <thead>
                         <tr>
                           <th>Saída</th>
@@ -606,7 +607,7 @@ export function ManagementDashboard({
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </PaginatedTable>
                   </div>
                 )}
               </section>

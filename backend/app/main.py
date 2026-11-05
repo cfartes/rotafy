@@ -19,6 +19,7 @@ from app.billing.routes import router as billing_router
 from app.billing.service import list_plans
 from app.boarding import router as boarding_router
 from app.company_address import update_address
+from app.company_dashboard import router as company_dashboard_router
 from app.company_welcome import router as company_welcome_router
 from app.config import Settings
 from app.contracts import pending as contract_pending
@@ -881,6 +882,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(tracking_history_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
+    application.include_router(company_dashboard_router)
     application.include_router(geography_router)
     application.include_router(geocoding_router)
     application.include_router(postal_codes_router)

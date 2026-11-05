@@ -126,12 +126,13 @@ test("superadmin selects the integrated preset and dependent modules stay consis
   );
 });
 
-test("integrated company sees enabled menus and can issue a scoped partner key", async ({
+test("integrated company sees enabled menus without partner integration administration", async ({
   page,
 }) => {
-  let submitted: any;
+  const integrationRequests: string[] = [];
   await page.route("**/api/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    if (path.startsWith("/integrations/")) integrationRequests.push(path);
     let body: any = [];
     if (path === "/auth/me")
       body = {
@@ -143,25 +144,6 @@ test("integrated company sees enabled menus and can issue a scoped partner key",
         is_active: true,
       };
     if (path === "/company") body = company;
-    if (path === "/users")
-      body = [
-        {
-          id: "technical",
-          full_name: "Integração Parceiro",
-          email: "api@example.com",
-          role: "attendant",
-          is_active: true,
-        },
-      ];
-    if (path === "/integrations/service-keys/scopes")
-      body = [{ id: "trips:read", name: "Consultar viagens e deslocamentos" }];
-    if (
-      path === "/integrations/service-keys" &&
-      route.request().method() === "POST"
-    ) {
-      submitted = route.request().postDataJSON();
-      body = { id: "key", token: "ri.company.example-secret" };
-    }
     await route.fulfill({ json: body });
   });
   await page.goto("/");
@@ -177,26 +159,6 @@ test("integrated company sees enabled menus and can issue a scoped partner key",
   await expect(
     page.getByRole("button", { name: "Viagens", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Integração com parceiros", exact: true })
-    .click();
-  await page.getByLabel("Nome da integração").fill("Parceiro de teste");
-  await page
-    .getByLabel("Usuário técnico (atendente)")
-    .selectOption("technical");
-  await page
-    .getByRole("checkbox", { name: /Consultar viagens e deslocamentos/ })
-    .check();
-  await page.getByRole("button", { name: "Criar chave de integração" }).click();
-  await expect(page.getByLabel(/Chave criada/)).toHaveValue(
-    "ri.company.example-secret",
-  );
-  expect(submitted).toEqual({
-    name: "Parceiro de teste",
-    user_id: "technical",
-    valid_days: 90,
-    scopes: ["trips:read"],
-  });
-  await page.getByRole("button", { name: "Ocultar chave" }).click();
-  await expect(page.getByLabel(/Chave criada/)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Integração com parceiros", exact: true })).toHaveCount(0);
+  expect(integrationRequests).toEqual([]);
 });

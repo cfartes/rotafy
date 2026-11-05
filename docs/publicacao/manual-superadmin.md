@@ -14,7 +14,7 @@ Na mesma tela, altere o perfil ou suspenda/ative o acesso. Suspensões e mudanç
 
 ### Log de acesso da equipe
 
-Em **Equipe Nexus**, o administrador completo consulta **Log de acesso dos colaboradores Nexus**. Filtre por colaborador, entrada/saída e período. Os horários seguem Brasília e são exibidos até 200 registros por consulta. O histórico reúne entradas autenticadas e saídas pelo botão **Sair**, incluindo os registros anteriores disponíveis. Fechar o navegador ou expirar a sessão não registra uma saída. Tentativas de senha inválida não fazem parte dessa consulta.
+Em **Equipe Nexus**, o administrador completo consulta **Log de acesso dos colaboradores Nexus**. Filtre por colaborador, entrada/saída e período. Os horários seguem Brasília e ficam disponíveis até 200 registros por consulta, em páginas de vinte. O histórico reúne entradas autenticadas e saídas pelo botão **Sair**, incluindo os registros anteriores disponíveis. Fechar o navegador ou expirar a sessão não registra uma saída. Tentativas de senha inválida não fazem parte dessa consulta.
 
 ## 2. Empresas, planos e assinaturas {#nexus}
 
@@ -316,3 +316,9 @@ O administrador solicita o mapa em **Rastreamento → Rota planejada × percurso
 O roteiro é preservado no início do trecho, sem histórico retroativo. A comparação usa a sequência de paradas e amostras de GPS, sem reconstrução por ruas, cálculo automático de desvios ou avaliação disciplinar. O mapa mostra até dez mil amostras. A limpeza operacional acompanha os noventa dias do GPS.
 
 O menu **Mapa da frota** é separado de **Rastreamento** e pertence ao mesmo módulo. É exclusivo do administrador da empresa. Exibe somente o GPS próprio, sem usar a chave Google da comparação: consulta posições a cada quinze segundos, preserva o zoom, sinaliza dados com mais de dois minutos e permite centralizar ou expandir para tela cheia. As configurações, pontos de embarque, histórico da sessão atual e comparação permanecem em Rastreamento. O administrador da empresa também dispõe do menu **Histórico de trajetos** para consultar viagens ou trechos encerrados por período, veículo e trecho, reunindo as sessões GPS disponíveis por até noventa dias. Esse menu pertence ao módulo de rastreamento, utiliza posições recebidas do aparelho e não exige outra chave de mapas ou novo APK. Lacunas superiores a dez minutos e trocas de celular interrompem a linha; o percurso registrado é aproximado.
+
+### Dashboard da empresa e paginação
+
+As tabelas do painel Nexus e do cliente exibem vinte registros por página, com botões para avançar e voltar. Totais e exportações completas preservam o conjunto consultado. O NPS mantém os indicadores gerais e entrega vinte avaliações por página.
+
+Na empresa, a **Visão geral** de administradores e atendentes apresenta indicadores por período, ranking de rotas concluídas e próximas saídas; a equipe fica somente em **Equipe**. As rotas mostram o total histórico de viagens concluídas e permitem exclusão do catálogo com confirmação, preservando viagens e percursos existentes. O menu **Integração com parceiros** foi retirado do painel do cliente; os endpoints e credenciais existentes não foram revogados por essa alteração visual.

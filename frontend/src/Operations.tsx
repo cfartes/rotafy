@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import {
   PackageItineraryEditor,
@@ -394,7 +395,7 @@ export function Operations({
           <p className="empty-state">Carregando…</p>
         ) : (
           <div className="table-scroll">
-            <table className={`operations-table-${tab}`}>
+            <PaginatedTable className={`operations-table-${tab}`}>
               <thead>
                 <tr>
                   {(tab === "trips"
@@ -528,7 +529,7 @@ export function Operations({
                     </tr>
                   ))}
               </tbody>
-            </table>
+            </PaginatedTable>
             {!(tab === "trips"
               ? trips.data?.length
               : tab === "vehicles"
