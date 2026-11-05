@@ -63,6 +63,7 @@ from app.request_security import RequestBodyLimit
 from app.reservation_imports import router as reservation_imports_router
 from app.reservations import router as reservations_router
 from app.route_comparison import router as route_comparison_router
+from app.route_planning import router as route_planning_router
 from app.route_refresh import router as route_refresh_router
 from app.route_templates import router as route_templates_router
 from app.schemas import (
@@ -882,6 +883,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(tracking_history_router)
     application.include_router(whatsapp_connection_router)
     application.include_router(route_templates_router)
+    application.include_router(route_planning_router)
     application.include_router(company_dashboard_router)
     application.include_router(geography_router)
     application.include_router(geocoding_router)

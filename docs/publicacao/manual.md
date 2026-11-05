@@ -135,10 +135,22 @@ A capacidade atribuída é preservada na viagem. Alterar a frota depois não rec
 3. Selecione UF e cidade de origem e destino. A lista de cidades acompanha a UF escolhida.
 4. Informe os endereços de saída e chegada, de modo que possam ser localizados no Google Maps.
 5. Inclua as paradas intermediárias na ordem da operação. Defina embarque, desembarque ou ambos em cada uma.
-6. Informe o deslocamento estimado em minutos e o tempo adicional total nas paradas.
+6. Confira o deslocamento estimado em minutos e informe o tempo adicional total nas paradas. Com o cálculo automático disponível, aguarde a previsão ou ajuste a duração manualmente.
 7. Para ida e volta, utilize **Gerar volta invertendo a ida**, quando adequado, e revise a sugestão antes de salvar.
 
 As paradas adicionais da Rota não exigem data nem horário individual. Exemplo: 60 minutos de trajeto mais 20 nas paradas resultam em 80 minutos previstos. Informe a duração estimada do percurso para planejar os horários.
+
+### Calcular distância e tempo padrão
+
+Quando habilitado pela Nexus, o formulário consulta automaticamente a previsão após selecionar as cidades e preencher os endereços completos de saída, chegada e de todas as paradas. A consulta aguarda uma breve pausa na digitação e respeita a ordem cadastrada, sem reorganizar as paradas. Ida e volta são calculadas separadamente, inclusive depois de **Gerar volta invertendo a ida**.
+
+A seção **Distância e tempo padrão** apresenta **Distância prevista**, **Deslocamento sem trânsito** e **Total com suas paradas**. O total soma o tempo calculado ao tempo adicional de atendimento informado pela empresa. Em uma rota nova, a duração calculada preenche o deslocamento enquanto ele ainda não foi ajustado manualmente. Aguarde a consulta antes de salvar; se preferir, informe seu próprio tempo.
+
+Ajustes manuais não são sobrescritos pela resposta da consulta. Em uma rota existente ou duplicada, a duração cadastrada é preservada. Utilize **Usar tempo calculado** para adotar a sugestão e **Recalcular percurso** para consultar novamente. Alterar apenas o tempo de parada atualiza o total sem consultar de novo. Se os endereços mudarem, a previsão anterior deixa de ser exibida e uma nova consulta é preparada.
+
+Nos cards, **Consultar distância e tempo** abre uma previsão atual para cada sentido, sem alterar o cadastro. A distância é uma consulta do Google Maps, não uma cópia permanente da resposta do serviço. O tempo operacional confirmado ao salvar fica no cadastro e é utilizado para sugerir a chegada das novas viagens. Viagens já cadastradas preservam seu percurso e horários; a consulta não os altera.
+
+Com o cálculo indisponível, limite de consultas atingido ou endereço não encontrado, o cadastro manual continua disponível. A previsão é sem trânsito em tempo real e depende dos endereços informados. Confira a adequação do percurso ao veículo; o tempo real da viagem pode variar.
 
 Os cards informam a quantidade de **viagens concluídas** daquela rota em todo o histórico, incluindo seu uso dentro de pacotes. Cada viagem conta uma vez, independentemente dos veículos e trechos.
 
@@ -630,7 +642,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 21. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 22. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}

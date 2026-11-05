@@ -1,3 +1,4 @@
+import { RouteEstimate } from "./RouteEstimate";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +58,7 @@ export function RouteCatalog() {
     undefined,
   );
   const [duplicate, setDuplicate] = useState<SavedRoute | null>(null);
+  const [preview, setPreview] = useState<SavedRoute | null>(null);
   const [removing, setRemoving] = useState<SavedRoute | null>(null);
   const [removeError, setRemoveError] = useState("");
   const [removingPending, setRemovingPending] = useState(false);
@@ -157,10 +159,33 @@ export function RouteCatalog() {
               }}
             >
               Excluir Rota
+            </button>{" "}
+            <button
+              className="button secondary"
+              onClick={() => setPreview(route)}
+            >
+              Consultar distância e tempo
             </button>
           </article>
         ))}
       </div>
+      {preview && (
+        <Modal
+          title={`Previsão da rota · ${preview.name}`}
+          wide
+          onClose={() => setPreview(null)}
+        >
+          <div className="modal-form">
+            {preview.legs.map((leg, i) => (
+              <RouteEstimate
+                key={i}
+                leg={leg}
+                label={i === 0 ? "ida" : "volta"}
+              />
+            ))}
+          </div>
+        </Modal>
+      )}
       {removing && (
         <Modal
           title="Excluir rota do catálogo"
@@ -229,6 +254,8 @@ function RouteEditor({
       ? [...initial.legs, ...(initial.legs.length === 1 ? [blank()] : [])]
       : [blank(), blank()],
   );
+  const [manual, setManual] = useState([!!initial, !!initial]);
+  const [calculating, setCalculating] = useState([false, false]);
   const [active, setActive] = useState(
     duplicate ? true : (initial?.is_active ?? true),
   );
@@ -239,8 +266,20 @@ function RouteEditor({
       current.map((leg, i) => (i === index ? { ...leg, ...update } : leg)),
     );
   }
+  function duration(index: number, minutes: number, manually = true) {
+    setManual((current) =>
+      current.map((value, i) => (i === index ? manually : value)),
+    );
+    change(index, { duration_minutes: minutes });
+  }
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (
+      calculating
+        .slice(0, mode === "round_trip" ? 2 : 1)
+        .some((busy, i) => busy && !manual[i])
+    )
+      return;
     setPending(true);
     setError("");
     try {
@@ -347,9 +386,7 @@ function RouteEditor({
                   max={10080}
                   step={1}
                   value={leg.duration_minutes}
-                  onChange={(e) =>
-                    change(index, { duration_minutes: Number(e.target.value) })
-                  }
+                  onChange={(e) => duration(index, Number(e.target.value))}
                 />
               </Field>
               <Field label="Tempo adicional total nas paradas (minutos)">
@@ -371,6 +408,19 @@ function RouteEditor({
               minutos. Informe o tempo de deslocamento e acrescente o tempo de
               atendimento nas paradas.
             </p>
+            <RouteEstimate
+              leg={leg}
+              label={index === 0 ? "ida" : "volta"}
+              manual={manual[index]}
+              onBusy={(busy) =>
+                setCalculating((current) =>
+                  current[index] === busy
+                    ? current
+                    : current.map((v, i) => (i === index ? busy : v)),
+                )
+              }
+              onApply={(minutes) => duration(index, minutes, false)}
+            />
             {leg.stops.map((stop, position) => (
               <div className="operation-card" key={position}>
                 <Field label={`Parada ${position + 1}`}>
@@ -484,7 +534,8 @@ function RouteEditor({
               <button
                 type="button"
                 className="button secondary"
-                onClick={() =>
+                onClick={() => {
+                  setManual((current) => [current[0], false]);
                   change(1, {
                     ...leg,
                     origin: leg.destination,
@@ -504,8 +555,8 @@ function RouteEditor({
                             ? "boarding"
                             : "both",
                     })),
-                  })
-                }
+                  });
+                }}
               >
                 Gerar volta invertendo a ida
               </button>
@@ -525,7 +576,15 @@ function RouteEditor({
           <button type="button" className="button secondary" onClick={onClose}>
             Cancelar
           </button>
-          <button className="button primary" disabled={pending}>
+          <button
+            className="button primary"
+            disabled={
+              pending ||
+              calculating
+                .slice(0, mode === "round_trip" ? 2 : 1)
+                .some((busy, i) => busy && !manual[i])
+            }
+          >
             {pending ? "Salvando…" : "Salvar Rota"}
           </button>
         </footer>

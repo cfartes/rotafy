@@ -34,13 +34,13 @@ export function GeocodingSettings() {
       <p>{query.data.browser_key_configured ? "Chave web cadastrada. Deixe vazio para manter." : "Nenhuma chave web cadastrada."} Use uma chave separada da chave de backend, restrita ao domínio do app por HTTP referrer. Habilite Maps JavaScript API e Geocoding API. A chave web é utilizada pelo navegador e será visível ao administrador que carregar o mapa.</p>
       <label><input type="checkbox" name="clear_browser_key" />Remover a chave web cadastrada</label>
       <p>O mapa só carrega após solicitação do administrador. Carregamentos e localização dos endereços têm consumo próprio no Google e não entram no limite de consultas do backend. Configure cotas no Google Cloud.</p>
-      <h3>Previsão de chegada no aviso de proximidade</h3>
-      <label><input type="checkbox" name="routes_enabled" defaultChecked={query.data.routes_enabled ?? false} />Incluir tempo estimado de chegada pelo Google Maps</label>
+      <h3>Cálculos de rotas e previsão de chegada</h3>
+      <label><input type="checkbox" name="routes_enabled" defaultChecked={query.data.routes_enabled ?? false} />Habilitar cálculo de distância, tempo padrão e previsão de chegada pelo Google Maps</label>
       <label><input type="checkbox" name="optimization_enabled" defaultChecked={query.data.optimization_enabled ?? false} />Calcular sequência otimizada dos hotéis e casas antes da viagem</label>
       <p>A otimização preserva os pontos fixos e horários cadastrados. Reorganiza somente locais personalizados dentro do mesmo segmento e da mesma operação (embarque ou desembarque), sem inverter embarque e desembarque. Usa o mesmo limite de consultas de rotas. Sincronize o APK antes de iniciar.</p>
       <Field label="Limite mensal de consultas de rotas"><input name="routes_limit" type="number" min="1" max="1000000" step="1" required defaultValue={query.data.routes_limit ?? 9000} /></Field>
       <Field label="Minutos previstos de atendimento em cada parada anterior"><input name="stop_minutes" type="number" min="0" max="30" step="1" required defaultValue={query.data.stop_minutes ?? 2} /></Field>
-      <p>Consultas de rotas neste mês: {query.data.routes_used ?? 0}. Usa trânsito e a sequência de pontos do motorista. O tempo de atendimento é uma margem estimada por parada. A Routes API tem consumo próprio; configure cotas no Google Cloud. Sem uma previsão válida, o aviso de proximidade continua sem tempo estimado.</p>
+      <p>Consultas de rotas neste mês: {query.data.routes_used ?? 0}. O cadastro de rotas calcula distância e tempo padrão sem trânsito. A previsão de chegada usa trânsito e a sequência de pontos do motorista. Ambos compartilham este limite. O tempo de atendimento é uma margem estimada por parada. A Routes API tem consumo próprio; configure cotas no Google Cloud. Sem uma previsão válida, o aviso de proximidade continua sem tempo estimado.</p>
       {error && <Alert>{error}</Alert>}{notice && <p role="status">{notice}</p>}
       <button className="button primary" disabled={busy}>Salvar localização automática</button>
     </form>}
