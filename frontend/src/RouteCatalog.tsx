@@ -23,6 +23,7 @@ export type SavedRoute = {
   id: string;
   name: string;
   version: number;
+  completed_trips?: number;
   is_active: boolean;
   mode: string;
   legs: RouteLeg[];
@@ -56,6 +57,26 @@ export function RouteCatalog() {
     undefined,
   );
   const [duplicate, setDuplicate] = useState<SavedRoute | null>(null);
+  const [removing, setRemoving] = useState<SavedRoute | null>(null);
+  const [removeError, setRemoveError] = useState("");
+  const [removingPending, setRemovingPending] = useState(false);
+  async function remove() {
+    if (!removing || removingPending) return;
+    setRemovingPending(true);
+    setRemoveError("");
+    try {
+      await api(`/routes/${removing.id}`, { method: "DELETE" });
+      await client.invalidateQueries({ queryKey: ["routes"] });
+      await client.invalidateQueries({ queryKey: ["company-dashboard"] });
+      setRemoving(null);
+    } catch (err) {
+      setRemoveError(
+        err instanceof Error ? err.message : "Não foi possível excluir a rota.",
+      );
+    } finally {
+      setRemovingPending(false);
+    }
+  }
   return (
     <section className="panel">
       <header className="panel-header">
@@ -96,6 +117,13 @@ export function RouteCatalog() {
               {route.mode === "round_trip" ? "Ida e volta" : "Somente ida"} ·{" "}
               {route.is_active ? "Ativa" : "Inativa"} · versão {route.version}
             </p>
+            <p>
+              <strong>
+                {(route.completed_trips || 0).toLocaleString("pt-BR")} viagens
+                concluídas
+              </strong>{" "}
+              · todo o histórico
+            </p>
             {route.legs.map((leg, i) => (
               <p key={i}>
                 {i === 0 ? "Ida" : "Volta"}:{" "}
@@ -120,10 +148,52 @@ export function RouteCatalog() {
               }}
             >
               Duplicar Rota
+            </button>{" "}
+            <button
+              className="button secondary"
+              onClick={() => {
+                setRemoveError("");
+                setRemoving(route);
+              }}
+            >
+              Excluir Rota
             </button>
           </article>
         ))}
       </div>
+      {removing && (
+        <Modal
+          title="Excluir rota do catálogo"
+          onClose={() => {
+            if (!removingPending) setRemoving(null);
+          }}
+        >
+          <div className="modal-form">
+            <p>
+              Excluir a rota <strong>{removing.name}</strong>? Ela deixará de
+              aparecer no catálogo. As viagens já cadastradas, os roteiros de
+              pacotes salvos e o histórico serão preservados.
+            </p>
+            {removeError && <Alert>{removeError}</Alert>}
+            <div className="form-actions">
+              <button
+                className="button secondary"
+                disabled={removingPending}
+                onClick={() => setRemoving(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="button primary"
+                disabled={removingPending}
+                onClick={() => void remove()}
+              >
+                {removingPending ? "Excluindo…" : "Confirmar exclusão"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {editing !== undefined && (
         <RouteEditor
           initial={editing || duplicate}

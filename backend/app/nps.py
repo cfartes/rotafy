@@ -184,7 +184,7 @@ async def report(
         "expired",
     ]
     | None = None,
-    page: int = Query(1, ge=1, le=100),
+    page: int = Query(1, ge=1, le=250),
     output: Literal["json", "csv", "pdf"] = "json",
 ):
     rows = await report_rows(actor, start, end, kind, trip_id, classification, status)
@@ -198,7 +198,7 @@ async def report(
                 {"month": m, **metrics([r for r in rows if r["month"] == m])}
                 for m in months
             ],
-            "rows": rows[(page - 1) * 50 : page * 50],
+            "rows": rows[(page - 1) * 20 : page * 20],
             "total": len(rows),
             "page": page,
         }

@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { ReservationWhatsApp } from "./ReservationWhatsApp";
 import { useModules } from "./modules";
@@ -271,7 +272,7 @@ export function Reservations({
           <p className="empty-state">Carregando…</p>
         ) : (
           <div className="table-scroll">
-            <table className="reservations-table">
+            <PaginatedTable className="reservations-table">
               <thead>
                 <tr>
                   {[
@@ -316,7 +317,7 @@ export function Reservations({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </PaginatedTable>
             {!reservations.data?.length && (
               <p className="empty-state">
                 Nenhuma família cadastrada nesta viagem.
@@ -1175,7 +1176,7 @@ function ImportModal({
                   passageiros · prévia válida até {date(preview.expires_at)}
                 </p>
                 <div className="table-scroll">
-                  <table>
+                  <PaginatedTable>
                     <thead>
                       <tr>
                         <th>Família</th>
@@ -1195,7 +1196,7 @@ function ImportModal({
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </PaginatedTable>
                 </div>
                 {preview.errors.length > 0 && (
                   <Alert>

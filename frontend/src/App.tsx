@@ -1,8 +1,9 @@
+import { CompanyDashboard } from "./CompanyDashboard";
+import { PaginatedTable } from "./components/PaginatedTable";
 import { Reaccommodations } from "./Reaccommodations";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { MobileRelease } from "./MobileRelease";
 import { CompanyModules } from "./CompanyModules";
-import { PartnerIntegration } from "./PartnerIntegration";
 import { hasModule, menuModule } from "./modules";
 import { Tracking } from "./Tracking";
 import { EditCollaborator } from "./EditCollaborator";
@@ -864,6 +865,7 @@ const actionNames: Record<string, string> = {
   "user.invited": "Pessoa convidada para definir senha",
   "user.invitation_resent": "Convite de acesso reenviado",
   "route.created": "Rota cadastrada",
+  "route.deleted": "Rota excluída do catálogo",
   "route.updated": "Rota atualizada",
   "trip.updated": "Viagem atualizada",
   "reservation.updated": "Reserva atualizada",
@@ -1088,7 +1090,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const team = useQuery({
     queryKey: ["users"],
     queryFn: () => api<User[]>("/users"),
-    enabled: isAdmin && !financialOnly && hasModule(user, "team"),
+    enabled: isAdmin && !financialOnly && page === "directory" && hasModule(user, "team"),
   });
   const company = useQuery({
     queryKey: ["company"],
@@ -1363,7 +1365,6 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               ? [{ id: "integrations", label: "Configurações", icon: KeyRound }]
               : []),
             ...(fullNexus ? [{ id: "modules", label: "Módulos por empresa", icon: Building2 }] : []),
-            ...(isAdmin ? [{ id: "integrations", label: "Integração com parceiros", icon: KeyRound }] : []),
             ...(fullNexus
               ? [{ id: "nexus-team", label: "Equipe Nexus", icon: Users }]
               : []),
@@ -1497,7 +1498,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                           : `Olá, ${user.full_name.split(" ")[0]}. Seu acesso à empresa está ativo.`}
               </p>
             </div>
-            {canManage && (isNexus || hasModule(user, "team")) && (page === "overview" || page === "directory") && (
+            {canManage && (isNexus || hasModule(user, "team")) && ((isNexus && page === "overview") || page === "directory") && (
               <button
                 className="button primary"
                 onClick={() => setCreating(true)}
@@ -1537,7 +1538,6 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "integrations" && fullNexus && <NexusContracts />}
           {page === "integrations" && fullNexus && <MobileRelease />}
           {page === "modules" && fullNexus && <CompanyModules companies={companies.data || []} />}
-          {page === "integrations" && isAdmin && <PartnerIntegration />}
           {page === "overview" && isAdmin && <PlanChangeNotice onOpen={() => setPage("contract")} />}
           {page === "contract" && isAdmin && <CompanyContract user={user} />}
           {page === "whatsapp" && isAdmin && <CompanyWhatsApp />}
@@ -1602,7 +1602,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               onLogout={onLogout}
             />
           )}
-          {page === "overview" && (
+          {page === "overview" && !isNexus && !financialOnly && (isAdmin || user.role === "attendant") && <CompanyDashboard user={user} />}
+          {page === "overview" && (isNexus || (!isAdmin && user.role !== "attendant")) && (
             <>
               <div className="stats-grid">
                 <div className="stat-card">
@@ -1694,7 +1695,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </section>
             </>
           )}
-          {canManage && (isNexus || hasModule(user, "team")) && (page === "overview" || page === "directory") && (
+          {canManage && (isNexus || hasModule(user, "team")) && ((isNexus && page === "overview") || page === "directory") && (
             <section className="panel">
               <header className="panel-header">
                 <div>
@@ -1749,7 +1750,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                 </div>
               ) : (
                 <div className="table-scroll">
-                  <table>
+                  <PaginatedTable>
                     <thead>
                       <tr>
                         <th>{isNexus ? "Empresa" : "Pessoa"}</th>
@@ -1902,7 +1903,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                           </tr>
                         ))}
                     </tbody>
-                  </table>
+                  </PaginatedTable>
                   {search &&
                     !rows.some((row) =>
                       ("trade_name" in row
@@ -1929,7 +1930,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               {audit.error && <Alert>{message(audit.error)}</Alert>}
               {audit.isPending ? <div className="empty-state">Carregando…</div> : (
                 <div className="table-scroll activity-table" role="region" aria-label="Histórico de atividades" tabIndex={0}>
-                  <table>
+                  <PaginatedTable>
                     <thead><tr><th scope="col">Data e hora</th><th scope="col">Usuário</th>{isNexus && <th scope="col">Empresa</th>}<th scope="col">Atividade</th><th scope="col">Registro afetado</th><th scope="col">Detalhes</th></tr></thead>
                     <tbody>{audit.data?.map(event => (
                       <tr key={event.id}>
@@ -1941,7 +1942,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                         <td><details><summary aria-label={`Detalhes da atividade ${event.id.slice(0, 8)}`}>Ver detalhes</summary><dl><dt>Código da ação</dt><dd>{event.action}</dd><dt>ID do evento</dt><dd>{event.id}</dd><dt>ID do usuário</dt><dd>{event.actor_id || "Não informado"}</dd><dt>ID do registro</dt><dd>{event.target_id || "Não se aplica"}</dd></dl></details></td>
                       </tr>
                     ))}</tbody>
-                  </table>
+                  </PaginatedTable>
                   {audit.data?.length === 0 && <div className="empty-state">Nenhuma atividade registrada.</div>}
                 </div>
               )}

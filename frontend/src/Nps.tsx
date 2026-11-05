@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -375,7 +376,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
               <h2>Evolução por mês</h2>
             </div>
             <div className="nps-table">
-              <table>
+              <PaginatedTable>
                 <thead>
                   <tr>
                     <th>Mês de criação</th>
@@ -394,7 +395,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </PaginatedTable>
             </div>
           </section>
           <section className="panel">
@@ -423,7 +424,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
               </p>
             ) : (
               <div className="nps-table">
-                <table>
+                <PaginatedTable>
                   <thead>
                     <tr>
                       <th>Cliente / tipo</th>
@@ -465,7 +466,7 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </PaginatedTable>
               </div>
             )}
             <div className="nps-pagination">
@@ -477,11 +478,11 @@ export function Nps({ canConfigure }: { canConfigure: boolean }) {
                 Anterior
               </button>
               <span>
-                Página {page} de {Math.max(1, Math.ceil(query.data.total / 50))}
+                Página {page} de {Math.max(1, Math.ceil(query.data.total / 20))}
               </span>
               <button
                 className="button secondary"
-                disabled={page * 50 >= query.data.total}
+                disabled={page * 20 >= query.data.total}
                 onClick={() => setPage(page + 1)}
               >
                 Próxima

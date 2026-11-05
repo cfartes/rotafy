@@ -1,3 +1,4 @@
+import { PaginatedTable } from "../components/PaginatedTable";
 import { DataUseNotice } from "./../components/DataUseNotice";
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -524,7 +525,7 @@ function SubscriptionDetails({
           Valores calculados por ciclo, com cobrança administrada pela Nexus.
         </p>
         <div className="table-scroll">
-          <table>
+          <PaginatedTable>
             <thead>
               <tr>
                 <th>Ciclo</th>
@@ -554,7 +555,7 @@ function SubscriptionDetails({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       </section>
       {isNexus && sub.status === "cancelled" && (
@@ -758,7 +759,7 @@ export function Billing({
               </div>
             ) : (
               <div className="table-scroll">
-                <table>
+                <PaginatedTable>
                   <thead>
                     <tr>
                       <th>Empresa</th>
@@ -807,7 +808,7 @@ export function Billing({
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </PaginatedTable>
               </div>
             )}
           </section>

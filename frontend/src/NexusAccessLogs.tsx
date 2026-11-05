@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type User } from "./api";
@@ -91,7 +92,7 @@ export function NexusAccessLogs({ users }: { users: User[] }) {
         <p>Carregando acessos…</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <PaginatedTable>
             <thead>
               <tr>
                 <th>Data e hora</th>
@@ -114,7 +115,7 @@ export function NexusAccessLogs({ users }: { users: User[] }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
           {logs.data?.length === 0 && (
             <p>Nenhum acesso encontrado neste período.</p>
           )}

@@ -137,13 +137,13 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
   await page.getByLabel("Senha", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Acessar painel" }).click();
   await expect(
-    page.getByRole("heading", { name: "Pessoas da equipe" }),
+    page.getByRole("heading", { name: "Resultado da operação" }),
   ).toBeVisible();
   await page.goto("/offline");
   await expect(page).toHaveURL("http://localhost:5178/");
   await expect(
     page.getByRole("heading", {
-      name: "Cadastros e operação da empresa",
+      name: "Resultado da operação",
       exact: true,
     }),
   ).toBeVisible();
@@ -182,6 +182,7 @@ test("login, cadastro de empresa, equipe e logout no navegador", async ({
   await expect(
     page.getByText("Receptivo de Homologação Sul", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Equipe", exact: true }).click();
   await page
     .getByRole("button", { name: "Adicionar pessoa", exact: true })
     .click();

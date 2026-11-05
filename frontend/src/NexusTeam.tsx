@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -93,7 +94,7 @@ export function NexusTeam({ currentUserId }: { currentUserId: string }) {
         <p>Carregando equipe…</p>
       ) : (
         <div className="table-scroll">
-          <table>
+          <PaginatedTable>
             <thead>
               <tr>
                 <th>Nome / e-mail</th>
@@ -150,7 +151,7 @@ export function NexusTeam({ currentUserId }: { currentUserId: string }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       )}
       <NexusAccessLogs users={users.data || []} />

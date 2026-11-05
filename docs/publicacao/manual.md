@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **03/11/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **05/11/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -18,6 +18,18 @@ Este manual descreve a implementação disponível em **03/11/2026**. As imagens
 8. Consulte a finalização, a ocupação, as vendas e o consumo do plano.
 
 <aside class="note"><strong>Três conceitos diferentes.</strong> Rota é o percurso reutilizável. Pacote é o produto turístico e seu roteiro. Viagem é a saída agendada, com datas, horários, equipe e veículos. Cadastrar uma Rota ou um modelo de pacote não agenda uma saída nem consome a franquia.</aside>
+
+### Visão geral: dashboard gerencial
+
+Administradores e atendentes acompanham a operação na **Visão geral**, sem a lista de colaboradores. Escolha as datas e use **Atualizar indicadores**; o padrão é do primeiro dia do mês até hoje. O período admite até 366 dias e considera a data de saída da viagem no horário de Brasília.
+
+Os cards mostram viagens concluídas, em andamento, agendadas e canceladas. Com os respectivos módulos, mostram também rotas ativas, reservas confirmadas, passageiros reservados, valor das reservas e pagamentos registrados. Reservas provisórias e canceladas, assim como viagens canceladas, não entram nos indicadores de reservas. Os valores são operacionais, não o financeiro da assinatura. Passageiros reservados não equivalem a embarques efetivamente registrados.
+
+O ranking **Rotas mais usadas** apresenta até vinte rotas pelas viagens concluídas no período. Cada viagem conta uma vez por rota, incluindo rotas utilizadas nos pacotes; veículos e trechos não multiplicam essa contagem. Rotas excluídas do catálogo continuam identificadas no histórico. O card de rotas ativas reflete o cadastro atual, independentemente das datas. **Próximas saídas** mostra as vinte primeiras viagens futuras agendadas, sem se limitar ao período dos cards. Viagens sem rota vinculada entram nos totais, mas não no ranking.
+
+### Tabelas e navegação
+
+As tabelas do painel mostram até **20 registros por página**, tanto no acesso da empresa quanto no Nexus. Utilize **Próxima página** ou **Anterior** e confira a página atual. Uma busca que altera os resultados retorna à primeira página. Os totais e indicadores consideram o conjunto consultado; a paginação visual não limita os arquivos completos de exportação. A lista de colaboradores permanece no menu **Equipe**.
 
 ## 2. Perfis e permissões {#perfis}
 
@@ -128,7 +140,9 @@ A capacidade atribuída é preservada na viagem. Alterar a frota depois não rec
 
 As paradas adicionais da Rota não exigem data nem horário individual. Exemplo: 60 minutos de trajeto mais 20 nas paradas resultam em 80 minutos previstos. Informe a duração estimada do percurso para planejar os horários.
 
-As ações **Editar Rota**, **Duplicar Rota** e desativar permitem manter o catálogo. Desativar impede novas escolhas, preservando o histórico das viagens que já utilizam o percurso.
+Os cards informam a quantidade de **viagens concluídas** daquela rota em todo o histórico, incluindo seu uso dentro de pacotes. Cada viagem conta uma vez, independentemente dos veículos e trechos.
+
+As ações **Editar Rota**, **Duplicar Rota** e desativar permitem manter o catálogo. Desativar impede novas escolhas. Para remover a rota do catálogo, use **Excluir Rota**, leia a confirmação e clique em **Confirmar exclusão**. A rota deixa de aparecer nas novas escolhas, mas as viagens já cadastradas, seus percursos, reservas e vínculos históricos são preservados. A exclusão não cancela viagens nem apaga o histórico.
 
 [CAPTURA:rotas-catalogo-desktop.png]
 
@@ -616,7 +630,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 11. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 20. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -764,7 +778,7 @@ Os menus disponíveis dependem do perfil, dos módulos contratados e da situaç�
 
 No modelo integrado, a venda acontece no sistema parceiro; o Rotafy recebe os dados autorizados para comunicação, bilhetes e operação de embarque/desembarque. O motorista ou guia usa sua própria conta no Android, prepara as viagens com conexão e sincroniza os registros realizados offline.
 
-O administrador gerencia credenciais em **Integração com parceiros**, quando habilitado. Vincule um atendente dedicado, limite permissões e validade e entregue a credencial apenas ao responsável técnico autorizado. A credencial aparece uma única vez. Revogue-a quando não for mais necessária. Suspender ou mudar a função do atendente interrompe as credenciais vinculadas. A integração não concede acesso às configurações globais nem ao financeiro da assinatura.
+O menu **Integração com parceiros** não é disponibilizado no painel do cliente. Para necessidades de conexão com outro sistema, entre em contato com a Nexus. Integrações existentes mantêm suas permissões e não concedem acesso às configurações globais nem ao financeiro da assinatura.
 
 
 ## NPS e satisfação dos clientes {#nps}

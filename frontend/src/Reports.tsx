@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -367,7 +368,7 @@ export function Reports({
                     aria-label="Tabela do relatório com rolagem horizontal"
                     role="region"
                   >
-                    <table>
+                    <PaginatedTable key={`${category}:${payment}:${JSON.stringify(submitted)}`}>
                       <caption>
                         {category === "consumption"
                           ? "Consumo por empresa e ciclo"
@@ -395,7 +396,7 @@ export function Reports({
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </PaginatedTable>
                   </div>
                 )}
               </>

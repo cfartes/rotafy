@@ -1,3 +1,4 @@
+import { PaginatedTable } from "./components/PaginatedTable";
 import { DataUseNotice } from "./components/DataUseNotice";
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ export function WhatsAppAutomation() {
           <p className="muted">Nenhum envio automático registrado.</p>
         )}
         <div className="table-wrap">
-          <table>
+          <PaginatedTable>
             <thead>
               <tr>
                 <th>Tipo / passageiro</th>
@@ -123,7 +124,7 @@ export function WhatsAppAutomation() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </PaginatedTable>
         </div>
       </div>
     </section>
