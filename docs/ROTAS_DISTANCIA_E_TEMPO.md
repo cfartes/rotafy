@@ -2,7 +2,7 @@
 
 ## Fluxo
 
-O cadastro consulta a previsão depois de cidades e endereços completos, com debounce de um segundo. A ordem das paradas é mantida. Cada sentido tem sua previsão; inverter a ida não copia um resultado do provedor para a volta. Uma rota nova recebe o tempo calculado apenas enquanto o operador não o editou. Rotas existentes/duplicadas preservam o tempo; o botão Usar tempo calculado aplica explicitamente a sugestão. Paradas somam sua margem sem nova consulta.
+Novas rotas consultam a previsão depois de cidades e endereços completos, com debounce de um segundo. A ordem das paradas é mantida. Cada sentido tem sua previsão; inverter a ida não copia um resultado do provedor para a volta. Uma rota nova recebe o tempo calculado apenas enquanto o operador não o editou. Rotas existentes/duplicadas preservam o tempo; o botão Usar tempo calculado aplica explicitamente a sugestão. Paradas somam sua margem sem nova consulta.
 
 O botão Consultar distância e tempo no card abre uma previsão atual, sem modificar a rota. Respostas atrasadas de outra geometria e respostas após fechar a tela não são aplicadas. O salvamento aguarda o cálculo automático pendente, mas permanece disponível para um tempo manual. Falha no serviço permite preenchimento manual. TripModal e a validação de snapshots já utilizam duration_minutes + stop_minutes; não há mudança nos snapshots das viagens existentes.
 
@@ -38,3 +38,7 @@ python3 scripts/production.py logs --since 10m --tail 300 api 2>&1 | grep 'route
 ```
 
 `GOOGLE_NO_ROUTE` indica resposta sem percurso; não comprova um erro de chave. Os outros códigos não autorizam alterar automaticamente endereços ou trocar restrições da chave. Falhas continuam permitindo salvar duração manualmente, sem alterar viagens existentes.
+
+## Consulta sob demanda em rotas existentes
+
+Abrir/duplicar um cadastro preserva os tempos e não chama o provedor. Nome, nome de parada e tempos não alteram a assinatura do percurso. Cidades, endereços e inclusão/remoção/ordem de paradas disparam uma previsão com debounce. O formulário permite consulta explícita; o botão do card já representa uma solicitação explícita e abre a previsão atual. A consulta de disponibilidade é interna e não chama o Google. Não há cache permanente novo nem migração.

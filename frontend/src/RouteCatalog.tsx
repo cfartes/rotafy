@@ -412,6 +412,7 @@ function RouteEditor({
               leg={leg}
               label={index === 0 ? "ida" : "volta"}
               manual={manual[index]}
+              automatic={!initial}
               onBusy={(busy) =>
                 setCalculating((current) =>
                   current[index] === busy
