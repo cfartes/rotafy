@@ -60,7 +60,7 @@ def requests_for(data):
                 "origin": {"address": part[0]},
                 "destination": {"address": part[-1]},
                 "intermediates": [{"address": address} for address in part[1:-1]],
-                "travelMode": "DRIVING",
+                "travelMode": "DRIVE",
                 "routingPreference": "TRAFFIC_UNAWARE",
                 "languageCode": "pt-BR",
                 "units": "METRIC",

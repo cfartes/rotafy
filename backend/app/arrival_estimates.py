@@ -72,7 +72,7 @@ def route_request(points, target_id, position, stop_minutes):
             position["target_latitude"], position["target_longitude"]
         ),
         "intermediates": stops,
-        "travelMode": "DRIVING",
+        "travelMode": "DRIVE",
         "routingPreference": "TRAFFIC_AWARE",
         "languageCode": "pt-BR",
         "units": "METRIC",

@@ -41,6 +41,7 @@ def test_route_preserves_previous_pickups_and_dwell():
         },
         2,
     )
+    assert payload["travelMode"] == "DRIVE"
     assert payload["intermediates"] == [{"address": "Hotel A"}]
     assert (
         dwell == [{"scheduled_at": None, "minutes": 2}]
@@ -105,6 +106,7 @@ def test_order_groups_preserve_anchors_and_pickup_dropoff_boundaries():
     # point_query only needs addresses here; no names or customer metadata leave the server.
     result = groups(points)
     assert [g[0] for g in result] == [[1, 2], [3, 4]]
+    assert all(g[2]["travelMode"] == "DRIVE" for g in result)
     assert all(g[2]["origin"] == {"address": "Origin"} for g in result)
     assert valid_permutation([1, 0], 2) and not valid_permutation([0, 0], 2)
     assert not valid_permutation([False, True], 2)

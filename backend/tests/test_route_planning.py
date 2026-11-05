@@ -35,7 +35,8 @@ def test_provider_requests_preserve_every_stop_and_do_not_use_live_traffic():
     assert points[0]["address"].endswith("Blumenau, SC, Brasil")
     assert points[-1]["address"].endswith("Navegantes, SC, Brasil")
     assert all(
-        c["routingPreference"] == "TRAFFIC_UNAWARE"
+        c["travelMode"] == "DRIVE"
+        and c["routingPreference"] == "TRAFFIC_UNAWARE"
         and "departureTime" not in c
         and "optimizeWaypointOrder" not in c
         for c in calls

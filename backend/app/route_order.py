@@ -43,7 +43,7 @@ def groups(points, context=None):
             "origin": {"address": point_query(before)},
             "destination": {"address": point_query(after)},
             "intermediates": [{"address": point_query(points[i])} for i in indices],
-            "travelMode": "DRIVING",
+            "travelMode": "DRIVE",
             "routingPreference": "TRAFFIC_AWARE",
             "optimizeWaypointOrder": True,
         }
