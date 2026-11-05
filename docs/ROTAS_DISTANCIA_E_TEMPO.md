@@ -23,3 +23,18 @@ Referências oficiais: [computeRoutes](https://developers.google.com/maps/docume
 ## Compatibilidade com o Google Routes
 
 O campo `travelMode` utiliza `DRIVE` no planejamento, ETA e ordenação de paradas. `DRIVING` pertence a outras interfaces e é inválido no endpoint REST v2 `computeRoutes`, causando rejeição mesmo com endereços válidos. Os testes verificam o valor nos três construtores de requisição.
+
+## Diagnóstico de falha na consulta
+
+A tela apresenta somente mensagens controladas e códigos: `SERVICE_DISABLED`, `BILLING_DISABLED`, `API_KEY_INVALID`, `API_KEY_SERVICE_BLOCKED`, `API_KEY_HTTP_REFERRER_BLOCKED`, `API_KEY_IP_ADDRESS_BLOCKED`, `GOOGLE_PERMISSION_DENIED`, `GOOGLE_INVALID_ARGUMENT`, `GOOGLE_QUOTA`, `GOOGLE_UNAVAILABLE`, `GOOGLE_NO_ROUTE`, `GOOGLE_TIMEOUT`, `GOOGLE_CONNECTION` ou `GOOGLE_INVALID_RESPONSE`. Códigos de configuração devem ser revisados pela Nexus; não pedir a chave ao cliente. A mensagem bruta, metadados e URL do erro Google nunca são exibidos ou registrados.
+
+Para confirmar a versão ativa: `curl -fsS https://rotafy.nexusdataanalytics.tech/api/v1/health`.
+
+Depois de reproduzir a falha, consultar somente os códigos no slot ativo:
+
+```sh
+cd /opt/rotafy-tech
+python3 scripts/production.py logs --since 10m --tail 300 api 2>&1 | grep 'route_preview.failed'
+```
+
+`GOOGLE_NO_ROUTE` indica resposta sem percurso; não comprova um erro de chave. Os outros códigos não autorizam alterar automaticamente endereços ou trocar restrições da chave. Falhas continuam permitindo salvar duração manualmente, sem alterar viagens existentes.

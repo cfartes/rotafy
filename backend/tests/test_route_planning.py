@@ -290,3 +290,77 @@ def test_permissions_modules_invalid_addresses_and_company_throttle(
             {"id": seeded["b"]},
         )
     assert client.post("/api/v1/routes/estimate", json=PAYLOAD).status_code == 403
+
+
+@pytest.mark.parametrize(
+    "status,reason,expected",
+    [
+        (403, "SERVICE_DISABLED", "SERVICE_DISABLED"),
+        (403, "BILLING_DISABLED", "BILLING_DISABLED"),
+        (403, "API_KEY_HTTP_REFERRER_BLOCKED", "API_KEY_HTTP_REFERRER_BLOCKED"),
+        (403, "API_KEY_IP_ADDRESS_BLOCKED", "API_KEY_IP_ADDRESS_BLOCKED"),
+        (403, "API_KEY_SERVICE_BLOCKED", "API_KEY_SERVICE_BLOCKED"),
+        (400, "API_KEY_INVALID", "API_KEY_INVALID"),
+        (403, "private-reason", "GOOGLE_PERMISSION_DENIED"),
+        (400, None, "GOOGLE_INVALID_ARGUMENT"),
+        (429, None, "GOOGLE_QUOTA"),
+        (500, None, "GOOGLE_UNAVAILABLE"),
+    ],
+)
+def test_provider_rejections_are_classified_without_exposing_body(
+    monkeypatch, status, reason, expected
+):
+    from urllib.error import HTTPError
+
+    from app.route_planning import PreviewError
+
+    def fail(*args, **kwargs):
+        body = {
+            "error": {
+                "message": "private key and address",
+                "details": [{"reason": reason, "metadata": {"key": "private key"}}],
+            }
+        }
+        raise HTTPError(
+            "https://private-url",
+            status,
+            "private reason",
+            {},
+            io.BytesIO(json.dumps(body).encode()),
+        )
+
+    monkeypatch.setattr(
+        "app.route_planning.build_opener", lambda *_: SimpleNamespace(open=fail)
+    )
+    with pytest.raises(PreviewError) as caught:
+        compute_preview({}, "private key")
+    assert caught.value.code == expected
+    assert "private" not in str(caught.value)
+    assert "manualmente" in str(caught.value)
+
+
+def test_no_route_is_distinct_from_configuration_failure(monkeypatch):
+    from app.route_planning import PreviewError
+
+    monkeypatch.setattr(
+        "app.route_planning.build_opener",
+        lambda *_: SimpleNamespace(open=lambda *a, **k: io.BytesIO(b"{}")),
+    )
+    with pytest.raises(PreviewError, match="GOOGLE_NO_ROUTE"):
+        compute_preview({}, "synthetic-key")
+
+
+def test_provider_diagnostic_reaches_screen_and_safe_log(
+    client, seeded, owner, planning, monkeypatch, caplog
+):
+    from app.route_planning import PreviewError
+
+    def fail(*args):
+        raise PreviewError("SERVICE_DISABLED", "API de rotas desabilitada.")
+
+    monkeypatch.setattr("app.route_planning.compute_preview", fail)
+    response = client.post("/api/v1/routes/estimate", json=PAYLOAD)
+    assert response.status_code == 503
+    assert "SERVICE_DISABLED" in response.json()["detail"]
+    assert "route_preview.failed code=SERVICE_DISABLED" in caplog.text
+    assert PAYLOAD["origin_address"] not in caplog.text
