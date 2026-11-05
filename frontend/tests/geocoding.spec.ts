@@ -21,11 +21,11 @@ test("full superadmin saves a server key without reading it back", async ({ page
   await page.getByRole("button", { name: "Configurações", exact: true }).click();
   await page.getByLabel("Ativar localização automática", { exact: true }).check();
   await page.getByLabel("Chave Google Geocoding do backend", { exact: true }).fill("sample_test_key");
-  await page.getByLabel("Incluir tempo estimado de chegada pelo Google Maps").check();
+  await page.getByLabel("Habilitar cálculo de distância, tempo padrão e previsão de chegada pelo Google Maps").check();
   await page.getByLabel("Calcular sequência otimizada dos hotéis e casas antes da viagem").check();
   await page.getByRole("button", { name: "Salvar localização automática", exact: true }).click();
   await expect(page.getByText("Chave cadastrada. Deixe vazio para mantê-la.", { exact: true })).toBeVisible();
-  expect(submission).toEqual({ expected_version: 0, enabled: true, monthly_limit: 9000, api_key: "sample_test_key", clear_key: false, optimization_enabled: true, routes_enabled: true, routes_limit: 9000, stop_minutes: 2 });
+  expect(submission).toEqual({ expected_version: 0, enabled: true, monthly_limit: 9000, api_key: "sample_test_key", clear_key: false, clear_browser_key: false, optimization_enabled: true, routes_enabled: true, routes_limit: 9000, stop_minutes: 2 });
   await expect(page.getByLabel("Chave Google Geocoding do backend", { exact: true })).toHaveValue("");
 });
 
