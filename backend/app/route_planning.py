@@ -2,8 +2,10 @@
 
 import asyncio
 import json
+import logging
 import math
 import re
+from urllib.error import HTTPError
 from urllib.request import Request as HTTPRequest
 from urllib.request import build_opener
 
@@ -20,6 +22,67 @@ from app.operations import OperationalInput, tenant
 from app.security import digest
 
 router = APIRouter(prefix="/api/v1/routes", tags=["Previsão de rotas"])
+
+
+class PreviewError(ValueError):
+    def __init__(self, code, message):
+        self.code = code
+        super().__init__(
+            f"{message} Código: {code}. Você pode informar o tempo manualmente."
+        )
+
+
+def provider_error(error):
+    messages = {
+        "SERVICE_DISABLED": "A API de rotas não está habilitada no projeto Google. Solicite a revisão à Nexus.",
+        "BILLING_DISABLED": "O faturamento do projeto Google está desabilitado. Solicite a revisão à Nexus.",
+        "API_KEY_INVALID": "A chave Google foi recusada. Solicite a revisão à Nexus.",
+        "API_KEY_SERVICE_BLOCKED": "A chave Google não tem permissão para a API de rotas. Solicite a revisão à Nexus.",
+        "API_KEY_HTTP_REFERRER_BLOCKED": "A chave Google está restrita a sites e não autoriza o servidor. Solicite a revisão à Nexus.",
+        "API_KEY_IP_ADDRESS_BLOCKED": "A chave Google não autoriza o IP do servidor. Solicite a revisão à Nexus.",
+    }
+    reason = None
+    try:
+        raw = error.read(262145)
+        if len(raw) <= 262144:
+            details = json.loads(raw).get("error", {}).get("details", [])
+            reason = next(
+                (
+                    d.get("reason")
+                    for d in details
+                    if isinstance(d, dict) and d.get("reason") in messages
+                ),
+                None,
+            )
+    except (OSError, ValueError, AttributeError, TypeError):
+        pass
+    if reason:
+        return PreviewError(reason, messages[reason])
+    code, message = {
+        400: (
+            "GOOGLE_INVALID_ARGUMENT",
+            "O Google rejeitou os dados da consulta de rota. Solicite a revisão à Nexus.",
+        ),
+        401: (
+            "GOOGLE_AUTHENTICATION",
+            "O Google recusou a autenticação do serviço. Solicite a revisão à Nexus.",
+        ),
+        403: (
+            "GOOGLE_PERMISSION_DENIED",
+            "O Google recusou a consulta. Solicite à Nexus a revisão da chave, permissões e faturamento.",
+        ),
+        429: (
+            "GOOGLE_QUOTA",
+            "A cota de consultas do Google foi atingida. Tente novamente mais tarde.",
+        ),
+    }.get(
+        error.code,
+        (
+            "GOOGLE_UNAVAILABLE",
+            "O serviço de rotas do Google está indisponível. Tente novamente mais tarde.",
+        ),
+    )
+    return PreviewError(code, message)
 
 
 class RoutePreview(OperationalInput):
@@ -81,11 +144,20 @@ def compute_preview(payload, key):
             "X-Goog-FieldMask": "routes.duration,routes.distanceMeters",
         },
     )
-    with build_opener(NoRedirect()).open(request, timeout=8) as response:
-        raw = response.read(262145)
-        if len(raw) > 262144:
-            raise ValueError("Invalid response size")
-        route = json.loads(raw)["routes"][0]
+    try:
+        with build_opener(NoRedirect()).open(request, timeout=8) as response:
+            raw = response.read(262145)
+            if len(raw) > 262144:
+                raise ValueError("Invalid response size")
+            routes = json.loads(raw).get("routes", [])
+            if not routes:
+                raise PreviewError(
+                    "GOOGLE_NO_ROUTE",
+                    "O Google não encontrou um percurso entre os endereços. Confira a saída, a chegada e as paradas.",
+                )
+            route = routes[0]
+    except HTTPError as error:
+        raise provider_error(error) from None
     distance, duration = route["distanceMeters"], route["duration"]
     if type(distance) is not int or not 0 <= distance <= 100000000:
         raise ValueError("Invalid distance")
@@ -176,10 +248,21 @@ async def estimate(
         distance, seconds = sum(v[0] for v in values), sum(v[1] for v in values)
         if seconds > 604800 or distance > 100000000:
             raise ValueError("Route exceeds supported range")
-    except (OSError, ValueError, KeyError, IndexError, TypeError):
+    except PreviewError as error:
+        logging.getLogger(__name__).warning("route_preview.failed code=%s", error.code)
+        raise HTTPException(503, str(error)) from None
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as error:
+        code = (
+            "GOOGLE_TIMEOUT"
+            if isinstance(error, TimeoutError)
+            else "GOOGLE_CONNECTION"
+            if isinstance(error, OSError)
+            else "GOOGLE_INVALID_RESPONSE"
+        )
+        logging.getLogger(__name__).warning("route_preview.failed code=%s", code)
         raise HTTPException(
             503,
-            "Não foi possível calcular o percurso. Confira os endereços ou informe o tempo manualmente.",
+            f"Não foi possível consultar o serviço de rotas. Tente novamente ou informe o tempo manualmente. Código: {code}.",
         ) from None
     return {
         "distance_m": distance,
