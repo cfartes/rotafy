@@ -630,7 +630,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 20. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 21. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}
@@ -717,6 +717,16 @@ O administrador consulta o menu **Histórico de trajetos**, separado do mapa ao 
 A consulta reúne as sessões do mesmo veículo e trecho, incluindo trocas do celular responsável. Mostra a quantidade de amostras, primeiro e último GPS exibidos e um mapa com **Centralizar percurso**. A linha liga posições recebidas: o percurso é aproximado e não reconstrói as ruas. Trocas de celular e intervalos superiores a dez minutos interrompem a linha. Os marcadores inicial e final informam horário e precisão ao receber foco ou passar o ponteiro.
 
 As posições são retidas por até noventa dias. Não é necessário ter salvo o roteiro planejado nem configurar outra chave de mapas. Uma sessão sem GPS mostra uma orientação, sem inventar percurso. Uma única amostra permite apenas marcar uma posição. A consulta avisa quando houver mais de duzentas viagens no período ou mais de dez mil amostras no trecho: reduza o período para localizar outras viagens; um trecho com mais amostras terá seu percurso exibido parcialmente. A tela não altera a coleta nem exige atualização do aplicativo Android.
+
+### Quilometragem estimada pelo GPS
+
+Ao selecionar uma viagem em **Histórico de trajetos**, a seção **Quilometragem estimada pelo GPS** mostra o total registrado na viagem e uma tabela por veículo. Ao escolher o veículo e trecho, o card **Trecho selecionado** mostra sua estimativa, separando ida, volta e etapas dos pacotes. O total da viagem soma os quilômetros de todos os veículos nos trechos encerrados; se houver dois ônibus no mesmo trajeto, a soma reúne ambos, não a distância de um único ônibus.
+
+O cálculo utiliza todas as posições ainda retidas, mesmo quando o mapa limita a exibição a dez mil amostras. Não liga sessões de celulares diferentes nem completa trajetos sem GPS. Trechos encerrados sem rastreamento aparecem como **Não calculável** e deixam a soma parcial. Na viagem ainda não concluída, entram apenas os trechos encerrados. **0,00 km** significa que houve um intervalo válido sem deslocamento relevante; ausência de posições ou somente uma posição não equivale a zero quilômetro.
+
+A seção informa **Percurso parcial** quando detecta problemas de cobertura ou de qualidade. A análise do trecho detalha lacunas acima de dez minutos, trocas de sessão, posições imprecisas acima de cem metros, saltos incompatíveis com até 160 km/h considerando a margem de precisão e horários conflitantes. Também sinaliza quando o início da coleta ultrapassa os noventa dias de retenção ou faltam horários para conferir a cobertura. Distâncias dos intervalos desconhecidos não são interpoladas.
+
+**Sem lacunas detectadas** descreve somente os registros disponíveis e não garante cobertura integral. A oscilação do GPS dentro da margem de precisão é desconsiderada para reduzir quilômetros artificiais com o veículo parado. Curvas entre amostras podem reduzir o total calculado. O mapa continua mostrando amostras brutas; a quilometragem aplica esses filtros. Utilize como estimativa operacional, sem substituir o hodômetro do veículo.
 
 Quando a Nexus habilita a previsão de chegada, o aviso de proximidade pode incluir o tempo aproximado até o embarque, considerando trânsito e a sequência de pontos do motorista. Há uma margem configurável para atendimento nas paradas anteriores. O sistema consulta somente ao preparar o aviso; não envia atualizações repetidas da estimativa. GPS antigo, falha de consulta, fila sem resposta, limite atingido ou rota insuficientemente definida mantêm o aviso sem informar minutos.
 

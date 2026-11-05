@@ -5,10 +5,17 @@ from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import text
 
 from app.billing.calendar import utc_now
 from app.identity import Auth, admin
 from app.operations import rows
+from app.tracking_distance import (
+    GAP_SECONDS,
+    MAX_ACCURACY_M,
+    MAX_SPEED_KMH,
+    DistanceCounter,
+)
 
 router = APIRouter(prefix="/api/v1/tracking/history", tags=["Histórico de trajetos"])
 JOINS = """FROM tracking_sessions s
@@ -66,7 +73,7 @@ async def journeys_for(actor, trip_id, allocation_id=None, leg_id=None):
     )
     return await rows(
         actor.db,
-        """SELECT s.allocation_id,s.leg_id,v.name AS vehicle_name,
+        """SELECT s.allocation_id,s.leg_id,v.id AS vehicle_id,v.name AS vehicle_name,
       v.plate,l.origin,l.destination,l.position,t.name AS trip_name,t.status AS trip_status,
       min(s.started_at) AS tracking_started_at,max(s.ended_at) AS tracking_ended_at,
       count(DISTINCT s.id) AS session_count,count(p.id) AS position_count,
@@ -95,6 +102,96 @@ async def journeys(trip_id: UUID, actor: Auth):
             404, "Nenhum trecho encerrado com rastreamento registrado nesta viagem."
         )
     return result
+
+
+@router.get("/{trip_id}/distance")
+async def distance(trip_id: UUID, actor: Auth):
+    admin(actor)
+    recorded = await journeys_for(actor, trip_id)
+    if not recorded:
+        raise HTTPException(
+            404, "Nenhum trecho encerrado com rastreamento nesta viagem."
+        )
+    cutoff = utc_now() - timedelta(days=90)
+    expected = await rows(
+        actor.db,
+        """SELECT tv.id AS allocation_id,l.id AS leg_id,v.id AS vehicle_id,
+          v.name AS vehicle_name,v.plate,l.origin,l.destination,l.position,t.status AS trip_status,
+          nullif(tv.journey_states->l.id::text->>'started_at','')::timestamptz AS journey_started_at,
+          nullif(tv.journey_states->l.id::text->>'arrived_at','')::timestamptz AS journey_ended_at
+          FROM trips t JOIN trip_vehicles tv ON tv.trip_id=t.id AND tv.company_id=t.company_id
+          JOIN vehicles v ON v.id=tv.vehicle_id AND v.company_id=t.company_id
+          JOIN trip_legs l ON l.trip_id=t.id AND l.company_id=t.company_id
+          WHERE t.id=:trip AND t.company_id=:company
+          AND (tv.leg_positions='[]'::jsonb OR tv.leg_positions @> to_jsonb(l.position))
+          AND (t.status IN ('completed','cancelled') OR tv.journey_states->l.id::text->>'status'='completed')""",
+        trip=trip_id,
+        company=actor.company_id,
+    )
+    entries = {(r["allocation_id"], r["leg_id"]): r for r in expected}
+    for r in recorded:
+        key = (r["allocation_id"], r["leg_id"])
+        entries[key] = entries.get(key, {}) | r
+    counters = {key: DistanceCounter() for key in entries}
+    # Stream all retained samples; the map's 10,000-point cap must not cap kilometres.
+    async with actor.db.stream(
+        text(
+            """SELECT s.allocation_id,s.leg_id,p.id,p.session_id,p.latitude,p.longitude,
+          p.accuracy_m,p.captured_at """
+            + JOINS
+            + """
+          AND s.trip_id=:trip AND p.id IS NOT NULL
+          ORDER BY s.allocation_id,s.leg_id,p.captured_at,p.received_at,p.id"""
+        ),
+        {"trip": trip_id, "company": actor.company_id, "cutoff": cutoff},
+    ) as result:
+        async for point in result.mappings():
+            counters[(point["allocation_id"], point["leg_id"])].add(point)
+    journeys = []
+    for key, entry in entries.items():
+        start = entry.get("journey_started_at") or entry.get("tracking_started_at")
+        end = entry.get("journey_ended_at") or entry.get("tracking_ended_at")
+        summary = counters[key].summary(start, end, cutoff)
+        summary["timing_unknown"] = (
+            entry.get("journey_started_at") is None
+            or entry.get("journey_ended_at") is None
+        )
+        summary["partial"] |= summary["timing_unknown"]
+        journeys.append(
+            {
+                "allocation_id": entry["allocation_id"],
+                "leg_id": entry["leg_id"],
+                "vehicle_id": entry["vehicle_id"],
+                "vehicle_name": entry["vehicle_name"],
+                "plate": entry["plate"],
+                "position": entry["position"],
+                "origin": entry["origin"],
+                "destination": entry["destination"],
+                "has_tracking": bool(entry.get("session_count")),
+                **summary,
+            }
+        )
+    journeys.sort(
+        key=lambda r: (
+            r["vehicle_name"],
+            r["plate"],
+            r["position"],
+            str(r["allocation_id"]),
+        )
+    )
+    values = [r["distance_m"] for r in journeys if r["distance_m"] is not None]
+    return {
+        "journeys": journeys,
+        "distance_m": sum(values) if values else None,
+        "partial": any(r["partial"] for r in journeys)
+        or recorded[0]["trip_status"] != "completed",
+        "trip_status": recorded[0]["trip_status"],
+        "untracked_journeys": sum(not r["has_tracking"] for r in journeys),
+        "retention_days": 90,
+        "gap_minutes": GAP_SECONDS // 60,
+        "max_accuracy_m": MAX_ACCURACY_M,
+        "max_speed_kmh": MAX_SPEED_KMH,
+    }
 
 
 @router.get("/{trip_id}/{allocation_id}/{leg_id}")
