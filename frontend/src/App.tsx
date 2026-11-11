@@ -25,6 +25,7 @@ import { Collections } from "./Collections";
 import { PaymentReturn } from "./PaymentReturn";
 import { PasswordInput } from "./components/PasswordInput";
 import { useEffect, useState, lazy, Suspense, type FormEvent } from "react";
+import { DemoLeads } from "./DemoLeads";
 import { NexusTeam } from "./NexusTeam";
 import { Billing } from "./billing/Billing";
 import { money, type Plan } from "./billing/types";
@@ -1057,6 +1058,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     | "modules"
     | "collections"
     | "nexus-team"
+    | "demo-leads"
     | "whatsapp"
     | "whatsapp-chat"
     | "nps"
@@ -1184,6 +1186,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
   const title =
+    page === "demo-leads" ? "Leads da demonstração" :
     page === "company-settings" ? "Configurações da empresa" :
     page === "nps" ? "NPS e satisfação" :
     page === "whatsapp-chat" ? "Conversas WhatsApp" : page === "whatsapp-connections" ? "Conexões WhatsApp" : page === "modules" ? "Módulos por empresa" : page === "route-history" ? "Histórico de trajetos" : page === "fleet-map" ? "Mapa da frota" : page === "tracking" ? "Rastreamento" : page === "contract" ? "Meu contrato" : page === "whatsapp"
@@ -1364,6 +1367,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             ...(fullNexus
               ? [{ id: "integrations", label: "Configurações", icon: KeyRound }]
               : []),
+            ...(fullNexus ? [{ id: "demo-leads", label: "Leads da demonstração", icon: Users }] : []),
             ...(fullNexus ? [{ id: "modules", label: "Módulos por empresa", icon: Building2 }] : []),
             ...(fullNexus
               ? [{ id: "nexus-team", label: "Equipe Nexus", icon: Users }]
@@ -1531,6 +1535,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           {page === "collections" && (fullNexus || isAdmin) && (
             <Collections nexus={isNexus} />
           )}
+          {page === "demo-leads" && fullNexus && <DemoLeads />}
           {page === "nexus-team" && fullNexus && (
             <NexusTeam currentUserId={user.id} />
           )}
