@@ -312,8 +312,13 @@ async def main():
                     await process_nps(engine, company)
                 if stop.is_set():
                     break
+                from app.demo_leads import process_demo
                 from app.session_discovery import process_discovery
 
+                await process_demo(
+                    engine,
+                    os.environ.get("PUBLIC_BASE_URL", "https://rotafy.nexusdataanalytics.tech"),
+                )
                 await process_discovery(engine)
                 if stop.is_set():
                     break

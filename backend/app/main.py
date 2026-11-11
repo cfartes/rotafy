@@ -25,6 +25,7 @@ from app.config import Settings
 from app.contracts import pending as contract_pending
 from app.contracts import router as contracts_router
 from app.crew_schedule import router as crew_schedule_router
+from app.demo_leads import router as demo_leads_router
 from app.documentation import router as documentation_router
 from app.edits import router as edits_router
 from app.email_auth import redeem_platform
@@ -864,6 +865,7 @@ def create_app(settings: Settings | None = None):
     application.include_router(public_sales_router)
     application.include_router(boarding_router)
     application.include_router(crew_schedule_router)
+    application.include_router(demo_leads_router)
     application.include_router(mobile_releases_router)
     application.include_router(documentation_router)
     application.include_router(privacy_router)
