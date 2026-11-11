@@ -372,3 +372,70 @@ def test_concurrent_duplicate_phone_creates_one_demo(client, seeded, owner, demo
     assert sorted(codes) == [202, 429]
     with owner.connect() as db:
         assert db.scalar(text("SELECT count(*) FROM demo_leads")) == 1
+
+
+def test_captcha_is_persisted_and_preserved_without_exposing_secret(
+    client, seeded, owner, demo
+):
+    login(client, email="nexus@example.com", nexus=True)
+    response = client.patch(
+        "/api/v1/nexus/demo-settings",
+        json={
+            "expected_version": 0,
+            "enabled": True,
+            "daily_limit": 100,
+            "captcha_secret": "updated-captcha-fixture",
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["captcha_configured"] is True
+    assert "updated-captcha-fixture" not in response.text
+    with owner.connect() as db:
+        assert (
+            decrypt(
+                db.scalar(text("SELECT captcha_secret FROM demo_settings WHERE id"))
+            )
+            == "updated-captcha-fixture"
+        )
+    response = client.patch(
+        "/api/v1/nexus/demo-settings",
+        json={"expected_version": 1, "enabled": True, "daily_limit": 100},
+    )
+    assert response.status_code == 200 and response.json()["captcha_configured"] is True
+    with owner.connect() as db:
+        assert (
+            decrypt(
+                db.scalar(text("SELECT captcha_secret FROM demo_settings WHERE id"))
+            )
+            == "updated-captcha-fixture"
+        )
+
+
+def test_missing_sender_returns_specific_activation_error_and_can_save_disabled(
+    client, seeded, owner, demo
+):
+    login(client, email="nexus@example.com", nexus=True)
+    with owner.begin() as db:
+        db.execute(text("UPDATE billing_settings SET nexus_session_id=NULL WHERE id"))
+    response = client.patch(
+        "/api/v1/nexus/demo-settings",
+        json={
+            "expected_version": 0,
+            "enabled": True,
+            "daily_limit": 100,
+            "captcha_secret": "updated-captcha-fixture",
+        },
+    )
+    assert (
+        response.status_code == 422 and "WhatsApp da Nexus" in response.json()["detail"]
+    )
+    response = client.patch(
+        "/api/v1/nexus/demo-settings",
+        json={
+            "expected_version": 0,
+            "enabled": False,
+            "daily_limit": 100,
+            "captcha_secret": "updated-captcha-fixture",
+        },
+    )
+    assert response.status_code == 200 and response.json()["captcha_configured"]

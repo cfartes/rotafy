@@ -50,6 +50,7 @@ export function DemoLeads() {
     [stage, setStage] = useState(""),
     [marketing, setMarketing] = useState("");
   const [error, setError] = useState(""),
+    [saved, setSaved] = useState(false),
     [secret, setSecret] = useState(""),
     [siteKey, setSiteKey] = useState(""),
     [busy, setBusy] = useState(false);
@@ -68,20 +69,23 @@ export function DemoLeads() {
     e.preventDefault();
     if (!config.data) return;
     const form = new FormData(e.currentTarget);
+    const captcha = String(form.get("demo_captcha_secret") || "").trim();
     setBusy(true);
     setError("");
+    setSaved(false);
     try {
-      await api("/nexus/demo-settings", {
+      const updated = await api<Config>("/nexus/demo-settings", {
         method: "PATCH",
         body: JSON.stringify({
           expected_version: config.data.version,
           enabled: form.get("enabled") === "on",
           daily_limit: Number(form.get("limit")),
-          ...(secret ? { captcha_secret: secret } : {}),
+          ...(captcha ? { captcha_secret: captcha } : {}),
         }),
       });
+      cache.setQueryData(["demo-settings"], updated);
       setSecret("");
-      await cache.invalidateQueries({ queryKey: ["demo-settings"] });
+      setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao salvar.");
     } finally {
@@ -151,6 +155,13 @@ export function DemoLeads() {
         )}
         <details>
           <summary>Configurar demonstração do site</summary>
+          {error && <Alert>{error}</Alert>}
+          {saved && (
+            <p role="status">
+              Configuração salva com sucesso. Por segurança, a chave não é
+              exibida novamente.
+            </p>
+          )}
           {config.data && (
             <form
               onSubmit={save}
@@ -177,8 +188,13 @@ export function DemoLeads() {
               </Field>
               <Field label="Chave secreta do CAPTCHA Turnstile">
                 <PasswordInput
+                  name="demo_captcha_secret"
+                  autoComplete="new-password"
                   value={secret}
-                  onChange={(e) => setSecret(e.target.value)}
+                  onChange={(e) => {
+                    setSecret(e.target.value);
+                    setSaved(false);
+                  }}
                   placeholder={
                     config.data.captcha_configured
                       ? "Já configurada; deixe vazio para manter"
@@ -186,6 +202,23 @@ export function DemoLeads() {
                   }
                 />
               </Field>
+              <p role="status">
+                CAPTCHA:{" "}
+                {config.data.captcha_configured
+                  ? "chave cadastrada"
+                  : "chave ainda não cadastrada"}
+                . Credencial do site:{" "}
+                {config.data.key_configured
+                  ? "cadastrada"
+                  : "ainda não cadastrada"}
+                .
+              </p>
+              <p>
+                Deixe a chave vazia para manter a que já está cadastrada. Se a
+                ativação for recusada por falta de configuração, desmarque
+                “Habilitar demonstração pública”, salve os dados e conclua a
+                configuração antes de ativar.
+              </p>
               <p>
                 O site deve usar o CAPTCHA com ação demo-ticket. Os envios usam
                 o WhatsApp da Nexus configurado no financeiro e o intervalo da
@@ -193,8 +226,12 @@ export function DemoLeads() {
                 inclua no JavaScript público.
               </p>
               <div className="modal-actions">
-                <button className="button primary" disabled={busy}>
-                  Salvar configuração
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={busy}
+                >
+                  {busy ? "Salvando…" : "Salvar configuração"}
                 </button>
                 <button
                   type="button"
