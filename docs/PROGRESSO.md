@@ -151,7 +151,7 @@ Atualizado em 2026-10-06.
 - Compose de produção independente: HTTPS/Caddy, cookies Secure, banco/API sem portas publicadas, confiança no IP do proxy, tags de entrega, imagens de infraestrutura fixadas e rotação de logs.
 - Serviço de backup custom PostgreSQL/restic para S3 externo, configuração separada e agenda systemd preparadas. O envio externo não foi executado: destino e credenciais ainda faltam.
 - Ensaio de backup/restauração com snapshot consistente, container novo sem rede/portas, banco criado de template0, conferência das contagens/revisão/papéis/RLS e histórico imutável. Arquivo em RESTORE_DRILL_RESULT.json; banco de origem não alterado.
-- Carga local: duas empresas, 20 veículos, 800 passageiros e 100 consultas com dez leitores simultâneos, sem erros ou mistura de dados. Latências em LOAD_TEST_RESULT.json; não representam SLA da VPS nem carga de escrita.
+- Carga local: duas empresas, 20 veículos, 800 passageiros e cinco consultas por usuário com 40/50 usuários simultâneos, sem erros ou mistura de dados. Latências em LOAD_TEST_RESULT.json; não representam SLA da VPS nem carga de escrita.
 - Instruções em [RELATORIOS.md](RELATORIOS.md), [IMPLANTACAO_E_OPERACAO.md](IMPLANTACAO_E_OPERACAO.md) e [HOMOLOGACAO.md](HOMOLOGACAO.md).
 
 ### Validação da etapa 8

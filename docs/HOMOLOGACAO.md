@@ -12,7 +12,7 @@ Atualizado em 2026-10-06. Implementação e testes locais não significam implan
 | Edição de viagens/reservas e realocação com histórico | Automatizado local | Testes backend e jornadas Chromium ampliadas |
 | Convites e recuperação por Resend | Transporte simulado local; envio real pendente | Configurar chave/remetente verificado; conferir recebimento, spam, expiração, uso único e sessões revogadas |
 | Restauração de snapshot consistente | Ensaio local aprovado | RESTORE_DRILL_RESULT.json; container isolado |
-| Carga de duas empresas e 20 veículos | Medida local | LOAD_TEST_RESULT.json; repetir na VPS |
+| Carga de duas empresas e 20 veículos | Medida local, 40/50 usuários | LOAD_TEST_RESULT.json; repetir em homologação antes da VPS |
 | Compose, Caddy e serviço de backup | Preparados/validados localmente | Configuração, build e validação sem publicação |
 | Instalação/câmera/offline Android real | Pendente | HTTPS; executar roteiro abaixo |
 | Instalação/câmera/offline iPhone real | Pendente | Safari/HTTPS; executar roteiro abaixo |

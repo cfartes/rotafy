@@ -1,14 +1,14 @@
 {
-  "environment": "Windows TestClient/FastAPI + local PostgreSQL Docker; not VPS",
+  "environment": "Windows TestClient/FastAPI + local PostgreSQL rotafy_test; not VPS",
   "companies": 2,
   "vehicles": 20,
   "unique_passengers": 800,
-  "concurrent_readers": 10,
-  "requests": 100,
+  "simulated_users": 50,
+  "requests": 250,
   "errors": 0,
-  "duration_seconds": 1.28,
-  "requests_per_second": 78.21,
-  "p50_ms": 102.45,
-  "p95_ms": 266.23,
-  "max_ms": 280.58
+  "duration_seconds": 5.86,
+  "requests_per_second": 42.67,
+  "p50_ms": 1111.15,
+  "p95_ms": 1750.25,
+  "max_ms": 2875.29
 }

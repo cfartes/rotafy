@@ -1,8 +1,10 @@
 """Carga de leitura local representativa; não estabelece SLA da VPS."""
 
 import json
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from math import ceil
 from pathlib import Path
 from uuid import uuid4
 
@@ -135,22 +137,27 @@ def test_two_companies_twenty_vehicles_eight_hundred_passengers(client, seeded, 
         )
         return elapsed
 
+    simulated_users = int(os.environ.get("LOAD_TEST_USERS", "50"))
+    if simulated_users not in (40, 50):
+        raise ValueError("LOAD_TEST_USERS deve ser 40 ou 50.")
+    requests = simulated_users * 5
+
     started = time.perf_counter()
-    with ThreadPoolExecutor(max_workers=10) as pool:
-        samples = sorted(pool.map(read, range(100)))
+    with ThreadPoolExecutor(max_workers=simulated_users) as pool:
+        samples = sorted(pool.map(read, range(requests)))
     seconds = time.perf_counter() - started
     report = {
-        "environment": "Windows TestClient/FastAPI + local PostgreSQL Docker; not VPS",
+        "environment": "Windows TestClient/FastAPI + local PostgreSQL rotafy_test; not VPS",
         "companies": 2,
         "vehicles": 20,
         "unique_passengers": 800,
-        "concurrent_readers": 10,
-        "requests": 100,
+        "simulated_users": simulated_users,
+        "requests": requests,
         "errors": 0,
         "duration_seconds": round(seconds, 2),
-        "requests_per_second": round(100 / seconds, 2),
-        "p50_ms": round(samples[49], 2),
-        "p95_ms": round(samples[94], 2),
+        "requests_per_second": round(requests / seconds, 2),
+        "p50_ms": round(samples[len(samples) // 2], 2),
+        "p95_ms": round(samples[ceil(len(samples) * 0.95) - 1], 2),
         "max_ms": round(samples[-1], 2),
     }
     (Path(__file__).resolve().parents[2] / "docs" / "LOAD_TEST_RESULT.json").write_text(

@@ -62,6 +62,16 @@ Set-Location ..
 
 Os testes criam o banco dedicado `rotafy_test` no container local e limpam apenas esse banco. Validam políticas reais do PostgreSQL, não um substituto em memória. A conexão de proprietário é usada somente na preparação do banco de teste e nas migrações.
 
+Para simular 40 ou 50 usuários consultando relatórios ao mesmo tempo, com cinco requisições por usuário:
+
+```powershell
+$env:LOAD_TEST_USERS = "50" # ou "40"
+.\.venv\Scripts\python.exe -m pytest backend/tests/test_load_scenario.py -q --tb=short
+Remove-Item Env:LOAD_TEST_USERS
+```
+
+O cenário usa somente o banco local dedicado `rotafy_test`, grava as métricas em `docs/LOAD_TEST_RESULT.json` e não testa escrita, GPS ou integrações externas. Não aponte os testes para produção; resultados locais não representam capacidade ou SLA da VPS.
+
 ```powershell
 Set-Location frontend
 npm.cmd ci
