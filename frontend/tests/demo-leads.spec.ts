@@ -124,3 +124,149 @@ for (const role of ["nexus_staff", "admin"])
     ).toHaveCount(0);
     expect(forbidden).toEqual([]);
   });
+
+test("salva chave com confirmação, persiste indicador ao reabrir e mantém ao salvar vazio", async ({
+  page,
+}) => {
+  let config = {
+    enabled: false,
+    daily_limit: 100,
+    version: 0,
+    key_configured: true,
+    captcha_configured: false,
+  };
+  const bodies: Record<string, unknown>[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let data: unknown = [];
+    if (path === "/auth/me")
+      data = {
+        id: "nexus",
+        full_name: "Administrador",
+        role: "nexus",
+        is_active: true,
+        company_id: null,
+      };
+    if (path === "/nexus/demo-leads") data = { items: [], total: 0 };
+    if (path === "/nexus/demo-settings") {
+      if (route.request().method() === "PATCH") {
+        const body = route.request().postDataJSON();
+        bodies.push(body);
+        config = {
+          ...config,
+          enabled: body.enabled,
+          daily_limit: body.daily_limit,
+          captcha_configured:
+            config.captcha_configured || !!body.captcha_secret,
+          version: config.version + 1,
+        };
+      }
+      data = config;
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto("/nexus");
+  await page
+    .getByRole("button", { name: "Leads da demonstração", exact: true })
+    .click();
+  await page
+    .getByText("Configurar demonstração do site", { exact: true })
+    .click();
+  const key = page.locator('input[name="demo_captcha_secret"]');
+  // Password managers may fill the DOM without firing React onChange.
+  await key.evaluate((input: HTMLInputElement) => {
+    input.value = "turnstile-fixture-secret";
+  });
+  await page
+    .getByRole("button", { name: "Salvar configuração", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Configuração salva com sucesso" }),
+  ).toBeVisible();
+  await expect(key).toHaveValue("");
+  await expect(
+    page.getByRole("status").filter({ hasText: "CAPTCHA: chave cadastrada" }),
+  ).toBeVisible();
+  expect(bodies[0].captcha_secret).toBe("turnstile-fixture-secret");
+  await page
+    .getByRole("button", { name: "Salvar configuração", exact: true })
+    .click();
+  await expect.poll(() => bodies.length).toBe(2);
+  expect(bodies[1]).not.toHaveProperty("captcha_secret");
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Leads da demonstração", exact: true })
+    .click();
+  await page
+    .getByText("Configurar demonstração do site", { exact: true })
+    .click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "CAPTCHA: chave cadastrada" }),
+  ).toBeVisible();
+  await expect(page.locator('input[name="demo_captcha_secret"]')).toHaveValue(
+    "",
+  );
+});
+
+test("rejeição ao ativar é visível no formulário e não apaga a chave digitada", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace("/api/v1", "");
+    let data: unknown = [];
+    if (path === "/auth/me")
+      data = {
+        id: "nexus",
+        full_name: "Administrador",
+        role: "nexus",
+        is_active: true,
+        company_id: null,
+      };
+    if (path === "/nexus/demo-leads") data = { items: [], total: 0 };
+    if (path === "/nexus/demo-settings") {
+      if (route.request().method() === "PATCH")
+        return route.fulfill({
+          status: 422,
+          json: { detail: "Configure o WhatsApp da Nexus antes de ativar." },
+        });
+      data = {
+        enabled: false,
+        daily_limit: 100,
+        version: 0,
+        key_configured: true,
+        captcha_configured: false,
+      };
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto("/nexus");
+  await page
+    .getByRole("button", { name: "Leads da demonstração", exact: true })
+    .click();
+  await page
+    .getByText("Configurar demonstração do site", { exact: true })
+    .click();
+  await page
+    .locator('input[name="demo_captcha_secret"]')
+    .fill("turnstile-fixture-secret");
+  await page.getByLabel("Habilitar demonstração pública").check();
+  await page
+    .getByRole("button", { name: "Salvar configuração", exact: true })
+    .click();
+  await expect(
+    page
+      .locator("details")
+      .filter({
+        has: page.getByText("Configurar demonstração do site", { exact: true }),
+      })
+      .getByRole("alert"),
+  ).toContainText("WhatsApp da Nexus");
+  await expect(page.locator('input[name="demo_captcha_secret"]')).toHaveValue(
+    "turnstile-fixture-secret",
+  );
+  await expect(
+    page.getByText("Configuração salva com sucesso", { exact: false }),
+  ).toHaveCount(0);
+});

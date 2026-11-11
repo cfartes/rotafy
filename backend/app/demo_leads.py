@@ -195,16 +195,21 @@ async def save_settings(data: DemoConfig, actor: Auth):
         if data.captcha_secret and data.captcha_secret.get_secret_value().strip()
         else row["captcha_secret"]
     )
-    if data.enabled and (
-        not secret
-        or not row["site_key_hash"]
-        or not await actor.db.scalar(
-            text("SELECT nexus_session_id FROM billing_settings WHERE id")
-        )
+    missing = []
+    if not secret:
+        missing.append("chave secreta do CAPTCHA")
+    if not row["site_key_hash"]:
+        missing.append("credencial do servidor do site")
+    if not await actor.db.scalar(
+        text("SELECT nexus_session_id FROM billing_settings WHERE id")
     ):
+        missing.append("WhatsApp da Nexus em Financeiro e cobranças")
+    if data.enabled and missing:
         raise HTTPException(
             422,
-            "Configure a credencial do site, o CAPTCHA e o WhatsApp da Nexus antes de ativar.",
+            "Não foi possível ativar nem salvar as alterações. Configure: "
+            + "; ".join(missing)
+            + ". Para salvar sem ativar, desmarque Habilitar demonstração pública.",
         )
     await actor.db.execute(
         text(

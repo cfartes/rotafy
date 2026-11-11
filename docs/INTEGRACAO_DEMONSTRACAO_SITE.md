@@ -102,3 +102,7 @@ Credenciais ficam fora das respostas de listagem. O QR usa token aleatório de 2
 ## Validação antes de publicar o formulário
 
 Testar em homologação: consentimento opcional desmarcado, nome/empresa na imagem/legenda, CAPTCHA e hostname, bloqueio de telefone repetido, navegação do QR e expiração, Superadmin restrito, configuração desativada, falha/retorno incerto do provedor e indicação correta de que 202 não confirma entrega. A mudança do app não instala o formulário no domínio externo. Não usar números de pessoas sem solicitação.
+
+## Conferir o salvamento da chave
+
+Após salvar, a tela confirma **Configuração salva com sucesso** e mostra **CAPTCHA: chave cadastrada**. O campo é limpo por segurança; não exibe a chave já salva. Deixá-lo vazio preserva a chave existente. A indicação confirma armazenamento, não a validação de uma solicitação real no provedor. Se faltar WhatsApp da Nexus, credencial do site ou CAPTCHA para ativar, a mensagem identifica o item e nenhuma alteração é salva. É possível desmarcar a ativação e salvar a chave antes de concluir os demais requisitos. O formulário lê o valor do campo no envio, inclusive preenchimento automático, sem depender somente do evento de digitação.
