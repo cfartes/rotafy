@@ -84,3 +84,8 @@ APK 1.9.1 (15): campos e cartões padronizados, botões com área de toque míni
 - Motorista consulta os trechos do dia em Brasília; guia mantém consulta antecipada. Ambos iniciam somente nos trinta minutos anteriores ao horário. O backend valida a regra e mantém viagens em andamento após a meia-noite.
 - Atualização da rota na saída e leitura da mesma sequência otimizada usada pelo backend. Em falha de atualização, a saída é preservada e a tela informa a necessidade de sincronizar.
 - [Operação, mapa administrativo e previsão de chegada](../docs/RASTREAMENTO_E_PREVISAO.md).
+
+
+## APK 1.12.0 (compilação 20)
+
+Padrão visual aplicado à agenda, viagens e manifesto: resumo de passageiros, localização separada, QR fixo no rodapé e preparação offline recolhível. Regras e serviço de GPS preservados. Consulte [escopo e validação](../docs/PADRAO_VISUAL_APK.md).

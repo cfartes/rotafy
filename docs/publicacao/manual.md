@@ -393,6 +393,9 @@ O hotel/local personalizado tem prioridade. Na ausência dele, usa-se a parada e
 
 ## 16. App Android: acesso e agenda {#android}
 
+No APK **1.12.0 (20)**, a tela da viagem apresenta o resumo do trecho e as contagens de passageiros, separando as informações de localização. **Ler QR do passageiro** permanece no rodapé durante a rolagem. Consulte **Preparação e uso offline** para ver a validade; uma preparação vencida continua sinalizada. O estado da fila informa quando não há registros pendentes. Fonte ampliada e nomes longos são acomodados sem reduzir o texto. Fechar a viagem continua exigindo desembarque, sincronização e confirmação.
+
+
 O app operacional é destinado a **motoristas e guias**, com os mesmos recursos para ambos. A empresa distribui o APK configurado para sua operação.
 
 1. Instale ou atualize o APK fornecido pela empresa. Prefira atualizar sobre a instalação existente, sem desinstalar, para preservar registros locais.

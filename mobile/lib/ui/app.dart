@@ -9,6 +9,82 @@ import '../core/controller.dart';
 import 'manifest.dart';
 import 'agenda.dart';
 import 'update_notice.dart';
+import 'operation_panel.dart';
+
+ThemeData operationTheme() => ThemeData(
+  colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff0b7067)),
+  textTheme: const TextTheme(
+    headlineSmall: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      color: Color(0xff16344d),
+    ),
+    titleLarge: TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w700,
+      color: Color(0xff16344d),
+    ),
+    titleMedium: TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w600,
+      color: Color(0xff16344d),
+    ),
+    bodyMedium: TextStyle(fontSize: 15, height: 1.5, color: Color(0xff36546b)),
+  ),
+  listTileTheme: const ListTileThemeData(
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+  ),
+  useMaterial3: true,
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Colors.white,
+    foregroundColor: Color(0xff0a2540),
+    surfaceTintColor: Colors.transparent,
+    centerTitle: false,
+  ),
+  cardTheme: CardThemeData(
+    color: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: const BorderSide(color: Color(0xffd8e2e9)),
+    ),
+  ),
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      minimumSize: const Size(48, 48),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size(48, 48),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+  ),
+  snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
+  inputDecorationTheme: const InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+      borderSide: BorderSide(color: Color(0xffa6bac8)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(12)),
+      borderSide: BorderSide(color: Color(0xff0f766e), width: 2),
+    ),
+  ),
+  scaffoldBackgroundColor: const Color(0xfff4f7fa),
+);
 
 class RotafyApp extends StatelessWidget {
   final OperationController controller;
@@ -21,60 +97,7 @@ class RotafyApp extends StatelessWidget {
       controller: controller,
       child: child ?? const SizedBox.shrink(),
     ),
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff0f766e)),
-      useMaterial3: true,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Color(0xff0a2540),
-        surfaceTintColor: Colors.transparent,
-        centerTitle: false,
-      ),
-      cardTheme: CardThemeData(
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xffd8e2e9)),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      snackBarTheme: const SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-      ),
-      inputDecorationTheme: const InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          borderSide: BorderSide(color: Color(0xffa6bac8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          borderSide: BorderSide(color: Color(0xff0f766e), width: 2),
-        ),
-      ),
-      scaffoldBackgroundColor: const Color(0xfff4f7fa),
-    ),
+    theme: operationTheme(),
     home: AnimatedBuilder(
       animation: controller,
       builder: (context, _) => controller.user == null
@@ -298,7 +321,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     timer = Timer.periodic(const Duration(seconds: 15), (_) {
       final c = widget.controller;
-      if (foreground && c.user?['role'] == 'driver' && timer!.tick % 4 == 0 && !c.busy && !loading) {
+      if (foreground &&
+          c.user?['role'] == 'driver' &&
+          timer!.tick % 4 == 0 &&
+          !c.busy &&
+          !loading) {
         unawaited(loadTrips());
       }
       if (foreground &&
@@ -435,26 +462,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   child: Text(c.error!),
                 ),
               ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      '${c.records.length} registros aguardando envio ou revisão',
-                    ),
-                    FilledButton.icon(
-                      onPressed: c.busy ? null : c.synchronize,
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Sincronizar agora'),
-                    ),
-                    const Text(
-                      'Os registros só ficam confirmados após resposta do servidor. A sincronização automática funciona enquanto o app está aberto.',
-                    ),
-                  ],
+            const SizedBox(height: 16),
+            OperationPanel(
+              title: c.records.isEmpty
+                  ? 'Sem registros pendentes'
+                  : '${c.records.length} registros aguardando envio ou revisão',
+              icon: c.records.isEmpty
+                  ? Icons.check_circle_outline
+                  : Icons.sync_problem_outlined,
+              children: [
+                const Text(
+                  'Os registros só ficam confirmados após resposta do servidor. A sincronização automática funciona enquanto o app está aberto.',
                 ),
-              ),
+                OutlinedButton.icon(
+                  onPressed: c.busy ? null : c.synchronize,
+                  icon: const Icon(Icons.sync),
+                  label: const Text('Sincronizar agora'),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(
@@ -510,7 +535,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             if (loading) const LinearProgressIndicator(),
             if (error != null) Text(error!),
             ...trips
-                .where((trip) => !c.closedTrips.contains(trip['id']) && c.canSeeTrip(Json.from(trip)))
+                .where(
+                  (trip) =>
+                      !c.closedTrips.contains(trip['id']) &&
+                      c.canSeeTrip(Json.from(trip)),
+                )
                 .map((trip) => TripCard(controller: c, trip: trip)),
           ],
         ),
@@ -579,39 +608,47 @@ class _TripCardState extends State<TripCard> {
                       ),
                     )
                     .map(
-                      (leg) => ListTile(
-                        title: Text(
-                          '${v['name']} · ${detail!['mode'] == 'multi_destination'
-                              ? 'Deslocamento ${leg['position']}'
-                              : leg['position'] == 1
-                              ? 'Ida'
-                              : 'Volta'}',
-                        ),
-                        subtitle: Text(
-                          '${leg['origin']} → ${leg['destination']}',
-                        ),
-                        trailing: FilledButton(
-                          onPressed:
-                              widget.controller.busy ||
-                                  !widget.controller.moduleEnabled('boarding')
-                              ? null
-                              : () async {
-                                  if (await widget.controller.prepare(
-                                        detail!,
-                                        Json.from(v),
-                                        Json.from(leg),
-                                      ) &&
-                                      context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Trecho preparado para uso offline.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                          child: const Text('Preparar'),
+                      (leg) => Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: 10,
+                          children: [
+                            Text(
+                              '${v['name']} · ${detail!['mode'] == 'multi_destination'
+                                  ? 'Deslocamento ${leg['position']}'
+                                  : leg['position'] == 1
+                                  ? 'Ida'
+                                  : 'Volta'}',
+                            ),
+                            Text('${leg['origin']} → ${leg['destination']}'),
+                            FilledButton(
+                              onPressed:
+                                  widget.controller.busy ||
+                                      !widget.controller.moduleEnabled(
+                                        'boarding',
+                                      )
+                                  ? null
+                                  : () async {
+                                      if (await widget.controller.prepare(
+                                            detail!,
+                                            Json.from(v),
+                                            Json.from(leg),
+                                          ) &&
+                                          context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Trecho preparado para uso offline.',
+                                                ),
+                                              ),
+                                            );
+                                      }
+                                    },
+                              child: const Text('Preparar'),
+                            ),
+                          ],
                         ),
                       ),
                     ),
