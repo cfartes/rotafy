@@ -1780,7 +1780,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   </button>
                 </div>
               ) : (
-                <div className="table-scroll">
+                <div>
+                  <p className="table-scroll-hint">Deslize a tabela para ver todas as colunas.</p>
+                  <div className="table-scroll" role="region" aria-label={isNexus ? "Lista de empresas" : "Lista da equipe"} tabIndex={0}>
                   <PaginatedTable>
                     <thead>
                       <tr>
@@ -1948,6 +1950,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                         Nenhum resultado para esta busca.
                       </div>
                     )}
+                  </div>
                 </div>
               )}
             </section>

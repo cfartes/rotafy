@@ -394,7 +394,9 @@ export function Operations({
         {listLoading ? (
           <p className="empty-state">Carregando…</p>
         ) : (
-          <div className="table-scroll">
+          <div>
+            <p className="table-scroll-hint">Deslize a tabela para ver todas as colunas.</p>
+            <div className="table-scroll" role="region" aria-label={tab === "vehicles" ? "Lista de veículos" : tab === "packages" ? "Lista de pacotes" : "Lista de viagens"} tabIndex={0}>
             <PaginatedTable className={`operations-table-${tab}`}>
               <thead>
                 <tr>
@@ -537,6 +539,7 @@ export function Operations({
                 : packages.data?.length) && (
               <p className="empty-state">Nenhum cadastro disponível.</p>
             )}
+            </div>
           </div>
         )}
       </section>
