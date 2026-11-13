@@ -66,6 +66,7 @@ class VehicleTracking {
       }
       final started = await channel.invokeMethod<bool>('start', {
         'session': session['id'],
+        'endpoint': endpoint,
         'base': AppConfig.apiUrl,
         'origin': AppConfig.origin,
         'cookie': api.cookies.entries

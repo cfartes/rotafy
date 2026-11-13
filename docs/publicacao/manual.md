@@ -408,6 +408,16 @@ Utilize o aplicativo fornecido pela empresa e mantenha-o atualizado.
 
 Viagens concluídas deixam de estar disponíveis para operação. Conclusões feitas por outro usuário aparecem após atualizar ou sincronizar. Registros pendentes continuam acessíveis para revisão, sem reabrir a viagem.
 
+### Assistência durante o trecho
+
+No APK **1.13.0 (21)**, **Próxima parada de passageiros** destaca o primeiro ponto do roteiro com embarque ou desembarque pendente. Mostra endereço, passageiros e botão de navegação. O destaque considera os registros locais, mesmo antes de sincronizar; não detecta a chegada pelo GPS e não substitui as demais paradas do roteiro. Após atualizar o sistema, prepare/sincronize o trecho para carregar os vínculos dos pontos.
+
+A área de localização diferencia serviço parado neste celular, outro trecho em rastreamento, ausência de posição recente e falta de confirmação de envio. Um aviso aparece após três minutos sem atualização, com a tela de viagem aberta. Outro celular pode continuar responsável pelo veículo. Confira as orientações e o último envio; não interprete a notificação do serviço como garantia de que o servidor recebeu posições.
+
+A fila separa **Precisam de revisão** e **Aguardando envio**, mostrando ação e horário. Resolva as revisões antes dos comandos dependentes daquele passageiro. Antes de confirmar a chegada, confira o resumo de horários, passageiros e pendências. Cancelar mantém o trecho aberto; os bloqueios de encerramento continuam aplicados.
+
+[CAPTURA:apk-proxima-parada.png]
+
 ### Biometria opcional
 
 Durante o login, marque **Usar biometria nos próximos acessos** e conclua a autenticação inicial. No próximo acesso, utilize **Entrar com biometria**. A disponibilidade depende de biometria forte e de um aparelho compatível; a proteção do cofre biométrico exige Android 9 ou superior.
@@ -653,7 +663,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 25. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 28. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}

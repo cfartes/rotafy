@@ -1,23 +1,23 @@
 {
   "edition": "2026.10",
-  "revision": 27,
+  "revision": 28,
   "revised_at": "2026-11-13",
   "files": [
     {
       "name": "manual.html",
-      "bytes": 997011
+      "bytes": 1069168
     },
     {
       "name": "manual.pdf",
-      "bytes": 1328731
+      "bytes": 1364343
     },
     {
       "name": "manual-superadmin.html",
-      "bytes": 58689
+      "bytes": 59152
     },
     {
       "name": "manual-superadmin.pdf",
-      "bytes": 262526
+      "bytes": 263945
     },
     {
       "name": "apresentacao.html",

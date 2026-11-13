@@ -89,3 +89,8 @@ APK 1.9.1 (15): campos e cartões padronizados, botões com área de toque míni
 ## APK 1.12.0 (compilação 20)
 
 Padrão visual aplicado à agenda, viagens e manifesto: resumo de passageiros, localização separada, QR fixo no rodapé e preparação offline recolhível. Regras e serviço de GPS preservados. Consulte [escopo e validação](../docs/PADRAO_VISUAL_APK.md).
+
+
+## APK 1.13.0 (21)
+
+Próxima parada por passageiros pendentes no roteiro, diagnóstico visual de localização após três minutos sem atualização, fila separada por envio/revisão e resumo antes de confirmar chegada. Atualize a API e depois prepare os trechos. Sem migração de banco. [Regras e validação](../docs/ASSISTENCIA_OPERACIONAL_APK.md).

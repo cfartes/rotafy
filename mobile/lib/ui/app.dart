@@ -471,6 +471,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ? Icons.check_circle_outline
                   : Icons.sync_problem_outlined,
               children: [
+                Text(
+                  'Aguardando envio: ${c.records.where((r) => r['status'] == 'pending').length} · Precisam de revisão: ${c.records.where((r) => r['status'] != 'pending').length}',
+                ),
                 const Text(
                   'Os registros só ficam confirmados após resposta do servidor. A sincronização automática funciona enquanto o app está aberto.',
                 ),
