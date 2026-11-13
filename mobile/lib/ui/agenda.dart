@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/api.dart';
 import '../core/controller.dart';
 import '../core/crew.dart';
+import 'operation_panel.dart';
 
 List<Json> upcomingTrips(
   List<Json> trips,
@@ -98,17 +99,17 @@ class AgendaList extends StatelessWidget {
             ),
           ),
         for (final trip in items)
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.event),
-              title: Text(trip['name']),
-              subtitle: Text(
+          OperationPanel(
+            title: trip['name'],
+            icon: Icons.event_outlined,
+            children: [
+              Text(
                 '${agendaDate(DateTime.parse(trip['starts_at']).toLocal())} · '
-                '${agendaTime(DateTime.parse(trip['starts_at']).toLocal())}\n'
-                'Destino: ${trip['destination']}',
+                '${agendaTime(DateTime.parse(trip['starts_at']).toLocal())}',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              isThreeLine: true,
-            ),
+              Text('Destino: ${trip['destination']}'),
+            ],
           ),
       ],
     );

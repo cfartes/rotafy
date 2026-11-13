@@ -253,10 +253,18 @@ void main() {
         ),
       );
       expect(find.text('Trecho: Em viagem'), findsOneWidget);
-      final arrival = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Fechar viagem · chegada no destino'),
+      await tester.scrollUntilVisible(
+        find.text('Fechar viagem · chegada no destino'),
+        200,
+      );
+      final arrival = tester.widget<OutlinedButton>(
+        find.widgetWithText(
+          OutlinedButton,
+          'Fechar viagem · chegada no destino',
+        ),
       );
       expect(arrival.onPressed, isNull);
+      await tester.ensureVisible(find.text('Desembarcar todos · 1 a bordo'));
       await tester.tap(find.text('Desembarcar todos · 1 a bordo'));
       await tester.pumpAndSettle();
       expect(find.text('Desembarcar todos?'), findsOneWidget);
@@ -272,6 +280,10 @@ void main() {
       await tester.pump();
       expect(find.text('Pessoa a bordo'), findsOneWidget);
       expect(find.text('Pessoa aguardando'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.byTooltip('Recolher passageiros'),
+        -150,
+      );
       await tester.tap(find.byTooltip('Recolher passageiros'));
       await tester.pump();
       expect(find.text('Pessoa a bordo'), findsNothing);

@@ -11,6 +11,7 @@ import '../core/controller.dart';
 import '../core/crew.dart';
 import '../core/offline.dart';
 import '../core/tracking.dart';
+import 'operation_panel.dart';
 
 const presenceLabels = {
   'waiting': 'Aguardando embarque',
@@ -302,39 +303,80 @@ class _ManifestPageState extends State<ManifestPage> {
       final route = legs.where((l) => l['id'] == data['leg']['id']);
       return Scaffold(
         appBar: AppBar(title: Text(data['vehicle']['name'])),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: FilledButton.icon(
+              onPressed: canWrite ? () => scan(context, data) : null,
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Ler QR do passageiro'),
+            ),
+          ),
+        ),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                data['trip']['name'],
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              Text('${data['leg']['origin']} → ${data['leg']['destination']}'),
-              Text(
-                'Preparado até ${DateTime.parse(data['expires_at']).toLocal()}',
+              OperationPanel(
+                title: data['trip']['name'],
+                icon: Icons.route_outlined,
+                children: [
+                  Text(
+                    '${data['leg']['origin']} → ${data['leg']['destination']}',
+                  ),
+                  Text(
+                    'Trecho: ${journeyStatus == 'scheduled'
+                        ? 'Não iniciado'
+                        : journeyStatus == 'in_progress'
+                        ? 'Em viagem'
+                        : 'Chegada registrada'}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Chip(label: Text('$waiting aguardando')),
+                      Chip(label: Text('$onboard a bordo')),
+                      Chip(
+                        label: Text(
+                          '${passengers.length - waiting - onboard} desembarcados',
+                        ),
+                      ),
+                    ],
+                  ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('Preparação e uso offline'),
+                    children: [
+                      Text(
+                        'Preparado até ${DateTime.parse(data['expires_at']).toLocal()}',
+                      ),
+                      const Text(
+                        'Cancelamentos, revogações e alterações de outros aparelhos são conferidos ao sincronizar.',
+                      ),
+                    ],
+                  ),
+                ],
               ),
               if (expired)
-                const Text(
-                  'Preparação vencida. Conecte-se e prepare o trecho novamente. A fila foi preservada.',
+                const OperationPanel(
+                  title: 'Preparação vencida',
+                  icon: Icons.warning_amber_rounded,
+                  children: [
+                    Text(
+                      'Conecte-se e prepare o trecho novamente. A fila foi preservada.',
+                    ),
+                  ],
                 ),
-              const Text(
-                'Cancelamentos, revogações e alterações de outros aparelhos são conferidos ao sincronizar.',
-              ),
               if (controller.busy) const LinearProgressIndicator(),
               if (controller.error != null)
-                Text(
-                  controller.error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                OperationPanel(
+                  title: 'Confira antes de continuar',
+                  icon: Icons.error_outline,
+                  children: [Text(controller.error!)],
                 ),
-              Text(
-                'Trecho: ${journeyStatus == 'scheduled'
-                    ? 'Não iniciado'
-                    : journeyStatus == 'in_progress'
-                    ? 'Em viagem'
-                    : 'Chegada registrada'}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
               if (journeyStatus == 'scheduled')
                 FilledButton.icon(
                   onPressed: canOperate && startAllowed && records.isEmpty
@@ -351,41 +393,50 @@ class _ManifestPageState extends State<ManifestPage> {
                 ),
               if (journeyStatus == 'in_progress' &&
                   controller.moduleEnabled('tracking'))
+                OperationPanel(
+                  title: 'Localização neste celular',
+                  icon: Icons.location_on_outlined,
+                  children: [
+                    if (journeyStatus == 'in_progress' &&
+                        controller.moduleEnabled('tracking'))
+                      OutlinedButton.icon(
+                        onPressed: canOperate ? tracking : null,
+                        icon: const Icon(Icons.my_location),
+                        label: const Text('Assumir rastreamento deste veículo'),
+                      ),
+                    if (journeyStatus == 'in_progress')
+                      TextButton(
+                        onPressed: () async {
+                          await VehicleTracking.stop();
+                          await refreshTracking();
+                          if (mounted) {
+                            setState(
+                              () => trackingNotice = 'Compartilhamento interrompido neste celular.',
+                            );
+                          }
+                        },
+                        child: const Text(
+                          'Interromper rastreamento neste celular',
+                        ),
+                      ),
+                    if (trackingNotice != null) Text(trackingNotice!),
+                    if (journeyStatus == 'in_progress' &&
+                        trackingHealth != null &&
+                        controller.moduleEnabled('tracking')) ...[
+                      Text(
+                        trackingHealth!['active'] == true
+                            ? trackingHealth!['message'] as String
+                            : 'Rastreamento parado neste celular. Use Assumir rastreamento para iniciar.',
+                      ),
+                      if ((trackingHealth!['last_sent_at'] as num? ?? 0) > 0)
+                        Text(
+                          'Último envio confirmado: ${TimeOfDay.fromDateTime(DateTime.fromMillisecondsSinceEpoch((trackingHealth!['last_sent_at'] as num).toInt())).format(context)}',
+                        ),
+                    ],
+                  ],
+                ),
+              if (journeyStatus == 'in_progress')
                 OutlinedButton.icon(
-                  onPressed: canOperate ? tracking : null,
-                  icon: const Icon(Icons.my_location),
-                  label: const Text('Assumir rastreamento deste veículo'),
-                ),
-              if (journeyStatus == 'in_progress')
-                TextButton(
-                  onPressed: () async {
-                    await VehicleTracking.stop();
-                    await refreshTracking();
-                    if (mounted) {
-                      setState(
-                        () => trackingNotice =
-                            'Compartilhamento interrompido neste celular.',
-                      );
-                    }
-                  },
-                  child: const Text('Interromper rastreamento neste celular'),
-                ),
-              if (trackingNotice != null) Text(trackingNotice!),
-              if (journeyStatus == 'in_progress' &&
-                  trackingHealth != null &&
-                  controller.moduleEnabled('tracking')) ...[
-                Text(
-                  trackingHealth!['active'] == true
-                      ? trackingHealth!['message'] as String
-                      : 'Rastreamento parado neste celular. Use Assumir rastreamento para iniciar.',
-                ),
-                if ((trackingHealth!['last_sent_at'] as num? ?? 0) > 0)
-                  Text(
-                    'Último envio confirmado: ${TimeOfDay.fromDateTime(DateTime.fromMillisecondsSinceEpoch((trackingHealth!['last_sent_at'] as num).toInt())).format(context)}',
-                  ),
-              ],
-              if (journeyStatus == 'in_progress')
-                FilledButton.icon(
                   onPressed:
                       canOperate &&
                           startAllowed &&
@@ -407,11 +458,6 @@ class _ManifestPageState extends State<ManifestPage> {
                     : null,
                 icon: const Icon(Icons.groups),
                 label: Text('Desembarcar todos · $onboard a bordo'),
-              ),
-              FilledButton.icon(
-                onPressed: canWrite ? () => scan(context, data) : null,
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Ler QR do passageiro'),
               ),
               OutlinedButton.icon(
                 onPressed: controller.busy ? null : controller.synchronize,
