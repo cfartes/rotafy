@@ -18,7 +18,7 @@ class MainActivity : FlutterFragmentActivity() {
                 "start" -> {
                     try {
                         val intent = Intent(this, TrackingService::class.java)
-                        for (key in listOf("session", "base", "origin", "cookie", "csrf")) intent.putExtra(key, call.argument<String>(key))
+                        for (key in listOf("session", "endpoint", "base", "origin", "cookie", "csrf")) intent.putExtra(key, call.argument<String>(key))
                         if (Build.VERSION.SDK_INT >= 26) startForegroundService(intent) else startService(intent)
                         val session = call.argument<String>("session")
                         val deadline = SystemClock.elapsedRealtime() + 5000
@@ -42,7 +42,10 @@ class MainActivity : FlutterFragmentActivity() {
                 "diagnostics" -> result.success(mapOf(
                     "active" to (TrackingService.activeSession != null),
                     "message" to TrackingService.lastIssue,
-                    "last_sent_at" to TrackingService.lastSentAt
+                    "last_sent_at" to TrackingService.lastSentAt,
+                    "started_at" to TrackingService.startedAt,
+                    "last_captured_at" to TrackingService.lastCapturedAt,
+                    "endpoint" to TrackingService.activeEndpoint
                 ))
                 else -> result.notImplemented()
             }

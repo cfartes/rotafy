@@ -93,7 +93,8 @@ async def vehicle_route_data(
           WHERE p.reservation_id=r.id AND COALESCE(bs.status,'waiting')='waiting') AS boarded,
         NOT EXISTS(SELECT 1 FROM passengers p LEFT JOIN boarding_states bs ON bs.passenger_id=p.id AND bs.leg_id=rl.leg_id
           WHERE p.reservation_id=r.id AND COALESCE(bs.status,'waiting')<>'alighted') AS disembarked,
-        ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names
+        ARRAY(SELECT p.full_name FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.full_name) AS passenger_names,
+        ARRAY(SELECT p.id FROM passengers p WHERE p.reservation_id=r.id ORDER BY p.id) AS passenger_ids
         FROM reservation_legs rl JOIN reservations r ON r.id=rl.reservation_id
         WHERE rl.allocation_id=:allocation AND r.trip_id=:trip
         AND (r.status='confirmed' OR (r.status='pending' AND r.expires_at>now())) ORDER BY r.created_at,r.id""",
@@ -145,6 +146,8 @@ async def vehicle_route_data(
         }
         for point in points:
             point["boarding_reservations"] = []
+            point["boarding_passenger_ids"] = []
+            point["dropoff_passenger_ids"] = []
             point["service_pending"] = False
             point["service_completed"] = False
         for entry in locations:
@@ -155,6 +158,9 @@ async def vehicle_route_data(
                 if not location:
                     point = anchor_points.get(entry[f"{kind}_position"])
                     if point is not None and entry["status"] == "confirmed":
+                        point[f"{kind}_passenger_ids"].extend(
+                            str(id) for id in entry["passenger_ids"]
+                        )
                         if kind == "boarding":
                             point["boarding_reservations"].append(str(entry["id"]))
                         complete = (
@@ -189,6 +195,8 @@ async def vehicle_route_data(
                         "kind": kind,
                         "optimization_group": anchor,
                         "boarding_reservations": [],
+                        "boarding_passenger_ids": [],
+                        "dropoff_passenger_ids": [],
                         "service_pending": False,
                         "service_completed": False,
                         "passenger_names": [],
@@ -198,6 +206,9 @@ async def vehicle_route_data(
                     ordered.append((anchor, location.get("order", 1), point))
                 point = grouped[key]
                 if entry["status"] == "confirmed":
+                    point[f"{kind}_passenger_ids"].extend(
+                        str(id) for id in entry["passenger_ids"]
+                    )
                     if kind == "boarding":
                         point["boarding_reservations"].append(str(entry["id"]))
                     complete = (

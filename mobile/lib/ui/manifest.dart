@@ -11,6 +11,7 @@ import '../core/controller.dart';
 import '../core/crew.dart';
 import '../core/offline.dart';
 import '../core/tracking.dart';
+import '../core/trip_assistance.dart';
 import 'operation_panel.dart';
 
 const presenceLabels = {
@@ -117,7 +118,7 @@ class _ManifestPageState extends State<ManifestPage> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(title),
-          content: Text(description),
+          content: SingleChildScrollView(child: Text(description)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -134,11 +135,36 @@ class _ManifestPageState extends State<ManifestPage> {
 
   Future<void> journey(String status) async {
     final start = status == 'in_progress';
+    var summary = '';
+    if (!start) {
+      final snapshot = controller.prepared
+          .where((s) => s['id'] == manifestId)
+          .firstOrNull;
+      if (snapshot == null) return;
+      final data = Json.from(snapshot['data']);
+      final records = controller.records
+          .where((r) => r['manifest'] == manifestId)
+          .toList();
+      final people = projectPassengers(data, records);
+      summary =
+          'Veículo: ${data['vehicle']['name']}\n'
+          '${data['leg']['origin']} → ${data['leg']['destination']}\n'
+          'Saída registrada: ${executionTime(data['journey']?['started_at'])}\n'
+          'Chegada prevista: ${executionTime(data['leg']['ends_at'])}\n'
+          'Passageiros: ${people.length}\n'
+          'Aguardando embarque: ${people.where((p) => p['status'] == 'waiting').length}\n'
+          'A bordo: ${people.where((p) => p['status'] == 'onboard').length}\n'
+          'Desembarcados: ${people.where((p) => p['status'] == 'alighted').length}\n'
+          'Registros aguardando envio: ${records.where((r) => r['status'] == 'pending').length}\n'
+          'Registros para revisão: ${records.where((r) => r['status'] != 'pending').length}\n'
+          'Horários apresentados no fuso do celular.\n\n';
+      if (!mounted) return;
+    }
     if (await confirm(
       start ? 'Iniciar viagem?' : 'Fechar viagem neste trecho?',
       start
           ? 'Registrar a saída deste veículo e trecho. Se habilitado pela empresa, o rastreamento será iniciado automaticamente. Autorize o GPS quando solicitado e mantenha este celular no veículo. É necessário estar conectado.'
-          : 'Registrar a chegada deste veículo ao destino e tentar capturar sua localização. Autorize o GPS quando solicitado. Se estiver indisponível, a chegada será registrada sem coordenadas. Os passageiros devem estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
+          : '${summary}Registrar a chegada deste veículo ao destino e tentar capturar sua localização. Autorize o GPS quando solicitado. Se estiver indisponível, a chegada será registrada sem coordenadas. Os passageiros devem estar desembarcados e os registros sincronizados. Outros veículos e a volta continuam independentes.',
       start ? 'Iniciar viagem' : 'Confirmar chegada',
     )) {
       final changed = await controller.changeJourney(manifestId, status);
@@ -301,6 +327,23 @@ class _ManifestPageState extends State<ManifestPage> {
           !controller.busy;
       final legs = data['route']?['legs'] as List? ?? [];
       final route = legs.where((l) => l['id'] == data['leg']['id']);
+      final points = route.isEmpty ? [] : route.first['points'] as List? ?? [];
+      final next = nextServicePoint(points, passengers);
+      final feedback = trackingFeedback(
+        trackingHealth,
+        snapshots.first['endpoint'] as String,
+        DateTime.now(),
+      );
+      final ownTracking =
+          trackingHealth?['active'] == true &&
+          (trackingHealth?['endpoint'] == null ||
+              trackingHealth?['endpoint'] == snapshots.first['endpoint']);
+      final pendingRecords = records
+          .where((r) => r['status'] == 'pending')
+          .toList();
+      final reviewRecords = records
+          .where((r) => r['status'] != 'pending')
+          .toList();
       return Scaffold(
         appBar: AppBar(title: Text(data['vehicle']['name'])),
         bottomNavigationBar: SafeArea(
@@ -391,12 +434,69 @@ class _ManifestPageState extends State<ManifestPage> {
                       ? 'O início será liberado no horário previsto da saída. Você já pode consultar o manifesto.'
                       : 'O início será liberado $earlyMinutes minutos antes da saída prevista. Você já pode consultar o manifesto.',
                 ),
+              if (journeyStatus != 'completed' && points.isNotEmpty)
+                OperationPanel(
+                  title: 'Próxima parada de passageiros',
+                  icon: Icons.pin_drop_outlined,
+                  children: [
+                    if (next != null) ...[
+                      Text(
+                        next['name'],
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if ((next['address'] as String? ?? '').isNotEmpty)
+                        Text(next['address']),
+                      if ((next['complement'] as String? ?? '').isNotEmpty)
+                        Text(next['complement']),
+                      Text(
+                        'Embarcar: ${(next['pickup'] as List).length} · Desembarcar: ${(next['delivery'] as List).length}',
+                      ),
+                      if ((next['pickup'] as List).isNotEmpty)
+                        Text(
+                          'Embarque: ${(next['pickup'] as List).map((p) => p['full_name']).join(', ')}',
+                        ),
+                      if ((next['delivery'] as List).isNotEmpty)
+                        Text(
+                          'Desembarque: ${(next['delivery'] as List).map((p) => p['full_name']).join(', ')}',
+                        ),
+                      if (next['maps_url'] != null)
+                        OutlinedButton.icon(
+                          onPressed: () => openMaps(context, next['maps_url']),
+                          icon: const Icon(Icons.directions_outlined),
+                          label: const Text('Navegar até a próxima parada'),
+                        ),
+                    ] else
+                      Text(
+                        points.any(
+                              (p) => p.containsKey('boarding_passenger_ids'),
+                            )
+                            ? 'Sem embarques ou desembarques pendentes no roteiro preparado.'
+                            : 'Atualize o sistema e prepare o trecho novamente para acompanhar as próximas paradas.',
+                      ),
+                    const Text(
+                      'Ordem do roteiro e registros do manifesto, incluindo pendências locais. Não indica chegada detectada por GPS. As demais paradas continuam no roteiro abaixo.',
+                    ),
+                  ],
+                ),
               if (journeyStatus == 'in_progress' &&
                   controller.moduleEnabled('tracking'))
                 OperationPanel(
                   title: 'Localização neste celular',
                   icon: Icons.location_on_outlined,
                   children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        feedback.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: feedback.warning
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    Text(feedback.message),
                     if (journeyStatus == 'in_progress' &&
                         controller.moduleEnabled('tracking'))
                       OutlinedButton.icon(
@@ -404,7 +504,7 @@ class _ManifestPageState extends State<ManifestPage> {
                         icon: const Icon(Icons.my_location),
                         label: const Text('Assumir rastreamento deste veículo'),
                       ),
-                    if (journeyStatus == 'in_progress')
+                    if (journeyStatus == 'in_progress' && ownTracking)
                       TextButton(
                         onPressed: () async {
                           await VehicleTracking.stop();
@@ -422,12 +522,8 @@ class _ManifestPageState extends State<ManifestPage> {
                     if (trackingNotice != null) Text(trackingNotice!),
                     if (journeyStatus == 'in_progress' &&
                         trackingHealth != null &&
+                        ownTracking &&
                         controller.moduleEnabled('tracking')) ...[
-                      Text(
-                        trackingHealth!['active'] == true
-                            ? trackingHealth!['message'] as String
-                            : 'Rastreamento parado neste celular. Use Assumir rastreamento para iniciar.',
-                      ),
                       if ((trackingHealth!['last_sent_at'] as num? ?? 0) > 0)
                         Text(
                           'Último envio confirmado: ${TimeOfDay.fromDateTime(DateTime.fromMillisecondsSinceEpoch((trackingHealth!['last_sent_at'] as num).toInt())).format(context)}',
@@ -592,70 +688,83 @@ class _ManifestPageState extends State<ManifestPage> {
                   ),
                 ),
               ],
-              if (records.isNotEmpty)
-                Text(
-                  'Envio e revisão',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ...records.map(
-                (record) => Card(
-                  child: ListTile(
-                    title: Text(
-                      passengers
-                              .where(
-                                (p) =>
-                                    p['id'] ==
-                                    record['payload']['passenger_id'],
-                              )
-                              .map((p) => p['full_name'])
-                              .firstOrNull ??
-                          'Passageiro',
+              for (final group in [
+                ('Precisam de revisão', reviewRecords),
+                ('Aguardando envio', pendingRecords),
+              ]) ...[
+                if (group.$2.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      '${group.$1} · ${group.$2.length}',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    subtitle: Text(
-                      record['status'] == 'pending'
-                          ? 'Aguardando envio'
-                          : record['message'] ?? 'Revise este registro',
-                    ),
-                    trailing: record['status'] == 'pending'
-                        ? null
-                        : TextButton(
-                            onPressed: controller.busy
-                                ? null
-                                : () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text(
-                                          'Manter informação do servidor?',
-                                        ),
-                                        content: const Text(
-                                          'Os registros locais deste passageiro neste trecho serão descartados. Confira a presença antes de registrar novamente.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: const Text('Cancelar'),
+                  ),
+                if (group.$2.isNotEmpty &&
+                    group.$1 == 'Aguardando envio' &&
+                    reviewRecords.isNotEmpty)
+                  const Text(
+                    'Registros do mesmo passageiro podem aguardar a resolução de uma revisão anterior.',
+                  ),
+                ...group.$2.map(
+                  (record) => Card(
+                    child: ListTile(
+                      title: Text(
+                        passengers
+                                .where(
+                                  (p) =>
+                                      p['id'] ==
+                                      record['payload']['passenger_id'],
+                                )
+                                .map((p) => p['full_name'])
+                                .firstOrNull ??
+                            'Passageiro',
+                      ),
+                      subtitle: Text(
+                        '${record['payload']['action'] == 'board' ? 'Embarque' : 'Desembarque'} · ${executionTime(record['payload']['captured_at'])}\n'
+                        '${record['status'] == 'pending' ? 'Aguardando envio' : record['message'] ?? 'Revise este registro'}',
+                      ),
+                      trailing: record['status'] == 'pending'
+                          ? null
+                          : TextButton(
+                              onPressed: controller.busy
+                                  ? null
+                                  : () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text(
+                                            'Manter informação do servidor?',
                                           ),
-                                          FilledButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: const Text(
-                                              'Manter servidor',
+                                          content: const Text(
+                                            'Os registros locais deste passageiro neste trecho serão descartados. Confira a presença antes de registrar novamente.',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, false),
+                                              child: const Text('Cancelar'),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      await controller.acceptServer(record);
-                                    }
-                                  },
-                            child: const Text('Revisar'),
-                          ),
+                                            FilledButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, true),
+                                              child: const Text(
+                                                'Manter servidor',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm == true) {
+                                        await controller.acceptServer(record);
+                                      }
+                                    },
+                              child: const Text('Revisar'),
+                            ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

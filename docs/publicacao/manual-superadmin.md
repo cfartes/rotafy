@@ -349,3 +349,8 @@ Somente o Superadmin completo acessa **Leads da demonstração**. A tabela reún
 Contatos com autorização comercial podem avançar para **Contatado**, **Interessado** ou **Convertido**. Os demais ficam somente para acompanhamento da demonstração. O CSV exporta apenas autorizados, conforme a situação filtrada. **Aceito pelo serviço** não confirma entrega ou leitura; **Envio incerto** não deve ser reenviado sem conferência.
 
 Em **Configurar demonstração do site**, gere a credencial exclusiva do servidor do site, configure o CAPTCHA e o limite diário e ative somente após concluir a integração. Renovar a credencial invalida a anterior. A mensagem usa o WhatsApp da Nexus e inclui empresa e passageiro, com QR Code temporário de 24 horas claramente identificado como demonstração, sem criar reservas ou permitir embarque. A integração e as autorizações estão descritas em `docs/INTEGRACAO_DEMONSTRACAO_SITE.md`. A limpeza de contatos da base ativa ocorre após 90 dias pelo processamento de mensagens; backups seguem seu ciclo próprio.
+
+
+### APK 1.13.0: assistência operacional
+
+Atualize o sistema antes de publicar o APK 1.13.0 (21). Ele apresenta próxima parada de passageiros, avisos visuais de localização sem atualização, pendências separadas por envio/revisão e resumo de chegada. Não exige recriar o banco. Oriente a equipe a preparar/sincronizar os trechos após a atualização e instalar sobre a versão anterior, sem desinstalar.

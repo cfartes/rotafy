@@ -38,6 +38,12 @@ def test_hotel_route_manifest_offline_vehicle_isolation_and_cancel(client, seede
     point = route["legs"][0]["points"][1]
     assert point["name"] == HOTEL["name"]
     assert len(point["passenger_names"]) == 2
+    ids = {p["id"] for p in reservation["passengers"]}
+    assert set(point["boarding_passenger_ids"]) == ids
+    assert point["dropoff_passenger_ids"] == []
+    assert set(route["legs"][0]["points"][-1]["dropoff_passenger_ids"]) == ids
+    assert set(route["legs"][1]["points"][-2]["dropoff_passenger_ids"]) == ids
+    assert set(route["legs"][1]["points"][0]["boarding_passenger_ids"]) == ids
     assert "Rua+das+Flores" in point["maps_url"]
     assert route["legs"][1]["points"][-2]["name"] == HOTEL["name"]
     other = client.get(
@@ -45,6 +51,12 @@ def test_hotel_route_manifest_offline_vehicle_isolation_and_cancel(client, seede
     ).json()
     assert not any(
         p["name"] == HOTEL["name"] for l in other["legs"] for p in l["points"]
+    )
+    assert not any(
+        ids.intersection(p[field])
+        for leg in other["legs"]
+        for p in leg["points"]
+        for field in ("boarding_passenger_ids", "dropoff_passenger_ids")
     )
     assert (
         len(client.get(f"/api/v1/trips/{trip['id']}").json()["legs"][0]["stops"]) == 1

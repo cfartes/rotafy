@@ -264,7 +264,10 @@ void main() {
         ),
       );
       expect(arrival.onPressed, isNull);
-      await tester.ensureVisible(find.text('Desembarcar todos · 1 a bordo'));
+      await tester.scrollUntilVisible(
+        find.text('Desembarcar todos · 1 a bordo'),
+        150,
+      );
       await tester.tap(find.text('Desembarcar todos · 1 a bordo'));
       await tester.pumpAndSettle();
       expect(find.text('Desembarcar todos?'), findsOneWidget);

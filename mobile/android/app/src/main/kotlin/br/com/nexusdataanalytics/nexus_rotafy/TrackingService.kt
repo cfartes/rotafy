@@ -27,6 +27,9 @@ class TrackingService : Service() {
         @Volatile var activeSession: String? = null
         @Volatile var lastIssue = "Rastreamento parado neste celular."
         @Volatile var lastSentAt: Long = 0
+        @Volatile var startedAt: Long = 0
+        @Volatile var lastCapturedAt: Long = 0
+        @Volatile var activeEndpoint: String? = null
     }
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
@@ -82,6 +85,9 @@ class TrackingService : Service() {
             .setSmallIcon(android.R.drawable.ic_menu_mylocation).setOngoing(true).setContentIntent(pending).build()
         startForeground(3838, notification)
         activeSession = session
+        activeEndpoint = intent.getStringExtra("endpoint")
+        startedAt = System.currentTimeMillis()
+        lastCapturedAt = 0
         lastIssue = "Aguardando a próxima posição do veículo."
         lastSentAt = 0
         wakeLock?.acquire(360000)
@@ -159,6 +165,7 @@ class TrackingService : Service() {
             lastIssue = "Sem posição recente e válida. Confira a localização do aparelho."
             return
         }
+        lastCapturedAt = location.time
         val point = JSONObject().put("id",UUID.randomUUID().toString()).put("latitude",location.latitude)
             .put("longitude",location.longitude).put("accuracy_m",location.accuracy.toDouble())
             .put("captured_at",SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",Locale.US).apply { timeZone=TimeZone.getTimeZone("UTC") }.format(Date(location.time)))
@@ -208,7 +215,7 @@ class TrackingService : Service() {
     }
 
     override fun onDestroy() {
-        destroyed = true; generation++; val session = activeSession; activeSession = null
+        destroyed = true; generation++; val session = activeSession; activeSession = null; activeEndpoint = null
         locationRequest?.cancel(); locationRequest = null
         handler.removeCallbacksAndMessages(null); listener?.let { locations.removeUpdates(it) }
         // A deliberate local stop also releases the server session when online.
