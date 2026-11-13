@@ -165,9 +165,7 @@ test("reuse route for round-trip scheduling, with no individual stop times", asy
   await page.screenshot({
     path: "../docs/screenshots/rotas-catalogo-desktop.png",
   });
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   await page.getByRole("button", { name: "Nova viagem", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Nova viagem comercial" });
   await dialog
@@ -249,9 +247,7 @@ test("regular company schedules a simple trip without package controls", async (
   await expect(
     page.getByText("Transporte regular", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Viagens", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Viagens", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Pacotes", exact: true }),
   ).toHaveCount(0);
@@ -296,4 +292,79 @@ test("route creation fits a phone screen", async ({ page }) => {
   await page.screenshot({
     path: "../docs/screenshots/rotas-cadastro-mobile.png",
   });
+});
+
+test("janelas compartilhadas mantêm ações acessíveis, validação e foco sem rolar a página ao fundo", async ({
+  page,
+}) => {
+  const { submissions } = await setup(page);
+  await page.getByRole("button", { name: "Rotas", exact: true }).click();
+  const open = page.getByRole("button", { name: "Nova Rota", exact: true });
+  await expect(
+    page.getByRole("button", { name: "Rotas", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.addStyleTag({ content: "body { min-height:200vh; }" });
+  await open.click();
+  const dialog = page.getByRole("dialog", { name: "Nova Rota", exact: true });
+  await expect(dialog).toHaveClass(/rotafy-modal/);
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.documentElement).overflow,
+    ),
+  ).toBe("hidden");
+  const field = dialog.getByLabel("Nome da Rota", { exact: true });
+  expect(
+    await field.evaluate((node: HTMLInputElement) =>
+      node.matches(":user-invalid"),
+    ),
+  ).toBe(false);
+  await dialog
+    .getByRole("button", { name: "Salvar Rota", exact: true })
+    .click();
+  expect(
+    await field.evaluate((node: HTMLInputElement) =>
+      node.matches(":user-invalid"),
+    ),
+  ).toBe(true);
+  expect(submissions).toHaveLength(0);
+  await field.fill(
+    "Rota de demonstração com nome extenso para avaliar a interface",
+  );
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 850 });
+    const bounds = await dialog.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.width).toBeLessThanOrEqual(width);
+    expect(
+      await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+    ).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await dialog.evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+  });
+  await expect(
+    dialog.getByRole("button", { name: "Fechar", exact: true }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: "Salvar Rota", exact: true }),
+  ).toBeVisible();
+  const checkbox = dialog.getByLabel("Rota ativa para novas viagens");
+  expect((await checkbox.boundingBox())!.width).toBe(18);
+  const before = await page.evaluate(() => window.scrollY);
+  await page.mouse.move(4, 400);
+  await page.mouse.wheel(0, 500);
+  expect(await page.evaluate(() => window.scrollY)).toBe(before);
+  await dialog.screenshot({
+    path: "../artifacts/shared-modal-mobile.png",
+    animations: "disabled",
+  });
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(open).toBeFocused();
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.documentElement).overflow,
+    ),
+  ).not.toBe("hidden");
 });

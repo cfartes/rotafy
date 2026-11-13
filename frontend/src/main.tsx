@@ -6,6 +6,7 @@ import { PrivacyCenter } from "./Privacy";
 import { AppUpdateNotice } from "./AppUpdateNotice";
 import "./styles.css";
 import "./billing/styles.css";
+import "./workspace-ui.css";
 
 const client = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },

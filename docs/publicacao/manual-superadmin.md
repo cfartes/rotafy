@@ -4,6 +4,10 @@ Manual exclusivo da equipe Nexus. Acesse <https://rotafy.nexusdataanalytics.tech
 
 A senha exige pelo menos 8 caracteres, uma letra maiúscula e um caractere especial. Utilize **Esqueci minha senha** no acesso Nexus quando necessário. Não compartilhe credenciais.
 
+### Navegação e formulários
+
+Os menus do painel utilizam títulos, cards, tabelas e formulários com apresentação consistente. No celular, os campos se organizam em uma coluna; nas janelas de cadastro, o cabeçalho e as ações principais permanecem acessíveis durante a rolagem. Ao fechar uma janela, o foco retorna ao botão de origem para continuar a navegação por teclado. As permissões e regras de cada tela permanecem as mesmas.
+
 ### Perfis da equipe Nexus
 
 O **Administrador Nexus completo** mantém acesso a todas as áreas. O perfil **Equipe Nexus** acessa empresas e o histórico das ações de cadastro, edição, ativação e suspensão. Esse perfil não acessa configurações, financeiro, planos e assinaturas, relatórios financeiros ou a gestão dos usuários internos. Na criação de uma empresa, pode escolher um plano do catálogo público; alterações posteriores de assinatura cabem ao administrador completo.

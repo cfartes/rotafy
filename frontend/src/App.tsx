@@ -1186,6 +1186,30 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const subtitle = isNexus
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
+  const pageHelp: Record<string, string> = {
+    directory: isNexus ? "Gerencie as empresas e seus acessos à plataforma." : "Organize os colaboradores, perfis e convites da sua empresa.",
+    routes: "Prepare percursos para reutilizar em novas viagens.",
+    operations: {
+      vehicles: "Cadastre os veículos e acompanhe a capacidade da sua frota.",
+      packages: "Organize os roteiros e destinos dos seus pacotes.",
+      allocations: "Distribua veículos e equipe nas viagens programadas.",
+      passengers: "Consulte os passageiros cadastrados na operação.",
+      trips: "Acompanhe as saídas, a equipe e a situação de cada viagem.",
+    }[operationModule] || "Organize sua operação de transporte.",
+    "ticket-sales": "Escolha uma viagem e organize a reserva dos seus passageiros.",
+    tracking: "Configure o rastreamento e os avisos aos passageiros.",
+    "route-history": "Consulte os trajetos registrados nas viagens executadas.",
+    whatsapp: "Conecte o número que enviará as mensagens da sua empresa.",
+    "whatsapp-chat": "Acompanhe as conversas e responda aos seus clientes.",
+    nps: "Acompanhe as avaliações e os pontos de melhoria do atendimento e das viagens.",
+    collections: isNexus ? "Acompanhe as cobranças e os pagamentos das empresas." : "Consulte os valores da assinatura e suas opções de pagamento.",
+    integrations: "Gerencie as configurações e os serviços da plataforma.",
+    modules: "Defina os recursos disponíveis para cada empresa.",
+    "nexus-team": "Gerencie os acessos da equipe Nexus e consulte seu histórico.",
+    "demo-leads": "Acompanhe demonstrações e contatos que autorizaram prospecção.",
+    "company-settings": "Ajuste as preferências e os horários de atendimento da empresa.",
+    contract: "Consulte as condições de contratação e os registros de aceite.",
+  };
   const title =
     page === "demo-leads" ? "Leads da demonstração" :
     page === "company-settings" ? "Configurações da empresa" :
@@ -1405,6 +1429,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               <button
                 key={item.id}
                 className={menuActive(item.id) ? "active" : ""}
+                aria-current={menuActive(item.id) ? "page" : undefined}
                 onClick={() => {
                   if (item.id === "ticket-sales")
                     setTicketSalesVisit((v) => v + 1);
@@ -1429,7 +1454,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                   setMenu(false);
                 }}
               >
-                <item.icon size={19} />
+                <item.icon size={19} aria-hidden="true" />
                 {item.label}
                 {menuActive(item.id) && <span className="nav-active-dot" />}
               </button>
@@ -1486,7 +1511,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               </span>
               <h1>{title}</h1>
               <p className="muted">
-                {page === "reports"
+                {pageHelp[page] || (page === "reports"
                   ? isNexus
                     ? "Acompanhe o consumo por empresa e ciclo."
                     : "Consulte ocupação, reservas e presença da empresa."
@@ -1500,7 +1525,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                         ? "Organize as empresas e os acessos da plataforma."
                         : canManage
                           ? isCompanyOverview ? "Sua operação, seus passageiros e suas próximas saídas em um só lugar." : "Sua equipe conectada à operação."
-                          : `Olá, ${user.full_name.split(" ")[0]}. Seu acesso à empresa está ativo.`}
+                          : `Olá, ${user.full_name.split(" ")[0]}. Seu acesso à empresa está ativo.`)}
               </p>
             </div>
             {canManage && (isNexus || hasModule(user, "team")) && ((isNexus && page === "overview") || page === "directory") && (
