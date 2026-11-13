@@ -6,6 +6,10 @@ Este manual descreve a implementação disponível em **13/11/2026**. As imagens
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
+### Navegação e formulários
+
+Os menus do painel utilizam títulos, cards, tabelas e formulários com apresentação consistente. No celular, os campos se organizam em uma coluna; nas janelas de cadastro, o cabeçalho e as ações principais permanecem acessíveis durante a rolagem. Ao fechar uma janela, o foco retorna ao botão de origem para continuar a navegação por teclado. As permissões e regras de cada tela permanecem as mesmas.
+
 ### O fluxo de trabalho
 
 1. Cadastre a empresa, escolha seu perfil operacional e o plano.
