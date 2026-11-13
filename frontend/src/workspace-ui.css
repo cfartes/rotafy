@@ -298,7 +298,59 @@ dialog.rotafy-modal legend {
 .app-layout .table-scroll th,
 .app-layout .table-scroll td {
   white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.app-layout .table-scroll .status-badge,
+.app-layout .table-scroll code,
+.app-layout .operations-table-vehicles td:nth-child(2),
+.app-layout .operations-table-packages td:nth-child(3) {
+  white-space: nowrap;
+}
+.app-layout .table-scroll .identity-cell {
+  min-width: 180px;
+}
+.app-layout .table-scroll .identity-cell > div {
+  min-width: 0;
+  max-width: 28rem;
+}
+.app-layout .table-scroll .identity-cell strong,
+.app-layout .table-scroll .identity-cell small {
+  overflow-wrap: break-word;
+}
+.app-layout .table-avatar,
+.app-layout .status-badge > span {
+  flex-shrink: 0;
+}
+.table-scroll-hint {
+  display: none;
+}
+@media (max-width: 700px) {
+  /* Keep columns readable; only the table scrolls, never the whole page. */
+  .app-layout .table-scroll > table {
+    min-width: 640px;
+  }
+  .app-layout .company-dashboard .table-scroll > table {
+    min-width: 0;
+  }
+  .table-scroll-hint {
+    display: block;
+    padding: 12px 18px;
+    margin: 0;
+    color: var(--ui-muted);
+    font-size: 13px;
+    background: var(--ui-soft);
+  }
+}
+.app-layout .company-dashboard .table-scroll th,
+.app-layout .company-dashboard .table-scroll td {
   overflow-wrap: anywhere;
+}
+.app-layout .table-scroll > .table-pagination {
+  position: sticky;
+  left: 0;
+  width: 100%;
+  white-space: normal;
 }
 .app-layout .table-scroll .text-right {
   font-variant-numeric: tabular-nums;
