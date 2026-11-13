@@ -8,11 +8,29 @@ import re
 import shutil
 import subprocess
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 WORKERS = ("billing", "email", "geocoding", "whatsapp")
 DRAIN_SECONDS = 300
+
+
+def public_request(url):
+    # Identify deployment probes; generic Python user agents may be denied by the edge.
+    return urllib.request.Request(
+        url,
+        headers={"User-Agent": "RotaFY-Deployment/1.0", "Cache-Control": "no-cache"},
+    )
+
+
+def release_label(value):
+    # Public responses must not inject terminal escapes or arbitrary data into logs.
+    if isinstance(value, str) and re.fullmatch(
+        r"git-[a-f0-9]{7,40}|legacy|new|old|\d+(?:\.\d+){1,3}", value
+    ):
+        return value
+    return "ausente ou inválida"
 
 
 def stage_assets(output, images, volume):
@@ -58,7 +76,7 @@ def stage_assets(output, images, volume):
 
 
 def verify_public_assets(base):
-    with urllib.request.urlopen(base + "/", timeout=10) as response:
+    with urllib.request.urlopen(public_request(base + "/"), timeout=10) as response:
         markup = response.read().decode("utf-8")
     paths = list(
         dict.fromkeys(re.findall(r"""(?:src|href)=["'](/assets/[^"']+)["']""", markup))
@@ -76,7 +94,9 @@ def verify_public_assets(base):
             else None
         )
         if expected:
-            with urllib.request.urlopen(base + path, timeout=10) as response:
+            with urllib.request.urlopen(
+                public_request(base + path), timeout=10
+            ) as response:
                 if (
                     response.status != 200
                     or response.headers.get_content_type() not in expected
@@ -364,21 +384,44 @@ class RollingDeployment:
     def verify(self, target):
         expected = target["release"]
         for attempt in range(18):
+            detail = ""
             try:
                 for path in ("/version.json", "/api/v1/health"):
                     with urllib.request.urlopen(
-                        f"https://rotafy.nexusdataanalytics.tech{path}?deploy={time.time_ns()}",
+                        public_request(
+                            f"https://rotafy.nexusdataanalytics.tech{path}?deploy={time.time_ns()}"
+                        ),
                         timeout=10,
                     ) as response:
                         body = json.load(response)
-                    if body.get("release", body.get("version")) != expected:
+                    received = (
+                        body.get("release", body.get("version"))
+                        if isinstance(body, dict)
+                        else None
+                    )
+                    if received != expected:
+                        detail = f"{path}: esperada {release_label(expected)}, recebida {release_label(received)}"
                         raise ValueError(
                             "Public endpoint still serves another release."
                         )
-            except (OSError, ValueError):
+            except (OSError, ValueError) as error:
+                if isinstance(error, urllib.error.HTTPError):
+                    detail = f"{path}: HTTP {error.code}"
+                    if (
+                        error.headers
+                        and error.headers.get("cf-mitigated") == "challenge"
+                    ):
+                        detail += " (desafio Cloudflare)"
+                elif isinstance(error, urllib.error.URLError):
+                    detail = (
+                        f"{path}: falha de conexão/TLS ({type(error.reason).__name__})"
+                    )
+                elif not detail:
+                    detail = f"{path}: resposta JSON inválida ou erro de comunicação ({type(error).__name__})"
                 if attempt == 17:
                     raise ValueError(
-                        "Nova versão não confirmada via HTTPS; retornando à anterior."
+                        "Nova versão não confirmada via HTTPS; retornando à anterior. "
+                        + detail
                     ) from None
                 time.sleep(2)
             else:

@@ -296,9 +296,9 @@ def deploy(args):
         )
         return
     if __package__:
-        from .rolling_deploy import RollingDeployment
+        from .rolling_deploy import RollingDeployment, public_request
     else:
-        from rolling_deploy import RollingDeployment
+        from rolling_deploy import RollingDeployment, public_request
     rolling = RollingDeployment(ROOT, project, None, output, values)
     rolling.recover()
     if getattr(args, "rollback", False):
@@ -456,7 +456,7 @@ def deploy(args):
     for attempt in range(12):
         try:
             with urllib.request.urlopen(
-                f"https://{DOMAIN}/api/v1/health", timeout=10
+                public_request(f"https://{DOMAIN}/api/v1/health"), timeout=10
             ) as response:
                 if response.status == 200 and json.load(response).get("status") == "ok":
                     break
