@@ -185,6 +185,13 @@ test("visão geral gerencial sem equipe nem integração; rota excluída preserv
         .analyze()
     ).violations,
   ).toEqual([]);
+  await page
+    .locator(".company-dashboard")
+    .screenshot({
+      path: "../docs/screenshots/visao-geral-gerencial.png",
+      animations: "disabled",
+    });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: "../artifacts/company-dashboard-desktop.png",
     fullPage: true,
@@ -318,4 +325,137 @@ test("relatórios paginam sem limitar o download completo", async ({ page }) => 
   expect(
     (await readFile((await (await download).path())!, "utf8")).split("\n"),
   ).toHaveLength(42);
+});
+
+test("visão geral respeita módulos e apresenta estado vazio sem indicadores financeiros", async ({
+  page,
+}) => {
+  await setup(page, "attendant");
+  await page.route("**/api/v1/dashboard?**", (route) =>
+    route.fulfill({
+      json: {
+        summary: {
+          completed_trips: 0,
+          running_trips: 0,
+          scheduled_trips: 0,
+          cancelled_trips: 0,
+        },
+        active_routes: null,
+        sales: null,
+        ranking: [],
+        upcoming: [],
+      },
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Atualizar indicadores", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Reservas e valores", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Rotas mais usadas", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", {
+      name: "Nenhuma próxima saída agendada",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".overview-metric")).toHaveCount(4);
+  await page
+    .getByText("Como os indicadores são calculados", { exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByText("Pacotes contam uma viagem comercial", { exact: false }),
+  ).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+});
+
+test("visão geral mantém nomes longos, valores e tabelas acessíveis de 320 a 1440 px", async ({
+  page,
+}) => {
+  await setup(page);
+  const longName =
+    "Excursão com embarques em hotéis e visita aos pontos turísticos de Balneário Camboriú";
+  await page.route("**/api/v1/dashboard?**", (route) =>
+    route.fulfill({
+      json: {
+        summary: {
+          completed_trips: 1234567890,
+          running_trips: 2,
+          scheduled_trips: 4,
+          cancelled_trips: 1,
+        },
+        active_routes: 12345,
+        sales: {
+          confirmed_reservations: 1234567890,
+          passengers: 987654321,
+          reserved_cents: 99999999999900,
+          paid_cents: 100000,
+        },
+        ranking: [
+          {
+            id: "r",
+            name: longName,
+            completed_trips: 1234567890,
+            removed: true,
+          },
+        ],
+        upcoming: Array.from({ length: 21 }, (_, i) => ({
+          id: String(i),
+          name: longName + ` ${i + 1}`,
+          destination: "São Francisco do Sul — Centro histórico",
+          starts_at: "2026-11-14T12:00:00Z",
+        })),
+      },
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Atualizar indicadores", exact: true })
+    .click();
+  await expect(
+    page.getByText("Excluída do catálogo", { exact: true }),
+  ).toBeVisible();
+  const table = page.getByRole("table", {
+    name: "Próximas saídas",
+    exact: true,
+  });
+  await expect(table.locator("tbody tr")).toHaveCount(20);
+  await page
+    .getByRole("button", { name: "Próxima página", exact: true })
+    .click();
+  await expect(table.locator("tbody tr")).toHaveCount(1);
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const clipped = await page
+      .locator(".overview-metric")
+      .evaluateAll((nodes) =>
+        nodes.some((n) => n.scrollWidth > n.clientWidth + 1),
+      );
+    expect(clipped).toBe(false);
+  }
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.screenshot({
+    path: "../artifacts/company-dashboard-wide-stress.png",
+    fullPage: true,
+  });
 });

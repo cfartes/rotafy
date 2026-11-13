@@ -2,7 +2,7 @@
 
 O **Nexus Rotafy** organiza a operação de empresas de turismo e transporte: cadastros, rotas, viagens, pacotes, reservas familiares, bilhetes individuais, embarque, comunicação e relatórios. A equipe administrativa usa o painel web; motoristas e guias usam o painel operacional ou o aplicativo Android.
 
-Este manual descreve a implementação disponível em **11/11/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
+Este manual descreve a implementação disponível em **13/11/2026**. As imagens utilizam dados demonstrativos. Os menus dependem do perfil do usuário e do tipo de empresa. Uma captura pode mostrar uma seleção de filtros diferente da sua operação.
 
 **Endereço do painel:** <https://rotafy.nexusdataanalytics.tech>. O cadastro da empresa é realizado pela equipe comercial Nexus. A central de documentação utiliza `/ajuda`.
 
@@ -23,9 +23,13 @@ Este manual descreve a implementação disponível em **11/11/2026**. As imagens
 
 Administradores e atendentes acompanham a operação na **Visão geral**, sem a lista de colaboradores. Escolha as datas e use **Atualizar indicadores**; o padrão é do primeiro dia do mês até hoje. O período admite até 366 dias e considera a data de saída da viagem no horário de Brasília.
 
-Os cards mostram viagens concluídas, em andamento, agendadas e canceladas. Com os respectivos módulos, mostram também rotas ativas, reservas confirmadas, passageiros reservados, valor das reservas e pagamentos registrados. Reservas provisórias e canceladas, assim como viagens canceladas, não entram nos indicadores de reservas. Os valores são operacionais, não o financeiro da assinatura. Passageiros reservados não equivalem a embarques efetivamente registrados.
+Os cards de **Operação no período** mostram viagens em andamento, agendadas, concluídas e canceladas. Com o módulo de vendas, **Reservas e valores** reúne reservas confirmadas, passageiros reservados, valor das reservas e pagamentos registrados. O indicador **Rotas ativas** aparece junto ao ranking, quando o módulo de rotas está disponível. Reservas provisórias e canceladas, assim como viagens canceladas, não entram nos indicadores de reservas. Os valores são operacionais, não o financeiro da assinatura. Passageiros reservados não equivalem a embarques efetivamente registrados.
 
-O ranking **Rotas mais usadas** apresenta até vinte rotas pelas viagens concluídas no período. Cada viagem conta uma vez por rota, incluindo rotas utilizadas nos pacotes; veículos e trechos não multiplicam essa contagem. Rotas excluídas do catálogo continuam identificadas no histórico. O card de rotas ativas reflete o cadastro atual, independentemente das datas. **Próximas saídas** mostra as vinte primeiras viagens futuras agendadas, sem se limitar ao período dos cards. Viagens sem rota vinculada entram nos totais, mas não no ranking.
+O ranking **Rotas mais usadas** apresenta até vinte rotas pelas viagens concluídas no período. Cada viagem conta uma vez por rota, incluindo rotas utilizadas nos pacotes; veículos e trechos não multiplicam essa contagem. Rotas excluídas do catálogo continuam identificadas no histórico. O indicador de rotas ativas reflete o cadastro atual, independentemente das datas. **Próximas saídas** mostra as vinte primeiras viagens futuras agendadas, sem se limitar ao período dos cards. Viagens sem rota vinculada entram nos totais, mas não no ranking.
+
+Use **Como os indicadores são calculados** para consultar os critérios sem ocupar espaço na leitura inicial. A tela adapta os cards e as tabelas à largura disponível; nomes longos e valores completos continuam disponíveis. Os blocos de próximas saídas e rotas ficam lado a lado em telas largas e empilhados no celular. O visual não altera os cálculos nem o acesso por perfil.
+
+[CAPTURA:visao-geral-gerencial.png]
 
 ### Tabelas e navegação
 
@@ -642,7 +646,7 @@ Informe empresa, perfil, tela, operação, data/hora e a mensagem apresentada. U
 | Franquia | Quantidade de unidades comerciais incluídas no ciclo mensal. |
 | PAGO | Registro manual do recebimento conferido pela empresa. |
 
-**Documento de uso:** edição 2026.10, revisão 24. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
+**Documento de uso:** edição 2026.10, revisão 25. Em caso de diferença entre uma imagem e a tela, prevalecem a validação do sistema e as regras descritas para a versão publicada. As atualizações do sistema e do aplicativo são orientadas pela Nexus.
 
 
 ## 26. Financeiro da empresa e pagamento da assinatura {#financeiro}

@@ -1182,6 +1182,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       else setError(message(err));
     }
   }
+  const isCompanyOverview = page === "overview" && !isNexus && !financialOnly && (isAdmin || user.role === "attendant");
   const subtitle = isNexus
     ? "Administração Nexus"
     : company.data?.trade_name || "Sua empresa";
@@ -1477,7 +1478,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             <span className="avatar">{initials(user.full_name)}</span>
           </button>
         </header>
-        <main className={`content${page === "fleet-map" ? " fleet-map-content" : ""}`} id="main-content" tabIndex={-1}>
+        <main className={`content${page === "fleet-map" ? " fleet-map-content" : ""}${isCompanyOverview ? " company-overview-page" : ""}`} id="main-content" tabIndex={-1}>
           <div className="page-heading">
             <div>
               <span className="section-kicker">
@@ -1498,7 +1499,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
                       : isNexus
                         ? "Organize as empresas e os acessos da plataforma."
                         : canManage
-                          ? "Sua equipe conectada à operação."
+                          ? isCompanyOverview ? "Sua operação, seus passageiros e suas próximas saídas em um só lugar." : "Sua equipe conectada à operação."
                           : `Olá, ${user.full_name.split(" ")[0]}. Seu acesso à empresa está ativo.`}
               </p>
             </div>
@@ -1607,7 +1608,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
               onLogout={onLogout}
             />
           )}
-          {page === "overview" && !isNexus && !financialOnly && (isAdmin || user.role === "attendant") && <CompanyDashboard user={user} />}
+          {isCompanyOverview && <CompanyDashboard user={user} />}
           {page === "overview" && (isNexus || (!isAdmin && user.role !== "attendant")) && (
             <>
               <div className="stats-grid">
