@@ -104,3 +104,12 @@ API emite JSON com identificador da solicitação, método, rota normalizada, st
 Docker limita cada arquivo de log a 10 MB e três arquivos por container em produção. Dimensionamento e alertas finais dependem dos demais serviços da VPS. O resultado de carga local está em `docs/LOAD_TEST_RESULT.json`, sem promessa de capacidade da Hostinger.
 
 Referências: [Compose em produção](https://docs.docker.com/compose/how-tos/production/), [Traefik Docker](https://doc.traefik.io/traefik/reference/routing-configuration/other-providers/docker/), [pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html), [pg_restore](https://www.postgresql.org/docs/17/app-pgrestore.html) e [repositórios restic](https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html).
+
+
+## Falha de confirmação HTTPS com HTTP 403 no Python — 13/11/2026
+
+Foi reproduzido na VPS: `curl` recebeu HTTP 200 para a API, enquanto `urllib` com a identificação padrão recebeu HTTP 403. Com `User-Agent: RotaFY-Deployment/1.0`, o mesmo Python recebeu HTTP 200 em `/version.json`, `/api/v1/health` e `/`. As sondagens de implantação agora usam essa identificação explícita e `Cache-Control: no-cache`, inclusive na conferência de HTML/JavaScript/CSS. Não há mudança de certificado, validação TLS, critérios de versão ou proteção de rollback.
+
+Falhas de confirmação passam a indicar o endpoint e HTTP, tipo de falha de conexão/TLS ou versões esperada/recebida. Conteúdos de respostas, detalhes arbitrários de erro e credenciais não são incluídos. Uma resposta de versão diferente continua impedindo a troca.
+
+Se `artifacts/deploy/state.json` estiver em `switching`, a primeira execução com o script corrigido tenta restaurar o slot ativo e os workers. Ao terminar com “Atualização interrompida recuperada; versão anterior ativa”, confira o acesso, aguarde os cinco minutos de proteção entre trocas e execute a atualização novamente. Não edite esse estado manualmente, não desligue o banco e não use reinstalação para resolver essa situação.

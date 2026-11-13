@@ -1,10 +1,12 @@
 import copy
 import io
 import json
+import ssl
 import subprocess
 import tempfile
 import time
 import unittest
+import urllib.error
 from email.message import Message
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,8 +38,15 @@ class RollingTests(unittest.TestCase):
                 response(b"script", "text/javascript"),
                 response(b"style", "text/css"),
             ],
-        ):
+        ) as open_url:
             verify_public_assets("https://example.com")
+        self.assertEqual(open_url.call_count, 3)
+        self.assertTrue(
+            all(
+                c.args[0].get_header("User-agent") == "RotaFY-Deployment/1.0"
+                for c in open_url.call_args_list
+            )
+        )
         with (
             patch(
                 "scripts.rolling_deploy.urllib.request.urlopen",
@@ -57,6 +66,110 @@ class RollingTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, "JavaScript/CSS"),
         ):
             verify_public_assets("https://example.com")
+
+    def test_public_probes_use_explicit_identity_and_keep_version_validation(self):
+        def response(body):
+            return addinfourl(
+                io.BytesIO(json.dumps(body).encode()), {}, "https://example.com", 200
+            )
+
+        with (
+            patch(
+                "scripts.rolling_deploy.urllib.request.urlopen",
+                side_effect=[
+                    response({"version": "new"}),
+                    response({"release": "new"}),
+                ],
+            ) as open_url,
+            patch("scripts.rolling_deploy.verify_public_assets") as assets,
+        ):
+            self.deployment.verify(self.new)
+        self.assertEqual(open_url.call_count, 2)
+        for call in open_url.call_args_list:
+            self.assertEqual(
+                call.args[0].get_header("User-agent"), "RotaFY-Deployment/1.0"
+            )
+            self.assertEqual(call.args[0].get_header("Cache-control"), "no-cache")
+            self.assertEqual(call.kwargs, {"timeout": 10})
+        assets.assert_called_once()
+        with (
+            patch(
+                "scripts.rolling_deploy.urllib.request.urlopen",
+                side_effect=lambda *_a, **_k: response({"version": "git-cc29e0a709d2"}),
+            ),
+            patch("scripts.rolling_deploy.time.sleep"),
+            self.assertRaisesRegex(
+                ValueError, r"/version.json: esperada new, recebida git-cc29e0a709d2"
+            ),
+        ):
+            self.deployment.verify(self.new)
+
+    def test_probe_failure_explains_http_tls_and_json_without_exposing_response(self):
+        headers = Message()
+        headers["cf-mitigated"] = "challenge"
+        for error, reason in [
+            (
+                urllib.error.HTTPError(
+                    "https://example.com",
+                    403,
+                    "secret reason",
+                    headers,
+                    io.BytesIO(b"secret body"),
+                ),
+                "HTTP 403 (desafio Cloudflare)",
+            ),
+            (
+                urllib.error.URLError(ssl.SSLError("secret TLS details")),
+                "falha de conexão/TLS (SSLError)",
+            ),
+            (ValueError("secret invalid body"), "resposta JSON inválida"),
+        ]:
+            with (
+                patch(
+                    "scripts.rolling_deploy.urllib.request.urlopen", side_effect=error
+                ),
+                patch("scripts.rolling_deploy.time.sleep"),
+                self.assertRaises(ValueError) as caught,
+            ):
+                self.deployment.verify(self.new)
+            self.assertIn(reason, str(caught.exception))
+            self.assertNotIn("secret", str(caught.exception))
+
+    def test_public_release_label_never_logs_arbitrary_content_and_recovers_transient_errors(
+        self,
+    ):
+        def response(value):
+            return addinfourl(
+                io.BytesIO(json.dumps(value).encode()), {}, "https://example.com", 200
+            )
+
+        for value in (["private"], {"version": "private-token\\x1b[0m"}):
+            with (
+                patch(
+                    "scripts.rolling_deploy.urllib.request.urlopen",
+                    side_effect=lambda *_a, value=value, **_k: response(value),
+                ),
+                patch("scripts.rolling_deploy.time.sleep"),
+                self.assertRaisesRegex(
+                    ValueError, "recebida ausente ou inválida"
+                ) as caught,
+            ):
+                self.deployment.verify(self.new)
+            self.assertNotIn("private", str(caught.exception))
+        with (
+            patch(
+                "scripts.rolling_deploy.urllib.request.urlopen",
+                side_effect=[
+                    urllib.error.URLError("secret temporary failure"),
+                    response({"version": "new"}),
+                    response({"release": "new"}),
+                ],
+            ),
+            patch("scripts.rolling_deploy.time.sleep"),
+            patch("scripts.rolling_deploy.verify_public_assets") as assets,
+        ):
+            self.deployment.verify(self.new)
+        assets.assert_called_once()
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
